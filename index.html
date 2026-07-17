@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>바디 리컴포지션</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#7C5CFC">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="리컴포지션">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -2806,6 +2813,14 @@ render();
 // 문제가 반복 재발했음(여러 차례 수정 시도에도 근본 원인이 이거였음). 이제 동기화는
 // "지금 동기화" 버튼을 눌렀을 때만 실행됨 — 예측 가능하게 만들어 충돌 자체를 제거.
 
+// PWA: Service Worker 등록 (홈 화면 설치 + 정적 파일 오프라인 캐싱용, 구글 동기화 호출은 캐싱 제외됨)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch((err) => {
+      console.warn('Service Worker 등록 실패:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
