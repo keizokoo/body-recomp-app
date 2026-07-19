@@ -199,6 +199,7 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 
 .calc-table td, .calc-table th{padding:10px 10px;}
 .calc-table td:first-child{color:var(--text); font-weight:600; text-align:left;}
+.calc-table td:first-child, .calc-table td:nth-child(2){font-family:var(--font-body);}
 
 .guide-list{display:flex; flex-direction:column; gap:14px;}
 .guide-item{display:flex; gap:13px; font-size:13.5px; line-height:1.7; color:var(--text-dim);}
@@ -2287,7 +2288,8 @@ function renderGoal(){
   if(!last) return `<div class="empty-state">아직 기록이 없습니다.</div>`;
   const recentMA = ma.slice(-7);
   const maTrendDelta = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
-  const muscleAssess = computeMuscleAssessment(sortedInbody()[0], last);
+  const first = sortedInbody()[0];
+  const muscleAssess = computeMuscleAssessment(first, last);
 
   const other = last.weight - last.muscle - last.fat;
   const targetMuscle = Math.max(last.muscle, MUSCLE_BASELINE);
@@ -2319,16 +2321,15 @@ function renderGoal(){
       <div class="section-label good">${secNum('03')}목표 현황</div>
       <h3 class="hero-heading">체지방률 ${fmt(START_FAT_PCT)}% → 현재 ${fmt(last.fatPct)}%</h3>
       <div class="ring-grid">
-        ${FAT_GOALS.map(g=>{
-          const totalDist = START_FAT_PCT-g.pct;
-          const progressed = Math.min(100, Math.max(0, ((START_FAT_PCT-last.fatPct)/totalDist)*100));
-          const done = last.fatPct<=g.pct;
-          const remain = Math.max(0, last.fatPct-g.pct);
+        ${calcRowsCurrent.map(r => {
+          const totalFatToLose = Math.max(0.0001, first.fat - r.targetFat);
+          const achievedSoFar = first.fat - last.fat;
+          const progressed = r.achieved ? 100 : Math.min(100, Math.max(0, (achievedSoFar/totalFatToLose)*100));
           return `<div class="ring-card">
-            ${ringSVG(progressed, done)}
-            <div class="ring-label">${g.label} · ${g.pct}%</div>
-            <div class="ring-status ${done?'done':'pending'}">
-              ${done ? '달성 완료' : `${fmt(remain)}%p 남음`}
+            ${ringSVG(progressed, r.achieved)}
+            <div class="ring-label">${r.g.label} · ${r.g.pct}%</div>
+            <div class="ring-status ${r.achieved?'done':'pending'}">
+              ${r.achieved ? '달성 완료' : `체지방 ${fmt(r.fatLossNeeded)}kg 감소 필요`}
             </div>
           </div>`;
         }).join('')}
@@ -2348,9 +2349,9 @@ function renderGoal(){
               <td>${r.g.label}</td>
               <td class="dim">${r.basisLabel}</td>
               <td>${r.g.pct}%</td>
-              <td class="warn-text">${r.achieved?'달성':`-${fmt(r.fatLossNeeded)}kg`}</td>
+              <td class="warn-text">${r.achieved?'<span style="font-family:var(--font-body)">달성</span>':`-${fmt(r.fatLossNeeded)}kg`}</td>
               <td>${fmt(r.targetMuscle)}kg</td>
-              <td class="good-text">${r.muscleGainNeeded>0.05?`+${fmt(r.muscleGainNeeded)}kg`:'현 수준 유지'}</td>
+              <td class="good-text">${r.muscleGainNeeded>0.05?`+${fmt(r.muscleGainNeeded)}kg`:'<span style="font-family:var(--font-body)">현 수준 유지</span>'}</td>
               <td>${fmt(r.targetWeight)}kg</td>
             </tr>`).join('')}
           </tbody>
