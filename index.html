@@ -4,13 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>바디 리컴포지션</title>
-<link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#7C5CFC">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="리컴포지션">
-<link rel="apple-touch-icon" href="./icon-192.png">
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -2306,7 +2299,19 @@ function renderGoal(){
     const fatLossNeeded = last.fat - targetFat;
     const muscleGainNeeded = targetMuscle - last.muscle;
     const achieved = last.fatPct <= g.pct;
-    return {g, targetFat, targetWeight, targetMuscle, fatLossNeeded, muscleGainNeeded, achieved};
+    return {g, targetFat, targetWeight, targetMuscle, fatLossNeeded, muscleGainNeeded, achieved, basisLabel:'회복 기준'};
+  });
+  // [2026-07-19 추가] 인바디를 매일 측정하므로, 골격근이 회복 기준값(33.2kg)까지 오른다고
+  // 가정하지 않고 "오늘 실측 골격근량 그대로 유지"된다는 보수적 가정으로도 1차/2차 목표에
+  // 필요한 체지방 감량을 별도로 계산해서 함께 보여줌 (요청: 매일 실측 골격근량 기준 계산 추가).
+  const calcRowsCurrent = FAT_GOALS.map(g => {
+    const t = g.pct/100;
+    const tm = last.muscle; // 오늘 실측 골격근량 고정(회복 가정 없음)
+    const targetFat = t*(other+tm) / (1-t);
+    const targetWeight = other + tm + targetFat;
+    const fatLossNeeded = last.fat - targetFat;
+    const achieved = last.fatPct <= g.pct;
+    return {g, targetFat, targetWeight, targetMuscle:tm, fatLossNeeded, muscleGainNeeded:0, achieved, basisLabel:'오늘 실측 골격근 기준'};
   });
 
   return `
@@ -2327,25 +2332,9 @@ function renderGoal(){
             </div>
           </div>`;
         }).join('')}
-        ${(() => {
-          // [2026-07-17 추가] 골격근 보존 현황: 시작 기준값(33.2kg) 고정이 아니라
-          // 가장 최근 인바디 골격근량(last.muscle)을 기준값과 직접 비교해서 보여줌.
-          // targetMuscle 표(구간표)는 current<baseline일 때 33.2kg 고정으로만 보여서
-          // "지금 실제로 얼마나 보존됐는지"가 안 보인다는 피드백으로 추가된 게이지.
-          const muscleProgress = Math.min(100, Math.max(0, (last.muscle/MUSCLE_BASELINE)*100));
-          const muscleDone = last.muscle >= MUSCLE_BASELINE;
-          const muscleRemain = Math.max(0, MUSCLE_BASELINE-last.muscle);
-          return `<div class="ring-card">
-            ${ringSVG(muscleProgress, muscleDone)}
-            <div class="ring-label">골격근 보존 · 현재 ${fmt(last.muscle)}kg</div>
-            <div class="ring-status ${muscleDone?'done':'pending'}">
-              ${muscleDone ? '기준 유지/초과' : `기준(${fmt(MUSCLE_BASELINE)}kg) 대비 -${fmt(muscleRemain)}kg`}
-            </div>
-          </div>`;
-        })()}
       </div>
       <div class="note-box" style="margin-top:14px;">
-        골격근 보존 게이지는 시작 기준값(${fmt(MUSCLE_BASELINE)}kg) 대비 <b>최근 인바디 실측 골격근량(${fmt(last.muscle)}kg)</b>이 얼마나 유지됐는지를 매 인바디 측정마다 갱신해서 보여줍니다. 체중감량 대비 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
+        체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
       </div>
     </section>
 
@@ -2353,10 +2342,11 @@ function renderGoal(){
       <div class="section-label">${secNum('04')}목표 달성에 필요한 변화량 (추정)</div>
       <div style="overflow-x:auto;">
         <table class="data-table calc-table">
-          <thead><tr><th style="text-align:left">목표</th><th>목표 체지방률</th><th>필요 체지방 감량</th><th>필요 골격근량</th><th>골격근 증가분</th><th>예상 목표체중</th></tr></thead>
+          <thead><tr><th style="text-align:left">목표</th><th>기준</th><th>목표 체지방률</th><th>필요 체지방 감량</th><th>필요 골격근량</th><th>골격근 증가분</th><th>예상 목표체중</th></tr></thead>
           <tbody>
-            ${calcRows.map(r => `<tr>
+            ${[...calcRows, ...calcRowsCurrent].map(r => `<tr>
               <td>${r.g.label}</td>
+              <td class="dim">${r.basisLabel}</td>
               <td>${r.g.pct}%</td>
               <td class="warn-text">${r.achieved?'달성':`-${fmt(r.fatLossNeeded)}kg`}</td>
               <td>${fmt(r.targetMuscle)}kg</td>
@@ -2367,7 +2357,7 @@ function renderGoal(){
         </table>
       </div>
       <div class="note-box" style="margin-top:14px;">
-        추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정하고, 골격근량은 회복 기준값(${MUSCLE_BASELINE}kg) 이상을 목표로 하여 목표 체지방률을 만족하는 체지방량·체중을 역산했습니다. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
+        추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정합니다. <b>"회복 기준" 행</b>은 골격근량이 시작 기준값(${MUSCLE_BASELINE}kg) 이상으로 회복된다고 가정한 계산이고, <b>"오늘 실측 골격근 기준" 행</b>은 매일 측정하는 오늘자 골격근 실측치(${fmt(last.muscle)}kg)가 그대로 유지된다는 보수적 가정으로 계산해 필요 체지방 감량을 역산했습니다. 골격근이 실제로 늘면 "오늘 실측 기준" 행의 필요 감량치는 인바디 측정마다 갱신되어 줄어듭니다. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
       </div>
     </section>
 
@@ -2813,14 +2803,6 @@ render();
 // 문제가 반복 재발했음(여러 차례 수정 시도에도 근본 원인이 이거였음). 이제 동기화는
 // "지금 동기화" 버튼을 눌렀을 때만 실행됨 — 예측 가능하게 만들어 충돌 자체를 제거.
 
-// PWA: Service Worker 등록 (홈 화면 설치 + 정적 파일 오프라인 캐싱용, 구글 동기화 호출은 캐싱 제외됨)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch((err) => {
-      console.warn('Service Worker 등록 실패:', err);
-    });
-  });
-}
 </script>
 </body>
 </html>
