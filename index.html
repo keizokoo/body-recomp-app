@@ -637,7 +637,8 @@ function computeWorkoutKPICards(workouts){
   const inclineCardSub = inclineRecent.length
     ? `목표(${HR_TARGET_SET_DATE}) 설정 후 세션 중 목표존(${CARDIO_HR_TARGET.min}-${CARDIO_HR_TARGET.max}bpm) 적중`
     : `목표(${CARDIO_HR_TARGET.min}-${CARDIO_HR_TARGET.max}bpm) 설정 후 세션 대기 중`;
-  const inclineCardTone = !inclineRecent.length ? 'neutral' : (inZoneCount===inclineRecent.length ? 'good' : 'warn');
+  const inZoneRate = inclineRecent.length ? inZoneCount/inclineRecent.length : null;
+  const inclineCardTone = inZoneRate===null ? 'neutral' : (inZoneRate>=0.8 ? 'good' : (inZoneRate>=0.5 ? 'neutral' : 'warn'));
 
   const volPrev7Sum = wPrev7.reduce((s,w)=>s+parseVolume(w.volume),0);
   const volChangePct = volPrev7Sum>0 ? Math.round((vol7-volPrev7Sum)/volPrev7Sum*100) : null;
@@ -652,7 +653,7 @@ function computeWorkoutKPICards(workouts){
     {icon:'dumbbell', label:'이번주 총 볼륨', value:`${vol7.toLocaleString()}kg`, sub: wPrev7.length ? `지난 7일 대비 ${vol7 >= volPrev7Sum ? '증가' : '감소'}` : '비교 데이터 부족', tone:'neutral'},
     {icon:'target', label:'부위 커버리지', value:`${coverage7}/6`, sub:'최근 7일 동안 자극된 부위 수', tone: coverage7>=4?'good':(coverage7>=2?'neutral':'warn')},
     {icon: inclineCardTone==='warn'?'up':'down', label:'인클라인 트레드밀 심박존 준수', value: inclineCardValue, sub: inclineCardSub, tone: inclineCardTone},
-    {icon: volChangePct===null?'target':(volChangePct>=0?'up':'down'), label:'주간 볼륨 변화율', value: volChangePct===null?'—':`${volChangePct>0?'+':''}${volChangePct}%`, sub: volChangePct===null?'비교 데이터 부족':`지난주 ${volPrev7Sum.toLocaleString()}kg → 이번주 ${vol7.toLocaleString()}kg`, tone: volChangePct===null?'neutral':(volChangePct>=0?'good':'warn')},
+    {icon: volChangePct===null?'target':(volChangePct>=0?'up':'down'), label:'주간 볼륨 변화율', value: volChangePct===null?'—':`${volChangePct>0?'+':''}${volChangePct}%`, sub: volChangePct===null?'비교 데이터 부족':`지난주 ${volPrev7Sum.toLocaleString()}kg → 이번주 ${vol7.toLocaleString()}kg`, tone: volChangePct===null?'neutral':(volChangePct>=0?'good':(volChangePct>=-15?'neutral':'warn'))},
     {icon:'award', label:'역대 최고 볼륨(PR)', value: prEntry?`${prEntry.vol.toLocaleString()}kg`:'—', sub: prEntry?`${prEntry.date}${prEntry.parts.length?' · '+prEntry.parts.join('/'):''}${prRecent?' · 최근 14일 내 신기록 🔥':''}`:'기록 없음', tone: prRecent?'good':'neutral'},
   ];
 }
@@ -1136,7 +1137,7 @@ function computeInsights(){
 
   const insights = [
     {icon:'target', label:'1차(20%) 목표 달성률', value:`${fmt(achieveRate20,0)}%`, sub:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% (목표 20%)`, tone: achieveRate20>=100?'good':'neutral'},
-    {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(achieveRate18,0)}%`, sub:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% (목표 18%)`, tone:'good'},
+    {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(achieveRate18,0)}%`, sub:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% (목표 18%)`, tone: achieveRate18>=100?'good':'neutral'},
     {icon:'down', label:'누적 체중 변화', value:`${fmt(weightLoss)}kg`, sub:`${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg`, tone:'good'},
     {icon:'down', label:'누적 체지방량 변화', value:`${fmt(fatMassLoss)}kg`, sub:`${fmt(first.fat)}kg → ${fmt(last.fat)}kg`, tone:'good'},
     {icon:'dumbbell', label:'체중감량 대비 골격근 보존', value: muscleAssess.muscleLoss<=0 ? '유지/증가' : `비율 ${fmt(muscleAssess.ratio,2)}`, sub: muscleAssess.muscleLoss<=0 ? `골격근 ${fmt(last.muscle)}kg — 감소 없음` : `골격근 -${fmt(muscleAssess.muscleLossPct,1)}% / 체중 -${fmt(muscleAssess.weightLossPct,1)}% · ${muscleAssess.label}(SURMOUNT-1 DEXA 실측 비율 0.51 기준)`, tone: muscleAssess.tone},
@@ -1354,7 +1355,7 @@ function computeMounjaroInsights(cycles){
     } else if(isLatest){
       detail += ' 아직 진행 중인 차수라 마지막에 반영될 여지는 있어요.';
     }
-    insights.push({tone: isWorsening && !artifact ? 'warn' : 'warn', title: isWorsening ? `${worst.cycle}차 체지방 증가` : `${worst.cycle}차는 정체 구간`, detail});
+    insights.push({tone: isWorsening && !artifact ? 'warn' : 'neutral', title: isWorsening ? `${worst.cycle}차 체지방 증가` : `${worst.cycle}차는 정체 구간`, detail});
   }
 
   // 3) 차수별 감소 속도 추세 (초반 절반 vs 후반 절반 평균 비교)
