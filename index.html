@@ -482,7 +482,11 @@ function inferPartsForEntry(w){
   const parts = new Set();
   if(w.exercises && w.exercises.length){
     w.exercises.forEach(ex => { if(ex.part) parts.add(ex.part); });
-  } else {
+  }
+  // 2026-07-21 추가: exercises 배열은 있지만 종목별 part 필드가 하나도 없는 경우
+  // (업로드 데이터 누락 등) 그대로 두면 근력일이 통째로 미인식되는 버그가 있었음
+  // → 상위 name/part/note 텍스트 기반 탐지로 자동 폴백
+  if(parts.size===0){
     const text = `${w.name||''} ${w.part||''} ${w.note||''}`;
     BODY_PARTS.forEach(p => {
       if(p === '등'){
@@ -898,6 +902,16 @@ function movingAverage(arr, key, win){
     const avg = vals.reduce((a,b)=>a+b,0)/(vals.length||1);
     return {...row, [`${key}MA`]: avg};
   });
+}
+/* 2026-07-22 추가: 특정 날짜 시점의 MA7 스냅샷(여러 필드 동시) — 4주간격(투여회차) 비교용.
+   해당 날짜의 인바디 기록이 없으면 그 날짜 이전 가장 최근 기록을 기준으로 계산 */
+function ma7SnapshotAt(ib, date, fields){
+  const upto = ib.filter(r=>r.date<=date);
+  if(!upto.length) return null;
+  const win = upto.slice(-7);
+  const out = {};
+  fields.forEach(f=>{ out[f] = win.reduce((s,r)=>s+r[f],0)/win.length; });
+  return out;
 }
 /* 2026-07-21 추가: MA7/MA14 추세 판단용 — 단순 두 점 차이 대신 최근 N개 지점에
    선형회귀를 적용해 하루치 튐에 덜 흔들리는 기울기(1일당 변화량)를 계산 */
@@ -1408,6 +1422,30 @@ function computeSmartAlerts(ib, meals){
     }
   }
 
+  // 11) 마운자로 4주간격(투여회차) 비교 — 감량 속도 변화(증량 판단용)
+  {
+    const intervals = computeDoseIntervalComparison();
+    if(intervals.length >= 2){
+      const prev = intervals[intervals.length-2], curr = intervals[intervals.length-1];
+      const prevRate = (prev.ma7Start.fatPct - prev.ma7End.fatPct) / prev.fullIntervalDays;
+      const currRate = (curr.ma7Start.fatPct - curr.ma7End.fatPct) / curr.elapsedDays;
+      if(prevRate > 0){
+        const ratioPct = Math.round((currRate/prevRate)*100);
+        const p1 = `${prev.startCycleNum}차→${prev.endCycleNum}차`;
+        const p2 = `${curr.startCycleNum}차→${curr.endCycleNum}차${curr.isProvisional?'(잠정)':''}`;
+        if(ratioPct <= 70){
+          push({tone:'neutral', icon:'target', score: 78,
+            title:'4주간격 비교 — 감량 속도 둔화',
+            detail:`${p1} 구간 체지방률 MA7 기준 하루평균 ${fmt(prevRate,3)}%p/일 감소에서, ${p2} 구간 ${fmt(currRate,3)}%p/일로 이전 구간의 약 ${ratioPct}% 수준으로 느려졌어요${curr.isProvisional?`(${curr.elapsedDays}/${curr.fullIntervalDays}일 경과 시점 잠정치)`:''}. 마운자로 증량 여부를 검토해볼 시점일 수 있어요 — 추적관리 탭 '4주간격(투여회차) 비교'에서 자세히 보세요.`});
+        } else if(ratioPct >= 130){
+          push({tone:'good', icon:'down', score: 50,
+            title:'4주간격 비교 — 감량 속도 유지/가속',
+            detail:`${p1} 대비 ${p2} 구간 체지방률 감소 속도가 오히려 빨라졌어요(이전 대비 ${ratioPct}%). 현재 루틴이 잘 맞고 있어요.`});
+        }
+      }
+    }
+  }
+
   if(candidates.length === 0){
     return [{tone:'good', icon:'target', title:'특이사항 없음', detail:'체중·체지방·골격근량·섭취 칼로리 모두 계획 범위 안에서 안정적으로 진행되고 있어요.'}];
   }
@@ -1433,6 +1471,57 @@ function computeMounjaroCycles(){
       fatPctDelta: (start && end) ? end.fatPct - start.fatPct : null,
     };
   });
+}
+
+/* ---------- 마운자로 증량 판단용 4주간격(투여회차 4회 간격) "4대지표" 비교 ----------
+   1차↔5차, 5차↔9차, 9차↔13차... 구간을 비교. 목표 회차가 아직 투여 전이면
+   가장 최근 인바디 데이터를 그 회차의 잠정값으로 사용하고, 전체구간(28일) 대비
+   실제 경과일수 비율을 함께 표시한다. raw값과 MA7값을 모두 계산해 병기한다. */
+const FOUR_METRICS = [
+  {key:'weight', label:'체중', unit:'kg', goodDir:-1},
+  {key:'muscle', label:'골격근', unit:'kg', goodDir:1},
+  {key:'fat', label:'체지방', unit:'kg', goodDir:-1},
+  {key:'fatPct', label:'체지방률', unit:'%p', unitRaw:'%', goodDir:-1},
+];
+function computeDoseIntervalComparison(){
+  const ib = sortedInbody();
+  if(ib.length===0 || MOUNJARO_DOSES.length===0) return [];
+  const fields = FOUR_METRICS.map(m=>m.key);
+  const latest = ib[ib.length-1];
+  const results = [];
+  for(let startCycleNum=1; ; startCycleNum+=4){
+    const endCycleNum = startCycleNum+4;
+    const startDose = MOUNJARO_DOSES.find(d=>d.cycle===startCycleNum);
+    if(!startDose) break; // 시작 회차 자체가 아직 안 왔으면 더 이상 구간 생성 안 함
+    const endDose = MOUNJARO_DOSES.find(d=>d.cycle===endCycleNum);
+    const isProvisional = !endDose;
+    const nominalEndDate = endDose ? endDose.date
+      : toLocalISO(new Date(new Date(startDose.date+'T00:00:00').getTime() + 28*86400000));
+    const fullIntervalDays = Math.round((new Date(nominalEndDate+'T00:00:00') - new Date(startDose.date+'T00:00:00'))/86400000);
+
+    const startRecord = ib.find(r=>r.date>=startDose.date) || null;
+    let endRecord, elapsedDays;
+    if(isProvisional){
+      endRecord = latest;
+      elapsedDays = Math.round((new Date(latest.date+'T00:00:00') - new Date(startDose.date+'T00:00:00'))/86400000);
+      if(elapsedDays<=0) break;
+    } else {
+      const inRange = ib.filter(r=>r.date<=nominalEndDate);
+      endRecord = inRange.length ? inRange[inRange.length-1] : null;
+      elapsedDays = fullIntervalDays;
+    }
+    if(!startRecord || !endRecord) { if(isProvisional) break; else continue; }
+
+    const ma7Start = ma7SnapshotAt(ib, startRecord.date, fields);
+    const ma7End = ma7SnapshotAt(ib, endRecord.date, fields);
+
+    results.push({
+      startCycleNum, endCycleNum, startDose, nominalEndDate, isProvisional,
+      elapsedDays, fullIntervalDays, startRecord, endRecord, ma7Start, ma7End,
+    });
+    if(isProvisional) break; // 진행 중인 구간이면 그 다음(아직 오지도 않은) 구간은 만들지 않음
+  }
+  return results;
 }
 
 /* ---------- 마운자로 차수별 인사이트 (데이터 기반, 매번 재계산) ---------- */
@@ -1510,6 +1599,7 @@ function renderMounjaro(){
   const fullData = sortedInbody().filter(r => r.date >= firstDoseDate);
   const vlines = MOUNJARO_DOSES.map(d => ({date:d.date, label:`${d.cycle}차`}));
   const insights = computeMounjaroInsights(cycles);
+  const intervals = computeDoseIntervalComparison();
 
   return `
     <section class="card">
@@ -1571,6 +1661,54 @@ function renderMounjaro(){
         return ` ${last.cycle}차(${Number(mo)}/${Number(da)})는 다음 투여 전까지 진행 중이라 현재까지의 변화만 반영돼요.`;
       })()}</div>
     </section>
+
+    ${intervals.length ? `
+    <section class="card">
+      <div class="section-label">${secNum('03f')}4주간격(투여회차) 비교 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 마운자로 증량 판단용</span></div>
+      <p class="p-dim">투여 4회 간격(1차↔5차, 5차↔9차...)으로 4대지표를 비교합니다. 목표 회차가 아직 오지 않았으면 가장 최근 데이터를 잠정값으로 사용해요.</p>
+      ${intervals.map(iv => `
+        <div style="margin-top:14px;">
+          <div style="font-size:13px; font-weight:700; color:var(--text);">
+            ${iv.startCycleNum}차(${dLabel(iv.startDose.date)}) → ${iv.endCycleNum}차(${iv.isProvisional?'예정 ':''}${dLabel(iv.nominalEndDate)})
+          </div>
+          <div class="dim" style="font-size:11.5px; margin-top:2px;">
+            ${iv.isProvisional
+              ? `${iv.elapsedDays}/${iv.fullIntervalDays}일 경과(${Math.round(iv.elapsedDays/iv.fullIntervalDays*100)}%) 시점 · 오늘(${dLabel(iv.endRecord.date)}) 데이터로 잠정 비교`
+              : `${iv.fullIntervalDays}일 구간 · 완료된 구간 비교`}
+          </div>
+          <div style="overflow-x:auto; margin-top:8px;">
+            <table class="data-table">
+              <thead><tr>
+                <th style="text-align:left">지표</th><th>실측값 변화</th><th>MA7 기준 변화</th>
+              </tr></thead>
+              <tbody>
+                ${FOUR_METRICS.map(m => {
+                  const rawStart = iv.startRecord[m.key], rawEnd = iv.endRecord[m.key];
+                  const rawDelta = rawEnd - rawStart;
+                  const maStart = iv.ma7Start[m.key], maEnd = iv.ma7End[m.key];
+                  const maDelta = maEnd - maStart;
+                  const rawGood = m.goodDir===1 ? rawDelta>=0 : rawDelta<=0;
+                  const maGood = m.goodDir===1 ? maDelta>=0 : maDelta<=0;
+                  const uraw = m.unitRaw || m.unit;
+                  return `<tr>
+                    <td style="text-align:left">${m.label}</td>
+                    <td>
+                      <div class="${rawGood?'good-text':'warn-text'}" style="font-weight:700; font-size:13.5px;">${rawDelta>0?'+':''}${fmt(rawDelta)}${m.unit}</div>
+                      <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(rawStart)}${uraw} → ${fmt(rawEnd)}${uraw}</div>
+                    </td>
+                    <td>
+                      <div class="${maGood?'good-text':'warn-text'}" style="font-weight:600; font-size:13px;">${maDelta>0?'+':''}${fmt(maDelta)}${m.unit}</div>
+                      <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(maStart)}${uraw} → ${fmt(maEnd)}${uraw}</div>
+                    </td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('')}
+      <div class="note-box" style="margin-top:14px;">실측값은 해당 시점의 raw 측정치, MA7 기준은 BIA 하루 노이즈를 줄인 7일 이동평균값입니다. 증량 판단 시 MA7 기준을 우선 참고하세요.</div>
+    </section>` : ''}
   `;
 }
 
