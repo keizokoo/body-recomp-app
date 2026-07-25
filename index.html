@@ -407,7 +407,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-07-25-c (PWA manifest/service worker 등록 복원 + sw.js network-first 전환)';
+const APP_BUILD_VERSION = '2026-07-25-d (칼로리목표 BMR×0.3보정 + 탄수화물목표 PR40%기준 신설)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -623,6 +623,46 @@ function parseVolume(v){
   const n = Number(String(v).replace(/[^0-9.]/g,''));
   return isNaN(n) ? 0 : n;
 }
+
+// 2026-07-25 신설: 칼로리 목표 계산 — 기존 고정값 400 대신 BMR×0.3을 EAT 보정 기준점으로 사용.
+// 근거: 정희님 확정(2026-07-25) — BMR이 감량 진행에 따라 계속 낮아지는데 고정값 400은 시간이
+// 지날수록 상대적 비중이 커지는 왜곡이 있어, BMR에 비례시켜 이 왜곡을 방지.
+function computeCalorieTarget(bmr, eatKcal){
+  if(!bmr) return null;
+  const base = Math.round(bmr*1.5-550);
+  const threshold = bmr*0.3;
+  const eat = eatKcal||0;
+  const corrected = eat > threshold ? Math.round(base + (eat-threshold)*0.6) : base;
+  return {base, threshold: Math.round(threshold), targetLow: corrected, targetHigh: corrected+100};
+}
+
+// 2026-07-25 신설: 탄수화물 목표 계산 — 근력운동 총볼륨(kg) 기준 A/B/C 3단계.
+// 근거: 정희님 확정(2026-07-25) — 근력 없는 날=A, 있는 날은 "오늘 볼륨 vs 역대 최고볼륨(PR)의 40%"로 B/C 분리.
+// PR 기준을 쓰는 이유: PR이 갱신될 때마다 기준선도 자동으로 같이 움직여서 별도 재계산이 필요 없음.
+const CARB_TARGET_RANGES = { A:[130,150], B:[150,180], C:[180,210] };
+const CARB_VOLUME_PR_RATIO = 0.4;
+function computeMaxVolumePR(workouts){
+  const vols = workouts.map(w=>parseVolume(w.volume)).filter(v=>v>0);
+  return vols.length ? Math.max(...vols) : 0;
+}
+function computeCarbTarget(workouts, date){
+  const dayType = classifyDayType(workouts, date);
+  const hasStrength = dayType && (dayType.type==='근력' || dayType.type==='둘다');
+  if(!hasStrength){
+    return {tier:'A', range:CARB_TARGET_RANGES.A, reason:'근력 없는 날'};
+  }
+  const dayVolume = workouts.filter(w=>w.date===date).reduce((s,w)=>s+parseVolume(w.volume),0);
+  const pr = computeMaxVolumePR(workouts);
+  if(pr<=0){
+    return {tier:'B', range:CARB_TARGET_RANGES.B, reason:'PR 데이터 없음(기본 B등급 적용)'};
+  }
+  const threshold = pr*CARB_VOLUME_PR_RATIO;
+  if(dayVolume >= threshold){
+    return {tier:'C', range:CARB_TARGET_RANGES.C, reason:`오늘 볼륨 ${dayVolume.toLocaleString()}kg ≥ PR(${pr.toLocaleString()}kg)의 ${Math.round(CARB_VOLUME_PR_RATIO*100)}%(${Math.round(threshold).toLocaleString()}kg)`};
+  }
+  return {tier:'B', range:CARB_TARGET_RANGES.B, reason:`오늘 볼륨 ${dayVolume.toLocaleString()}kg < PR의 ${Math.round(CARB_VOLUME_PR_RATIO*100)}%(${Math.round(threshold).toLocaleString()}kg)`};
+}
+
 function parseKm(text){
   if(!text) return 0;
   const matches = [...text.matchAll(/(\d+(\.\d+)?)\s*km(?!\/h)/g)];
@@ -1286,7 +1326,8 @@ const ICONS = {
 };
 
 /* ---------- 스마트 인사이트 (규칙 기반 자동 분석, Claude 개입 없이 매번 새로 계산) ---------- */
-function computeSmartAlerts(ib, meals){
+function computeSmartAlerts(ib, meals, workouts){
+  workouts = workouts || [];
   // 후보군(candidate pool) 방식: 가능한 모든 인사이트 후보를 만들고, 각각에 중요도 점수(score)를 매긴 뒤
   // 상위 N개만 매번 동적으로 선정합니다. 데이터 상황에 따라 더 중요한 인사이트가 자동으로 앞에 옵니다.
   const candidates = [];
@@ -1364,6 +1405,29 @@ function computeSmartAlerts(ib, meals){
           title:'기초대사량 변화 — 칼로리 목표 재계산 시점',
           detail:`기초대사량이 ${bmrThen}kcal → ${last.bmr}kcal로 낮아졌어요. 목표를 ${targetLow}~${targetHigh}kcal로 다시 맞춰주세요.`});
       }
+    }
+  }
+
+  // 3b) 오늘 목표 대비 섭취 현황 — 칼로리(BMR×0.3 EAT보정)와 탄수화물(볼륨/PR 40% 기준) 둘 다 표시
+  // (2026-07-25 확정: 기존 고정값 400 대신 BMR비례, 탄수화물은 세트수 대신 볼륨/PR비율 기준)
+  {
+    const todayD = todayISO();
+    const todayEAT = workouts.filter(w=>w.date===todayD).reduce((s,w)=>s+(Number(w.calories)||0),0);
+    const calTarget = last.bmr ? computeCalorieTarget(last.bmr, todayEAT) : null;
+    const carbTarget = computeCarbTarget(workouts, todayD);
+    const todayMeal = meals.find(m=>m.date===todayD);
+    if(calTarget && carbTarget){
+      const calIntake = todayMeal ? (todayMeal.calories||0) : null;
+      const carbIntake = todayMeal ? (todayMeal.carbs||0) : null;
+      let detail = `칼로리 목표 ${calTarget.targetLow}~${calTarget.targetHigh}kcal(오늘 EAT ${todayEAT}kcal${todayEAT>calTarget.threshold?`, BMR×0.3=${calTarget.threshold}kcal 초과분 보정 적용`:''}) · 탄수화물 목표 ${carbTarget.tier}등급 ${carbTarget.range[0]}~${carbTarget.range[1]}g(${carbTarget.reason}).`;
+      let tone = 'neutral';
+      if(calIntake!==null && carbIntake!==null){
+        const calDelta = calIntake < calTarget.targetLow ? calIntake-calTarget.targetLow : (calIntake > calTarget.targetHigh ? calIntake-calTarget.targetHigh : 0);
+        const carbDelta = carbIntake < carbTarget.range[0] ? carbIntake-carbTarget.range[0] : (carbIntake > carbTarget.range[1] ? carbIntake-carbTarget.range[1] : 0);
+        detail += ` 현재 섭취 ${fmt(calIntake,0)}kcal(델타 ${calDelta===0?'범위내':(calDelta>0?'+':'')+fmt(calDelta,0)}) / 탄수 ${fmt(carbIntake,0)}g(델타 ${carbDelta===0?'범위내':(carbDelta>0?'+':'')+fmt(carbDelta,0)}).`;
+        if(calDelta!==0 || carbDelta!==0) tone = 'warn'; else tone = 'good';
+      }
+      push({tone, icon:'target', score: 58, title:`오늘 목표 (칼로리 EAT보정 + 탄수 ${carbTarget.tier}등급)`, detail});
     }
   }
 
@@ -1946,7 +2010,7 @@ function renderWeeklyPlanSection(workouts){
     <section class="card">
       <div class="section-label good">${secNum('W3b')}주간 근력/유산소 계획 &amp; 실적</div>
       ${(() => {
-        const advisories = computeSmartAlerts(sortedInbody(), state.meals).filter(a=>a.tone==='warn').slice(0,2);
+        const advisories = computeSmartAlerts(sortedInbody(), state.meals, state.workouts).filter(a=>a.tone==='warn').slice(0,2);
         if(!advisories.length) return '';
         return `<div class="plan-advisory">
           <div class="plan-advisory-head">⚖️ 이번주 참고사항 (체성분·식단 기반)</div>
@@ -2293,7 +2357,7 @@ function renderDashboard(){
     <section class="card">
       <div class="section-label good">${secNum('00b')}스마트 인사이트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.lastUpdated ? '최종 갱신 '+fmtDateTime(state.lastUpdated) : '데이터 기반 자동 감지'}</span></div>
       <div class="alert-list">
-        ${computeSmartAlerts(ib, state.meals).map(a => `
+        ${computeSmartAlerts(ib, state.meals, state.workouts).map(a => `
           <div class="alert-item ${a.tone==='warn'?'tone-warn-item':a.tone==='good'?'tone-good-item':''}">
             <div class="alert-icon tone-${a.tone}">${ICONS[a.icon] || ICONS.target}</div>
             <div class="alert-body">
