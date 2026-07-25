@@ -16,7 +16,7 @@
 
   --grad-1:linear-gradient(120deg,#7C5CFC 0%,#17D9B4 100%);
 
-  --c-weight:#4C8DFF; --c-muscle:#17D9B4; --c-fat:#FF6B7A; --c-fatpct:#7C5CFC; --c-goalline:#FF6B7A; --c-grid:#EFF0F9;
+  --c-weight:#4C8DFF; --c-muscle:#17D9B4; --c-fat:#FF6B7A; --c-fatpct:#7C5CFC; --c-waist:#F5A623; --c-goalline:#FF6B7A; --c-grid:#EFF0F9;
   --c-gauge-from:#7C5CFC; --c-gauge-to:#17D9B4; --c-goalmark:#FF6B7A; --c-track:#EFF0F9;
   --c-ring-from:#7C5CFC; --c-ring-good:#17D9B4; --c-ring-warn:#FFB648;
   --c-good:#0EBB9A; --c-good-soft:rgba(23,217,180,0.14);
@@ -401,6 +401,9 @@ const SEED_MEAL = [
 const FAT_GOALS = [{label:"1차 목표", pct:20}, {label:"2차 목표", pct:18}];
 const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
+// 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
+// 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
+const APP_BUILD_VERSION = '2026-07-25-b (classifyDayType/칼로리/체중정체/골격근인사이트 수정)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -410,6 +413,7 @@ const MOUNJARO_DOSES = [
   {cycle:5, date:'2026-07-02', dose:'2.5mg'},
   {cycle:6, date:'2026-07-09', dose:'2.5mg'},
   {cycle:7, date:'2026-07-16', dose:'2.5mg'},
+  {cycle:8, date:'2026-07-23', dose:'5mg'},
 ];
 
 /* =========================================================
@@ -482,7 +486,11 @@ function inferPartsForEntry(w){
   const parts = new Set();
   if(w.exercises && w.exercises.length){
     w.exercises.forEach(ex => { if(ex.part) parts.add(ex.part); });
-  } else {
+  }
+  // 2026-07-21 추가: exercises 배열은 있지만 종목별 part 필드가 하나도 없는 경우
+  // (업로드 데이터 누락 등) 그대로 두면 근력일이 통째로 미인식되는 버그가 있었음
+  // → 상위 name/part/note 텍스트 기반 탐지로 자동 폴백
+  if(parts.size===0){
     const text = `${w.name||''} ${w.part||''} ${w.note||''}`;
     BODY_PARTS.forEach(p => {
       if(p === '등'){
@@ -577,7 +585,11 @@ function parseDurationMin(text){
   return null;
 }
 function isInclineEntry(w){
-  const text = `${w.name||''} ${w.part||''} ${w.note||''}`;
+  // 2026-07-25 수정: classifyDayType과 동일한 이유로, exercises 구조화 데이터가 있는 항목은
+  // note를 스캔하지 않음(근력세션 note에 "인클라인" 단어가 우연히/부정문으로 들어가도
+  // 인클라인 이력에 잘못 추가되는 걸 방지).
+  const hasStructuredExercises = !!(w.exercises && w.exercises.length);
+  const text = hasStructuredExercises ? `${w.name||''} ${w.part||''}` : `${w.name||''} ${w.part||''} ${w.note||''}`;
   return text.includes('인클라인') || text.includes('트레드밀');
 }
 // 목표 심박존(105~125bpm)은 이 날짜에 처음 설정됨 — 그 이전 세션은 기준 미적용(참고용)으로만 표시
@@ -800,7 +812,8 @@ const SEED_STEPS = [
   ["2026-07-15",14609,11.60,577,14],
 ].map(r => ({date:r[0], steps:r[1], km:r[2], kcal:r[3], floors:r[4]}));
 
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3'};
+const SEED_WAIST = [];
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3'};
 
 function loadArr(key, seed){
   try{
@@ -811,6 +824,25 @@ function loadArr(key, seed){
   }catch(e){ return seed; }
 }
 function saveArr(key, arr){ try{ localStorage.setItem(key, JSON.stringify(arr)); }catch(e){ console.error('저장 실패', e); } }
+function addWaistEntry(){
+  const dateEl = document.getElementById('waistDateInput');
+  const valEl = document.getElementById('waistValueInput');
+  const date = dateEl.value;
+  const val = parseFloat(valEl.value);
+  if(!date || isNaN(val) || val<=0){ alert('날짜와 허리둘레(cm)를 정확히 입력해주세요.'); return; }
+  state.waist = state.waist.filter(w=>w.date!==date);
+  state.waist.push({date, waist: val});
+  state.waist.sort((a,b)=>a.date.localeCompare(b.date));
+  saveArr(LS_KEYS.waist, state.waist);
+  markUpdated();
+  valEl.value = '';
+  render();
+}
+function deleteWaistEntry(date){
+  state.waist = state.waist.filter(w=>w.date!==date);
+  saveArr(LS_KEYS.waist, state.waist);
+  render();
+}
 function loadAiNote(){
   try{ const raw = localStorage.getItem(LS_KEYS.ainote); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
 }
@@ -821,6 +853,7 @@ let state = {
   workouts: loadArr(LS_KEYS.workout, SEED_WORKOUT),
   meals: loadArr(LS_KEYS.meal, SEED_MEAL),
   steps: loadArr(LS_KEYS.steps, SEED_STEPS),
+  waist: loadArr(LS_KEYS.waist, SEED_WAIST),
   aiNote: loadAiNote(),
   lastUpdated: localStorage.getItem(LS_KEYS.lastupdate) || null,
   tab: 'dashboard',
@@ -877,6 +910,42 @@ function movingAverage(arr, key, win){
     const avg = vals.reduce((a,b)=>a+b,0)/(vals.length||1);
     return {...row, [`${key}MA`]: avg};
   });
+}
+/* 2026-07-22 추가: 특정 날짜 시점의 MA7 스냅샷(여러 필드 동시) — 4주간격(투여회차) 비교용.
+   해당 날짜의 인바디 기록이 없으면 그 날짜 이전 가장 최근 기록을 기준으로 계산 */
+function ma7SnapshotAt(ib, date, fields){
+  const upto = ib.filter(r=>r.date<=date);
+  if(!upto.length) return null;
+  const win = upto.slice(-7);
+  const out = {};
+  fields.forEach(f=>{ out[f] = win.reduce((s,r)=>s+r[f],0)/win.length; });
+  return out;
+}
+/* 2026-07-21 추가: MA7/MA14 추세 판단용 — 단순 두 점 차이 대신 최근 N개 지점에
+   선형회귀를 적용해 하루치 튐에 덜 흔들리는 기울기(1일당 변화량)를 계산 */
+function linRegSlope(points){
+  const n = points.length;
+  if(n<2) return null;
+  const xMean = (n-1)/2;
+  const yMean = points.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0;
+  for(let i=0;i<n;i++){ num += (i-xMean)*(points[i]-yMean); den += (i-xMean)*(i-xMean); }
+  return den===0 ? 0 : num/den;
+}
+/* MA7이 MA14를 상향/하향 돌파한 가장 최근 시점 탐지 (같은 날짜 기준 병합) */
+function detectCrossover(ma7arr, ma14arr, key7, key14){
+  const map14 = new Map(ma14arr.map(r=>[r.date, r[key14]]));
+  const merged = ma7arr.map(r => ({date:r.date, v7:r[key7], v14:map14.get(r.date)}))
+    .filter(r => r.v7!=null && r.v14!=null);
+  for(let i=merged.length-1;i>=1;i--){
+    const prevDiff = merged[i-1].v7 - merged[i-1].v14;
+    const curDiff = merged[i].v7 - merged[i].v14;
+    if(prevDiff===0) continue;
+    if((prevDiff<0 && curDiff>=0) || (prevDiff>0 && curDiff<=0)){
+      return {date: merged[i].date, direction: curDiff>=0?'up':'down', daysAgo: merged.length-1-i};
+    }
+  }
+  return null;
 }
 function isoWeekKey(dateStr){
   const d = new Date(dateStr+'T00:00:00');
@@ -945,6 +1014,64 @@ function lineChartSVG(data, key, colorVar, opts={}){
     ${vlines}
     <path d="${areaD}" fill="url(#${gid})" stroke="none"/>
     <path d="${pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    ${xTicks}
+  </svg>`;
+}
+
+/* 2026-07-21 추가: 기존 lineChartSVG(단일계열)는 그대로 두고, MA7(실선)+MA14(점선)를
+   같은 좌표축에 겹쳐 그리는 전용 함수를 신설 — 다른 차트 호출부에는 영향 없음 */
+function lineChartSVGMulti(data, key1, data2, key2, colorVar, opts={}){
+  const w=300,h=120,padL=34,padR=6,padT=15,padB=18;
+  const vals1 = data.map(d=>d[key1]).filter(v=>v!=null);
+  const vals2 = data2.map(d=>d[key2]).filter(v=>v!=null);
+  const allVals = vals1.concat(vals2);
+  if(allVals.length===0) return `<svg class="chart" viewBox="0 0 ${w} ${h}"></svg>`;
+  let min = Math.min(...allVals), max = Math.max(...allVals);
+  const pad = opts.pad ?? ((max-min)*0.15 || 1);
+  min -= pad; max += pad;
+  const x = i => padL + (i/(data.length-1||1)) * (w-padL-padR);
+  const y = v => padT + (1-(v-min)/(max-min||1)) * (h-padT-padB);
+
+  function buildPath(arr, key){
+    const pts = arr.map((d,i) => d[key]!=null ? [x(i), y(d[key])] : null);
+    let pathD = '', areaD = '', started = false;
+    pts.forEach((p) => {
+      if(!p) { started=false; return; }
+      if(!started){ pathD += `M${p[0].toFixed(1)},${p[1].toFixed(1)} `; areaD += `M${p[0].toFixed(1)},${h-padB} L${p[0].toFixed(1)},${p[1].toFixed(1)} `; started=true; }
+      else { pathD += `L${p[0].toFixed(1)},${p[1].toFixed(1)} `; areaD += `L${p[0].toFixed(1)},${p[1].toFixed(1)} `; }
+    });
+    const lastPt = [...pts].reverse().find(p=>p);
+    if(lastPt) areaD += `L${lastPt[0].toFixed(1)},${h-padB} Z`;
+    return {pathD, areaD};
+  }
+  const s1 = buildPath(data, key1);
+  const s2 = buildPath(data2, key2);
+
+  const gridY = [0,0.5,1].map(t => ({ y: padT + t*(h-padT-padB), val: max - t*(max-min) }));
+  const yDecimals = (max-min) < 8 ? 1 : 0;
+  const yTicks = gridY.map(g => `<text class="chart-axis" x="${padL-6}" y="${(g.y+3).toFixed(1)}" text-anchor="end">${fmt(g.val, yDecimals)}</text>`).join('');
+  const gid = 'g'+key1+Math.random().toString(36).slice(2,7);
+
+  let goalLine = '';
+  if(opts.goal!=null && opts.goal>=min && opts.goal<=max){
+    goalLine = `<line x1="${padL}" x2="${w-padR}" y1="${y(opts.goal)}" y2="${y(opts.goal)}" style="stroke:var(--c-goalline)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>`;
+  }
+
+  const nTicks = Math.min(5, data.length);
+  const tickIdx = Array.from({length:nTicks}, (_,i)=>Math.round(i*(data.length-1)/(nTicks-1||1)));
+  const xTicks = [...new Set(tickIdx)].map(i => `<text class="chart-axis" x="${x(i)}" y="${h-4}" text-anchor="middle">${dLabel(data[i].date)}</text>`).join('');
+
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" style="stop-color:var(${colorVar})" stop-opacity="0.28"/>
+      <stop offset="100%" style="stop-color:var(${colorVar})" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${gridY.map(g=>`<line x1="${padL}" x2="${w-padR}" y1="${g.y}" y2="${g.y}" style="stroke:var(--c-grid)" stroke-width="1"/>`).join('')}
+    ${yTicks}
+    ${goalLine}
+    <path d="${s1.areaD}" fill="url(#${gid})" stroke="none"/>
+    <path d="${s2.pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity="0.55"/>
+    <path d="${s1.pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
     ${xTicks}
   </svg>`;
 }
@@ -1175,38 +1302,56 @@ function computeSmartAlerts(ib, meals){
     }
   }
 
-  // 2) 골격근 손실 평가
+  // 2) 골격근 손실 평가 — 단기(최근 7일 MA7 변화)와 누적(6/5 대비 비율)을 함께 표시 (2026-07-25 개선)
   const muscleAssess = computeMuscleAssessment(ib[0], last);
+  const muscleMA7ForAlert = movingAverage(ib, 'muscle', 7).slice(-7);
+  const muscleShortTrend = muscleMA7ForAlert.length>=2 ? muscleMA7ForAlert[muscleMA7ForAlert.length-1].muscleMA - muscleMA7ForAlert[0].muscleMA : null;
+  const shortTermText = muscleShortTrend===null ? '' :
+    ` 단기(최근 7일 MA7 변화)로는 ${muscleShortTrend>0?'+':''}${fmt(muscleShortTrend,2)}kg${muscleShortTrend<=-0.15?' — 하락':muscleShortTrend>=0.15?' — 상승':' — 거의 변화 없음'}이에요.`;
   if(muscleAssess.tone === 'warn'){
     if(muscleAssess.weightLossPct <= 0.3){
       push({tone:'warn', icon:'dumbbell', score: 88,
         title:'체중 변화 없이 골격근만 감소',
-        detail:`골격근이 ${fmt(muscleAssess.muscleLoss)}kg 줄었는데 체중은 거의 안 줄었어요(${fmt(muscleAssess.weightLossPct,1)}%). 단백질 섭취나 저항운동 부족일 수 있어요.`});
+        detail:`누적(6/5 대비): 골격근이 ${fmt(muscleAssess.muscleLoss)}kg 줄었는데 체중은 거의 안 줄었어요(${fmt(muscleAssess.weightLossPct,1)}%).${shortTermText} 결론: 단백질 섭취나 저항운동 부족일 수 있어요.`});
     } else {
       push({tone:'warn', icon:'dumbbell', score: 85,
         title:'체중감량 대비 근손실 비중 높음',
-        detail:`체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%로, 비율 ${fmt(muscleAssess.ratio,2)}가 SURMOUNT-1 실측 기준(0.51)보다 높아요.`});
+        detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 실측 기준(0.51)보다 높아요.${shortTermText} 결론: 단기·누적 모두 근손실 비중이 높은 신호라 저항운동 볼륨·단백질 섭취 점검이 필요해요.`});
     }
   } else if(muscleAssess.tone === 'good' && muscleAssess.muscleLoss > 0){
     push({tone:'good', icon:'dumbbell', score: 55,
       title:'골격근 보존 우수 (임상 예상 대비)',
-      detail:`체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%로, 비율 ${fmt(muscleAssess.ratio,2)}는 임상 기준(0.51)보다 훨씬 낮아요.`});
+      detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 임상 기준(0.51)보다 훨씬 낮아요.${shortTermText} 결론: 누적으로는 안전권이며 단기 흐름도 양호해요.`});
+  } else if(muscleAssess.tone === 'neutral'){
+    push({tone:'neutral', icon:'dumbbell', score: 38,
+      title:'골격근 손실 — 임상 기준 범위 내',
+      detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 기준(0.51) 이내예요.${shortTermText} 결론: 누적 기준으로는 안전권이니, 단기 하락이 며칠 더 이어지는지만 지켜보면 돼요.`});
   }
 
-  // 3) 칼로리 목표 이탈
+  // 3) 칼로리 목표 이탈 — 질병/컨디션난조 등 특이일은 제외하고 계산 (2026-07-25 개선)
+  // 주의: note 텍스트 키워드 매칭이라 완벽하지 않음. 향후 데이터에 명시적 "특이일" 플래그 필드가
+  // 추가되면 그쪽을 우선 사용하도록 교체 권장.
+  const SPECIAL_DAY_KEYWORDS = ['설사','컨디션난조','몸살','장염','병원','속탈','메스꺼움','구토','식중독','감기'];
+  const isSpecialDay = (m) => SPECIAL_DAY_KEYWORDS.some(k => (m.note||'').includes(k));
   if(last.bmr && meals.length >= 5){
     const targetLow = Math.round(last.bmr*1.5-550);
     const targetHigh = targetLow+100;
-    const recent5 = [...meals].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
-    const avgCal = recent5.reduce((s,m)=>s+(m.calories||0),0)/recent5.length;
-    if(avgCal > targetHigh+150){
-      push({tone:'warn', icon:'up', score: 80,
-        title:'섭취 칼로리가 목표보다 높아요',
-        detail:`목표 ${targetLow}~${targetHigh}kcal인데, 최근 5끼 평균 ${fmt(avgCal,0)}kcal예요.`});
-    } else if(avgCal < targetLow-150){
-      push({tone:'warn', icon:'down', score: 83,
-        title:'섭취 칼로리가 너무 낮아요',
-        detail:`목표 ${targetLow}~${targetHigh}kcal인데, 최근 5끼 평균 ${fmt(avgCal,0)}kcal예요. 과도한 저칼로리는 근손실·대사저하 위험이 있어요.`});
+    const sortedMealsDesc = [...meals].sort((a,b)=>b.date.localeCompare(a.date));
+    const normalMeals = sortedMealsDesc.filter(m=>!isSpecialDay(m));
+    const recent5 = normalMeals.slice(0,5);
+    const excludedCount = recent5.length ? sortedMealsDesc.filter(m=>isSpecialDay(m) && m.date>=recent5[recent5.length-1].date).length : 0;
+    const excludeNote = excludedCount>0 ? ` (질병/특이일 ${excludedCount}건은 제외하고 계산)` : '';
+    if(recent5.length >= 3){
+      const avgCal = recent5.reduce((s,m)=>s+(m.calories||0),0)/recent5.length;
+      if(avgCal > targetHigh+150){
+        push({tone:'warn', icon:'up', score: 80,
+          title:'섭취 칼로리가 목표보다 높아요',
+          detail:`목표 ${targetLow}~${targetHigh}kcal인데, 최근 정상섭취 ${recent5.length}끼 평균 ${fmt(avgCal,0)}kcal예요.${excludeNote}`});
+      } else if(avgCal < targetLow-150){
+        push({tone:'warn', icon:'down', score: 83,
+          title:'섭취 칼로리가 너무 낮아요',
+          detail:`목표 ${targetLow}~${targetHigh}kcal인데, 최근 정상섭취 ${recent5.length}끼 평균 ${fmt(avgCal,0)}kcal예요. 과도한 저칼로리는 근손실·대사저하 위험이 있어요.${excludeNote}`});
+      }
     }
     if(ib.length >= 8){
       const bmrThen = ib[ib.length-8].bmr;
@@ -1218,13 +1363,20 @@ function computeSmartAlerts(ib, meals){
     }
   }
 
-  // 4) 체중 정체
-  if(ib.length >= 3){
-    const last3w = ib.slice(-3).map(r=>r.weight);
-    if(last3w[last3w.length-1] >= last3w[0]){
+  // 4) 체중 정체 — raw 값 대신 MA7/MA14 기반으로 판정 (2026-07-25 개선: BIA 하루 노이즈로 인한 오판정 방지)
+  const weightMA7arr = movingAverage(ib, 'weight', 7);
+  const weightMA14arr = movingAverage(ib, 'weight', 14);
+  if(weightMA7arr.length >= 7){
+    const w7 = weightMA7arr.slice(-7);
+    const trend7 = w7[w7.length-1].weightMA - w7[0].weightMA;
+    const w14recent = weightMA14arr.slice(-7);
+    const trend14 = w14recent.length>=2 ? w14recent[w14recent.length-1].weightMA - w14recent[0].weightMA : null;
+    const plateau7 = trend7 >= -0.1;
+    const plateau14 = trend14!==null ? trend14 >= -0.05 : null;
+    if(plateau7 && (plateau14===null || plateau14)){
       push({tone:'warn', icon:'up', score: 65,
-        title:'체중 정체 또는 반등',
-        detail:`최근 측정에서 체중이 ${fmt(last3w[0])}kg → ${fmt(last3w[last3w.length-1])}kg으로 줄지 않았어요. 며칠 더 지켜보되, 지속되면 칼로리를 점검해보세요.`});
+        title:'체중 정체 또는 반등 (MA7/MA14 기준)',
+        detail:`MA7 기준 최근 7일간 체중 이동평균이 ${trend7>0?'+':''}${fmt(trend7,2)}kg${trend14!==null?`, MA14 기준으로도 ${trend14>0?'+':''}${fmt(trend14,2)}kg`:''}로 하루치 변동이 아니라 추세 자체가 정체/반등 신호예요. 며칠 더 지켜보되, 지속되면 칼로리를 점검해보세요.`});
     }
   }
 
@@ -1303,6 +1455,30 @@ function computeSmartAlerts(ib, meals){
     }
   }
 
+  // 11) 마운자로 4주간격(투여회차) 비교 — 감량 속도 변화(증량 판단용)
+  {
+    const intervals = computeDoseIntervalComparison();
+    if(intervals.length >= 2){
+      const prev = intervals[intervals.length-2], curr = intervals[intervals.length-1];
+      const prevRate = (prev.ma7Start.fatPct - prev.ma7End.fatPct) / prev.fullIntervalDays;
+      const currRate = (curr.ma7Start.fatPct - curr.ma7End.fatPct) / curr.elapsedDays;
+      if(prevRate > 0){
+        const ratioPct = Math.round((currRate/prevRate)*100);
+        const p1 = `${prev.startCycleNum}차→${prev.endCycleNum}차`;
+        const p2 = `${curr.startCycleNum}차→${curr.endCycleNum}차${curr.isProvisional?'(잠정)':''}`;
+        if(ratioPct <= 70){
+          push({tone:'neutral', icon:'target', score: 78,
+            title:'4주간격 비교 — 감량 속도 둔화',
+            detail:`${p1} 구간 체지방률 MA7 기준 하루평균 ${fmt(prevRate,3)}%p/일 감소에서, ${p2} 구간 ${fmt(currRate,3)}%p/일로 이전 구간의 약 ${ratioPct}% 수준으로 느려졌어요${curr.isProvisional?`(${curr.elapsedDays}/${curr.fullIntervalDays}일 경과 시점 잠정치)`:''}. 마운자로 증량 여부를 검토해볼 시점일 수 있어요 — 추적관리 탭 '4주간격(투여회차) 비교'에서 자세히 보세요.`});
+        } else if(ratioPct >= 130){
+          push({tone:'good', icon:'down', score: 50,
+            title:'4주간격 비교 — 감량 속도 유지/가속',
+            detail:`${p1} 대비 ${p2} 구간 체지방률 감소 속도가 오히려 빨라졌어요(이전 대비 ${ratioPct}%). 현재 루틴이 잘 맞고 있어요.`});
+        }
+      }
+    }
+  }
+
   if(candidates.length === 0){
     return [{tone:'good', icon:'target', title:'특이사항 없음', detail:'체중·체지방·골격근량·섭취 칼로리 모두 계획 범위 안에서 안정적으로 진행되고 있어요.'}];
   }
@@ -1328,6 +1504,57 @@ function computeMounjaroCycles(){
       fatPctDelta: (start && end) ? end.fatPct - start.fatPct : null,
     };
   });
+}
+
+/* ---------- 마운자로 증량 판단용 4주간격(투여회차 4회 간격) "4대지표" 비교 ----------
+   1차↔5차, 5차↔9차, 9차↔13차... 구간을 비교. 목표 회차가 아직 투여 전이면
+   가장 최근 인바디 데이터를 그 회차의 잠정값으로 사용하고, 전체구간(28일) 대비
+   실제 경과일수 비율을 함께 표시한다. raw값과 MA7값을 모두 계산해 병기한다. */
+const FOUR_METRICS = [
+  {key:'weight', label:'체중', unit:'kg', goodDir:-1},
+  {key:'muscle', label:'골격근', unit:'kg', goodDir:1},
+  {key:'fat', label:'체지방', unit:'kg', goodDir:-1},
+  {key:'fatPct', label:'체지방률', unit:'%p', unitRaw:'%', goodDir:-1},
+];
+function computeDoseIntervalComparison(){
+  const ib = sortedInbody();
+  if(ib.length===0 || MOUNJARO_DOSES.length===0) return [];
+  const fields = FOUR_METRICS.map(m=>m.key);
+  const latest = ib[ib.length-1];
+  const results = [];
+  for(let startCycleNum=1; ; startCycleNum+=4){
+    const endCycleNum = startCycleNum+4;
+    const startDose = MOUNJARO_DOSES.find(d=>d.cycle===startCycleNum);
+    if(!startDose) break; // 시작 회차 자체가 아직 안 왔으면 더 이상 구간 생성 안 함
+    const endDose = MOUNJARO_DOSES.find(d=>d.cycle===endCycleNum);
+    const isProvisional = !endDose;
+    const nominalEndDate = endDose ? endDose.date
+      : toLocalISO(new Date(new Date(startDose.date+'T00:00:00').getTime() + 28*86400000));
+    const fullIntervalDays = Math.round((new Date(nominalEndDate+'T00:00:00') - new Date(startDose.date+'T00:00:00'))/86400000);
+
+    const startRecord = ib.find(r=>r.date>=startDose.date) || null;
+    let endRecord, elapsedDays;
+    if(isProvisional){
+      endRecord = latest;
+      elapsedDays = Math.round((new Date(latest.date+'T00:00:00') - new Date(startDose.date+'T00:00:00'))/86400000);
+      if(elapsedDays<=0) break;
+    } else {
+      const inRange = ib.filter(r=>r.date<=nominalEndDate);
+      endRecord = inRange.length ? inRange[inRange.length-1] : null;
+      elapsedDays = fullIntervalDays;
+    }
+    if(!startRecord || !endRecord) { if(isProvisional) break; else continue; }
+
+    const ma7Start = ma7SnapshotAt(ib, startRecord.date, fields);
+    const ma7End = ma7SnapshotAt(ib, endRecord.date, fields);
+
+    results.push({
+      startCycleNum, endCycleNum, startDose, nominalEndDate, isProvisional,
+      elapsedDays, fullIntervalDays, startRecord, endRecord, ma7Start, ma7End,
+    });
+    if(isProvisional) break; // 진행 중인 구간이면 그 다음(아직 오지도 않은) 구간은 만들지 않음
+  }
+  return results;
 }
 
 /* ---------- 마운자로 차수별 인사이트 (데이터 기반, 매번 재계산) ---------- */
@@ -1405,6 +1632,7 @@ function renderMounjaro(){
   const fullData = sortedInbody().filter(r => r.date >= firstDoseDate);
   const vlines = MOUNJARO_DOSES.map(d => ({date:d.date, label:`${d.cycle}차`}));
   const insights = computeMounjaroInsights(cycles);
+  const intervals = computeDoseIntervalComparison();
 
   return `
     <section class="card">
@@ -1466,6 +1694,54 @@ function renderMounjaro(){
         return ` ${last.cycle}차(${Number(mo)}/${Number(da)})는 다음 투여 전까지 진행 중이라 현재까지의 변화만 반영돼요.`;
       })()}</div>
     </section>
+
+    ${intervals.length ? `
+    <section class="card">
+      <div class="section-label">${secNum('03f')}4주간격(투여회차) 비교 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 마운자로 증량 판단용</span></div>
+      <p class="p-dim">투여 4회 간격(1차↔5차, 5차↔9차...)으로 4대지표를 비교합니다. 목표 회차가 아직 오지 않았으면 가장 최근 데이터를 잠정값으로 사용해요.</p>
+      ${intervals.map(iv => `
+        <div style="margin-top:14px;">
+          <div style="font-size:13px; font-weight:700; color:var(--text);">
+            ${iv.startCycleNum}차(${dLabel(iv.startDose.date)}) → ${iv.endCycleNum}차(${iv.isProvisional?'예정 ':''}${dLabel(iv.nominalEndDate)})
+          </div>
+          <div class="dim" style="font-size:11.5px; margin-top:2px;">
+            ${iv.isProvisional
+              ? `${iv.elapsedDays}/${iv.fullIntervalDays}일 경과(${Math.round(iv.elapsedDays/iv.fullIntervalDays*100)}%) 시점 · 오늘(${dLabel(iv.endRecord.date)}) 데이터로 잠정 비교`
+              : `${iv.fullIntervalDays}일 구간 · 완료된 구간 비교`}
+          </div>
+          <div style="overflow-x:auto; margin-top:8px;">
+            <table class="data-table">
+              <thead><tr>
+                <th style="text-align:left">지표</th><th>실측값 변화</th><th>MA7 기준 변화</th>
+              </tr></thead>
+              <tbody>
+                ${FOUR_METRICS.map(m => {
+                  const rawStart = iv.startRecord[m.key], rawEnd = iv.endRecord[m.key];
+                  const rawDelta = rawEnd - rawStart;
+                  const maStart = iv.ma7Start[m.key], maEnd = iv.ma7End[m.key];
+                  const maDelta = maEnd - maStart;
+                  const rawGood = m.goodDir===1 ? rawDelta>=0 : rawDelta<=0;
+                  const maGood = m.goodDir===1 ? maDelta>=0 : maDelta<=0;
+                  const uraw = m.unitRaw || m.unit;
+                  return `<tr>
+                    <td style="text-align:left">${m.label}</td>
+                    <td>
+                      <div class="${rawGood?'good-text':'warn-text'}" style="font-weight:700; font-size:13.5px;">${rawDelta>0?'+':''}${fmt(rawDelta)}${m.unit}</div>
+                      <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(rawStart)}${uraw} → ${fmt(rawEnd)}${uraw}</div>
+                    </td>
+                    <td>
+                      <div class="${maGood?'good-text':'warn-text'}" style="font-weight:600; font-size:13px;">${maDelta>0?'+':''}${fmt(maDelta)}${m.unit}</div>
+                      <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(maStart)}${uraw} → ${fmt(maEnd)}${uraw}</div>
+                    </td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `).join('')}
+      <div class="note-box" style="margin-top:14px;">실측값은 해당 시점의 raw 측정치, MA7 기준은 BIA 하루 노이즈를 줄인 7일 이동평균값입니다. 증량 판단 시 MA7 기준을 우선 참고하세요.</div>
+    </section>` : ''}
   `;
 }
 
@@ -1583,7 +1859,15 @@ function classifyDayType(workouts, date){
   if(restOnly) return {type:'휴식', label:entries[0].name||'휴식'};
   let hasStrength=false, hasCardio=false, labels=[];
   entries.forEach(w=>{
-    const text = `${w.name||''} ${w.part||''} ${w.note||''}`;
+    // 2026-07-25 수정: exercises 배열(구조화 데이터)이 있는 항목은 note 자유텍스트를 유산소
+    // 키워드 스캔 대상에서 제외함. note에 심박존 설명 등으로 "유산소"/"인클라인" 단어가 우연히
+    // 포함되면(심지어 "인클라인 안 함" 같은 부정문이어도) 오탐되는 문제가 실제 발생함(2026-07-25,
+    // 근력만 한 날인데 note의 심박존 설명 때문에 "둘다"로 잘못 분류·인클라인 이력에도 잘못 추가됨).
+    // exercises가 없는 레거시 항목(SEED_WORKOUT 등)은 기존 note 스캔 방식 그대로 유지(회귀 방지 —
+    // 예: 6/6·6/7·6/16 등은 part엔 유산소 표시가 없고 note에만 "인클라인 트레드밀 Nkm..."로 적혀있어
+    // note 스캔이 반드시 필요함).
+    const hasStructuredExercises = !!(w.exercises && w.exercises.length);
+    const text = hasStructuredExercises ? `${w.name||''} ${w.part||''}` : `${w.name||''} ${w.part||''} ${w.note||''}`;
     if(inferPartsForEntry(w).some(p=>BODY_PARTS.includes(p))) hasStrength=true;
     // 정책 변경(2026-07-15): "혈당" 키워드 자동제외 방식 폐기 — 취약한 텍스트매칭이었음.
     // 이제는 산책의 속도/심박 데이터가 목표존(105-125bpm)·브리스크 페이스에 해당하면
@@ -2017,14 +2301,17 @@ function renderDashboard(){
     </section>
 
     <section class="card">
-      <div class="section-label good">${secNum('00c')}체지방률·골격근량 7일 이동평균 추세 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 단일 측정 노이즈를 걸러낸 추세선</span></div>
-      <p class="p-dim" style="margin-bottom:14px;">인바디는 하루 컨디션(염분·수분·화장실 여부)에 따라 출렁여요. 이동평균은 그 노이즈를 줄여서 진짜 추세를 보여줘요.</p>
+      <div class="section-label good">${secNum('00c')}체지방률·골격근량 이동평균 추세 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 단일 측정 노이즈를 걸러낸 MA7/MA14 추세선</span></div>
+      <p class="p-dim" style="margin-bottom:14px;">인바디는 하루 컨디션(염분·수분·화장실 여부)에 따라 출렁여요. 실선(MA7)은 단기추세, 점선(MA14)은 더 완만한 장기추세를 보여줘요. 절대값보다 기울기(회귀선) 방향이 더 중요한 지표예요.</p>
       ${(() => {
         const maFat = movingAverage(ib, 'fatPct', 7);
         const maMuscle = movingAverage(ib, 'muscle', 7);
+        const maFat14 = movingAverage(ib, 'fatPct', 14);
+        const maMuscle14 = movingAverage(ib, 'muscle', 14);
         const recentFat = maFat.slice(-7), recentMuscle = maMuscle.slice(-7);
         const fatMATrend = recentFat.length>=2 ? recentFat[recentFat.length-1].fatPctMA - recentFat[0].fatPctMA : null;
         const muscleMATrend = recentMuscle.length>=2 ? recentMuscle[recentMuscle.length-1].muscleMA - recentMuscle[0].muscleMA : null;
+        const ma_musAssess = computeMuscleAssessment(ib[0], last); // 2026-07-25: 누적(6/5 대비) 비율을 단기 MA 추세와 함께 병기하기 위함
 
         let insightBlock = '';
         if(fatMATrend!==null && muscleMATrend!==null){
@@ -2052,6 +2339,16 @@ function renderDashboard(){
             tone='warn'; title='체지방 정체 + 골격근량 감소 — 점검 필요';
             detail=`체지방률 이동평균 ${fmt(fatMATrend,2)}%p로 큰 변화가 없는데 골격근량 이동평균은 ${fmt(Math.abs(muscleMATrend),2)}kg 줄었어요. 단백질 섭취, 저항운동 볼륨, 칼로리 결손 폭을 함께 점검해보는 게 좋겠어요.`;
           }
+          // 2026-07-25 추가: 단기(위 MA7 7일변화) 판정에 누적(6/5 대비 비율) 참고와 종합결론을 함께 붙여 표시
+          const cumulativeText = ma_musAssess.muscleLoss<=0
+            ? ` (누적 참고: 6/5 대비 골격근 감소 없음 — 현재 ${fmt(last.muscle)}kg, 시작값 ${fmt(MUSCLE_BASELINE)}kg)`
+            : ma_musAssess.weightLossPct<=0.3
+              ? ` (누적 참고: 체중 변화가 아직 적어 비율 계산 의미가 작아요)`
+              : ` (누적 참고: 6/5 대비 체중 -${fmt(ma_musAssess.weightLossPct,1)}%·골격근 -${fmt(ma_musAssess.muscleLossPct,1)}%, 비율 ${fmt(ma_musAssess.ratio,2)} — SURMOUNT-1 0.51 기준 ${ma_musAssess.tone==='good'?'훨씬 안전권':ma_musAssess.tone==='neutral'?'기준 이내':'기준 초과'})`;
+          const overallText = muscleDown
+            ? (ma_musAssess.tone==='warn' ? ' 종합하면: 단기·누적 모두 근손실 비중이 높은 신호라 저항운동 볼륨·단백질 섭취 점검이 필요해요.' : ' 종합하면: 최근 며칠은 골격근이 주춤했지만, 다이어트 시작 이후 누적 흐름은 아직 양호한 범위예요.')
+            : '';
+          detail += cumulativeText + overallText;
           insightBlock = `<div class="alert-item ${tone==='warn'?'tone-warn-item':tone==='good'?'tone-good-item':''}" style="margin-bottom:16px;">
             <div class="alert-icon tone-${tone}">${tone==='warn'?ICONS.up:tone==='good'?ICONS.down:ICONS.target}</div>
             <div class="alert-body"><div class="alert-title tone-${tone}">${title}</div><div class="alert-detail">${detail}</div></div>
@@ -2061,23 +2358,27 @@ function renderDashboard(){
         return `
           ${insightBlock}
           <div class="chart-grid">
-            ${chartCard('체지방률 7일 이동평균', maFat, 'fatPctMA', '%', '--c-fatpct', 18)}
-            ${chartCard('골격근량 7일 이동평균', maMuscle, 'muscleMA', 'kg', '--c-muscle', MUSCLE_BASELINE)}
+            ${maTrendChartCard('체지방률 이동평균 (MA7/MA14)', maFat, maFat14, 'fatPctMA', 'fatPctMA', '%', '--c-fatpct', 18, 'down', 3)}
+            ${maTrendChartCard('골격근량 이동평균 (MA7/MA14)', maMuscle, maMuscle14, 'muscleMA', 'muscleMA', 'kg', '--c-muscle', MUSCLE_BASELINE, 'up', 3)}
           </div>
           ${expandToggleRow('maTable', maFat.length, '일별 상세 기록 보기')}
           ${state.expandedTables['maTable'] ? `
           <div style="overflow-x:auto; margin-top:10px;">
             <table class="data-table">
-              <thead><tr><th style="text-align:left">날짜</th><th>체지방률(원본)</th><th>체지방률 MA7</th><th>골격근(원본)</th><th>골격근 MA7</th></tr></thead>
+              <thead><tr><th style="text-align:left">날짜</th><th>체지방률(원본)</th><th>체지방률 MA7</th><th>체지방률 MA14</th><th>골격근(원본)</th><th>골격근 MA7</th><th>골격근 MA14</th></tr></thead>
               <tbody>
                 ${maFat.slice().reverse().map((r) => {
                   const mRow = maMuscle.find(m=>m.date===r.date);
+                  const fRow14 = maFat14.find(m=>m.date===r.date);
+                  const mRow14 = maMuscle14.find(m=>m.date===r.date);
                   return `<tr>
                   <td style="text-align:left">${r.date}</td>
                   <td>${fmt(r.fatPct,1)}%</td>
                   <td class="good-text">${fmt(r.fatPctMA,2)}%</td>
+                  <td class="good-text" style="opacity:0.7">${fRow14?fmt(fRow14.fatPctMA,2):'—'}%</td>
                   <td>${mRow?fmt(mRow.muscle,1):'—'}kg</td>
                   <td class="good-text">${mRow?fmt(mRow.muscleMA,2):'—'}kg</td>
+                  <td class="good-text" style="opacity:0.7">${mRow14?fmt(mRow14.muscleMA,2):'—'}kg</td>
                 </tr>`;}).join('')}
               </tbody>
             </table>
@@ -2134,6 +2435,41 @@ function renderDashboard(){
   `;
 }
 function secNum(n){ return `<span class="sec-num">${n}</span>`; }
+/* 2026-07-21 추가: 대시보드 MA7 추세 섹션 전용 카드 — MA7(실선)+MA14(점선) 오버레이,
+   최근 7일 회귀기울기 배지, MA7-MA14 교차 배지를 함께 표시. goodDirection: 'down'이면
+   값이 줄어드는 게 좋음(체지방률), 'up'이면 늘거나 유지가 좋음(골격근량) */
+function maTrendChartCard(title, ma7data, ma14data, key7, key14, unit, colorVar, goal, goodDirection, slopeDecimals){
+  const vals7 = ma7data.map(d=>d[key7]).filter(v=>v!=null);
+  const nowVal = vals7[vals7.length-1];
+  const recent7 = ma7data.slice(-7).map(d=>d[key7]).filter(v=>v!=null);
+  const slope = linRegSlope(recent7);
+  const cross = detectCrossover(ma7data, ma14data, key7, key14);
+
+  let slopeBadge = '';
+  if(slope!=null){
+    const improving = goodDirection==='down' ? slope < -0.001 : slope > 0.001;
+    const worsening = goodDirection==='down' ? slope > 0.001 : slope < -0.001;
+    const tone = improving ? 'good' : worsening ? 'warn' : 'neutral';
+    const toneColor = tone==='good' ? 'var(--c-good)' : tone==='warn' ? 'var(--c-warn)' : 'var(--text-faint)';
+    const arrow = slope>0.001 ? '↑' : slope<-0.001 ? '↓' : '→';
+    slopeBadge = `<div style="font-size:11px; color:${toneColor}; margin:2px 0 6px;">최근 7일 기울기(회귀) ${arrow} ${slope>=0?'+':''}${fmt(slope,slopeDecimals)}${unit}/day</div>`;
+  }
+  let crossBadge = '';
+  if(cross && cross.daysAgo<=5){
+    const upGood = goodDirection==='down' ? cross.direction==='down' : cross.direction==='up';
+    const toneColor = upGood ? 'var(--c-good)' : 'var(--c-warn)';
+    crossBadge = `<div style="font-size:11px; color:${toneColor}; margin-bottom:6px;">⚡ MA7이 MA14를 ${cross.direction==='up'?'상향':'하향'} 돌파 (${dLabel(cross.date)}, ${cross.daysAgo===0?'오늘':cross.daysAgo+'일 전'})</div>`;
+  }
+
+  return `<div class="card chart-card">
+    <div class="ch-head"><span class="ch-title">${title}</span><span class="ch-now mono" style="color:var(${colorVar})">${fmt(nowVal)}${unit}</span></div>
+    ${slopeBadge}${crossBadge}
+    ${lineChartSVGMulti(ma7data, key7, ma14data, key14, colorVar, {goal})}
+    <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">
+      <span style="color:var(${colorVar})">━ MA7</span>&nbsp;&nbsp;<span style="color:var(${colorVar}); opacity:0.55;">┅ MA14</span>
+    </div>
+  </div>`;
+}
 function chartCard(title, data, key, unit, colorVar, goal, vlines){
   const vals = data.map(d=>d[key]).filter(v=>v!=null);
   const nowVal = vals[vals.length-1];
@@ -2364,6 +2700,32 @@ function renderGoal(){
     </section>
 
     <section class="card">
+      <div class="section-label good">${secNum('04b')}허리둘레 추적</div>
+      <p class="p-dim">체지방이 줄어도 복부는 가장 늦게 반영되는 경우가 많아, 인바디와 별도로 허리둘레 추이를 함께 기록하면 판단에 도움이 됩니다. 같은 조건(아침 공복, 같은 위치·줄자)에서 측정해주세요 — 하루 1~3cm 변동은 자연스러운 범위입니다.</p>
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0;">
+        <input type="date" id="waistDateInput" value="${todayISO()}" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
+        <input type="number" step="0.1" id="waistValueInput" placeholder="cm" style="width:80px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <button onclick="addWaistEntry()" class="btn-primary" style="padding:8px 18px; border-radius:8px; border:none; background:var(--c-waist); color:#fff; font-weight:600; cursor:pointer;">추가</button>
+      </div>
+      ${state.waist.length ? chartCard('허리둘레', [...state.waist].sort((a,b)=>a.date.localeCompare(b.date)), 'waist', 'cm', '--c-waist', null, null) : `<div class="empty-state">아직 기록된 허리둘레가 없어요. 위에서 날짜와 cm를 입력해 추가해보세요.</div>`}
+      ${state.waist.length ? `<div style="overflow-x:auto; margin-top:12px;">
+        <table class="data-table">
+          <thead><tr><th style="text-align:left">날짜</th><th>허리둘레</th><th></th></tr></thead>
+          <tbody>
+            ${[...state.waist].sort((a,b)=>b.date.localeCompare(a.date)).map(w => `<tr>
+              <td>${w.date}</td>
+              <td>${fmt(w.waist)}cm</td>
+              <td><button onclick="deleteWaistEntry('${w.date}')" style="background:none; border:none; color:var(--text-faint); cursor:pointer; font-family:var(--font-body); font-size:12px;">삭제</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
+      <div class="note-box" style="margin-top:14px;">
+        허리둘레는 아직 클라우드 동기화(Google Sheet) 연동 전이라 <b>지금 이 기기에만 저장</b>됩니다. 다른 기기에서도 같이 보시려면 Apps Script(Code.gs)에 Waist 시트 처리를 추가해야 하니, 필요하시면 Code.gs 파일을 다시 올려주세요.
+      </div>
+    </section>
+
+    <section class="card">
       <div class="section-label good">${secNum('05')}추천 가이드</div>
       <div class="guide-list">
         ${(() => {
@@ -2447,6 +2809,17 @@ function renderSettings(){
         <button class="btn btn-primary btn-sm" onclick="saveAiNoteFromInput()">저장 (오늘 날짜로 갱신)</button>
         ${state.aiNote ? `<button class="btn btn-ghost btn-sm" onclick="clearAiNote()">삭제</button>` : ''}
       </div>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('06c')}앱 버전</div>
+      <p class="p-dim" style="font-family:var(--font-mono); font-size:12px;">
+        ${esc(APP_BUILD_VERSION)}
+      </p>
+      <p class="p-dim" style="font-size:11.5px; margin-top:4px;">
+        코드 수정 후 GitHub 업로드가 실제로 반영됐는지 확인할 때, 여기 버전 문구가 바뀌었는지만 보면 됩니다
+        (바뀌었으면 반영 성공, 그대로면 캐시 삭제 후 재접속 또는 업로드 재확인 필요).
+      </p>
     </section>
   `;
 }
@@ -2592,6 +2965,7 @@ async function cloudSync(silent){
         headers:{'Content-Type':'text/plain;charset=utf-8'},
         body: JSON.stringify({
           inbody: recentWindow_(state.inbody), workouts: recentWindow_(state.workouts), meals: recentWindow_(state.meals),
+          waist: recentWindow_(state.waist),
           aiAnalysis: state.aiNote ? state.aiNote.text : null,
           aiAnalysisDate: state.aiNote ? state.aiNote.date : null,
         })
@@ -2603,8 +2977,10 @@ async function cloudSync(silent){
       state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts);
       state.meals = mergeMealsByDate_(state.meals, data.meals);
       state.steps = mergeByDate_(state.steps, data.steps);
+      state.waist = mergeByDate_(state.waist, data.waist);
       saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
       saveArr(LS_KEYS.steps, state.steps);
+      saveArr(LS_KEYS.waist, state.waist);
       if(data.aiAnalysis && (!state.aiNote || data.aiAnalysisDate >= state.aiNote.date)){
         state.aiNote = {date: data.aiAnalysisDate || todayISO(), text: data.aiAnalysis, syncedAt: new Date().toISOString()};
         saveAiNote(state.aiNote);
