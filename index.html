@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>바디 리컴포지션</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#7C5CFC">
 <style>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -403,7 +407,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-07-25-b (classifyDayType/칼로리/체중정체/골격근인사이트 수정)';
+const APP_BUILD_VERSION = '2026-07-25-c (PWA manifest/service worker 등록 복원 + sw.js network-first 전환)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -3180,6 +3184,17 @@ render();
 // 이 자동 동기화와 사용자의 수동 "지금 동기화" 클릭이 충돌해서 배지가 안 뜨거나 늦게 뜨는
 // 문제가 반복 재발했음(여러 차례 수정 시도에도 근본 원인이 이거였음). 이제 동기화는
 // "지금 동기화" 버튼을 눌렀을 때만 실행됨 — 예측 가능하게 만들어 충돌 자체를 제거.
+
+// 2026-07-25 복원: 이 서비스워커 등록 코드가 이전 index.html에서 누락돼 있었음(원인 불명 —
+// 세션 시작 시 받은 파일에 이미 빠져있었음). 그 결과 예전에 등록된 낡은 서비스워커가 계속
+// 살아남아 캐시를 붙들고 있었는데, 이 등록 코드가 없으니 새 버전으로 교체될 방법이 없어
+// "코드를 아무리 고쳐 올려도 반영이 안 되는" 문제가 반복됐음. 재등록 + sw.js 자체의 캐시
+// 전략도 network-first로 변경(아래 sw.js 참고)해서 향후 이런 문제가 재발하지 않도록 함.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW 등록 실패:', err));
+  });
+}
 
 </script>
 </body>

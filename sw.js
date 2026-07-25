@@ -1,5 +1,9 @@
 // 바디 리컴포지션 PWA Service Worker
-const CACHE_NAME = 'bodyrecomp-cache-v1';
+// 2026-07-25 수정: 기존 cache-first(있으면 캐시 즉시 반환 + 백그라운드로만 갱신) 전략이
+// 배포할 때마다 "한 버전씩 계속 뒤처져서 보이는" 문제의 근본 원인이었음. 개발 중인 앱이라
+// 최신 코드 반영이 성능보다 훨씬 중요하므로 network-first(항상 네트워크 우선, 실패시에만
+// 캐시 폴백)로 전략 변경. CACHE_NAME도 v1→v2로 올려서 이번 배포 시 낡은 캐시를 강제 정리.
+const CACHE_NAME = 'bodyrecomp-cache-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -30,9 +34,8 @@ self.addEventListener('activate', (event) => {
       Promise.all(
         keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       )
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -40,20 +43,17 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return; // 동기화 POST 등은 그대로 네트워크로
   if (shouldBypassCache(request.url)) return; // 구글 동기화는 캐싱 제외, 항상 최신 요청
 
+  // network-first: 항상 네트워크를 먼저 시도해서 최신 버전을 받고, 캐시는 오프라인일 때만 사용.
+  // (기존 cache-first 전략은 배포 직후에도 예전 화면을 계속 보여주는 문제가 있었음)
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached); // 오프라인이면 캐시로 폴백
-
-      // 캐시가 있으면 즉시 캐시 응답 + 백그라운드로 최신화, 없으면 네트워크 응답 대기
-      return cached || network;
-    })
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request))
   );
 });
