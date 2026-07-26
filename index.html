@@ -407,7 +407,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-07-25-d (칼로리목표 BMR×0.3보정 + 탄수화물목표 PR40%기준 신설)';
+const APP_BUILD_VERSION = '2026-07-26-a (인클라인 이력 parseKm 구간중복합산 버그 수정)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -665,7 +665,13 @@ function computeCarbTarget(workouts, date){
 
 function parseKm(text){
   if(!text) return 0;
-  const matches = [...text.matchAll(/(\d+(\.\d+)?)\s*km(?!\/h)/g)];
+  // 2026-07-26 수정: note에 "구간: 1구간 1.00km/..., 2구간 1.00km/..." 같은 구간별 세부내역이
+  // 있으면, 그 안의 개별 구간 거리(km)들이 name/note 앞부분의 총거리(예: "5.44km")와
+  // 별개로 다시 매칭돼 전부 합산되어 실제보다 훨씬 큰 값(예: 5.44+1.00×5+0.03=10.47km)이
+  // 표시되는 버그가 있었음(2026-07-26 발견, 7/16·7/17 과거 기록도 소급 영향 확인됨).
+  // "구간:" 마커 이후는 이미 집계된 총거리의 세부 분해일 뿐이므로 파싱 대상에서 제외.
+  const cut = text.split(/구간\s*:/)[0];
+  const matches = [...cut.matchAll(/(\d+(\.\d+)?)\s*km(?!\/h)/g)];
   return matches.reduce((s,m)=>s+parseFloat(m[1]),0);
 }
 function daysAgoList(n){
