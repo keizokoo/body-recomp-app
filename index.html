@@ -75,10 +75,7 @@ header.topbar{padding:24px 0 4px;}
 .btn-sm{padding:8px 14px; font-size:12.5px;}
 .btn.danger{color:var(--c-warn); border-color:var(--c-warn-soft);}
 .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
-.sync-badge{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:var(--radius-pill); white-space:nowrap;}
-.sync-badge-progress{background:var(--c-neutral-soft); color:var(--c-neutral);}
-.sync-badge-done{background:var(--c-good-soft); color:var(--c-good);}
-.sync-badge-error{background:var(--c-warn-soft); color:var(--c-warn);}
+/* 2026-07-31: 기존 설정탭 sync-badge 클래스는 대시보드 hero-sync-status로 대체되어 제거함 */
 
 nav.tabs{display:flex; gap:6px; padding:16px 0 6px; flex-wrap:wrap;}
 nav.tabs button{background:transparent; border:none; color:var(--text-dim); font-size:13.5px; font-weight:600; padding:8px 15px; border-radius:var(--radius-pill); transition:.15s;}
@@ -94,8 +91,14 @@ main{padding-top:12px; display:flex; flex-direction:column; gap:26px;}
 
 /* HERO */
 .hero{position:relative; overflow:hidden; padding:34px 30px 28px; border-radius:var(--radius-lg); box-shadow:var(--shadow-md);}
-.hero-eyebrow{font-size:12px; letter-spacing:.02em; color:var(--eyebrow-text); font-weight:700; margin-bottom:14px; display:inline-flex; align-items:center; gap:7px; background:var(--eyebrow-bg); padding:5px 12px 5px 10px; border-radius:var(--radius-pill);}
+.hero-top-row{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 10px; margin-bottom:14px;}
+.hero-eyebrow{font-size:12px; letter-spacing:.02em; color:var(--eyebrow-text); font-weight:700; margin-bottom:0; display:inline-flex; align-items:center; gap:7px; background:var(--eyebrow-bg); padding:5px 12px 5px 10px; border-radius:var(--radius-pill);}
 .hero-eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--c-gauge-from);}
+/* 2026-07-31 추가: 대시보드 첫 화면에서 바로 보이는 자동 동기화 상태 표시(설정탭 배지를 이걸로 대체) */
+.hero-sync-status{font-size:11.5px; font-weight:600; color:var(--text-faint); display:inline-flex; align-items:center; gap:5px; white-space:nowrap; cursor:default;}
+.hero-sync-status-syncing{color:var(--c-neutral);}
+.hero-sync-status-error{color:var(--c-warn); cursor:pointer; text-decoration:underline; text-underline-offset:2px;}
+.hero-sync-status-done{color:var(--text-faint);}
 .hero-grid{display:grid; grid-template-columns:1fr; gap:26px; align-items:center;}
 @media(min-width:760px){.hero-grid{grid-template-columns:280px 1fr;}}
 .hero-figure{text-align:center;}
@@ -407,7 +410,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-07-29-b (단백질 목표 하한 150→140g 조정 추가)';
+const APP_BUILD_VERSION = '2026-07-31-a (자동 동기화 재도입: 대시보드 상단 실시간 상태 표시)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -933,6 +936,18 @@ function fmtDateTime(iso){
   if(isNaN(d.getTime())) return iso; // 이미 "YYYY-MM-DD" 같은 단순 문자열인 경우 그대로
   const pad = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+// 2026-07-31 추가: 대시보드 동기화 상태 표시용 상대시간("n분 전") 포맷터
+function timeAgo_(iso){
+  if(!iso) return null;
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return null;
+  const diffMin = Math.floor((Date.now() - d.getTime())/60000);
+  if(diffMin < 1) return '방금';
+  if(diffMin < 60) return `${diffMin}분 전`;
+  const diffHr = Math.floor(diffMin/60);
+  if(diffHr < 24) return `${diffHr}시간 전`;
+  return `${Math.floor(diffHr/24)}일 전`;
 }
 
 /* =========================================================
@@ -2310,7 +2325,10 @@ function renderDashboard(){
 
   return `
     <section class="hero card">
-      <div class="hero-eyebrow"><span class="dot"></span>Live Tracking</div>
+      <div class="hero-top-row">
+        <div class="hero-eyebrow"><span class="dot"></span>Live Tracking</div>
+        ${(localStorage.getItem(LS_KEYS.cloudurl)||'').trim() ? `<div id="hero-sync-status" class="${heroSyncStatusClass_()}" onclick="cloudSync(false)">${heroSyncStatusText_()}</div>` : ''}
+      </div>
       <div class="hero-grid">
         <div class="hero-figure">
           ${gaugeSVG(last.fatPct, START_FAT_PCT, FAT_GOALS)}
@@ -2857,7 +2875,7 @@ function renderSettings(){
       <div class="section-label good">${secNum('05b')}클라우드 동기화 (Google Sheets)</div>
       <p class="p-dim">
         Google Sheet를 데이터 허브로 써서, 이 기기뿐 아니라 다른 기기·Claude 채팅에서 넣은 기록도 자동으로 합쳐집니다.
-        아래에 배포한 Apps Script 웹앱 URL을 붙여넣고 저장하면, 앱을 열 때마다 자동으로 동기화됩니다.
+        아래에 배포한 Apps Script 웹앱 URL을 붙여넣고 저장하면, 앱을 열 때 + 화면으로 돌아올 때 + 화면이 켜져있는 동안 5분마다 자동으로 동기화됩니다.
       </p>
       <div class="field" style="max-width:480px;">
         <label>Apps Script 웹앱 URL</label>
@@ -2865,13 +2883,13 @@ function renderSettings(){
       </div>
       <div class="btn-row" style="margin-top:12px; align-items:center;">
         <button class="btn btn-primary btn-sm" onclick="saveCloudUrl()">저장</button>
-        <button id="sync-now-btn" class="btn btn-sm" onclick="cloudSync(false)" ${syncing?'disabled':''}>지금 동기화</button>
-        <span id="sync-badge" class="${syncBadgeClass_()}" style="${syncUiStatus.phase==='idle'?'display:none;':''}">${syncBadgeText_()}</span>
+        <button id="sync-now-btn" class="btn btn-sm" onclick="cloudSync(false)" ${syncing?'disabled':''}>지금 동기화(수동)</button>
       </div>
       <div class="note-box" style="margin-top:14px;">
         <span id="sync-status">${lastSync ? `마지막 갱신: ${fmtDateTime(lastSync)}` : '아직 동기화한 적 없음'}</span><br>
-        Apps Script 배포 코드는 함께 받으신 <b>body-recomp-sync-Code.gs</b> 파일 안내를 따라 한 번만 설정하면 됩니다. URL이 저장되어 있으면 이후엔 앱을 열 때마다 자동으로 동기화돼요.
-        <br>⚠️ 동기화 중에는 <b>이 화면을 벗어나지 마세요</b> — 다른 앱으로 전환하거나 화면을 끄면 모바일 브라우저가 통신을 일시정지시켜 동기화가 실패할 수 있습니다(브라우저 공통 동작). 25초 넘게 응답이 없으면 자동으로 시간 초과 처리됩니다.
+        Apps Script 배포 코드는 함께 받으신 <b>body-recomp-sync-Code.gs</b> 파일 안내를 따라 한 번만 설정하면 됩니다.
+        실시간 동기화 진행 상태(⏳ 동기화 중 / ☁️ n분 전 갱신 / ⚠️ 실패)는 여기가 아니라 <b>대시보드 탭 맨 위</b>에서 항상 확인할 수 있어요.
+        <br>⚠️ 앱을 완전히 백그라운드로 보내거나 화면을 끄면 모바일 브라우저가 통신을 일시정지시켜 그 동기화 시도는 실패할 수 있습니다(브라우저 공통 동작) — 다시 앱으로 돌아오면 자동으로 재시도됩니다. 60초 넘게 응답이 없으면 시간 초과로 처리됩니다.
       </div>
     </section>
 
@@ -2900,28 +2918,32 @@ function renderSettings(){
     </section>
   `;
 }
-// 2026-07-17 추가: 동기화 배지는 render() 전체 재구성에 기대지 않고 직접 DOM을 조작해서
-// 클릭 즉시(같은 이벤트 핸들러 안에서) 화면에 반영되도록 함 — render() 타이밍에 의존하던
-// 기존 방식이 실기기에서 계속 "안 뜬다"고 재보고돼서, 근본적으로 다른 방식으로 교체.
-function syncBadgeClass_(){
-  if(syncUiStatus.phase==='syncing') return 'sync-badge sync-badge-progress';
-  if(syncUiStatus.phase==='done') return 'sync-badge sync-badge-done';
-  if(syncUiStatus.phase==='error') return 'sync-badge sync-badge-error';
-  return 'sync-badge';
+// 2026-07-17 추가 → 2026-07-31 교체: 기존엔 설정탭 배지를 직접 DOM 조작으로 갱신했으나,
+// 정희님 요청으로 진행상태 표시 위치를 "설정탭 배지"에서 "대시보드 첫 화면(히어로 카드)"로
+// 이전함. render() 타이밍에 기대지 않고 클릭/자동동기화 즉시 반영되도록 직접 DOM을 조작하는
+// 방식(2026-07-17에 확립된 접근)은 그대로 유지 — 이번엔 대상 엘리먼트만 #hero-sync-status로 변경.
+function heroSyncStatusClass_(){
+  const base = 'hero-sync-status';
+  if(syncUiStatus.phase==='syncing') return base+' hero-sync-status-syncing';
+  if(syncUiStatus.phase==='error') return base+' hero-sync-status-error';
+  return base+' hero-sync-status-done';
 }
-function syncBadgeText_(){
-  if(syncUiStatus.phase==='syncing') return `⏳ 동기화 중... (${syncUiStatus.elapsedSec||0}초)`;
-  if(syncUiStatus.phase==='done') return `✅ 완료 · ${fmtDateTime(syncUiStatus.at)}`;
-  if(syncUiStatus.phase==='error') return `⚠️ ${syncUiStatus.message||'실패'}`;
-  return '';
+function heroSyncStatusText_(){
+  if(syncUiStatus.phase==='syncing') return `⏳ 동기화 중${syncUiStatus.elapsedSec?` (${syncUiStatus.elapsedSec}초)`:''}`;
+  if(syncUiStatus.phase==='error') return `⚠️ 동기화 실패 · 탭하여 재시도`;
+  const ago = timeAgo_(state.lastUpdated);
+  return ago ? `☁️ ${ago} 갱신` : '☁️ 동기화 대기 중';
 }
-function paintSyncBadge(){
-  const badge = document.getElementById('sync-badge');
-  if(badge){
-    badge.className = syncBadgeClass_();
-    badge.textContent = syncBadgeText_();
-    badge.style.display = syncUiStatus.phase==='idle' ? 'none' : '';
+function paintHeroSyncStatus(){
+  const el = document.getElementById('hero-sync-status');
+  if(el){
+    el.className = heroSyncStatusClass_();
+    el.textContent = heroSyncStatusText_();
   }
+}
+// 설정탭 "지금 동기화" 버튼은 유지하되(요청사항), 진행 배지는 더 이상 설정탭에 두지 않으므로
+// 버튼 비활성화 상태만 직접 갱신.
+function paintSyncButtonState_(){
   const btn = document.getElementById('sync-now-btn');
   if(btn) btn.disabled = syncing;
 }
@@ -2973,14 +2995,14 @@ function mergeMealsByDate_(existing, incoming){
 }
 
 let syncing = false;
-let syncUiStatus = {phase:'idle', at:null, elapsedSec:0}; // 'idle'|'syncing'|'done'|'error' — 버튼 옆 동기화 상태 표시용
+let syncUiStatus = {phase:'idle', at:null, elapsedSec:0}; // 'idle'|'syncing'|'done'|'error' — 대시보드 히어로 상태 위젯 표시용
 let syncTimerHandle = null;
 function startSyncTimer(){
   clearInterval(syncTimerHandle);
   syncTimerHandle = setInterval(() => {
     if(syncUiStatus.phase!=='syncing'){ clearInterval(syncTimerHandle); syncTimerHandle=null; return; }
     syncUiStatus = {...syncUiStatus, elapsedSec: (syncUiStatus.elapsedSec||0)+1};
-    paintSyncBadge();
+    paintHeroSyncStatus();
   }, 1000);
 }
 function stopSyncTimer(){ clearInterval(syncTimerHandle); syncTimerHandle=null; }
@@ -3017,22 +3039,28 @@ async function cloudSync(silent){
     const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
     if(!url){ if(!silent) alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
     if(syncing){
-      // 앱 열릴 때 자동으로 도는 백그라운드 동기화(silent)가 아직 끝나기 전에 사용자가
-      // "지금 동기화"를 누르는 경우에도, 실제로 동기화가 진행 중인 상태이니 배지를 보여줌.
-      if(!silent){ syncUiStatus = {phase:'syncing', at:null, elapsedSec: syncUiStatus.elapsedSec||0}; paintSyncBadge(); }
+      // 이미 동기화가 진행 중이면(자동이든 수동이든) 중복 실행하지 않고 현재 상태만 화면에 반영.
+      syncUiStatus = {phase:'syncing', at:null, elapsedSec: syncUiStatus.elapsedSec||0};
+      paintHeroSyncStatus(); paintSyncButtonState_();
       return;
     }
+    // 2026-07-31 추가: 자동(silent) 동기화가 "기록 추가" 모달이 열려 있는 도중(사용자 입력 중)
+    // 실행되면, 동기화 끝에 호출되는 render() 전체 재구성이 입력 중이던 모달까지 다시 그리면서
+    // 포커스/커서 위치를 흐트러뜨릴 수 있음. 사용자가 직접 누른 수동 동기화(silent=false)는
+    // 명시적 요청이므로 그대로 진행하고, 자동 동기화만 모달이 열려있는 동안 건너뜀(다음 주기나
+    // 모달 닫힘 후 재시도됨).
+    if(silent && modalState.open) return;
     syncing = true;
-    // 2026-07-17 재작성: render() 전체 재구성 타이밍에 기대지 않고, 클릭한 바로 그 자리에서
-    // paintSyncBadge()로 배지 DOM을 직접 즉시 갱신 — 실기기에서 "배지가 안 뜬다"는 문제가
-    // render()의 비동기적 리페인트 타이밍에 기인했을 가능성이 높아 근본적으로 다른 방식으로 교체.
-    if(!silent){
-      syncUiStatus = {phase:'syncing', at:null, elapsedSec:0}; startSyncTimer(); paintSyncBadge();
-      // 브라우저가 실제로 이 배지 갱신을 화면에 그릴 기회를 확실히 갖도록 두 번의 rAF로 강제 양보.
-      // (동기적으로 DOM은 바뀌었어도, 다음 코드가 곧바로 이어지면 페인트가 씹힐 가능성을 방지)
-      if(typeof requestAnimationFrame === 'function'){
-        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      }
+    // 2026-07-17: render() 전체 재구성 타이밍에 기대지 않고 직접 DOM을 즉시 갱신하는 방식을
+    // 확립(실기기에서 "배지가 안 뜬다"는 문제의 근본 원인이 render() 리페인트 타이밍이었음).
+    // 2026-07-31: 이 방식을 대시보드 히어로 상태 위젯에도 그대로 적용하되, 자동(silent) 동기화도
+    // 화면에 보여야 한다는 요청에 따라 silent 여부와 무관하게 항상 상태를 갱신함(이전엔 silent일
+    // 때 배지를 건드리지 않아 자동 동기화가 화면에 전혀 표시되지 않았음).
+    syncUiStatus = {phase:'syncing', at:null, elapsedSec:0}; startSyncTimer();
+    paintHeroSyncStatus(); paintSyncButtonState_();
+    // 브라우저가 실제로 이 상태 갱신을 화면에 그릴 기회를 확실히 갖도록 두 번의 rAF로 강제 양보.
+    if(typeof requestAnimationFrame === 'function'){
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
     try{
       // 2026-07-26 근본 수정: 순서를 "풀(pull) 먼저 → 로컬 정리 → 그다음 푸시(push)"로 변경.
@@ -3070,22 +3098,34 @@ async function cloudSync(silent){
       }, SYNC_TIMEOUT_MS);
       markUpdated();
       stopSyncTimer();
-      if(!silent){ syncUiStatus = {phase:'done', at: new Date().toISOString()}; }
+      syncUiStatus = {phase:'done', at: new Date().toISOString()};
+      // 2026-07-31 추가: 자동 동기화가 5분마다 조용히 화면을 다시 그리면서 스크롤 위치가
+      // 맨 위로 튀는 걸 막기 위해, 재구성 전후로 스크롤 위치를 붙잡아둠(수동 동기화 때도
+      // 동일 적용 — 부작용 없이 UX만 개선).
+      const scrollY = window.scrollY;
       render(); // 데이터가 실제로 바뀌었으니 여기서는 전체 재구성이 맞음(마지막 갱신 시각 등도 갱신)
+      if(typeof requestAnimationFrame === 'function'){
+        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      } else {
+        window.scrollTo(0, scrollY);
+      }
     } finally { syncing = false; stopSyncTimer(); }
   }catch(e){
-    // render() 등 예상 못한 곳에서 예외가 나도 조용히 묻히지 않고 반드시 사용자에게 보이도록 함
-    // (alert는 render 실패와 무관하게 항상 뜸).
+    // render() 등 예상 못한 곳에서 예외가 나도 조용히 묻히지 않고 화면(대시보드 상태 위젯)에
+    // 반영함. 다만 alert()는 사용자가 명시적으로 누른 수동 동기화(silent=false)일 때만 띄움 —
+    // 자동(silent) 동기화 실패마다 팝업이 뜨면 백그라운드에서 방해가 되므로, 자동 실패는
+    // 상태 위젯의 "⚠️ 동기화 실패" 표시(탭하면 재시도)로만 조용히 알림.
     syncing = false;
     stopSyncTimer();
     console.error('cloudSync error', e);
-    if(!silent){
-      try{
-        syncUiStatus = {phase:'error', at: new Date().toISOString(), message: (e && e.isTimeout) ? e.message : ('동기화 실패: ' + (e && e.message ? e.message : '알 수 없는 오류'))};
-        paintSyncBadge();
-      }catch(e2){
-        alert('동기화 중 오류가 발생했습니다: ' + (e && e.message ? e.message : e));
-      }
+    syncUiStatus = {phase:'error', at: new Date().toISOString(), message: (e && e.isTimeout) ? e.message : ('동기화 실패: ' + (e && e.message ? e.message : '알 수 없는 오류'))};
+    const heroVisible = !!document.getElementById('hero-sync-status');
+    try{ paintHeroSyncStatus(); paintSyncButtonState_(); }catch(e2){ /* 아래 alert로 대체 */ }
+    // 수동 동기화(사용자가 직접 누름)인데 지금 대시보드 탭이 아니라 상태 위젯이 화면에
+    // 안 보이는 경우, 실패를 놓치지 않도록 alert로 보완. 자동(silent) 동기화 실패는
+    // 팝업 없이 위젯 표시로만 조용히 알림.
+    if(!silent && !heroVisible){
+      alert('동기화 중 오류가 발생했습니다: ' + (e && e.message ? e.message : e));
     }
   }
 }
@@ -3259,10 +3299,46 @@ function inferPartFromName(name){
 function num(v){ const n = Number(v); return isNaN(n) ? null : n; }
 
 render();
-// 2026-07-17 제거: 앱 열릴 때마다 자동으로 도는 백그라운드(silent) 동기화가 25초+ 걸리다 보니,
-// 이 자동 동기화와 사용자의 수동 "지금 동기화" 클릭이 충돌해서 배지가 안 뜨거나 늦게 뜨는
-// 문제가 반복 재발했음(여러 차례 수정 시도에도 근본 원인이 이거였음). 이제 동기화는
-// "지금 동기화" 버튼을 눌렀을 때만 실행됨 — 예측 가능하게 만들어 충돌 자체를 제거.
+// 2026-07-17 제거 → 2026-07-31 재도입: 앱 열릴 때마다 자동으로 도는 백그라운드(silent) 동기화를
+// 정희님 요청으로 다시 켬. 2026-07-17에 껐던 이유는 자동(silent) 동기화와 수동 "지금 동기화"
+// 클릭이 충돌해서 배지가 안 뜨거나 늦게 뜨는 문제였는데, 그 근본 원인(배지가 render() 전체
+// 재구성 타이밍에 의존)은 이미 그날 다른 방식(직접 DOM 조작)으로 고쳐져 있었음. 이번 재도입에서
+// 추가로 막아둔 재발 경로:
+//   1) syncing 플래그로 자동/수동 동시 실행을 원천 차단(이미 있던 가드, cloudSync 참고)
+//   2) 자동 동기화 중 "기록 추가" 모달이 열려 있으면 건너뜀(입력 방해 방지, cloudSync 참고)
+//   3) 동기화 후 render()로 스크롤 위치가 튀지 않도록 위치 복원(cloudSync 참고)
+//   4) 60초 미만 간격의 중복 자동 트리거는 lastAutoSyncAt으로 스킵(과도한 Apps Script 호출 방지)
+// 표시 위치는 설정탭 배지가 아니라 대시보드 히어로 카드(#hero-sync-status)로 이전함 — 앱을
+// 열자마자 첫 화면에서 바로 상태를 확인할 수 있게 하기 위함(정희님 요청).
+const AUTO_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5분마다(화면이 켜져있는 동안만)
+const MIN_AUTO_SYNC_GAP_MS = 60 * 1000; // 연속 트리거(로드+visibilitychange 등) 중복 방지용 최소 간격
+let lastAutoSyncAt = 0;
+let autoSyncTimerHandle = null;
+function triggerAutoSync(){
+  const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
+  if(!url) return; // 클라우드 동기화 URL 설정 전이면 자동 동기화 대상 아님
+  if(syncing) return;
+  const now = Date.now();
+  if(now - lastAutoSyncAt < MIN_AUTO_SYNC_GAP_MS) return;
+  lastAutoSyncAt = now;
+  cloudSync(true);
+}
+function startAutoSyncTimer(){
+  clearInterval(autoSyncTimerHandle);
+  // 모바일 브라우저는 화면이 꺼지거나 앱이 백그라운드로 가면 setInterval을 지연/정지시키는 게
+  // 일반적인 동작이라, 별도 처리 없이도 "화면이 켜져있는 동안만" 요구사항과 자연히 맞아떨어짐.
+  // 다만 이중 안전장치로 visibilityState 체크도 함께 둠.
+  autoSyncTimerHandle = setInterval(() => {
+    if(document.visibilityState === 'visible') triggerAutoSync();
+  }, AUTO_SYNC_INTERVAL_MS);
+}
+window.addEventListener('load', () => {
+  triggerAutoSync();    // 앱을 열 때
+  startAutoSyncTimer();
+});
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') triggerAutoSync(); // 다른 탭/앱에서 돌아올 때
+});
 
 // 2026-07-25 복원: 이 서비스워커 등록 코드가 이전 index.html에서 누락돼 있었음(원인 불명 —
 // 세션 시작 시 받은 파일에 이미 빠져있었음). 그 결과 예전에 등록된 낡은 서비스워커가 계속
