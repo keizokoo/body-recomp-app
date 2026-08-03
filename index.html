@@ -407,7 +407,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-03-a (cloudSync push에 steps 누락된 것 수정)';
+const APP_BUILD_VERSION = '2026-08-03-c (인클라인 이력: 접으면 0건/펼치면 전체로 이분화)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -920,7 +920,8 @@ function toggleMounjaroTab(){
 function toggleExpand(id){ state.expandedTables[id] = !state.expandedTables[id]; render(); }
 function expandToggleRow(id, count, label){
   const expanded = !!state.expandedTables[id];
-  return `<div class="toggle-row" onclick="toggleExpand('${id}')">${expanded?'▴':'▾'} ${label||'전체 기록 보기'} (${count}건)</div>`;
+  const collapsedLabel = label||'전체 기록 보기';
+  return `<div class="toggle-row" onclick="toggleExpand('${id}')">${expanded?'▴ 간략히 보기':`▾ ${collapsedLabel} (${count}건)`}</div>`;
 }
 
 function markUpdated(){
@@ -2257,8 +2258,15 @@ function renderWorkoutTab(){
       ${(() => {
         const hist = computeInclineHistory(workouts);
         if(hist.length===0) return `<div class="empty-state" style="padding:30px 10px;">인클라인 트레드밀 기록이 없습니다.</div>`;
-        const shown = state.expandedTables['inclineHistory'] ? hist : hist.slice(0,15);
-        return `${hist.length>15 ? expandToggleRow('inclineHistory', hist.length, '전체 이력 보기') : ''}
+        // 2026-08-03 변경: 접힌 상태("간략히 보기")에서는 표를 아예 숨김(0건). 예전엔 접혀도
+        // 최근 15건이 계속 보여서 "펼치기를 눌러도 안 바뀐다"는 오해를 유발했음 — 접힘/펼침을
+        // 완전히 이분법으로(0건 vs 전체) 바꿔 눌렀을 때 변화가 명확히 보이도록 함.
+        const needsToggle = hist.length > 15;
+        const expanded = !!state.expandedTables['inclineHistory'];
+        const shown = !needsToggle ? hist : (expanded ? hist : []);
+        const toggleRow = needsToggle ? expandToggleRow('inclineHistory', hist.length, '전체 이력 보기') : '';
+        if(needsToggle && !expanded) return toggleRow;
+        return `${toggleRow}
         <div style="overflow-x:auto; margin-top:10px;">
           <table class="data-table">
             <thead><tr><th style="text-align:left">날짜</th><th>거리</th><th>시간</th><th>칼로리</th><th>평균심박</th><th style="text-align:left">검토</th></tr></thead>
