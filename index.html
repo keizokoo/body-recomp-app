@@ -148,7 +148,7 @@ main{padding-top:12px; display:flex; flex-direction:column; gap:26px;}
 @media(min-width:640px){.chart-grid{grid-template-columns:1fr 1fr;}}
 .chart-card .ch-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;}
 .ch-title{font-size:12px; font-weight:600; color:var(--text-dim);}
-.ch-now{font-family:var(--font-mono); font-size:16px; font-weight:700;}
+.ch-now{font-family:var(--font-body); font-size:16px; font-weight:700;}
 svg.chart{width:100%; height:120px; display:block;}
 .chart-axis text, text.chart-axis{fill:var(--text-faint); font-size:9px; font-family:var(--font-mono);}
 
@@ -224,7 +224,7 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .dropzone:hover{border-color:var(--c-gauge-from); color:var(--accent-strong-text); background:var(--panel-alt);}
 .field{display:flex; flex-direction:column; gap:5px;}
 .field label{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-faint);}
-.field input{background:var(--panel-alt); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-size:13.5px; font-family:var(--font-mono);}
+.field input{background:var(--panel-alt); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-size:13.5px; font-family:var(--font-body);}
 .field input:focus{outline:none; border-color:var(--c-gauge-from);}
 .btn-save{background:var(--brand-mark-bg); color:var(--btn-primary-fg); border:none; border-radius:var(--radius-sm); padding:12px; font-weight:700; font-size:14px; box-shadow:var(--shadow-glow);}
 .link-btn{background:none; border:none; color:var(--text-dim); text-decoration:underline; font-size:12.5px; text-underline-offset:3px; font-weight:600;}
@@ -272,7 +272,7 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .recovery-item .rc-icon .part-dot{width:12px; height:12px;}
 .recovery-item .rc-part{font-size:13px; font-weight:700; color:var(--text);}
 .recovery-item .rc-status{font-size:11px; font-weight:700; margin-top:5px; padding:2px 8px; border-radius:999px; display:inline-block;}
-.recovery-item .rc-days{font-size:10.5px; color:var(--text-faint); margin-top:5px; font-family:var(--font-mono);}
+.recovery-item .rc-days{font-size:10.5px; color:var(--text-faint); margin-top:5px; font-family:var(--font-body);}
 .recovery-item.status-resting .rc-status{background:var(--c-warn-soft); color:var(--c-warn);}
 .recovery-item.status-ready .rc-status{background:var(--c-neutral-soft); color:var(--c-neutral);}
 .recovery-item.status-recovered .rc-status{background:var(--c-good-soft); color:var(--c-good);}
@@ -407,7 +407,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-03-d (한글 폰트 오버라이드 누락 수정: 추천운동 종목명, 목표탭 계산표 라벨)';
+const APP_BUILD_VERSION = '2026-08-03-f (마운자로 9차(7/30,5mg) 추가)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -418,6 +418,7 @@ const MOUNJARO_DOSES = [
   {cycle:6, date:'2026-07-09', dose:'2.5mg'},
   {cycle:7, date:'2026-07-16', dose:'2.5mg'},
   {cycle:8, date:'2026-07-23', dose:'5mg'},
+  {cycle:9, date:'2026-07-30', dose:'5mg'},
 ];
 
 /* =========================================================
@@ -1750,8 +1751,8 @@ function renderMounjaro(){
           </tr></thead>
           <tbody>
             ${cycles.map(c => `<tr>
-              <td>${c.cycle}차</td>
-              <td>${c.date} (목)</td>
+              <td style="font-family:var(--font-body);">${c.cycle}차</td>
+              <td style="font-family:var(--font-body);">${c.date} (목)</td>
               <td>${c.dose}</td>
               <td>${!c.start||!c.end ? '—' : `${fmt(c.start.weight)}→${fmt(c.end.weight)}kg <span class="${c.weightDelta<=0?'good-text':'warn-text'}">(${c.weightDelta>0?'+':''}${fmt(c.weightDelta)})</span>`}</td>
               <td>${!c.start||!c.end ? '—' : `${fmt(c.start.muscle)}→${fmt(c.end.muscle)}kg <span class="${c.muscleDelta>=0?'good-text':'warn-text'}">(${c.muscleDelta>0?'+':''}${fmt(c.muscleDelta)})</span>`}</td>
@@ -1799,7 +1800,7 @@ function renderMounjaro(){
                   const maGood = m.goodDir===1 ? maDelta>=0 : maDelta<=0;
                   const uraw = m.unitRaw || m.unit;
                   return `<tr>
-                    <td style="text-align:left">${m.label}</td>
+                    <td style="text-align:left; font-family:var(--font-body);">${m.label}</td>
                     <td>
                       <div class="${rawGood?'good-text':'warn-text'}" style="font-weight:700; font-size:13.5px;">${rawDelta>0?'+':''}${fmt(rawDelta)}${m.unit}</div>
                       <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(rawStart)}${uraw} → ${fmt(rawEnd)}${uraw}</div>
@@ -2077,7 +2078,7 @@ function renderPlanDetailPanel(date, workouts){
     ${entries.length===0 ? `<div class="plan-detail-empty">기록된 운동이 없습니다.</div>` : entries.map(w => `
       <div class="plan-detail-item">
         <div class="plan-detail-name">${esc(w.name||'(이름없음)')}</div>
-        <div class="plan-detail-meta">${w.part?esc(w.part):''}${w.volume?` · ${esc(String(w.volume))}`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
+        <div class="plan-detail-meta">${w.part?`<span style="font-family:var(--font-body);">${esc(w.part)}</span>`:''}${w.volume?` · ${esc(String(w.volume))}`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
         ${w.note?`<div class="plan-detail-note">${esc(w.note)}</div>`:''}
       </div>`).join('')}
   </div>`;
@@ -2357,7 +2358,7 @@ function renderDashboard(){
               <span class="hg-status ${done?'done':''}">${done?'달성 완료':`${fmt(remain)}%p 남음`}</span>
             </div>
             <div class="hg-bar"><div class="hg-fill" style="width:${progressed}%"></div></div>
-            <div class="hg-foot"><span>진행률 ${fmt(progressed,0)}%</span><span>${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% → ${g.pct}%</span></div>
+            <div class="hg-foot"><span><span style="font-family:var(--font-body);">진행률</span> ${fmt(progressed,0)}%</span><span>${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% → ${g.pct}%</span></div>
             <div class="hg-detail">${done ? '체지방량 목표 달성 — 유지 단계로 전환' : `현재 체지방량 ${fmt(last.fat)}kg → 약 <b>-${fmt(fatLossNeeded)}kg</b> 추가 감량 필요 (목표 체지방량 ${fmt(targetFat)}kg)`}</div>
           </div>`;
         }).join('')}
@@ -2898,7 +2899,7 @@ function renderSettings(){
 
     <section class="card">
       <div class="section-label good">${secNum('06c')}앱 버전</div>
-      <p class="p-dim" style="font-family:var(--font-mono); font-size:12px;">
+      <p class="p-dim" style="font-family:var(--font-body); font-size:12px;">
         ${esc(APP_BUILD_VERSION)}
       </p>
       <p class="p-dim" style="font-size:11.5px; margin-top:4px;">
@@ -3152,7 +3153,7 @@ function renderModal(){
         <div class="ex-rows">
           ${(modalState.exerciseRows||[]).map((row,i) => `
             <div class="ex-row">
-              <input placeholder="종목명" value="${esc(row.name||'')}" oninput="updateExRow(${i},'name',this.value)">
+              <input placeholder="종목명" style="font-family:var(--font-body);" value="${esc(row.name||'')}" oninput="updateExRow(${i},'name',this.value)">
               <select onchange="updateExRow(${i},'part',this.value)">
                 <option value="">부위</option>
                 ${BODY_PARTS.map(p=>`<option value="${p}" ${row.part===p?'selected':''}>${p}</option>`).join('')}
