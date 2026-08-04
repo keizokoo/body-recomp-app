@@ -414,7 +414,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-04-c (앱 열 때 자동 동기화 재도입 + 대시보드 상단 동기화 배너 추가)';
+const APP_BUILD_VERSION = '2026-08-04-e (머니트레일 벤치마킹: 역대 최저 체중/체지방률 신기록 배지 추가)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -870,7 +870,13 @@ const SEED_STEPS = [
 ].map(r => ({date:r[0], steps:r[1], km:r[2], kcal:r[3], floors:r[4]}));
 
 const SEED_WAIST = [];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3'};
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1'};
+// 2026-08-04 추가: 자동동기화 스로틀링(머니트레일 앱 벤치마킹 #1). 앱을 자주 열어도 짧은 간격
+// 안에서는 자동 동기화를 재실행하지 않도록, "마지막 성공 시각"만 별도로 기록한다.
+// (state.lastUpdated/LS_KEYS.lastupdate는 로컬 데이터가 바뀔 때마다도 갱신되는 범용 타임스탬프라
+// "마지막 클라우드 동기화 성공 시각"으로 쓰기엔 부정확 — 그래서 전용 키를 새로 둠.)
+const AUTO_SYNC_THROTTLE_MS = 5*60*1000; // 5분 — 이 안에 재방문하면 자동 동기화 스킵(수동 버튼은 예외)
+const AUTO_SYNC_START_DELAY_MS = 1500; // 2026-08-04 추가(벤치마킹 #2): 초기 렌더가 눈에 보인 뒤 시작 — 로딩 첫 화면이 네트워크에 묶이지 않도록
 
 function loadArr(key, seed){
   try{
@@ -1242,7 +1248,18 @@ function HEADER_TEMPLATE(){
 }
 function render(){
   const app = document.getElementById('app');
-  app.innerHTML = HEADER_TEMPLATE() + `<main>${renderTab()}</main>`;
+  // 2026-08-04 추가(머니트레일 앱 벤치마킹 #3): renderTab() 안의 특정 탭 렌더링 함수 하나가
+  // 예외를 던져도(예: 계산 로직 버그, 데이터 형식 이상) 앱 전체가 하얗게 빈 화면이 되지 않도록
+  // 여기서 한 번 방어. 머니트레일 앱의 safe(fn) 패턴과 같은 목적 — 문제가 생긴 탭만 안내
+  // 메시지를 보여주고, 다른 탭으로 이동하면 정상적으로 계속 쓸 수 있게 함.
+  let tabHtml;
+  try{
+    tabHtml = renderTab();
+  }catch(err){
+    console.error('renderTab 실패:', err);
+    tabHtml = `<div class="empty-state">⚠️ 이 화면을 표시하는 중 오류가 발생했습니다.<br>다른 탭으로 이동했다가 다시 시도해주세요.<br><span style="font-family:var(--font-mono); font-size:11px; color:var(--text-faint);">${esc(err && err.message ? err.message : String(err))}</span></div>`;
+  }
+  app.innerHTML = HEADER_TEMPLATE() + `<main>${tabHtml}</main>`;
   if(modalState.open) renderModal();
   const af = document.querySelector('[data-autofocus="1"]');
   if(af){ af.focus(); af.select && af.select(); }
@@ -1328,6 +1345,13 @@ function computeInsights(){
   const recentMeals = [...state.meals].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
   const avgCal = recentMeals.length ? recentMeals.reduce((s,m)=>s+(m.calories||0),0)/recentMeals.length : null;
 
+  // 2026-08-04 추가(머니트레일 앱 벤치마킹): 근력볼륨엔 이미 "역대 최고 볼륨(PR)" 배지가 있었는데
+  // 체성분 쪽엔 "역대 최저치 경신" 배지가 없었음 — 동일한 개념을 체중/체지방률에도 적용.
+  const minWeightEntry = ib.reduce((min, r) => (min===null || r.weight < min.weight) ? r : min, null);
+  const minFatPctEntry = ib.reduce((min, r) => (min===null || r.fatPct < min.fatPct) ? r : min, null);
+  const isNewWeightRecord = minWeightEntry && minWeightEntry.date === last.date;
+  const isNewFatPctRecord = minFatPctEntry && minFatPctEntry.date === last.date;
+
   const insights = [
     {icon:'target', label:'1차(20%) 목표 달성률', value:`${fmt(achieveRate20,0)}%`, sub:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% (목표 20%)`, tone: achieveRate20>=100?'good':'neutral'},
     {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(achieveRate18,0)}%`, sub:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% (목표 18%)`, tone: achieveRate18>=100?'good':'neutral'},
@@ -1335,6 +1359,8 @@ function computeInsights(){
     {icon:'down', label:'누적 체지방량 변화', value:`${fmt(fatMassLoss)}kg`, sub:`${fmt(first.fat)}kg → ${fmt(last.fat)}kg`, tone:'good'},
     {icon:'dumbbell', label:'체중감량 대비 골격근 보존', value: muscleAssess.muscleLoss<=0 ? '유지/증가' : `비율 ${fmt(muscleAssess.ratio,2)}`, sub: muscleAssess.muscleLoss<=0 ? `골격근 ${fmt(last.muscle)}kg — 감소 없음` : `골격근 -${fmt(muscleAssess.muscleLossPct,1)}% / 체중 -${fmt(muscleAssess.weightLossPct,1)}% · ${muscleAssess.label}(SURMOUNT-1 DEXA 실측 비율 0.51 기준)`, tone: muscleAssess.tone},
     {icon: maTrendDelta<=0?'down':'up', label:'최근 7일 체지방률 추세', value:`${maTrendDelta>=0?'+':''}${fmt(maTrendDelta,2)}%p`, sub:'이동평균 기준 (일일 노이즈 제외)', tone: maTrendDelta<=0?'good':'warn'},
+    {icon:'award', label:'역대 최저 체중', value:`${fmt(minWeightEntry.weight)}kg`, sub:`${minWeightEntry.date}${isNewWeightRecord?' · 오늘 신기록 🏆':''}`, tone: isNewWeightRecord?'good':'neutral'},
+    {icon:'award', label:'역대 최저 체지방률', value:`${fmt(minFatPctEntry.fatPct)}%`, sub:`${minFatPctEntry.date}${isNewFatPctRecord?' · 오늘 신기록 🏆':''}`, tone: isNewFatPctRecord?'good':'neutral'},
   ];
   return {insights, first, last, ma};
 }
@@ -3264,6 +3290,7 @@ async function cloudSync(silent){
       }, SYNC_TIMEOUT_MS);
       markUpdated();
       stopSyncTimer();
+      try{ localStorage.setItem(LS_KEYS.lastautosync, new Date().toISOString()); }catch(e){} // 2026-08-04 추가: 스로틀 판단용
       syncUiStatus = {phase:'done', at: new Date().toISOString()}; // 2026-08-04: 자동 동기화도 배너로 보여야 하므로 항상 설정
       render(); // 데이터가 실제로 바뀌었으니 여기서는 전체 재구성이 맞음(마지막 갱신 시각 등도 갱신)
     } finally { syncing = false; stopSyncTimer(); }
@@ -3454,7 +3481,7 @@ function inferPartFromName(name){
 function num(v){ const n = Number(v); return isNaN(n) ? null : n; }
 
 render();
-// [2026-07-17 제거 → 2026-08-04 재도입]
+// [2026-07-17 제거 → 2026-08-04 재도입 → 2026-08-04 머니트레일 벤치마킹 반영]
 // 예전엔 앱 열릴 때마다 자동으로 도는 백그라운드(silent) 동기화가 25초+ 걸리다 보니,
 // 이 자동 동기화와 사용자의 수동 "지금 동기화" 클릭이 충돌해서 배지가 안 뜨거나 늦게 뜨는
 // 문제가 반복 재발해 통째로 제거했었음. 이후(7/17~7/26) 아래 근본 원인들을 고쳐뒀음:
@@ -3465,8 +3492,17 @@ render();
 // 자동 동기화도 대시보드 상단 배너로 보이도록 함(재도입의 핵심 이유 — 정희님이 동기화가
 // 도는지 안 도는지 인지할 수 있어야 함). silent 파라미터는 이제 "URL 미설정 시 alert를
 // 띄우지 않는다"는 의미로만 남음.
+// [벤치마킹] 같은 날 다른 프로젝트(머니트레일 앱)의 자동동기화 구현을 비교 검토해 2가지를 추가 반영:
+//   - 스로틀링: AUTO_SYNC_THROTTLE_MS(5분) 이내 재방문이면 자동 동기화를 스킵(수동 버튼은 예외).
+//     매번 무조건 풀+푸시하던 기존 방식보다 불필요한 네트워크 호출·Apps Script 실행 횟수를 줄임.
+//   - 지연 시작: 초기 렌더가 화면에 그려질 기회를 준 뒤(AUTO_SYNC_START_DELAY_MS=1.5초) 시작 —
+//     첫 화면이 뜨자마자 네트워크 요청이 끼어들어 로딩이 느려 보이는 느낌을 줄임.
 if((localStorage.getItem(LS_KEYS.cloudurl)||'').trim()){
-  cloudSync(true);
+  const lastAutoRaw = localStorage.getItem(LS_KEYS.lastautosync);
+  const elapsed = lastAutoRaw ? (Date.now() - new Date(lastAutoRaw).getTime()) : Infinity;
+  if(elapsed >= AUTO_SYNC_THROTTLE_MS){
+    setTimeout(() => cloudSync(true), AUTO_SYNC_START_DELAY_MS);
+  }
 }
 
 // 2026-07-25 복원: 이 서비스워커 등록 코드가 이전 index.html에서 누락돼 있었음(원인 불명 —
