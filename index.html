@@ -416,7 +416,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-04-f (동기화 표시를 대시보드 배너 → 머니트레일 스타일 상단바 펄스도트 배지로 변경)';
+const APP_BUILD_VERSION = '2026-08-04-g (동기화 완료/실패 배지 자동소멸 제거 - 다음 동기화 전까지 계속 표시)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -3122,6 +3122,8 @@ function paintSyncBadge(){
   // 다른 탭에서는 banner가 null이라 조용히 건너뜀(에러 아님).
   // 2026-08-04 추가: 상단바 펄스도트 배지 직접 갱신(머니트레일의 showSyncBadge/finishSyncBadge와
   // 동일 패턴). 모든 탭에서 header가 항상 렌더되므로 이 요소는 tab과 무관하게 항상 존재함.
+  // [2026-08-04 수정] 완료/실패 상태를 몇 초 후 자동으로 숨기던 것을, 다음 동기화가 시작되기
+  // 전까지 계속 표시되도록 변경(정희님 요청 — 결과를 놓치지 않고 확인할 수 있어야 함).
   const topBadge = document.getElementById('top-sync-badge');
   const topBadgeText = document.getElementById('top-sync-badge-text');
   if(topBadge){
@@ -3136,12 +3138,10 @@ function paintSyncBadge(){
       topBadge.classList.add('show','done');
       topBadge.classList.remove('error');
       if(topBadgeText) topBadgeText.textContent = '동기화 완료';
-      bannerHideTimer = setTimeout(() => { topBadge.classList.remove('show','done'); }, 1200);
     } else if(syncUiStatus.phase==='error'){
       topBadge.classList.add('show','error');
       topBadge.classList.remove('done');
       if(topBadgeText) topBadgeText.textContent = '동기화 실패';
-      bannerHideTimer = setTimeout(() => { topBadge.classList.remove('show','error'); }, 2500);
     }
   }
 }
