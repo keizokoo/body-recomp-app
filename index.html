@@ -79,6 +79,13 @@ header.topbar{padding:24px 0 4px;}
 .sync-badge-progress{background:var(--c-neutral-soft); color:var(--c-neutral);}
 .sync-badge-done{background:var(--c-good-soft); color:var(--c-good);}
 .sync-badge-error{background:var(--c-warn-soft); color:var(--c-warn);}
+/* 2026-08-04 추가: 대시보드 최상단 동기화 배너 — "가장 인지하기 쉬운 방식"으로 상단 배너를
+   선택함(화면 위쪽부터 훑는 시선 흐름과 일치, 작은 배지/토스트보다 놓치기 어려움).
+   paintSyncBadge()에서 sync-badge와 함께 직접 DOM으로 갱신됨(render() 타이밍에 의존 안 함). */
+.sync-banner{font-size:12.5px; font-weight:600; padding:9px 14px; border-radius:var(--radius-sm); margin-bottom:12px; display:flex; align-items:center; gap:8px; font-family:var(--font-body);}
+.sync-banner-syncing{background:var(--c-neutral-soft); color:var(--c-neutral);}
+.sync-banner-done{background:var(--c-good-soft); color:var(--c-good);}
+.sync-banner-error{background:var(--c-warn-soft); color:var(--c-warn);}
 
 nav.tabs{display:flex; gap:6px; padding:16px 0 6px; flex-wrap:wrap;}
 nav.tabs button{background:transparent; border:none; color:var(--text-dim); font-size:13.5px; font-weight:600; padding:8px 15px; border-radius:var(--radius-pill); transition:.15s;}
@@ -407,7 +414,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-04-b (리포트탭 폰트 전수검수 — 한글 라벨/한글조각 font-body 오버라이드, 숫자컬럼은 mono 통일)';
+const APP_BUILD_VERSION = '2026-08-04-c (앱 열 때 자동 동기화 재도입 + 대시보드 상단 동기화 배너 추가)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -2312,12 +2319,13 @@ function workoutRow(w){
 }
 function renderDashboard(){
   const {insights, last, ma} = computeInsights();
-  if(!last) return `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
+  const banner = `<div id="dashboard-sync-banner" class="${syncBannerClass_()}" style="${syncUiStatus.phase==='idle'?'display:none;':'display:flex;'}">${syncBannerText_()}</div>`;
+  if(!last) return banner + `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
   const ib = sortedInbody();
   const recentMA = ma.slice(-7);
   const maTrend7 = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : null;
 
-  return `
+  return banner + `
     <section class="hero card">
       <div class="hero-eyebrow"><span class="dot"></span>Live Tracking</div>
       <div class="hero-grid">
@@ -3052,6 +3060,23 @@ function syncBadgeText_(){
   if(syncUiStatus.phase==='error') return `⚠️ ${syncUiStatus.message||'실패'}`;
   return '';
 }
+// 2026-08-04 추가: 대시보드 배너용 헬퍼. sync-badge와 완전히 같은 syncUiStatus를 공유하되
+// 문구만 배너에 맞게 조금 더 풀어씀. render() 전체 재구성이 일어날 때도(예: 동기화 완료 후
+// render() 호출) 배너 DOM이 새로 만들어지며 이 헬퍼로 현재 상태를 바로 반영하므로,
+// paintSyncBadge()의 직접 DOM 패치와 render()의 전체 재구성 두 경로 모두에서 항상 정확함.
+function syncBannerClass_(){
+  if(syncUiStatus.phase==='syncing') return 'sync-banner sync-banner-syncing';
+  if(syncUiStatus.phase==='done') return 'sync-banner sync-banner-done';
+  if(syncUiStatus.phase==='error') return 'sync-banner sync-banner-error';
+  return 'sync-banner';
+}
+function syncBannerText_(){
+  if(syncUiStatus.phase==='syncing') return `☁️ 동기화 중... (${syncUiStatus.elapsedSec||0}초)`;
+  if(syncUiStatus.phase==='done') return `✅ 동기화 완료 · ${fmtDateTime(syncUiStatus.at)}`;
+  if(syncUiStatus.phase==='error') return `⚠️ ${syncUiStatus.message||'동기화 실패'}`;
+  return '';
+}
+let bannerHideTimer = null;
 function paintSyncBadge(){
   const badge = document.getElementById('sync-badge');
   if(badge){
@@ -3061,6 +3086,25 @@ function paintSyncBadge(){
   }
   const btn = document.getElementById('sync-now-btn');
   if(btn) btn.disabled = syncing;
+
+  // 2026-08-04 추가: 대시보드 상단 배너. 대시보드 탭이 열려있을 때만 DOM에 존재하므로
+  // 다른 탭에서는 banner가 null이라 조용히 건너뜀(에러 아님).
+  const banner = document.getElementById('dashboard-sync-banner');
+  if(banner){
+    if(bannerHideTimer){ clearTimeout(bannerHideTimer); bannerHideTimer = null; }
+    if(syncUiStatus.phase==='idle'){
+      banner.style.display = 'none';
+    } else {
+      banner.className = syncBannerClass_();
+      banner.textContent = syncBannerText_();
+      banner.style.display = 'flex';
+      // 완료/에러는 계속 떠 있으면 오히려 거슬리므로 몇 초 후 배너만 자동으로 숨김
+      // (syncUiStatus 자체는 안 건드려서, 자동으로 안 사라지는 설정탭 sync-badge와는 독립적으로 동작).
+      if(syncUiStatus.phase==='done' || syncUiStatus.phase==='error'){
+        bannerHideTimer = setTimeout(() => { banner.style.display = 'none'; }, syncUiStatus.phase==='done'?4000:6000);
+      }
+    }
+  }
 }
 function saveAiNoteFromInput(){
   const v = document.getElementById('ai-note-input').value.trim();
@@ -3155,21 +3199,22 @@ async function cloudSync(silent){
     if(!url){ if(!silent) alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
     if(syncing){
       // 앱 열릴 때 자동으로 도는 백그라운드 동기화(silent)가 아직 끝나기 전에 사용자가
-      // "지금 동기화"를 누르는 경우에도, 실제로 동기화가 진행 중인 상태이니 배지를 보여줌.
-      if(!silent){ syncUiStatus = {phase:'syncing', at:null, elapsedSec: syncUiStatus.elapsedSec||0}; paintSyncBadge(); }
+      // "지금 동기화"를 누르거나, 자동 동기화가 두 번 겹쳐 불려도 배지/배너는 항상 갱신.
+      // 2026-08-04: 자동 동기화도 대시보드 배너로 보여야 하므로 !silent 조건 제거.
+      syncUiStatus = {phase:'syncing', at:null, elapsedSec: syncUiStatus.elapsedSec||0}; paintSyncBadge();
       return;
     }
     syncing = true;
     // 2026-07-17 재작성: render() 전체 재구성 타이밍에 기대지 않고, 클릭한 바로 그 자리에서
     // paintSyncBadge()로 배지 DOM을 직접 즉시 갱신 — 실기기에서 "배지가 안 뜬다"는 문제가
     // render()의 비동기적 리페인트 타이밍에 기인했을 가능성이 높아 근본적으로 다른 방식으로 교체.
-    if(!silent){
-      syncUiStatus = {phase:'syncing', at:null, elapsedSec:0}; startSyncTimer(); paintSyncBadge();
-      // 브라우저가 실제로 이 배지 갱신을 화면에 그릴 기회를 확실히 갖도록 두 번의 rAF로 강제 양보.
-      // (동기적으로 DOM은 바뀌었어도, 다음 코드가 곧바로 이어지면 페인트가 씹힐 가능성을 방지)
-      if(typeof requestAnimationFrame === 'function'){
-        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      }
+    // 2026-08-04: 자동(silent) 동기화도 대시보드 배너로 보여야 하므로 !silent 조건 제거—
+    // silent는 이제 "URL 미설정 시 alert를 띄우지 않는다"는 의미로만 씀(아래 참고).
+    syncUiStatus = {phase:'syncing', at:null, elapsedSec:0}; startSyncTimer(); paintSyncBadge();
+    // 브라우저가 실제로 이 배지 갱신을 화면에 그릴 기회를 확실히 갖도록 두 번의 rAF로 강제 양보.
+    // (동기적으로 DOM은 바뀌었어도, 다음 코드가 곧바로 이어지면 페인트가 씹힐 가능성을 방지)
+    if(typeof requestAnimationFrame === 'function'){
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
     try{
       // 2026-07-26 근본 수정: 순서를 "풀(pull) 먼저 → 로컬 정리 → 그다음 푸시(push)"로 변경.
@@ -3219,7 +3264,7 @@ async function cloudSync(silent){
       }, SYNC_TIMEOUT_MS);
       markUpdated();
       stopSyncTimer();
-      if(!silent){ syncUiStatus = {phase:'done', at: new Date().toISOString()}; }
+      syncUiStatus = {phase:'done', at: new Date().toISOString()}; // 2026-08-04: 자동 동기화도 배너로 보여야 하므로 항상 설정
       render(); // 데이터가 실제로 바뀌었으니 여기서는 전체 재구성이 맞음(마지막 갱신 시각 등도 갱신)
     } finally { syncing = false; stopSyncTimer(); }
   }catch(e){
@@ -3228,13 +3273,14 @@ async function cloudSync(silent){
     syncing = false;
     stopSyncTimer();
     console.error('cloudSync error', e);
-    if(!silent){
-      try{
-        syncUiStatus = {phase:'error', at: new Date().toISOString(), message: (e && e.isTimeout) ? e.message : ('동기화 실패: ' + (e && e.message ? e.message : '알 수 없는 오류'))};
-        paintSyncBadge();
-      }catch(e2){
-        alert('동기화 중 오류가 발생했습니다: ' + (e && e.message ? e.message : e));
-      }
+    // 2026-08-04: 자동 동기화 실패도(예: 오프라인) 배너로 알려야 하므로 상태 갱신은 항상 시도.
+    // 다만 paintSyncBadge 자체가 실패하는 예외적 상황의 raw alert() 폴백만 silent일 때 억제
+    // (자동 백그라운드 동기화 중에 갑자기 alert 팝업이 뜨는 건 사용자 경험상 피해야 함).
+    try{
+      syncUiStatus = {phase:'error', at: new Date().toISOString(), message: (e && e.isTimeout) ? e.message : ('동기화 실패: ' + (e && e.message ? e.message : '알 수 없는 오류'))};
+      paintSyncBadge();
+    }catch(e2){
+      if(!silent) alert('동기화 중 오류가 발생했습니다: ' + (e && e.message ? e.message : e));
     }
   }
 }
@@ -3408,10 +3454,20 @@ function inferPartFromName(name){
 function num(v){ const n = Number(v); return isNaN(n) ? null : n; }
 
 render();
-// 2026-07-17 제거: 앱 열릴 때마다 자동으로 도는 백그라운드(silent) 동기화가 25초+ 걸리다 보니,
+// [2026-07-17 제거 → 2026-08-04 재도입]
+// 예전엔 앱 열릴 때마다 자동으로 도는 백그라운드(silent) 동기화가 25초+ 걸리다 보니,
 // 이 자동 동기화와 사용자의 수동 "지금 동기화" 클릭이 충돌해서 배지가 안 뜨거나 늦게 뜨는
-// 문제가 반복 재발했음(여러 차례 수정 시도에도 근본 원인이 이거였음). 이제 동기화는
-// "지금 동기화" 버튼을 눌렀을 때만 실행됨 — 예측 가능하게 만들어 충돌 자체를 제거.
+// 문제가 반복 재발해 통째로 제거했었음. 이후(7/17~7/26) 아래 근본 원인들을 고쳐뒀음:
+//   - syncing 잠금 변수로 두 요청이 동시에 나가는 것 자체를 차단(이미 있었음)
+//   - 배지를 render() 타이밍에 기대지 않고 클릭/상태변화 즉시 직접 DOM으로 그리도록 재작성
+//   - pull→로컬정리→push 순서로 바꿔 삭제된 데이터가 재업로드로 되살아나는 버그 해결
+// 여기에 더해 2026-08-04에 syncUiStatus 갱신을 !silent 조건 없이 항상 수행하도록 바꿔서,
+// 자동 동기화도 대시보드 상단 배너로 보이도록 함(재도입의 핵심 이유 — 정희님이 동기화가
+// 도는지 안 도는지 인지할 수 있어야 함). silent 파라미터는 이제 "URL 미설정 시 alert를
+// 띄우지 않는다"는 의미로만 남음.
+if((localStorage.getItem(LS_KEYS.cloudurl)||'').trim()){
+  cloudSync(true);
+}
 
 // 2026-07-25 복원: 이 서비스워커 등록 코드가 이전 index.html에서 누락돼 있었음(원인 불명 —
 // 세션 시작 시 받은 파일에 이미 빠져있었음). 그 결과 예전에 등록된 낡은 서비스워커가 계속
