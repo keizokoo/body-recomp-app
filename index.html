@@ -407,7 +407,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-04-a (설정 왼쪽에 "리포트" 탭 신설 — 6/5 이후 전체기간 종합 리포트)';
+const APP_BUILD_VERSION = '2026-08-04-b (리포트탭 폰트 전수검수 — 한글 라벨/한글조각 font-body 오버라이드, 숫자컬럼은 mono 통일)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -2893,7 +2893,7 @@ function renderReport(){
   const deltaRow = (label, sVal, eVal, unit, goodDir) => {
     const delta = eVal - sVal;
     const good = goodDir==='down' ? delta<=0 : delta>=0;
-    return `<tr><td style="text-align:left">${label}</td><td>${fmt(sVal,1)}${unit}</td><td>${fmt(eVal,1)}${unit}</td>
+    return `<tr><td style="text-align:left; font-family:var(--font-body);">${label}</td><td>${fmt(sVal,1)}${unit}</td><td>${fmt(eVal,1)}${unit}</td>
       <td style="color:${good?'var(--c-good, #3ecf8e)':'var(--c-warn, #ffb648)'}">${delta>0?'+':''}${fmt(delta,1)}${unit}</td></tr>`;
   };
 
@@ -2901,7 +2901,7 @@ function renderReport(){
     <section class="card">
       <div class="section-label good">${secNum('07a')}종합 리포트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${first.date} ~ ${last.date} (${totalDays}일)</span></div>
       <p class="p-dim">다이어트 시작(${first.date}) 이후 전체 기간의 데이터를 실측 기준으로 자동 집계한 리포트예요. 화면을 열 때마다 최신 동기화 데이터로 다시 계산돼요.</p>
-      <table class="data-table calc-table" style="margin-top:12px;">
+      <table class="data-table" style="margin-top:12px;">
         <thead><tr><th style="text-align:left">지표</th><th>시작값(${first.date})</th><th>최신값(${last.date})</th><th>변화</th></tr></thead>
         <tbody>
           ${deltaRow('체중','weight' in first?first.weight:null, last.weight,'kg','down')}
@@ -2922,12 +2922,12 @@ function renderReport(){
         ⚠️ 이 0.51은 임상시험에서 <b>제지방량(근육+수분+장기+뼈)</b> 기준 DEXA 실측치이며, 정희님 데이터는 InBody(BIA) <b>골격근량</b> 기준이라 측정방식·지표범위가 다릅니다.
         따라서 이 비교는 "참고용 상한선"이지 동일 지표 간 엄밀한 비교는 아니에요. 골격근만 떼어보면 벤치마크보다 낮게 나오는 게 정상이라, 0.51 근접~약간 초과 정도는 보수적으로 봐도 크게 우려할 수준은 아니에요.
       </div>
-      <div class="calc-table" style="margin-top:14px;">
+      <div style="margin-top:14px; overflow-x:auto;">
         <table class="data-table">
           <thead><tr><th style="text-align:left">구간</th><th>골격근 변화(MA7)</th><th>체지방 변화(MA7)</th></tr></thead>
           <tbody>
-            <tr><td style="text-align:left">이전 14일(${priorPriorDate}~${priorDate})</td><td>${musclePriorDelta!==null?fmt(musclePriorDelta,2)+'kg':'—'}</td><td>${fatPriorDelta!==null?fmt(fatPriorDelta,2)+'kg':'—'}</td></tr>
-            <tr><td style="text-align:left">최근 14일(${priorDate}~${last.date})</td><td>${muscleRecentDelta!==null?fmt(muscleRecentDelta,2)+'kg':'—'}</td><td>${fatRecentDelta!==null?fmt(fatRecentDelta,2)+'kg':'—'}</td></tr>
+            <tr><td style="text-align:left; font-family:var(--font-body);">이전 14일(${priorPriorDate}~${priorDate})</td><td>${musclePriorDelta!==null?fmt(musclePriorDelta,2)+'kg':'—'}</td><td>${fatPriorDelta!==null?fmt(fatPriorDelta,2)+'kg':'—'}</td></tr>
+            <tr><td style="text-align:left; font-family:var(--font-body);">최근 14일(${priorDate}~${last.date})</td><td>${muscleRecentDelta!==null?fmt(muscleRecentDelta,2)+'kg':'—'}</td><td>${fatRecentDelta!==null?fmt(fatRecentDelta,2)+'kg':'—'}</td></tr>
           </tbody>
         </table>
       </div>
@@ -2936,14 +2936,14 @@ function renderReport(){
 
     <section class="card">
       <div class="section-label good">${secNum('07c')}운동·식단 준수 요약</div>
-      <table class="data-table calc-table">
+      <table class="data-table">
         <tbody>
-          <tr><td style="text-align:left">전체기간 근력 세션 수</td><td>${strengthSessions}회</td></tr>
-          <tr><td style="text-align:left">유산소 세션 중 심박 기록 있는 세션</td><td>${cardioWithHR.length}회</td></tr>
-          <tr><td style="text-align:left">그 중 목표존(${CARDIO_HR_TARGET.min}-${CARDIO_HR_TARGET.max}bpm) 준수율</td><td>${cardioZoneRate!==null?cardioZoneRate+'%':'—'}</td></tr>
-          <tr><td style="text-align:left">최근 14일 평균 칼로리</td><td>${avgCal!==null?avgCal.toLocaleString()+'kcal':'기록 없음'}</td></tr>
-          <tr><td style="text-align:left">최근 14일 평균 단백질</td><td>${avgProt!==null?avgProt+'g':'기록 없음'} <span class="dim">(목표 ${PROTEIN_TARGET.min}-${PROTEIN_TARGET.max}g)</span></td></tr>
-          <tr><td style="text-align:left">최근 14일 평균 탄수화물</td><td>${avgCarb!==null?avgCarb+'g':'기록 없음'}</td></tr>
+          <tr><td style="text-align:left; font-family:var(--font-body);">전체기간 근력 세션 수</td><td>${strengthSessions}<span style="font-family:var(--font-body);">회</span></td></tr>
+          <tr><td style="text-align:left; font-family:var(--font-body);">유산소 세션 중 심박 기록 있는 세션</td><td>${cardioWithHR.length}<span style="font-family:var(--font-body);">회</span></td></tr>
+          <tr><td style="text-align:left; font-family:var(--font-body);">그 중 목표존(${CARDIO_HR_TARGET.min}-${CARDIO_HR_TARGET.max}bpm) 준수율</td><td>${cardioZoneRate!==null?cardioZoneRate+'%':'—'}</td></tr>
+          <tr><td style="text-align:left; font-family:var(--font-body);">최근 14일 평균 칼로리</td><td>${avgCal!==null?avgCal.toLocaleString()+'kcal':'<span style="font-family:var(--font-body);">기록 없음</span>'}</td></tr>
+          <tr><td style="text-align:left; font-family:var(--font-body);">최근 14일 평균 단백질</td><td>${avgProt!==null?avgProt+'g':'<span style="font-family:var(--font-body);">기록 없음</span>'} <span style="font-family:var(--font-body); color:var(--text-faint);">(목표 ${PROTEIN_TARGET.min}-${PROTEIN_TARGET.max}g)</span></td></tr>
+          <tr><td style="text-align:left; font-family:var(--font-body);">최근 14일 평균 탄수화물</td><td>${avgCarb!==null?avgCarb+'g':'<span style="font-family:var(--font-body);">기록 없음</span>'}</td></tr>
         </tbody>
       </table>
     </section>
