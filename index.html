@@ -416,7 +416,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-12-a (동기화 완료 오표시 버그 수정 - POST 응답검사+재조회 검증 후에만 완료 표시)';
+const APP_BUILD_VERSION = '2026-08-12-b (마운자로 투여기록 하드코딩 제거 - Sheet Meta 연동으로 전환)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -872,7 +872,7 @@ const SEED_STEPS = [
 ].map(r => ({date:r[0], steps:r[1], km:r[2], kcal:r[3], floors:r[4]}));
 
 const SEED_WAIST = [];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1'};
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1'};
 // 2026-08-04 추가: 자동동기화 스로틀링(머니트레일 앱 벤치마킹 #1). 앱을 자주 열어도 짧은 간격
 // 안에서는 자동 동기화를 재실행하지 않도록, "마지막 성공 시각"만 별도로 기록한다.
 // (state.lastUpdated/LS_KEYS.lastupdate는 로컬 데이터가 바뀔 때마다도 갱신되는 범용 타임스탬프라
@@ -926,6 +926,11 @@ let state = {
   meals: loadArr(LS_KEYS.meal, SEED_MEAL),
   steps: loadArr(LS_KEYS.steps, SEED_STEPS),
   waist: loadArr(LS_KEYS.waist, SEED_WAIST),
+  // 2026-08-12 추가: 기존엔 코드에 하드코딩된 MOUNJARO_DOSES 상수를 그대로 화면에 썼음
+  // (Sheet Meta의 mounjaroDoses와 완전히 무관하게 동작 — 9·10차가 누락된 채 방치되는 사고
+  // 재발 원인). 이제 로컬 저장소 + cloudSync pull로 갱신되는 state.mounjaroDoses를 진짜
+  // 데이터로 쓰고, 하드코딩 배열은 최초 1회 로드 시의 seed(폴백)로만 사용.
+  mounjaroDoses: loadArr(LS_KEYS.mounjaroDoses, MOUNJARO_DOSES),
   aiNote: loadAiNote(),
   reportNote: loadReportNote(),
   lastUpdated: localStorage.getItem(LS_KEYS.lastupdate) || null,
@@ -1609,8 +1614,8 @@ function computeSmartAlerts(ib, meals, workouts){
 /* ---------- 마운자로 투여 차수별 트렌드 ---------- */
 function computeMounjaroCycles(){
   const ib = sortedInbody();
-  return MOUNJARO_DOSES.map((d, i) => {
-    const nextDate = MOUNJARO_DOSES[i+1] ? MOUNJARO_DOSES[i+1].date : null;
+  return state.mounjaroDoses.map((d, i) => {
+    const nextDate = state.mounjaroDoses[i+1] ? state.mounjaroDoses[i+1].date : null;
     const inCycle = ib.filter(r => r.date >= d.date && (!nextDate || r.date <= nextDate));
     const start = inCycle[0] || null;
     const end = inCycle[inCycle.length-1] || null;
@@ -1637,15 +1642,15 @@ const FOUR_METRICS = [
 ];
 function computeDoseIntervalComparison(){
   const ib = sortedInbody();
-  if(ib.length===0 || MOUNJARO_DOSES.length===0) return [];
+  if(ib.length===0 || state.mounjaroDoses.length===0) return [];
   const fields = FOUR_METRICS.map(m=>m.key);
   const latest = ib[ib.length-1];
   const results = [];
   for(let startCycleNum=1; ; startCycleNum+=4){
     const endCycleNum = startCycleNum+4;
-    const startDose = MOUNJARO_DOSES.find(d=>d.cycle===startCycleNum);
+    const startDose = state.mounjaroDoses.find(d=>d.cycle===startCycleNum);
     if(!startDose) break; // 시작 회차 자체가 아직 안 왔으면 더 이상 구간 생성 안 함
-    const endDose = MOUNJARO_DOSES.find(d=>d.cycle===endCycleNum);
+    const endDose = state.mounjaroDoses.find(d=>d.cycle===endCycleNum);
     const isProvisional = !endDose;
     const nominalEndDate = endDose ? endDose.date
       : toLocalISO(new Date(new Date(startDose.date+'T00:00:00').getTime() + 28*86400000));
@@ -1747,16 +1752,20 @@ function renderMounjaro(){
   const validCycles = cycles.filter(c => c.end);
   if(validCycles.length===0) return `<div class="empty-state">아직 이 기간의 인바디 기록이 없습니다.</div>`;
 
-  const firstDoseDate = MOUNJARO_DOSES[0].date;
+  const firstDoseDate = state.mounjaroDoses[0].date;
   const fullData = sortedInbody().filter(r => r.date >= firstDoseDate);
-  const vlines = MOUNJARO_DOSES.map(d => ({date:d.date, label:`${d.cycle}차`}));
+  const vlines = state.mounjaroDoses.map(d => ({date:d.date, label:`${d.cycle}차`}));
   const insights = computeMounjaroInsights(cycles);
   const intervals = computeDoseIntervalComparison();
+  // 2026-08-12 수정: "매주 목요일 2.5mg"이 하드코딩 고정 텍스트였음(실제 8차부터 5mg으로
+  // 증량됐는데도 문구는 항상 2.5mg으로 표시됨) — 최신 차수의 실제 dose값을 그대로 노출.
+  const latestDoseInfo = state.mounjaroDoses[state.mounjaroDoses.length-1];
+  const latestDoseText = latestDoseInfo ? `현재 ${latestDoseInfo.dose} 유지 중` : '';
 
   return `
     <section class="card">
       <div class="section-label good">${secNum('03b')}마운자로 투여 기록</div>
-      <p class="p-dim">매주 목요일 2.5mg 투여 중 · 현재 ${validCycles.length}차까지 진행됐고, 각 차수(투여일~다음 투여 전날)별 인바디 변화를 추적합니다.</p>
+      <p class="p-dim">매주 목요일 투여 중 · ${latestDoseText} · 현재 ${validCycles.length}차까지 진행됐고, 각 차수(투여일~다음 투여 전날)별 인바디 변화를 추적합니다.</p>
     </section>
 
     ${insights.length ? `
@@ -1960,7 +1969,7 @@ function getWeeklyPlan(workouts, mondayDate){
   });
   cardioSlots.forEach(di => { plan[dates[di]] = {type:'유산소', label: di===6 ? '인클라인 트레드밀(자율)' : '인클라인 트레드밀'}; });
   const thuDate = dates[3];
-  if(MOUNJARO_DOSES.some(d=>d.date===thuDate)) plan[thuDate].label += '(투여일, 가볍게)';
+  if(state.mounjaroDoses.some(d=>d.date===thuDate)) plan[thuDate].label += '(투여일, 가볍게)';
   return plan;
 }
 function planForDate(date, workouts){
@@ -3286,6 +3295,20 @@ async function cloudSync(silent){
       if(data.comprehensiveReport && (!state.reportNote || data.comprehensiveReportDate >= state.reportNote.date)){
         state.reportNote = {date: data.comprehensiveReportDate || todayISO(), text: data.comprehensiveReport, syncedAt: new Date().toISOString()};
         saveReportNote(state.reportNote);
+      }
+      // 2026-08-12 추가: Meta 'mounjaroDoses'는 Code.gs가 2026-08-10부터 이미 doGet 응답에
+      // 포함해왔지만, 클라이언트가 이 값을 전혀 소비하지 않고 하드코딩 배열만 쓰던 게
+      // "8차·2.5mg 고정 표시" 버그의 진짜 원인이었음(2026-08-12 실제 발견·수정).
+      // Meta 값은 날짜별 병합 대상이 아니라 매번 전체를 통째로 저장하는 단일 배열이므로,
+      // 서버 값이 오면(파싱 성공 + 비어있지 않으면) 그대로 신뢰해서 교체한다.
+      if(data.mounjaroDoses){
+        try{
+          const parsedDoses = typeof data.mounjaroDoses === 'string' ? JSON.parse(data.mounjaroDoses) : data.mounjaroDoses;
+          if(Array.isArray(parsedDoses) && parsedDoses.length){
+            state.mounjaroDoses = parsedDoses;
+            saveArr(LS_KEYS.mounjaroDoses, state.mounjaroDoses);
+          }
+        }catch(mjErr){ console.error('mounjaroDoses 파싱 실패', mjErr); }
       }
       // 2) 이제 서버 기준으로 정리된(중복 제거된) 로컬 데이터를 다시 시트로 전송 —
       //    이미 서버와 정합된 상태라 이 단계에서 새로운 중복이 생기지 않는다.
