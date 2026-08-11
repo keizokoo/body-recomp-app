@@ -416,16 +416,9 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-10-a (마운자로 투여기록 9·10차 추가 + 차수 자동화: MOUNJARO_DOSES 하드코딩→cloudSync 기반 state.mounjaroDoses, Code.gs 별도배포 필요)';
+const APP_BUILD_VERSION = '2026-08-12-a (동기화 완료 오표시 버그 수정 - POST 응답검사+재조회 검증 후에만 완료 표시)';
 
-// 2026-08-10 변경: 매주 새 차수가 추가될 때마다 이 파일을 직접 고쳐 GitHub에 재배포해야 했던
-// 문제(추적관리 8차 이후 미갱신 사고, 2026-08-10 발견)를 해소하기 위해 자동화 도입.
-// 이 배열은 이제 "클라우드 동기화 실패 시에만 쓰이는 폴백 시드"로 격하되고, 정상 동작 시엔
-// cloudSync가 Sheet Meta의 'mounjaroDoses' 키(Claude가 Drive 인박스로 매주 갱신)를 읽어와
-// state.mounjaroDoses에 반영 → localStorage에 저장 → 이후 코드 수정 없이 자동 반영됨.
-// (Apps Script Code.gs doGet()의 out 객체에도 mounjaroDoses: getMeta_(ss,'mounjaroDoses') 라인
-// 추가가 필요 — index.html만으로는 이 자동화가 완성되지 않음, Code.gs 별도 배포 필수)
-const DEFAULT_MOUNJARO_DOSES = [
+const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
   {cycle:2, date:'2026-06-11', dose:'2.5mg'},
   {cycle:3, date:'2026-06-18', dose:'2.5mg'},
@@ -434,8 +427,6 @@ const DEFAULT_MOUNJARO_DOSES = [
   {cycle:6, date:'2026-07-09', dose:'2.5mg'},
   {cycle:7, date:'2026-07-16', dose:'2.5mg'},
   {cycle:8, date:'2026-07-23', dose:'5mg'},
-  {cycle:9, date:'2026-07-30', dose:'5mg'},
-  {cycle:10, date:'2026-08-06', dose:'5mg'},
 ];
 
 /* =========================================================
@@ -881,7 +872,7 @@ const SEED_STEPS = [
 ].map(r => ({date:r[0], steps:r[1], km:r[2], kcal:r[3], floors:r[4]}));
 
 const SEED_WAIST = [];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjarodoses:'brc_mounjarodoses_v1'};
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1'};
 // 2026-08-04 추가: 자동동기화 스로틀링(머니트레일 앱 벤치마킹 #1). 앱을 자주 열어도 짧은 간격
 // 안에서는 자동 동기화를 재실행하지 않도록, "마지막 성공 시각"만 별도로 기록한다.
 // (state.lastUpdated/LS_KEYS.lastupdate는 로컬 데이터가 바뀔 때마다도 갱신되는 범용 타임스탬프라
@@ -935,7 +926,6 @@ let state = {
   meals: loadArr(LS_KEYS.meal, SEED_MEAL),
   steps: loadArr(LS_KEYS.steps, SEED_STEPS),
   waist: loadArr(LS_KEYS.waist, SEED_WAIST),
-  mounjaroDoses: loadArr(LS_KEYS.mounjarodoses, DEFAULT_MOUNJARO_DOSES),
   aiNote: loadAiNote(),
   reportNote: loadReportNote(),
   lastUpdated: localStorage.getItem(LS_KEYS.lastupdate) || null,
@@ -1619,8 +1609,8 @@ function computeSmartAlerts(ib, meals, workouts){
 /* ---------- 마운자로 투여 차수별 트렌드 ---------- */
 function computeMounjaroCycles(){
   const ib = sortedInbody();
-  return state.mounjaroDoses.map((d, i) => {
-    const nextDate = state.mounjaroDoses[i+1] ? state.mounjaroDoses[i+1].date : null;
+  return MOUNJARO_DOSES.map((d, i) => {
+    const nextDate = MOUNJARO_DOSES[i+1] ? MOUNJARO_DOSES[i+1].date : null;
     const inCycle = ib.filter(r => r.date >= d.date && (!nextDate || r.date <= nextDate));
     const start = inCycle[0] || null;
     const end = inCycle[inCycle.length-1] || null;
@@ -1647,15 +1637,15 @@ const FOUR_METRICS = [
 ];
 function computeDoseIntervalComparison(){
   const ib = sortedInbody();
-  if(ib.length===0 || state.mounjaroDoses.length===0) return [];
+  if(ib.length===0 || MOUNJARO_DOSES.length===0) return [];
   const fields = FOUR_METRICS.map(m=>m.key);
   const latest = ib[ib.length-1];
   const results = [];
   for(let startCycleNum=1; ; startCycleNum+=4){
     const endCycleNum = startCycleNum+4;
-    const startDose = state.mounjaroDoses.find(d=>d.cycle===startCycleNum);
+    const startDose = MOUNJARO_DOSES.find(d=>d.cycle===startCycleNum);
     if(!startDose) break; // 시작 회차 자체가 아직 안 왔으면 더 이상 구간 생성 안 함
-    const endDose = state.mounjaroDoses.find(d=>d.cycle===endCycleNum);
+    const endDose = MOUNJARO_DOSES.find(d=>d.cycle===endCycleNum);
     const isProvisional = !endDose;
     const nominalEndDate = endDose ? endDose.date
       : toLocalISO(new Date(new Date(startDose.date+'T00:00:00').getTime() + 28*86400000));
@@ -1757,16 +1747,16 @@ function renderMounjaro(){
   const validCycles = cycles.filter(c => c.end);
   if(validCycles.length===0) return `<div class="empty-state">아직 이 기간의 인바디 기록이 없습니다.</div>`;
 
-  const firstDoseDate = state.mounjaroDoses[0].date;
+  const firstDoseDate = MOUNJARO_DOSES[0].date;
   const fullData = sortedInbody().filter(r => r.date >= firstDoseDate);
-  const vlines = state.mounjaroDoses.map(d => ({date:d.date, label:`${d.cycle}차`}));
+  const vlines = MOUNJARO_DOSES.map(d => ({date:d.date, label:`${d.cycle}차`}));
   const insights = computeMounjaroInsights(cycles);
   const intervals = computeDoseIntervalComparison();
 
   return `
     <section class="card">
       <div class="section-label good">${secNum('03b')}마운자로 투여 기록</div>
-      <p class="p-dim">매주 목요일 ${state.mounjaroDoses[state.mounjaroDoses.length-1].dose} 투여 중 · 현재 ${validCycles.length}차까지 진행됐고, 각 차수(투여일~다음 투여 전날)별 인바디 변화를 추적합니다.</p>
+      <p class="p-dim">매주 목요일 2.5mg 투여 중 · 현재 ${validCycles.length}차까지 진행됐고, 각 차수(투여일~다음 투여 전날)별 인바디 변화를 추적합니다.</p>
     </section>
 
     ${insights.length ? `
@@ -1970,7 +1960,7 @@ function getWeeklyPlan(workouts, mondayDate){
   });
   cardioSlots.forEach(di => { plan[dates[di]] = {type:'유산소', label: di===6 ? '인클라인 트레드밀(자율)' : '인클라인 트레드밀'}; });
   const thuDate = dates[3];
-  if(state.mounjaroDoses.some(d=>d.date===thuDate)) plan[thuDate].label += '(투여일, 가볍게)';
+  if(MOUNJARO_DOSES.some(d=>d.date===thuDate)) plan[thuDate].label += '(투여일, 가볍게)';
   return plan;
 }
 function planForDate(date, workouts){
@@ -3297,29 +3287,10 @@ async function cloudSync(silent){
         state.reportNote = {date: data.comprehensiveReportDate || todayISO(), text: data.comprehensiveReport, syncedAt: new Date().toISOString()};
         saveReportNote(state.reportNote);
       }
-      // 2026-08-10 추가: 마운자로 투여 차수 자동화. Claude가 Drive 인박스에
-      // {"mounjaroDoses":[{cycle,date,dose},...]} 를 업로드하면 Apps Script가 Meta 시트의
-      // 'mounjaroDoses' 키(JSON 문자열)로 저장하고, doGet()이 이를 응답에 포함해줌(단, Code.gs
-      // doGet()의 out 객체에 mounjaroDoses: getMeta_(ss,'mounjaroDoses') 라인이 실제 존재해야
-      // 함 — 미존재 시 data.mounjaroDoses는 항상 undefined이고 아래 분기는 조용히 스킵되어
-      // 로컬 폴백(DEFAULT_MOUNJARO_DOSES 또는 이전 동기화값)을 계속 사용하게 됨).
-      // 형식 오류(파싱 실패/배열아님/빈배열)는 절대 로컬의 정상 데이터를 덮어쓰지 않도록 방어.
-      if(data.mounjaroDoses){
-        try{
-          const parsed = typeof data.mounjaroDoses === 'string' ? JSON.parse(data.mounjaroDoses) : data.mounjaroDoses;
-          if(Array.isArray(parsed) && parsed.length > 0 && parsed.every(d => d && d.cycle && d.date && d.dose)){
-            state.mounjaroDoses = parsed.slice().sort((a,b)=>a.cycle-b.cycle);
-            saveArr(LS_KEYS.mounjarodoses, state.mounjaroDoses);
-          } else {
-            console.error('mounjaroDoses 형식 오류(무시하고 로컬값 유지):', data.mounjaroDoses);
-          }
-        }catch(mdErr){
-          console.error('mounjaroDoses 파싱 실패(무시하고 로컬값 유지):', mdErr);
-        }
-      }
       // 2) 이제 서버 기준으로 정리된(중복 제거된) 로컬 데이터를 다시 시트로 전송 —
       //    이미 서버와 정합된 상태라 이 단계에서 새로운 중복이 생기지 않는다.
-      await fetchWithTimeout(url, {
+      const pushedInbodyDates_ = recentWindow_(state.inbody).map(r=>r.date);
+      const postRes_ = await fetchWithTimeout(url, {
         method:'POST',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
         body: JSON.stringify({
@@ -3331,6 +3302,25 @@ async function cloudSync(silent){
           comprehensiveReportDate: state.reportNote ? state.reportNote.date : null,
         })
       }, SYNC_TIMEOUT_MS);
+      // 2026-08-12 수정: "행위 수행(요청 전송)"≠"결과 확인(실제 반영)" 원칙 위반 버그 수정.
+      // 기존엔 POST가 네트워크 레벨에서 예외 없이 끝나기만 하면 무조건 '동기화 완료'로 표시했음
+      // (응답 상태코드·바디를 전혀 검사하지 않음) — Apps Script 내부 오류가 200으로 가려지거나
+      // 오류코드로 응답해도 클라이언트는 항상 성공으로 오인하는 구조였고, 이게 "배지는 완료인데
+      // 시트엔 반영 안 됨" 버그의 직접 원인이었음(2026-08-12 실제 발생·발견).
+      // (1) HTTP 상태코드 확인 → (2) 곧바로 재조회(GET)해서 방금 보낸 인바디 날짜가 실제로
+      // 서버(시트)에 존재하는지까지 재검증한 뒤에만 '완료'로 표시한다.
+      if(!postRes_.ok){
+        throw new Error(`서버가 업로드를 거부했습니다(HTTP ${postRes_.status}). Apps Script 배포 상태를 확인해주세요.`);
+      }
+      if(pushedInbodyDates_.length){
+        const verifyRes_ = await fetchWithTimeout(url + (url.includes('?') ? '&' : '?') + 'ts=' + Date.now(), {}, SYNC_TIMEOUT_MS);
+        const verifyData_ = await verifyRes_.json();
+        const serverDates_ = new Set((verifyData_.inbody||[]).map(r=>r.date));
+        const missing_ = pushedInbodyDates_.filter(d => !serverDates_.has(d));
+        if(missing_.length){
+          throw new Error(`인바디 ${missing_.join(', ')} 데이터가 서버(시트)에 반영되지 않았습니다. 다시 동기화하거나 Apps Script 배포 상태를 확인해주세요.`);
+        }
+      }
       markUpdated();
       stopSyncTimer();
       try{ localStorage.setItem(LS_KEYS.lastautosync, new Date().toISOString()); }catch(e){} // 2026-08-04 추가: 스로틀 판단용
