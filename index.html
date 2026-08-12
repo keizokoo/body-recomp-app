@@ -416,7 +416,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-12-b (마운자로 투여기록 하드코딩 제거 - Sheet Meta 연동으로 전환)';
+const APP_BUILD_VERSION = '2026-08-12-c (대시보드 MA7변화 계산방식을 텔레그램과 통일 - 근육/체중 단기추세)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -989,6 +989,22 @@ function movingAverage(arr, key, win){
     return {...row, [`${key}MA`]: avg};
   });
 }
+/* 2026-08-12 추가: 텔레그램 알림(Code.gs computeInbodyMA7Compare_)과 정확히 동일한 방식으로
+   "최근 1주 평균 vs 그 직전 1주 평균"을 계산 — 이전엔 대시보드가 movingAverage()로 만든
+   rolling MA7 시리즈에서 "최근 7개 지점의 시작-끝 차이"를 쓰고 있었는데, 이 방식은 텔레그램의
+   "최근 7건 평균 - 그 이전 7건 평균"(non-overlapping 두 블록 비교) 방식과 계산 결과가 달라서
+   같은 날 같은 지표를 두고 텔레그램은 "-0.3kg 하락"이라 하고 대시보드/채팅은 "0.00kg 정체"라고
+   하는 모순이 실제로 발생했음(2026-08-12). 이제 이 함수 하나로 통일해서 항상 같은 숫자가 나오게 함.
+   ib는 날짜 오름차순 정렬된 배열이어야 함(sortedInbody() 결과). 8건 미만이면 null. */
+function blockMA7Delta(ib, field){
+  const sorted = ib.filter(r => r[field]!=null && r[field]!==undefined);
+  if(sorted.length < 8) return null;
+  const current = sorted.slice(-7);
+  const previous = sorted.slice(-14,-7);
+  if(previous.length < 1) return null;
+  const avg = arr => arr.reduce((s,r)=>s+Number(r[field]||0),0)/arr.length;
+  return avg(current) - avg(previous);
+}
 /* 2026-07-22 추가: 특정 날짜 시점의 MA7 스냅샷(여러 필드 동시) — 4주간격(투여회차) 비교용.
    해당 날짜의 인바디 기록이 없으면 그 날짜 이전 가장 최근 기록을 기준으로 계산 */
 function ma7SnapshotAt(ib, date, fields){
@@ -1403,12 +1419,12 @@ function computeSmartAlerts(ib, meals, workouts){
     }
   }
 
-  // 2) 골격근 손실 평가 — 단기(최근 7일 MA7 변화)와 누적(6/5 대비 비율)을 함께 표시 (2026-07-25 개선)
+  // 2) 골격근 손실 평가 — 단기(최근 1주 평균 vs 지난주 평균)와 누적(6/5 대비 비율)을 함께 표시
+  // (2026-07-25 개선, 2026-08-12 계산방식을 텔레그램과 통일 — blockMA7Delta 주석 참고)
   const muscleAssess = computeMuscleAssessment(ib[0], last);
-  const muscleMA7ForAlert = movingAverage(ib, 'muscle', 7).slice(-7);
-  const muscleShortTrend = muscleMA7ForAlert.length>=2 ? muscleMA7ForAlert[muscleMA7ForAlert.length-1].muscleMA - muscleMA7ForAlert[0].muscleMA : null;
+  const muscleShortTrend = blockMA7Delta(ib, 'muscle');
   const shortTermText = muscleShortTrend===null ? '' :
-    ` 단기(최근 7일 MA7 변화)로는 ${muscleShortTrend>0?'+':''}${fmt(muscleShortTrend,2)}kg${muscleShortTrend<=-0.15?' — 하락':muscleShortTrend>=0.15?' — 상승':' — 거의 변화 없음'}이에요.`;
+    ` 최근 일주일 평균 근육량이 그 전주 평균보다 ${muscleShortTrend>0?'+':''}${fmt(muscleShortTrend,2)}kg${muscleShortTrend<=-0.15?' — 줄었어요':muscleShortTrend>=0.15?' — 늘었어요':' — 거의 그대로예요'}.`;
   if(muscleAssess.tone === 'warn'){
     if(muscleAssess.weightLossPct <= 0.3){
       push({tone:'warn', icon:'dumbbell', score: 88,
@@ -1417,7 +1433,7 @@ function computeSmartAlerts(ib, meals, workouts){
     } else {
       push({tone:'warn', icon:'dumbbell', score: 85,
         title:'체중감량 대비 근손실 비중 높음',
-        detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 실측 기준(0.51)보다 높아요.${shortTermText} 결론: 단기·누적 모두 근손실 비중이 높은 신호라 저항운동 볼륨·단백질 섭취 점검이 필요해요.`});
+        detail:`누적(6/5 대비): 체중은 ${fmt(muscleAssess.weightLossPct,1)}% 줄었는데 근육량은 ${fmt(muscleAssess.muscleLossPct,1)}% 줄었어요(몸무게 준 것 대비 근육이 같이 빠진 정도 ${fmt(muscleAssess.ratio,2)} — 연구에서 안전하다고 보는 기준선 0.51보다 높음).${shortTermText} 결론: 저항운동 볼륨이나 단백질 섭취를 점검해보세요.`});
     }
   } else if(muscleAssess.tone === 'good' && muscleAssess.muscleLoss > 0){
     push({tone:'good', icon:'dumbbell', score: 55,
@@ -1487,20 +1503,15 @@ function computeSmartAlerts(ib, meals, workouts){
     }
   }
 
-  // 4) 체중 정체 — raw 값 대신 MA7/MA14 기반으로 판정 (2026-07-25 개선: BIA 하루 노이즈로 인한 오판정 방지)
-  const weightMA7arr = movingAverage(ib, 'weight', 7);
-  const weightMA14arr = movingAverage(ib, 'weight', 14);
-  if(weightMA7arr.length >= 7){
-    const w7 = weightMA7arr.slice(-7);
-    const trend7 = w7[w7.length-1].weightMA - w7[0].weightMA;
-    const w14recent = weightMA14arr.slice(-7);
-    const trend14 = w14recent.length>=2 ? w14recent[w14recent.length-1].weightMA - w14recent[0].weightMA : null;
+  // 4) 체중 정체 — raw 값 대신 최근 1주 평균 vs 지난주 평균 기반으로 판정
+  // (2026-07-25 개선: BIA 하루 노이즈로 인한 오판정 방지, 2026-08-12: 텔레그램과 계산방식 통일)
+  const trend7 = blockMA7Delta(ib, 'weight');
+  if(trend7 !== null){
     const plateau7 = trend7 >= -0.1;
-    const plateau14 = trend14!==null ? trend14 >= -0.05 : null;
-    if(plateau7 && (plateau14===null || plateau14)){
+    if(plateau7){
       push({tone:'warn', icon:'up', score: 65,
-        title:'체중 정체 또는 반등 (MA7/MA14 기준)',
-        detail:`MA7 기준 최근 7일간 체중 이동평균이 ${trend7>0?'+':''}${fmt(trend7,2)}kg${trend14!==null?`, MA14 기준으로도 ${trend14>0?'+':''}${fmt(trend14,2)}kg`:''}로 하루치 변동이 아니라 추세 자체가 정체/반등 신호예요. 며칠 더 지켜보되, 지속되면 칼로리를 점검해보세요.`});
+        title:'체중 정체 또는 반등',
+        detail:`최근 일주일 평균 체중이 그 전주 평균보다 ${trend7>0?'+':''}${fmt(trend7,2)}kg로, 하루치 변동이 아니라 추세 자체가 정체/반등 신호예요. 며칠 더 지켜보되, 지속되면 칼로리를 점검해보세요.`});
     }
   }
 
