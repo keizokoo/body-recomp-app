@@ -40,6 +40,23 @@
   --shadow-md:0 8px 24px rgba(88,70,220,0.08);
   --shadow-glow:0 12px 32px rgba(124,92,252,0.18);
 }
+/* 2026-08-13 추가: 다크모드. 라이트 테마와 같은 변수명을 그대로 재정의하는 방식이라
+   기존 컴포넌트 CSS(전부 var(--xxx)로 작성됨)를 하나도 안 건드리고 테마 전환이 가능함.
+   html[data-theme="dark"] 속성으로 켜지며, 설정 탭 토글이 이 속성을 갈아끼운다. */
+html[data-theme="dark"]{
+  --bg:#14151F; --panel:#1B1C29; --panel-alt:#20212F; --border:#2C2D3D; --border-soft:#23242F;
+  --text:#EDEEF7; --text-dim:#9C9FBD; --text-faint:#6A6C87;
+  --c-grid:#2A2B3B; --c-track:#2A2B3B;
+  --c-good:#2FE0BC; --c-good-soft:rgba(47,224,188,0.16);
+  --c-warn:#FF7A87; --c-warn-soft:rgba(255,122,135,0.16);
+  --c-neutral:#6E9CFF; --c-neutral-soft:rgba(110,156,255,0.16);
+  --eyebrow-bg:linear-gradient(120deg, rgba(124,92,252,0.22), rgba(23,217,180,0.18)); --eyebrow-text:#B7A6FF;
+  --accent-strong-text:#B7A6FF; --sec-num-color:#5A5C78;
+  --backdrop:rgba(0,0,0,0.6);
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.25), 0 1px 1px rgba(0,0,0,0.2);
+  --shadow-md:0 8px 24px rgba(0,0,0,0.35);
+}
+html[data-theme="dark"] .blob{opacity:0.18;}
 .gauge-value{background:var(--grad-1); -webkit-background-clip:text; background-clip:text; color:transparent;}
 .gauge-value .gauge-unit{-webkit-text-fill-color:var(--text-faint); color:var(--text-faint);}
 
@@ -334,6 +351,36 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .ex-row-del{background:none; border:none; color:var(--text-faint); font-size:14px; cursor:pointer; padding:4px;}
 .ex-row-del:hover{color:var(--c-warn);}
 
+/* 2026-08-13 추가: 레코드 삭제/수정 미니버튼, 특이일 선택 칩, 즐겨찾기 퀵애드, 부작용 로그,
+   리마인더 배너, 복사버튼 등 신규 기능 공통 스타일 */
+.row-actions{display:flex; gap:4px; margin-top:6px;}
+.mini-btn{font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
+.mini-btn:hover{color:var(--text); border-color:var(--text-faint);}
+.mini-btn.danger{color:var(--c-warn); border-color:var(--c-warn-soft);}
+.mini-btn.danger:hover{background:var(--c-warn-soft);}
+.special-chip-row{display:flex; gap:6px; flex-wrap:wrap;}
+.special-chip{font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
+.special-chip.active{background:var(--eyebrow-bg); border-color:var(--c-gauge-from); color:var(--accent-strong-text);}
+.fav-chip-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+.fav-chip{font-size:12px; font-weight:600; padding:7px 13px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel-alt); color:var(--text); cursor:pointer; display:inline-flex; align-items:center; gap:6px;}
+.fav-chip:hover{border-color:var(--c-gauge-from); color:var(--accent-strong-text);}
+.fav-chip .fav-macro{color:var(--text-faint); font-family:var(--font-mono); font-size:10.5px;}
+.reminder-banner{display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--radius); background:var(--c-warn-soft); border-left:3px solid var(--c-warn); margin-bottom:16px;}
+.reminder-banner .rb-title{font-size:13.5px; font-weight:700; color:var(--c-warn); margin-bottom:3px;}
+.reminder-banner .rb-detail{font-size:12.5px; color:var(--text-dim); line-height:1.55;}
+.theme-toggle{display:inline-flex; border-radius:var(--radius-pill); border:1px solid var(--border); overflow:hidden;}
+.theme-toggle button{padding:8px 14px; font-size:12.5px; font-weight:600; background:var(--panel); color:var(--text-dim); border:none; cursor:pointer;}
+.theme-toggle button.active{background:var(--brand-mark-bg); color:#fff;}
+.se-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-bottom:10px;}
+.se-chip{font-size:12px; font-weight:600; padding:9px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer; text-align:center;}
+.se-chip.active{background:var(--c-warn-soft); border-color:var(--c-warn); color:var(--c-warn);}
+
+@media print{
+  .blob, header.topbar .topbar-actions, nav.tabs, .btn, .btn-row, .no-print{display:none !important;}
+  body{padding-bottom:0; background:#fff;}
+  .shell{max-width:100%; padding:0;}
+  .card{box-shadow:none; border:1px solid #ddd; break-inside:avoid;}
+}
 </style>
 </head>
 <body>
@@ -416,7 +463,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-12-c (대시보드 MA7변화 계산방식을 텔레그램과 통일 - 근육/체중 단기추세)';
+const APP_BUILD_VERSION = '2026-08-13-a (10개 신규기능: 운동다중저장버그수정/레코드삭제수정/특이일플래그+보정가이드/리마인더/클립보드복사/부작용로그/즐겨찾기식단/리포트인쇄/다크모드/허리둘레동기화점검)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -527,6 +574,21 @@ function inferPartsForEntry(w){
 const CARDIO_HR_TARGET = {min:105, max:125};
 // 단백질 목표 (기존 체중×1.6g/kg에서 상향 조정, 절대량 기준)
 const PROTEIN_TARGET = {min:140, max:170}; // 2026-07-29: 하한 150→140g 조정(ISSN Aragon 2017, FFM기준 재검토)
+
+// 2026-08-13 추가: 특이일(과식/음주/컨디션난조 등) — 이 프로젝트의 임무 자체가 "음주, 과식 등
+// 특이이슈 발생시 대처방안 제공"인데, 기존엔 식단 메모의 자유텍스트 키워드 매칭에만 의존해서
+// (아래 computeSmartAlerts의 SPECIAL_DAY_KEYWORDS) 음주는 감지 목록에 아예 없었고, 대처 가이드도
+// 없었다. 이제 기록 모달에서 명시적으로 선택하는 구조화 필드로 남기고, 다음날 목표 보정까지 안내한다.
+const SPECIAL_DAY_TYPES = ['overeat','alcohol','poor_condition','eating_out','none'];
+const SPECIAL_DAY_LABELS = {overeat:'과식', alcohol:'음주', poor_condition:'컨디션난조', eating_out:'외식', none:'특이사항 없음'};
+// 다음날 보정 가이드 — 생리학적으로 엄밀한 처방이 아니라, 정체/왜곡된 해석을 막기 위한 보수적인
+// 방향성 가이드다(예: 음주 다음날은 수분 정체로 체중이 실제보다 높게 보일 수 있다는 것도 함께 안내).
+const SPECIAL_DAY_ADVICE = {
+  overeat: {calDelta:-200, carbDelta:-20, note:'전날 과식했다면 다음날은 목표보다 칼로리를 조금 낮추고(특히 탄수화물 위주로), 무리한 초과분 보정(단식 등)은 피하는 게 좋아요 — 하루이틀 사이 반등은 대부분 수분·글리코겐이라 체지방 자체가 는 게 아닐 가능성이 높아요.'},
+  alcohol: {calDelta:-150, carbDelta:-10, note:'음주 다음날은 수분·나트륨 정체로 체중/체지방률이 실제보다 높게 측정될 수 있어요(2~3일 내 정상화되는 경우가 많음) — 다음날 인바디 결과를 과도하게 해석하지 말고, 단백질 섭취와 수분 보충에 집중하세요.'},
+  poor_condition: {calDelta:0, carbDelta:0, note:'컨디션 난조인 날은 굳이 목표를 맞추려 하지 말고 회복에 집중하세요 — 이 기간 데이터는 추세 판단에서 자동으로 제외돼요.'},
+  eating_out: {calDelta:-100, carbDelta:0, note:'외식은 나트륨·지방이 평소보다 많을 수 있어요. 다음날은 평소 목표를 그대로 유지하면서 수분 섭취만 조금 늘려보세요.'},
+};
 
 function parseSteps(text){
   if(!text) return null;
@@ -872,7 +934,15 @@ const SEED_STEPS = [
 ].map(r => ({date:r[0], steps:r[1], km:r[2], kcal:r[3], floors:r[4]}));
 
 const SEED_WAIST = [];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1'};
+const SEED_SIDE_EFFECTS = [];
+const SEED_FAVORITES = [
+  {id:'fav_seed_1', name:'단백질 쉐이크 2스쿱', calories:240, protein:48, carbs:6},
+];
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1'};
+// 2026-08-13 추가: 로컬 고유 id 생성기 — 운동/부작용/즐겨찾기처럼 "하루에 여러 건"이 가능한
+// 레코드를 날짜만으로 식별하면(기존 워크아웃 저장 로직처럼) 같은 날 두 번째 항목을 추가할 때
+// 첫 번째 항목이 통째로 사라지는 버그가 생긴다. 이를 막기 위해 항목마다 안정적인 id를 부여한다.
+function makeId(prefix){ return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`; }
 // 2026-08-04 추가: 자동동기화 스로틀링(머니트레일 앱 벤치마킹 #1). 앱을 자주 열어도 짧은 간격
 // 안에서는 자동 동기화를 재실행하지 않도록, "마지막 성공 시각"만 별도로 기록한다.
 // (state.lastUpdated/LS_KEYS.lastupdate는 로컬 데이터가 바뀔 때마다도 갱신되는 범용 타임스탬프라
@@ -920,6 +990,15 @@ function loadReportNote(){
 }
 function saveReportNote(note){ try{ localStorage.setItem(LS_KEYS.reportnote, JSON.stringify(note)); }catch(e){ console.error('저장 실패', e); } }
 
+// 2026-08-13 추가: 기존 워크아웃 레코드(시드 데이터 포함)에는 id가 없으므로, 최초 로드 시
+// id가 없는 항목에 한해 안정적인 id를 채워넣는다(같은 배열 순서 기준이라 매 로드마다 동일하게
+// 부여됨 — 이후 저장부터는 이 id로 특정 항목을 정확히 수정/삭제할 수 있다).
+function ensureWorkoutIds(arr){
+  let changed = false;
+  arr.forEach((w,i) => { if(!w.id){ w.id = `w_legacy_${i}`; changed = true; } });
+  return {arr, changed};
+}
+
 let state = {
   inbody: loadArr(LS_KEYS.inbody, SEED_INBODY),
   workouts: loadArr(LS_KEYS.workout, SEED_WORKOUT),
@@ -931,6 +1010,8 @@ let state = {
   // 재발 원인). 이제 로컬 저장소 + cloudSync pull로 갱신되는 state.mounjaroDoses를 진짜
   // 데이터로 쓰고, 하드코딩 배열은 최초 1회 로드 시의 seed(폴백)로만 사용.
   mounjaroDoses: loadArr(LS_KEYS.mounjaroDoses, MOUNJARO_DOSES),
+  sideEffects: loadArr(LS_KEYS.sideEffects, SEED_SIDE_EFFECTS),
+  favorites: loadArr(LS_KEYS.favorites, SEED_FAVORITES),
   aiNote: loadAiNote(),
   reportNote: loadReportNote(),
   lastUpdated: localStorage.getItem(LS_KEYS.lastupdate) || null,
@@ -938,7 +1019,75 @@ let state = {
   showTable: false,
   showMounjaro: localStorage.getItem('brc_show_mounjaro_v1') === '1',
   expandedTables: {},
+  theme: localStorage.getItem(LS_KEYS.theme) || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+  notifEnabled: localStorage.getItem(LS_KEYS.notif) === '1',
 };
+{
+  const fixed = ensureWorkoutIds(state.workouts);
+  if(fixed.changed) saveArr(LS_KEYS.workout, state.workouts);
+}
+function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); }
+function setTheme(t){
+  state.theme = t;
+  try{ localStorage.setItem(LS_KEYS.theme, t); }catch(e){}
+  applyTheme();
+  render();
+}
+applyTheme();
+
+/* =========================================================
+   리마인더 / 알림 (2026-08-13 추가)
+   - 기존 스마트 인사이트는 전부 "이미 벌어진 일"에 대한 사후 경고(예: 측정 공백 3일 이상)였음.
+   - 이 기능은 그 공백 자체가 생기기 전에 미리 안내하는 사전 리마인더.
+   - 진짜 백그라운드 푸시(앱을 안 열어도 오는 알림)는 서버/푸시 인프라가 필요해 이 프로젝트
+     범위 밖 — 여기서는 "앱을 열었을 때" 조건을 검사해 배너 + (권한 허용 시) 브라우저
+     Notification을 띄우는, PWA 단독으로 가능한 현실적인 범위로 구현함.
+========================================================= */
+function checkReminders(){
+  const results = [];
+  const todayD = todayISO();
+  const dow = new Date(todayD+'T00:00:00').getDay(); // 4 = 목요일
+  if(dow===4){
+    const lastDose = state.mounjaroDoses[state.mounjaroDoses.length-1];
+    if(!lastDose || lastDose.date < todayD){
+      results.push({title:'오늘은 마운자로 투여일이에요', detail:'투여 후 이번 차수를 Sheet(Meta mounjaroDoses)에 기록해두는 걸 잊지 마세요 — 안 하면 대시보드/추적관리 탭이 지난 차수 기준으로 표시돼요.'});
+    }
+  }
+  const lastInbody = sortedInbody().slice(-1)[0];
+  if(lastInbody){
+    const gapDays = Math.round((new Date(todayD+'T00:00:00') - new Date(lastInbody.date+'T00:00:00'))/86400000);
+    if(gapDays>=2){
+      results.push({title:`인바디 기록이 ${gapDays}일째 없어요`, detail:'오늘 측정해서 기록해두면 MA7 추세 판단이 더 정확해져요(공백이 길수록 이동평균이 흔들려요).'});
+    }
+  }
+  return results;
+}
+function maybeFireNotification(reminders){
+  if(!state.notifEnabled || !reminders.length) return;
+  if(!('Notification' in window) || Notification.permission!=='granted') return;
+  const todayD = todayISO();
+  const lastFired = localStorage.getItem('brc_notif_lastfired_v1');
+  if(lastFired===todayD) return; // 같은 날 중복 발송 방지(하루 1회)
+  try{
+    new Notification('바디 리컴포지션', {body: reminders.map(r=>r.title).join(' · ')});
+    localStorage.setItem('brc_notif_lastfired_v1', todayD);
+  }catch(e){ console.error('알림 표시 실패', e); }
+}
+function requestNotifPermission(){
+  if(!('Notification' in window)){ alert('이 브라우저/기기는 웹 알림을 지원하지 않아요.'); return; }
+  Notification.requestPermission().then(perm => {
+    state.notifEnabled = (perm==='granted');
+    try{ localStorage.setItem(LS_KEYS.notif, state.notifEnabled?'1':'0'); }catch(e){}
+    if(!state.notifEnabled) alert('알림 권한이 허용되지 않았어요. 브라우저 설정에서 다시 허용할 수 있어요.');
+    render();
+  });
+}
+function disableNotif(){
+  state.notifEnabled = false;
+  try{ localStorage.setItem(LS_KEYS.notif, '0'); }catch(e){}
+  render();
+}
+
 function toggleMounjaroTab(){
   state.showMounjaro = !state.showMounjaro;
   localStorage.setItem('brc_show_mounjaro_v1', state.showMounjaro ? '1' : '0');
@@ -1283,15 +1432,88 @@ function render(){
     console.error('renderTab 실패:', err);
     tabHtml = `<div class="empty-state">⚠️ 이 화면을 표시하는 중 오류가 발생했습니다.<br>다른 탭으로 이동했다가 다시 시도해주세요.<br><span style="font-family:var(--font-mono); font-size:11px; color:var(--text-faint);">${esc(err && err.message ? err.message : String(err))}</span></div>`;
   }
-  app.innerHTML = HEADER_TEMPLATE() + `<main>${tabHtml}</main>`;
+  // 2026-08-13 추가: 리마인더 배너 — 대시보드에서만 노출(다른 탭까지 매번 뜨면 잔소리처럼
+  // 느껴질 수 있어서). 사후경고(스마트 인사이트의 "측정 공백" 등)와 달리 이건 사전 안내.
+  let reminderHtml = '';
+  try{
+    if(state.tab==='dashboard'){
+      const reminders = checkReminders();
+      if(reminders.length){
+        reminderHtml = reminders.map(r => `<div class="reminder-banner"><div class="alert-icon tone-warn">${ICONS.target}</div><div><div class="rb-title">${esc(r.title)}</div><div class="rb-detail">${esc(r.detail)}</div></div></div>`).join('');
+      }
+      maybeFireNotification(reminders);
+    }
+  }catch(e){ console.error('리마인더 체크 실패', e); }
+  app.innerHTML = HEADER_TEMPLATE() + `<main>${reminderHtml}${tabHtml}</main>`;
   if(modalState.open) renderModal();
   const af = document.querySelector('[data-autofocus="1"]');
   if(af){ af.focus(); af.select && af.select(); }
 }
 function tabBtn(key,label){ return `<button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>`; }
 function setTab(t){ state.tab=t; render(); }
-function openModal(kind){ modalState.open=true; modalState.kind=kind||'inbody'; modalState.status='idle'; modalState.form={date:todayISO()}; modalState.error=''; modalState.exerciseRows = modalState.kind==='workout' ? [{}] : []; render(); }
+function openModal(kind){ modalState.open=true; modalState.kind=kind||'inbody'; modalState.status='idle'; modalState.form={date:todayISO()}; modalState.error=''; modalState.editId=null; modalState.exerciseRows = modalState.kind==='workout' ? [{}] : []; render(); }
 function closeModal(){ modalState.open=false; render(); }
+
+// 2026-08-13 추가: 기존 레코드를 수정 모드로 모달에 불러오기(인바디/식단/운동 공통).
+// 인바디·식단은 날짜당 1건이라 saveRecord()의 날짜 기준 교체 로직이 그대로 "수정"으로 동작하고,
+// 운동만 하루 여러 건이 가능해서 editId로 정확히 그 항목만 특정해 교체한다.
+function openEditModal(kind, rec){
+  modalState.open = true;
+  modalState.kind = kind;
+  modalState.status = 'manual';
+  modalState.error = '';
+  modalState.editId = (kind==='workout') ? rec.id : null;
+  if(kind==='workout'){
+    if(rec.exercises && rec.exercises.length){
+      modalState.exerciseRows = rec.exercises.map(e => ({name:e.name, part:e.part, sets:e.sets, reps:e.reps, weight:e.weight}));
+      modalState.form = {date:rec.date, calories:rec.calories, note:rec.note};
+    } else {
+      modalState.exerciseRows = [{}];
+      modalState.form = {date:rec.date, name:rec.name, part:rec.part, volume:rec.volume, calories:rec.calories, note:rec.note};
+    }
+  } else if(kind==='meal'){
+    modalState.exerciseRows = [];
+    modalState.form = {date:rec.date, calories:rec.calories, protein:rec.protein, carbs:rec.carbs, description:rec.note, specialDayType:rec.specialDayType||''};
+  } else {
+    modalState.exerciseRows = [];
+    modalState.form = {date:rec.date, weight:rec.weight, muscle:rec.muscle, fat:rec.fat, fatPct:rec.fatPct, bmr:rec.bmr};
+  }
+  render();
+}
+function deleteInbodyEntry(date){
+  if(!confirm(`${date} 인바디 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  state.inbody = state.inbody.filter(r=>r.date!==date);
+  saveArr(LS_KEYS.inbody, state.inbody);
+  markUpdated();
+  render();
+}
+function deleteMealEntry(date){
+  if(!confirm(`${date} 식단 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  state.meals = state.meals.filter(r=>r.date!==date);
+  saveArr(LS_KEYS.meal, state.meals);
+  markUpdated();
+  render();
+}
+function deleteWorkoutEntry(id){
+  if(!confirm('이 운동 기록을 삭제할까요? 되돌릴 수 없습니다.')) return;
+  state.workouts = state.workouts.filter(r=>r.id!==id);
+  saveArr(LS_KEYS.workout, state.workouts);
+  markUpdated();
+  render();
+}
+function editWorkoutById(id){
+  const rec = state.workouts.find(r=>r.id===id);
+  if(!rec){ alert('해당 기록을 찾을 수 없어요(동기화 후 id가 바뀌었을 수 있어요).'); return; }
+  openEditModal('workout', rec);
+}
+function editInbodyByDate(date){
+  const rec = state.inbody.find(r=>r.date===date);
+  if(rec) openEditModal('inbody', rec);
+}
+function editMealByDate(date){
+  const rec = state.meals.find(r=>r.date===date);
+  if(rec) openEditModal('meal', rec);
+}
 
 function renderTab(){
   if(state.tab==='dashboard') return renderDashboard();
@@ -1445,11 +1667,14 @@ function computeSmartAlerts(ib, meals, workouts){
       detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 기준(0.51) 이내예요.${shortTermText} 결론: 누적 기준으로는 안전권이니, 단기 하락이 며칠 더 이어지는지만 지켜보면 돼요.`});
   }
 
-  // 3) 칼로리 목표 이탈 — 질병/컨디션난조 등 특이일은 제외하고 계산 (2026-07-25 개선)
-  // 주의: note 텍스트 키워드 매칭이라 완벽하지 않음. 향후 데이터에 명시적 "특이일" 플래그 필드가
-  // 추가되면 그쪽을 우선 사용하도록 교체 권장.
+  // 3) 칼로리 목표 이탈 — 질병/컨디션난조/과식/음주 등 특이일은 제외하고 계산 (2026-07-25 개선,
+  // 2026-08-13 개선: 이제 모달의 구조화된 specialDayType 필드가 있으면 그걸 우선 쓰고, 레거시
+  // 데이터(필드가 없는 과거 기록)에 한해서만 note 텍스트 키워드 매칭으로 폴백한다.
   const SPECIAL_DAY_KEYWORDS = ['설사','컨디션난조','몸살','장염','병원','속탈','메스꺼움','구토','식중독','감기'];
-  const isSpecialDay = (m) => SPECIAL_DAY_KEYWORDS.some(k => (m.note||'').includes(k));
+  const isSpecialDay = (m) => {
+    if(m.specialDayType) return m.specialDayType !== 'none';
+    return SPECIAL_DAY_KEYWORDS.some(k => (m.note||'').includes(k));
+  };
   if(last.bmr && meals.length >= 5){
     const targetLow = Math.round(last.bmr*1.5-550);
     const targetHigh = targetLow+100;
@@ -1500,6 +1725,23 @@ function computeSmartAlerts(ib, meals, workouts){
         if(calDelta!==0 || carbDelta!==0) tone = 'warn'; else tone = 'good';
       }
       push({tone, icon:'target', score: 58, title:`오늘 목표 (칼로리 EAT보정 + 탄수 ${carbTarget.tier}등급)`, detail});
+    }
+  }
+
+  // 3c) 특이일(과식/음주/외식/컨디션난조) 다음날 자동 대처 가이드
+  // (2026-08-13 신설 — 프로젝트 임무 "음주, 과식 등 특이이슈 발생시 대처방안 제공"에 직접 대응)
+  {
+    const todayD = todayISO();
+    const yesterdayD = toLocalISO(new Date(new Date(todayD+'T00:00:00').getTime()-86400000));
+    const yMeal = meals.find(m=>m.date===yesterdayD);
+    if(yMeal && yMeal.specialDayType && yMeal.specialDayType!=='none'){
+      const advice = SPECIAL_DAY_ADVICE[yMeal.specialDayType];
+      if(advice){
+        const label = SPECIAL_DAY_LABELS[yMeal.specialDayType];
+        push({tone:'neutral', icon:'target', score: 68,
+          title:`어제(${label}) 다음날 대처 가이드`,
+          detail:`어제 "${label}"로 기록됐어요. ${advice.note}${(advice.calDelta||advice.carbDelta)?` (참고: 오늘 목표에서 칼로리 ${advice.calDelta}kcal, 탄수화물 ${advice.carbDelta}g 정도 낮춰 잡는 걸 고려해볼 수 있어요 — 강제 규칙이 아니라 방향성 참고치예요.)`:''}`});
+      }
     }
   }
 
@@ -1758,6 +2000,70 @@ function computeMounjaroInsights(cycles){
   return insights.slice(0,5);
 }
 
+/* ---------- 마운자로 이상반응(부작용) 로그 (2026-08-13 신설) ----------
+   기존엔 투여차수·용량·인바디 변화만 정교하게 추적하고, GLP-1 계열 약물에서 흔한 오심·변비·
+   주사부위반응 같은 이상반응을 남길 곳이 전혀 없었음(증량 판단에 중요한 정보인데 기록이
+   안 남으면 "몇 차수부터 오심이 심해졌다" 같은 걸 나중에 복기할 수 없음). */
+const SIDE_EFFECT_TYPES = ['오심','변비','설사','두통','피로감','식욕감소','주사부위반응','기타'];
+const SIDE_EFFECT_SEVERITY = [{v:'mild',l:'경미'},{v:'moderate',l:'보통'},{v:'severe',l:'심함'}];
+let sideEffectForm = {symptom:'', severity:'mild', note:''};
+function updateSEForm(field, val){ sideEffectForm[field] = val; }
+function toggleSESymptom(sym){ sideEffectForm.symptom = (sideEffectForm.symptom===sym ? '' : sym); refreshSEForm(); }
+function refreshSEForm(){ const el = document.getElementById('se-form-mount'); if(el) el.outerHTML = renderSideEffectForm(); }
+function addSideEffect(){
+  const date = document.getElementById('se-date-input').value || todayISO();
+  const note = document.getElementById('se-note-input') ? document.getElementById('se-note-input').value.trim() : '';
+  if(!sideEffectForm.symptom){ alert('증상을 하나 선택해주세요.'); return; }
+  state.sideEffects.push({id:makeId('se'), date, symptom:sideEffectForm.symptom, severity:sideEffectForm.severity, note});
+  saveArr(LS_KEYS.sideEffects, state.sideEffects);
+  sideEffectForm = {symptom:'', severity:'mild', note:''};
+  markUpdated();
+  render();
+}
+function deleteSideEffect(id){
+  if(!confirm('이 부작용 기록을 삭제할까요?')) return;
+  state.sideEffects = state.sideEffects.filter(s=>s.id!==id);
+  saveArr(LS_KEYS.sideEffects, state.sideEffects);
+  render();
+}
+function renderSideEffectForm(){
+  return `<div id="se-form-mount">
+    <div class="se-grid">
+      ${SIDE_EFFECT_TYPES.map(s => `<button type="button" class="se-chip ${sideEffectForm.symptom===s?'active':''}" onclick="toggleSESymptom('${s}')">${s}</button>`).join('')}
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; max-width:420px; margin-bottom:8px;">
+      <input id="se-date-input" type="date" value="${todayISO()}" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+      <select onchange="updateSEForm('severity',this.value)" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); color:var(--text); background:var(--panel);">
+        ${SIDE_EFFECT_SEVERITY.map(s=>`<option value="${s.v}" ${sideEffectForm.severity===s.v?'selected':''}>${s.l}</option>`).join('')}
+      </select>
+    </div>
+    <input id="se-note-input" placeholder="메모(선택)" style="width:100%; max-width:420px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); color:var(--text); margin-bottom:8px;">
+    <div><button class="btn btn-primary btn-sm" onclick="addSideEffect()">부작용 기록 추가</button></div>
+  </div>`;
+}
+function renderSideEffectSection(){
+  const sorted = [...state.sideEffects].sort((a,b)=>b.date.localeCompare(a.date));
+  return `<section class="card">
+    <div class="section-label good">${secNum('03a2')}이상반응(부작용) 기록</div>
+    <p class="p-dim">오심·변비·주사부위반응 등을 차수와 함께 남겨두면, 나중에 "몇 차수부터 심해졌는지"를 체성분 변화 옆에서 같이 볼 수 있어요. 증량·감량 판단에 참고가 돼요.</p>
+    ${renderSideEffectForm()}
+    ${sorted.length ? `<div style="overflow-x:auto; margin-top:14px;">
+      <table class="data-table">
+        <thead><tr><th style="text-align:left">날짜</th><th style="text-align:left">증상</th><th>강도</th><th style="text-align:left">메모</th><th></th></tr></thead>
+        <tbody>
+          ${sorted.map(s => `<tr>
+            <td style="text-align:left">${s.date}</td>
+            <td style="text-align:left; font-family:var(--font-body);">${esc(s.symptom)}</td>
+            <td class="${s.severity==='severe'?'warn-text':''}">${(SIDE_EFFECT_SEVERITY.find(x=>x.v===s.severity)||{}).l||s.severity}</td>
+            <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body);">${esc(s.note||'')}</td>
+            <td><button class="mini-btn danger" onclick="deleteSideEffect('${s.id}')">삭제</button></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : `<div class="sw-empty" style="margin-top:10px;">아직 기록된 이상반응이 없어요.</div>`}
+  </section>`;
+}
+
 function renderMounjaro(){
   const cycles = computeMounjaroCycles();
   const validCycles = cycles.filter(c => c.end);
@@ -1778,6 +2084,8 @@ function renderMounjaro(){
       <div class="section-label good">${secNum('03b')}마운자로 투여 기록</div>
       <p class="p-dim">매주 목요일 투여 중 · ${latestDoseText} · 현재 ${validCycles.length}차까지 진행됐고, 각 차수(투여일~다음 투여 전날)별 인바디 변화를 추적합니다.</p>
     </section>
+
+    ${renderSideEffectSection()}
 
     ${insights.length ? `
     <section class="card">
@@ -2363,6 +2671,7 @@ function workoutRow(w){
       <div style="font-size:13px; font-weight:600; color:var(--text);">${esc(w.name||'')} ${risky?'<span class="badge miss">목디스크 확인</span>':''}</div>
       <div style="font-size:12px; color:var(--text-dim); margin-top:3px;">${parts.join(', ')||esc(w.part||'')}${w.volume?` · ${esc(String(w.volume))}`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
       ${w.note?`<div style="font-size:11.5px; color:var(--text-faint); margin-top:3px;">${esc(w.note)}</div>`:''}
+      ${w.id ? `<div class="row-actions"><button class="mini-btn" onclick="editWorkoutById('${w.id}')">수정</button><button class="mini-btn danger" onclick="deleteWorkoutEntry('${w.id}')">삭제</button></div>` : ''}
     </div>
   </div>`;
 }
@@ -2377,7 +2686,13 @@ function renderDashboard(){
 
   return `
     <section class="hero card">
-      <div class="hero-eyebrow"><span class="dot"></span>Live Tracking</div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
+        <div class="hero-eyebrow"><span class="dot"></span>Live Tracking</div>
+        <div class="no-print" style="display:flex; align-items:center; gap:8px;">
+          <span id="today-copy-status" style="font-size:11px; color:var(--c-good); opacity:0; transition:opacity .3s;">복사됨</span>
+          <button class="btn btn-sm" onclick="copyTodayText()">📋 오늘 데이터 복사</button>
+        </div>
+      </div>
       <div class="hero-grid">
         <div class="hero-figure">
           ${gaugeSVG(last.fatPct, START_FAT_PCT, FAT_GOALS)}
@@ -2652,7 +2967,7 @@ function editableCell(table, date, field, value, decimals){
 function renderInbodyTable(ma){
   return `<div class="card" style="margin-top:12px; overflow-x:auto;">
     <table class="data-table">
-      <thead><tr><th>날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th></tr></thead>
+      <thead><tr><th>날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th><th></th></tr></thead>
       <tbody>
         ${ma.map(r=>`<tr>
           <td>${r.date}</td>
@@ -2662,10 +2977,11 @@ function renderInbodyTable(ma){
           <td style="color:var(--c-accent-strong); font-weight:700;">${editableCell('inbody', r.date, 'fatPct', r.fatPct, 1)}</td>
           <td>${editableCell('inbody', r.date, 'bmr', r.bmr, 0)}</td>
           <td>${fmt(r.fatPctMA,2)}</td>
+          <td><button class="mini-btn danger" onclick="deleteInbodyEntry('${r.date}')">삭제</button></td>
         </tr>`).join('')}
       </tbody>
     </table>
-    <div class="note-box" style="margin-top:10px;">셀을 탭하면 바로 수정할 수 있어요. 입력 후 엔터 또는 다른 곳을 누르면 저장돼요.</div>
+    <div class="note-box" style="margin-top:10px;">셀을 탭하면 바로 수정할 수 있어요. 입력 후 엔터 또는 다른 곳을 누르면 저장돼요. 행을 통째로 잘못 넣었다면 맨 오른쪽 삭제 버튼을 쓰세요(확인창이 뜹니다).</div>
   </div>`;
 }
 
@@ -2731,11 +3047,12 @@ function dayRow(date, i, wArr, m, prev){
     const fDelta = prev ? i.fatPct - prev.fatPct : null;
     ibCol = `체중 <b class="mono">${fmt(i.weight)}kg</b>${deltaSpan(wDelta,'kg')}
       <br>골격근 <b class="mono">${fmt(i.muscle)}kg</b> · 체지방 <b class="mono">${fmt(i.fat)}kg</b>
-      <br>체지방률 <b class="mono" style="color:var(--c-fatpct)">${fmt(i.fatPct)}%</b>${deltaSpan(fDelta,'%p')}`;
+      <br>체지방률 <b class="mono" style="color:var(--c-fatpct)">${fmt(i.fatPct)}%</b>${deltaSpan(fDelta,'%p')}
+      <div class="row-actions"><button class="mini-btn" onclick="editInbodyByDate('${date}')">수정</button><button class="mini-btn danger" onclick="deleteInbodyEntry('${date}')">삭제</button></div>`;
   }
   let wkCol = `<span class="empty">기록 없음</span>`;
   if(wArr && wArr.length){
-    wkCol = wArr.map(w => `${esc(w.name)}<br><span class="dim">${esc(w.part)}</span>${w.volume?` · ${esc(w.volume)}`:''}${w.calories?` · ${w.calories}kcal`:''}`).join('<hr style="border:none;border-top:1px dashed var(--border);margin:6px 0;">');
+    wkCol = wArr.map(w => `${esc(w.name)}<br><span class="dim">${esc(w.part)}</span>${w.volume?` · ${esc(w.volume)}`:''}${w.calories?` · ${w.calories}kcal`:''}${w.id?`<div class="row-actions"><button class="mini-btn" onclick="editWorkoutById('${w.id}')">수정</button><button class="mini-btn danger" onclick="deleteWorkoutEntry('${w.id}')">삭제</button></div>`:''}`).join('<hr style="border:none;border-top:1px dashed var(--border);margin:6px 0;">');
   }
   let mlCol = `<span class="empty">기록 없음</span>`;
   if(m){
@@ -2743,7 +3060,9 @@ function dayRow(date, i, wArr, m, prev){
     const proHit = proteinTarget ? m.protein>=proteinTarget : null;
     mlCol = `${m.calories}kcal${target?`<span class="badge ${calHit?'hit':'miss'}">${calHit?'목표 충족':'목표 초과'}</span>`:''}
       <br>단백질 ${m.protein}g${proteinTarget?`<span class="badge ${proHit?'hit':'miss'}">${proHit?'충분':'부족'}</span>`:''}${m.carbs?` · 탄수 ${m.carbs}g`:''}
-      ${m.note?`<br><span class="dim">${esc(m.note)}</span>`:''}`;
+      ${m.specialDayType?`<br><span class="badge miss">${esc(SPECIAL_DAY_LABELS[m.specialDayType]||m.specialDayType)}</span>`:''}
+      ${m.note?`<br><span class="dim">${esc(m.note)}</span>`:''}
+      <div class="row-actions"><button class="mini-btn" onclick="editMealByDate('${date}')">수정</button><button class="mini-btn danger" onclick="deleteMealEntry('${date}')">삭제</button></div>`;
   }
 
   return `<div class="day-row">
@@ -2865,7 +3184,12 @@ function renderGoal(){
         </table>
       </div>` : ''}
       <div class="note-box" style="margin-top:14px;">
-        허리둘레는 아직 클라우드 동기화(Google Sheet) 연동 전이라 <b>지금 이 기기에만 저장</b>됩니다. 다른 기기에서도 같이 보시려면 Apps Script(Code.gs)에 Waist 시트 처리를 추가해야 하니, 필요하시면 Code.gs 파일을 다시 올려주세요.
+        <!-- 2026-08-13 확인: 클라이언트(cloudSync)는 이미 waist를 push/pull 요청에 포함해서
+             보내고 있음(mergeByDate_·recentWindow_ 모두 적용됨) — 다만 Google Apps Script
+             (Code.gs)가 이 waist 키를 실제로 시트에 쓰고/읽어주는지는 이 세션에서 Code.gs
+             원본이 없어 확인 불가. "요청을 보냈다"와 "서버가 실제로 처리한다"는 다른 얘기라
+             문구를 사실 그대로 정정함(행위≠결과확인 원칙). -->
+        허리둘레는 앱이 다른 기록과 함께 클라우드로 보내려고는 하지만, <b>Google Apps Script(Code.gs)가 이 항목을 처리하도록 돼있는지는 아직 확인되지 않았습니다.</b> Code.gs에 Waist 시트 처리가 없다면 실제로는 이 기기에만 남아있는 상태일 수 있어요. 다른 기기에서도 같이 보시려면 Code.gs 파일을 다음 채팅에 올려주세요 — 필요한 부분을 확인해서 채워드릴게요.
       </div>
     </section>
 
@@ -2957,8 +3281,15 @@ function renderReport(){
 
   return `
     <section class="card">
-      <div class="section-label good">${secNum('07a')}종합 리포트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${first.date} ~ ${last.date} (${totalDays}일)</span></div>
-      <p class="p-dim">다이어트 시작(${first.date}) 이후 전체 기간의 데이터를 실측 기준으로 자동 집계한 리포트예요. 화면을 열 때마다 최신 동기화 데이터로 다시 계산돼요.</p>
+      <div class="section-label good" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <span>${secNum('07a')}종합 리포트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${first.date} ~ ${last.date} (${totalDays}일)</span></span>
+        <span class="btn-row no-print">
+          <button class="btn btn-sm" onclick="copyReportText()">📋 텍스트로 복사</button>
+          <button class="btn btn-sm" onclick="printReport()">🖨 인쇄/PDF로 저장</button>
+        </span>
+      </div>
+      <div id="report-copy-status" style="font-size:11.5px; color:var(--c-good); margin-top:-6px; margin-bottom:10px; opacity:0; transition:opacity .3s;">복사됨</div>
+      <p class="p-dim">다이어트 시작(${first.date}) 이후 전체 기간의 데이터를 실측 기준으로 자동 집계한 리포트예요. 화면을 열 때마다 최신 동기화 데이터로 다시 계산돼요. "텍스트로 복사"를 누르면 Claude 채팅에 바로 붙여넣기 좋은 형태로 클립보드에 담겨요.</p>
       <table class="data-table" style="margin-top:12px;">
         <thead><tr><th style="text-align:left">지표</th><th>시작값(${first.date})</th><th>최신값(${last.date})</th><th>변화</th></tr></thead>
         <tbody>
@@ -3033,6 +3364,78 @@ function clearReportNote(){
   render();
 }
 
+/* =========================================================
+   클립보드 복사 / 인쇄 (2026-08-13 추가)
+   이 프로젝트의 실제 운영 방식은 "앱에서 데이터 확인 → Claude 채팅에 옮겨서 분석 요청 →
+   결과를 다시 앱에 붙여넣기"인데, 정작 앱 안에는 클립보드 복사 기능이 전혀 없어서 매번
+   화면을 보고 손으로 옮겨 적어야 했음. 여기서는 그 왕복에서 가장 자주 쓰일 두 가지
+   (종합 리포트, 오늘 하루 요약)를 텍스트로 복사하는 기능만 우선 추가함.
+========================================================= */
+function buildReportCopyText(){
+  const ib = sortedInbody();
+  if(!ib.length) return '아직 인바디 데이터가 없어 리포트를 만들 수 없어요.';
+  const first = ib[0], last = ib[ib.length-1];
+  const totalDays = Math.round((new Date(last.date+'T00:00:00')-new Date(first.date+'T00:00:00'))/86400000);
+  const assess = computeMuscleAssessment(first, last);
+  const mealCutoff = (() => { const d = new Date(todayISO()+'T00:00:00'); d.setDate(d.getDate()-14); return toLocalISO(d); })();
+  const recentMeals = state.meals.filter(m=>m.date>=mealCutoff);
+  const avgCal = recentMeals.length ? Math.round(recentMeals.reduce((s,m)=>s+(m.calories||0),0)/recentMeals.length) : null;
+  const avgProt = recentMeals.length ? Math.round(recentMeals.reduce((s,m)=>s+(m.protein||0),0)/recentMeals.length) : null;
+  const avgCarb = recentMeals.length ? Math.round(recentMeals.reduce((s,m)=>s+(m.carbs||0),0)/recentMeals.length) : null;
+  const strengthSessions = state.workouts.filter(w => inferPartsForEntry(w).some(p=>BODY_PARTS.includes(p))).length;
+  const latestDose = state.mounjaroDoses[state.mounjaroDoses.length-1];
+
+  const lines = [];
+  lines.push(`[바디 리컴포지션 종합 리포트] ${first.date} ~ ${last.date} (${totalDays}일)`);
+  lines.push(`체중 ${fmt(first.weight)}kg → ${fmt(last.weight)}kg (${fmt(last.weight-first.weight,1)}kg)`);
+  lines.push(`골격근량 ${fmt(first.muscle)}kg → ${fmt(last.muscle)}kg (${fmt(last.muscle-first.muscle,1)}kg)`);
+  lines.push(`체지방량 ${fmt(first.fat)}kg → ${fmt(last.fat)}kg (${fmt(last.fat-first.fat,1)}kg)`);
+  lines.push(`체지방률 ${fmt(first.fatPct)}% → ${fmt(last.fatPct)}% (${fmt(last.fatPct-first.fatPct,1)}%p)`);
+  lines.push(`골격근 손실비율(SURMOUNT-1 0.51 기준 참고): ${assess.ratio!==null?fmt(assess.ratio,2):'—'} — ${assess.label}`);
+  lines.push(`전체기간 근력 세션 수: ${strengthSessions}회`);
+  if(avgCal!==null) lines.push(`최근 14일 평균 섭취: 칼로리 ${avgCal}kcal / 단백질 ${avgProt}g / 탄수화물 ${avgCarb}g`);
+  if(latestDose) lines.push(`마운자로: ${latestDose.cycle}차(${latestDose.date}, ${latestDose.dose}) 완료`);
+  if(state.reportNote) lines.push(`\n[직전 Claude 종합 리포트 메모]\n${state.reportNote.text}`);
+  lines.push(`\n(바디 리컴포지션 앱에서 자동 생성 · ${todayISO()})`);
+  return lines.join('\n');
+}
+function buildTodayCopyText(){
+  const d = todayISO();
+  const ib = state.inbody.find(r=>r.date===d);
+  const meal = state.meals.find(m=>m.date===d);
+  const workouts = state.workouts.filter(w=>w.date===d);
+  const lines = [`[오늘(${d}) 데이터 요약]`];
+  lines.push(ib ? `인바디: 체중 ${fmt(ib.weight)}kg · 골격근 ${fmt(ib.muscle)}kg · 체지방 ${fmt(ib.fat)}kg(${fmt(ib.fatPct)}%) · BMR ${ib.bmr??'—'}kcal` : '인바디: 오늘 기록 없음');
+  lines.push(meal ? `식단: ${meal.calories}kcal · 단백질 ${meal.protein}g${meal.carbs?` · 탄수 ${meal.carbs}g`:''}${meal.specialDayType&&meal.specialDayType!=='none'?` · 특이일:${SPECIAL_DAY_LABELS[meal.specialDayType]}`:''}${meal.note?` · ${meal.note}`:''}` : '식단: 오늘 기록 없음');
+  if(workouts.length){
+    workouts.forEach(w => lines.push(`운동: ${w.name}${w.part?` (${w.part})`:''}${w.volume?` · ${w.volume}`:''}${w.calories?` · ${w.calories}kcal`:''}`));
+  } else {
+    lines.push('운동: 오늘 기록 없음');
+  }
+  lines.push(`(바디 리컴포지션 앱에서 자동 생성 · ${todayISO()})`);
+  return lines.join('\n');
+}
+async function copyTextToClipboard(text, statusElId, successMsg){
+  try{
+    await navigator.clipboard.writeText(text);
+    flashCopyStatus(statusElId, successMsg || '복사됐어요!');
+  }catch(e){
+    // 클립보드 API가 막혀있는 환경(권한 거부 등) 대비 폴백 — 텍스트를 보여줘서 수동 복사 가능하게 함
+    prompt('자동 복사가 안 됐어요. 아래 텍스트를 직접 복사하세요:', text);
+  }
+}
+function flashCopyStatus(elId, msg){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(()=>{ el.style.opacity='0'; }, 2500);
+}
+function copyReportText(){ copyTextToClipboard(buildReportCopyText(), 'report-copy-status', '복사됐어요! Claude 채팅에 붙여넣으세요.'); }
+function copyTodayText(){ copyTextToClipboard(buildTodayCopyText(), 'today-copy-status', '복사됐어요! Claude 채팅에 붙여넣으세요.'); }
+function printReport(){ window.print(); }
+
 function renderSettings(){
   const cloudUrl = localStorage.getItem(LS_KEYS.cloudurl) || '';
   const lastSync = state.lastUpdated;
@@ -3045,6 +3448,42 @@ function renderSettings(){
           <div style="font-size:12px; color:var(--text-dim); margin-top:2px;">마운자로 투여 차수별 인바디 변화 — 평소엔 숨기고 필요할 때만 켜서 보기</div>
         </div>
         <button class="btn ${state.showMounjaro?'btn-primary':''} btn-sm" onclick="toggleMounjaroTab()">${state.showMounjaro?'표시 중 · 끄기':'꺼짐 · 켜기'}</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('05a2')}화면 테마</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:12.5px; color:var(--text-dim);">기기 설정을 따르거나 직접 밝게/어둡게 고정할 수 있어요.</div>
+        <div class="theme-toggle">
+          <button class="${state.theme==='light'?'active':''}" onclick="setTheme('light')">라이트</button>
+          <button class="${state.theme==='dark'?'active':''}" onclick="setTheme('dark')">다크</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('05a3')}리마인더 알림</div>
+      <p class="p-dim">매주 목요일 마운자로 투여, 인바디 기록 공백 2일 이상일 때 앱을 열면 안내 배너가 뜹니다. 브라우저 알림 권한을 허용하면 앱을 여는 순간 시스템 알림으로도 받을 수 있어요(진짜 백그라운드 푸시는 아니고, 앱을 열 때 조건을 검사하는 방식이에요).</p>
+      <div class="btn-row" style="margin-top:8px;">
+        ${state.notifEnabled
+          ? `<button class="btn btn-sm" onclick="disableNotif()">알림 꺼짐 상태로 전환</button><span class="chip good">허용됨</span>`
+          : `<button class="btn btn-primary btn-sm" onclick="requestNotifPermission()">브라우저 알림 허용하기</button>`}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('05a4')}자주 먹는 음식 즐겨찾기</div>
+      <p class="p-dim">여기 등록해두면 식단 기록 모달에서 버튼 한 번으로 오늘 식단에 바로 합산돼요.</p>
+      ${state.favorites.length ? `<div class="fav-chip-row" style="margin-bottom:14px;">
+        ${state.favorites.map(fv => `<span class="fav-chip">${esc(fv.name)} <span class="fav-macro">${fv.calories}kcal·P${fv.protein}g·C${fv.carbs}g</span> <button class="mini-btn danger" style="margin-left:4px;" onclick="deleteFavorite('${fv.id}')">삭제</button></span>`).join('')}
+      </div>` : `<div class="sw-empty" style="margin-bottom:14px;">등록된 즐겨찾기가 없어요.</div>`}
+      <div style="display:grid; grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr auto; gap:6px; max-width:560px;">
+        <input id="fav-name-input" placeholder="이름 (예: 단백질 쉐이크)" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
+        <input id="fav-cal-input" type="number" placeholder="kcal" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <input id="fav-protein-input" type="number" placeholder="단백g" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <input id="fav-carbs-input" type="number" placeholder="탄수g" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <button class="btn btn-primary btn-sm" onclick="addFavorite()">추가</button>
       </div>
     </section>
 
@@ -3287,6 +3726,10 @@ async function cloudSync(silent){
       const data = await res.json();
       state.inbody = mergeByDate_(state.inbody, data.inbody);
       state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts);
+      // 2026-08-13 추가: 서버(Sheet)에는 워크아웃 id 컬럼이 없어서(Code.gs 변경 전까지는)
+      // pull로 들어온 항목엔 id가 비어있다. 최초 로드 때만 id를 채워주던 ensureWorkoutIds를
+      // 동기화 직후에도 다시 돌려야, 방금 pull된 항목도 수정/삭제 버튼이 정상 동작한다.
+      ensureWorkoutIds(state.workouts);
       state.meals = mergeMealsByDate_(state.meals, data.meals);
       state.steps = mergeByDate_(state.steps, data.steps);
       state.waist = mergeByDate_(state.waist, data.waist);
@@ -3424,10 +3867,23 @@ function renderModal(){
         ${field('bmr','BMR (kcal, 선택)', f.bmr)}
       ` : ''}
       ${modalState.kind==='meal' ? `
+        ${state.favorites.length ? `
+        <div class="field"><label>즐겨찾기로 빠르게 더하기</label>
+          <div class="fav-chip-row">
+            ${state.favorites.map(fv => `<button type="button" class="fav-chip" onclick="quickAddFavorite('${fv.id}','${f.date||todayISO()}')">${esc(fv.name)} <span class="fav-macro">${fv.calories}kcal·P${fv.protein}g</span></button>`).join('')}
+          </div>
+          <div class="note-box" style="margin-top:6px;">누르면 이 모달을 안 거치고 바로 해당 날짜 식단에 합산돼요. 자세히 적으려면 아래 칸을 직접 입력하세요.</div>
+        </div>` : ''}
         ${field('description','내용 요약', f.description)}
         ${field('calories','칼로리 (kcal)', f.calories)}
         ${field('protein','단백질 (g)', f.protein)}
         ${field('carbs','탄수화물 (g, 선택)', f.carbs)}
+        <div class="field"><label>특이일 (해당되면 선택)</label>
+          <div class="special-chip-row">
+            ${SPECIAL_DAY_TYPES.map(t => `<button type="button" class="special-chip ${f.specialDayType===t?'active':''}" onclick="modalState.form.specialDayType=(modalState.form.specialDayType==='${t}'?'':'${t}'); refreshModal();">${SPECIAL_DAY_LABELS[t]}</button>`).join('')}
+          </div>
+          <div class="note-box" style="margin-top:6px;">과식·음주 등을 표시해두면 다음날 대시보드에 자동으로 대처 가이드가 떠요.</div>
+        </div>
       ` : ''}
       ${modalState.kind==='workout' ? `
         <div class="ex-rows">
@@ -3509,12 +3965,16 @@ function saveRecord(){
     state.inbody = [...state.inbody.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.inbody, state.inbody);
   } else if(modalState.kind==='meal'){
-    const rec = {date:f.date, calories:num(f.calories), protein:num(f.protein), carbs:f.carbs?num(f.carbs):null, note:f.description||f.note||''};
+    // 2026-08-13 추가: 특이일 유형(과식/음주/컨디션난조/외식 등) — 기존엔 note 자유텍스트의
+    // 키워드 매칭에만 의존해 음주 등은 아예 감지가 안 됐음(computeSmartAlerts의
+    // SPECIAL_DAY_KEYWORDS 참고). 이제 구조화된 필드로 명시적으로 남긴다.
+    const rec = {date:f.date, calories:num(f.calories), protein:num(f.protein), carbs:f.carbs?num(f.carbs):null, note:f.description||f.note||'', specialDayType: f.specialDayType||null};
     state.meals = [...state.meals.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.meal, state.meals);
   } else {
     const validRows = (modalState.exerciseRows||[]).filter(r => r.name && r.name.trim());
     let rec;
+    const existingId = modalState.editId || null;
     if(validRows.length){
       const exercises = validRows.map(r => ({
         name:r.name.trim(), part:r.part||inferPartFromName(r.name), sets:num(r.sets), reps:num(r.reps), weight:num(r.weight)
@@ -3522,6 +3982,7 @@ function saveRecord(){
       const totalVol = exercises.reduce((s,e)=> s + ((e.weight||0)*(e.sets||0)*(e.reps||0)), 0);
       const parts = [...new Set(exercises.map(e=>e.part).filter(Boolean))];
       rec = {
+        id: existingId || makeId('w'),
         date:f.date,
         name: exercises.map(e=>e.name).join(' / '),
         part: parts.join('+') || (f.part||''),
@@ -3531,13 +3992,56 @@ function saveRecord(){
         exercises
       };
     } else {
-      rec = {date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||''};
+      rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||''};
     }
-    state.workouts = [...state.workouts.filter(r=>r.date!==rec.date), rec];
+    // 2026-08-13 근본 수정: 기존엔 같은 날짜의 기존 워크아웃 기록을 전부 지우고 새 항목
+    // 하나로 바꿔버려서, 하루에 두 번째 운동(예: 오전 근력 + 저녁 유산소)을 모달로 추가하면
+    // 첫 번째 기록이 조용히 사라지는 데이터 유실 버그가 있었다(분석 로직은 하루 여러 건을
+    // 전제로 설계돼 있었는데 저장 로직만 1건 가정이었음). 이제 id 기준으로 "그 항목만"
+    // 교체(수정)하거나, id가 없으면 새 항목으로 추가한다 — 같은 날짜의 다른 항목은 안 건드림.
+    if(existingId){
+      state.workouts = state.workouts.map(r => r.id===existingId ? rec : r);
+    } else {
+      state.workouts = [...state.workouts, rec];
+    }
     saveArr(LS_KEYS.workout, state.workouts);
   }
   markUpdated();
   closeModal();
+}
+// 2026-08-13 추가: 즐겨찾기 음식을 오늘 식단에 원클릭으로 합산. 식단은 날짜당 1건(하루 총합)
+// 구조라, 모달을 열지 않고 오늘 레코드를 찾아 없으면 새로 만들고 있으면 매크로만 더한다.
+function quickAddFavorite(favId, targetDate){
+  const fav = state.favorites.find(f=>f.id===favId);
+  if(!fav) return;
+  const date = targetDate || todayISO();
+  const existing = state.meals.find(m=>m.date===date);
+  if(existing){
+    existing.calories = (existing.calories||0) + (fav.calories||0);
+    existing.protein = (existing.protein||0) + (fav.protein||0);
+    existing.carbs = (existing.carbs||0) + (fav.carbs||0);
+    existing.note = existing.note ? `${existing.note} · ${fav.name}` : fav.name;
+  } else {
+    state.meals.push({date, calories:fav.calories||0, protein:fav.protein||0, carbs:fav.carbs||0, note:fav.name, specialDayType:null});
+  }
+  saveArr(LS_KEYS.meal, state.meals);
+  markUpdated();
+  render();
+}
+function addFavorite(){
+  const name = document.getElementById('fav-name-input').value.trim();
+  const cal = Number(document.getElementById('fav-cal-input').value);
+  const protein = Number(document.getElementById('fav-protein-input').value)||0;
+  const carbs = Number(document.getElementById('fav-carbs-input').value)||0;
+  if(!name || !cal){ alert('이름과 칼로리는 필수예요.'); return; }
+  state.favorites.push({id:makeId('fav'), name, calories:cal, protein, carbs});
+  saveArr(LS_KEYS.favorites, state.favorites);
+  render();
+}
+function deleteFavorite(id){
+  state.favorites = state.favorites.filter(f=>f.id!==id);
+  saveArr(LS_KEYS.favorites, state.favorites);
+  render();
 }
 function inferPartFromName(name){
   if(!name) return '';
