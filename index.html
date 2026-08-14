@@ -243,11 +243,6 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .modal-head{display:flex; justify-content:space-between; align-items:center; padding:18px 20px; border-bottom:1px solid var(--border-soft);}
 .modal-head h3{font-family:var(--font-display); font-size:17px; font-weight:700;}
 .modal-body{padding:20px; display:flex; flex-direction:column; gap:13px;}
-.kind-tabs{display:flex; gap:6px;}
-.kind-tabs button{flex:1; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); font-size:13px; font-weight:600;}
-.kind-tabs button.active{background:var(--eyebrow-bg); border-color:var(--c-gauge-from); color:var(--accent-strong-text);}
-.dropzone{border:1.5px dashed var(--border); border-radius:var(--radius); padding:32px 10px; text-align:center; color:var(--text-dim); font-size:13px; font-weight:600; display:flex; flex-direction:column; align-items:center; gap:9px; cursor:pointer;}
-.dropzone:hover{border-color:var(--c-gauge-from); color:var(--accent-strong-text); background:var(--panel-alt);}
 .field{display:flex; flex-direction:column; gap:5px;}
 .field label{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-faint);}
 .field input{background:var(--panel-alt); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-size:13.5px; font-family:var(--font-mono);}
@@ -255,9 +250,6 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .btn-save{background:var(--brand-mark-bg); color:var(--btn-primary-fg); border:none; border-radius:var(--radius-sm); padding:12px; font-weight:700; font-size:14px; box-shadow:var(--shadow-glow);}
 .link-btn{background:none; border:none; color:var(--text-dim); text-decoration:underline; font-size:12.5px; text-underline-offset:3px; font-weight:600;}
 .link-btn:hover{color:var(--accent-strong-text);}
-.spin{animation:spin .9s linear infinite; display:inline-block; color:var(--c-gauge-from);}
-@keyframes spin{to{transform:rotate(360deg);}}
-.loading-box{display:flex; flex-direction:column; align-items:center; gap:10px; padding:36px 0; color:var(--text-dim);}
 .msg-error{color:var(--c-warn); font-size:13px; font-weight:600;}
 .msg-good{color:var(--c-good); font-size:13px; font-weight:600;}
 .note-box{font-size:11.5px; color:var(--text-dim); line-height:1.65; background:var(--panel-alt); border-radius:var(--radius-sm); padding:12px 14px;}
@@ -463,7 +455,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-14-a (머니트레일 앱 벤치마킹 8개: 삭제tombstone동기화/DATA_PATCHES선언적보정/동기화전후축소경고/가져오기취소백업/중복운동정리/일괄붙여넣기입력/인바디표화살표키이동/CSV내보내기+진단패널+항목별숨기기+SURMOUNT비교카드) — 이전: 2026-08-13-a(10개 신규기능: 운동다중저장버그수정/레코드삭제수정/특이일플래그+보정가이드/리마인더/클립보드복사/부작용로그/즐겨찾기식단/리포트인쇄/다크모드/허리둘레동기화점검)';
+const APP_BUILD_VERSION = '2026-08-14-b (화면테마 토글을 설정탭→상단 헤더로 이동, 안쓰는 "기록 추가"(사진인식 add-flow) 기능 전체 삭제 — 기록 수정은 각 표/카드의 편집 버튼으로) — 이전: 2026-08-14-a(머니트레일 앱 벤치마킹 8개: 삭제tombstone동기화/DATA_PATCHES선언적보정/동기화전후축소경고/가져오기취소백업/중복운동정리/일괄붙여넣기입력/인바디표화살표키이동/CSV내보내기+진단패널+항목별숨기기+SURMOUNT비교카드)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -938,7 +930,7 @@ const SEED_SIDE_EFFECTS = [];
 const SEED_FAVORITES = [
   {id:'fav_seed_1', name:'단백질 쉐이크 2스쿱', calories:240, protein:48, carbs:6},
 ];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1',
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1',
   // 2026-08-14 추가(머니트레일 앱 벤치마킹): 삭제기록(tombstone), 데이터 패치 로그, 동기화 직전 백업(가져오기 취소용)
   deletedIds:'brc_deletedids_v1', patchlog:'brc_patchlog_v1', presyncbackup:'brc_presyncbackup_v1'};
 // 2026-08-13 추가: 로컬 고유 id 생성기 — 운동/부작용/즐겨찾기처럼 "하루에 여러 건"이 가능한
@@ -1469,46 +1461,6 @@ function gaugeSVG(current, start, goals){
 }
 
 /* =========================================================
-   Claude Vision 사진 인식 (사용자 자신의 API 키 필요)
-========================================================= */
-function fileToBase64(file){
-  return new Promise((resolve,reject)=>{
-    const r = new FileReader();
-    r.onload = () => resolve(r.result.split(',')[1]);
-    r.onerror = () => reject(new Error('파일을 읽지 못했습니다'));
-    r.readAsDataURL(file);
-  });
-}
-async function recognizeImage(base64, mediaType, kind){
-  const apiKey = localStorage.getItem(LS_KEYS.apikey);
-  if(!apiKey) throw new Error('NO_KEY');
-  const prompts = {
-    inbody: `이 이미지는 InBody(체성분 분석) 결과지 사진입니다. 다음 JSON 형식으로만 답하세요. 다른 텍스트, 설명, 코드블록 표시 없이 순수 JSON만 출력하세요.
-{"date":"YYYY-MM-DD 또는 null","weight":숫자,"muscle":숫자,"fat":숫자,"fatPct":숫자,"bmr":숫자 또는 null}
-읽을 수 없는 항목은 null. 절대 추측 금지.`,
-    meal: `이 이미지는 식사 사진 또는 영양정보 화면입니다. 다음 JSON 형식으로만 답하세요. 다른 텍스트 없이 순수 JSON만 출력하세요.
-{"description":"요약","calories":숫자 또는 null,"protein":숫자 또는 null,"carbs":숫자 또는 null}
-정확히 알 수 없으면 null, 추측 금지. 가려지거나 검게 칠해진 항목은 무시.`,
-    workout: `이 이미지는 운동 기록 사진입니다. 다음 JSON 형식으로만 답하세요. 다른 텍스트 없이 순수 JSON만 출력하세요.
-{"name":"요약","part":"부위","volume":"총볼륨 문자열 또는 null","calories":숫자 또는 null}
-확인 불가 값은 null.`
-  };
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{ 'content-type':'application/json', 'x-api-key': apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-    body: JSON.stringify({ model:'claude-sonnet-5', max_tokens:1000, messages:[{role:'user', content:[
-      {type:'image', source:{type:'base64', media_type:mediaType, data:base64}},
-      {type:'text', text:prompts[kind]}
-    ]}]})
-  });
-  const data = await res.json();
-  if(data.error) throw new Error(data.error.message || '인식 실패');
-  const text = (data.content||[]).map(b=>b.text||'').join('\n');
-  const clean = text.replace(/```json|```/g,'').trim();
-  return JSON.parse(clean);
-}
-
-/* =========================================================
    렌더링
 ========================================================= */
 function HEADER_TEMPLATE(){
@@ -1522,10 +1474,11 @@ function HEADER_TEMPLATE(){
       </div>
       <div class="topbar-actions">
         <span class="${topSyncBadgeClass_()}" id="top-sync-badge"><span class="sync-dot"></span><span id="top-sync-badge-text">${topSyncBadgeText_()}</span></span>
-        <button class="btn btn-primary" onclick="openModal()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
-          기록 추가
-        </button>
+        <!-- 2026-08-14 변경: "기록 추가" 버튼(사용 안 함)을 없애고 그 자리에 화면 테마 토글을 배치 -->
+        <div class="theme-toggle" title="화면 테마">
+          <button class="${state.theme==='light'?'active':''}" onclick="setTheme('light')">☀ 라이트</button>
+          <button class="${state.theme==='dark'?'active':''}" onclick="setTheme('dark')">☾ 다크</button>
+        </div>
       </div>
     </div>
     <nav class="tabs">
@@ -1566,7 +1519,6 @@ function render(){
 }
 function tabBtn(key,label){ return `<button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>`; }
 function setTab(t){ state.tab=t; render(); }
-function openModal(kind){ modalState.open=true; modalState.kind=kind||'inbody'; modalState.status='idle'; modalState.form={date:todayISO()}; modalState.error=''; modalState.editId=null; modalState.exerciseRows = modalState.kind==='workout' ? [{}] : []; render(); }
 function closeModal(){ modalState.open=false; render(); }
 
 // 2026-08-13 추가: 기존 레코드를 수정 모드로 모달에 불러오기(인바디/식단/운동 공통).
@@ -2613,7 +2565,7 @@ function renderPlanDetailPanel(date, workouts){
 
 function renderWorkoutTab(){
   const workouts = state.workouts;
-  if(workouts.length===0) return `<div class="empty-state">아직 운동 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
+  if(workouts.length===0) return `<div class="empty-state">아직 운동 기록이 없습니다. 설정 탭의 '일괄 붙여넣기 입력'으로 기록을 추가해보세요.</div>`;
 
   const kpis = computeWorkoutKPICards(workouts);
   const insights = computeWorkoutInsights(workouts);
@@ -2807,9 +2759,8 @@ function renderWorkoutTab(){
     </section>
 
     <section>
-      <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="section-label">
         <span>${secNum('W5')}운동 기록</span>
-        <button class="btn btn-primary btn-sm" onclick="openModal('workout')">+ 운동 기록 추가</button>
       </div>
       <div class="card" style="padding:4px 16px;">
         ${(state.expandedTables['workoutList'] ? sortedW : sortedW.slice(0,30)).map(w => workoutRow(w)).join('')}
@@ -2835,7 +2786,7 @@ function renderDashboard(){
   const {insights, last, ma} = computeInsights();
   // 2026-08-04: 동기화 표시가 대시보드 전용 배너 → 모든 탭 공통 상단바 배지로 바뀌면서
   // 여기서 배너를 그릴 필요가 없어짐(HEADER_TEMPLATE의 top-sync-badge가 그 역할을 대신함).
-  if(!last) return `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
+  if(!last) return `<div class="empty-state">아직 기록이 없습니다. 설정 탭의 '일괄 붙여넣기 입력'으로 기록을 추가해보세요.</div>`;
   const ib = sortedInbody();
   const recentMA = ma.slice(-7);
   const maTrend7 = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : null;
@@ -3161,7 +3112,7 @@ function renderLog(){
   const groupByDate = arr => arr.reduce((acc,r)=>{ (acc[r.date]=acc[r.date]||[]).push(r); return acc; }, {});
   const ib = byDate(state.inbody), wk = groupByDate(state.workouts), ml = byDate(state.meals);
   const dates = [...new Set([...state.inbody.map(r=>r.date), ...state.workouts.map(r=>r.date), ...state.meals.map(r=>r.date)])].sort((a,b)=>b.localeCompare(a));
-  if(dates.length===0) return `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
+  if(dates.length===0) return `<div class="empty-state">아직 기록이 없습니다. 설정 탭의 '일괄 붙여넣기 입력'으로 기록을 추가해보세요.</div>`;
 
   const ibSorted = sortedInbody();
   const prevOf = (date) => { const idx = ibSorted.findIndex(r=>r.date===date); return idx>0 ? ibSorted[idx-1] : null; };
@@ -3791,17 +3742,6 @@ function renderSettings(){
     </section>
 
     <section class="card">
-      <div class="section-label good">${secNum('05a2')}화면 테마</div>
-      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-        <div style="font-size:12.5px; color:var(--text-dim);">기기 설정을 따르거나 직접 밝게/어둡게 고정할 수 있어요.</div>
-        <div class="theme-toggle">
-          <button class="${state.theme==='light'?'active':''}" onclick="setTheme('light')">라이트</button>
-          <button class="${state.theme==='dark'?'active':''}" onclick="setTheme('dark')">다크</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
       <div class="section-label good">${secNum('05a3')}리마인더 알림</div>
       <p class="p-dim">매주 목요일 마운자로 투여, 인바디 기록 공백 2일 이상일 때 앱을 열면 안내 배너가 뜹니다. 브라우저 알림 권한을 허용하면 앱을 여는 순간 시스템 알림으로도 받을 수 있어요(진짜 백그라운드 푸시는 아니고, 앱을 열 때 조건을 검사하는 방식이에요).</p>
       <div class="btn-row" style="margin-top:8px;">
@@ -4284,32 +4224,16 @@ function saveCloudUrl(){
 }
 
 /* =========================================================
-   기록 추가 모달
+   기록 수정 모달 (2026-08-14: 사진 자동 인식 "기록 추가"는 사용하지 않아 삭제,
+   openEditModal로 진입하는 기존 기록 수정 전용으로 단순화)
 ========================================================= */
-let modalState = {open:false, kind:'inbody', status:'idle', form:{}, error:''};
+let modalState = {open:false, kind:'inbody', status:'manual', form:{}, error:''};
 
 function renderModal(){
   const kindLabel = {inbody:'인바디', meal:'식단', workout:'운동'}[modalState.kind];
-  let body = '';
-  if(modalState.status==='idle'){
-    body = `
-      <label class="dropzone" for="file-input">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.2"/><path d="M8 6l1.2-2h5.6L16 6"/></svg>
-        <span>${kindLabel} 사진 업로드 (자동 인식)</span>
-      </label>
-      <input id="file-input" type="file" accept="image/*" style="display:none" onchange="handleFile(this.files[0])">
-      <button class="link-btn" onclick="setManual()">사진 없이 직접 입력</button>
-    `;
-  } else if(modalState.status==='loading'){
-    body = `<div class="loading-box">
-      <span class="spin"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9"/></svg></span>
-      사진을 분석하는 중...
-    </div>`;
-  } else if(modalState.status==='review' || modalState.status==='manual'){
-    const f = modalState.form;
-    body = `
+  const f = modalState.form;
+  const body = `
       ${modalState.error ? `<div class="msg-error">${esc(modalState.error)}</div>` : ''}
-      ${modalState.status==='review' ? `<div class="msg-good">인식 결과를 확인하고 저장하세요.</div>` : ''}
       ${field('date','날짜 (YYYY-MM-DD)', f.date)}
       ${modalState.kind==='inbody' ? `
         ${field('weight','체중 (kg)', f.weight)}
@@ -4363,18 +4287,14 @@ function renderModal(){
       ` : ''}
       <button class="btn-save" onclick="saveRecord()">저장</button>
     `;
-  }
   document.body.insertAdjacentHTML('beforeend', `
     <div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this) closeModal()">
       <div class="modal">
         <div class="modal-head">
-          <h3>기록 추가</h3>
+          <h3>${kindLabel} 기록 수정</h3>
           <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
         </div>
         <div class="modal-body">
-          <div class="kind-tabs">
-            ${['inbody','meal','workout'].map(k=>`<button class="${modalState.kind===k?'active':''}" onclick="setKind('${k}')">${({inbody:'인바디',meal:'식단',workout:'운동'})[k]}</button>`).join('')}
-          </div>
           ${body}
         </div>
       </div>
@@ -4384,30 +4304,10 @@ function renderModal(){
 function field(key,label,val){
   return `<div class="field"><label>${label}</label><input data-field="${key}" value="${val!=null?esc(val):''}" oninput="modalState.form['${key}']=this.value"></div>`;
 }
-function setKind(k){ modalState.kind=k; modalState.status='idle'; modalState.form={date:todayISO()}; modalState.error=''; modalState.exerciseRows = k==='workout' ? [{}] : []; refreshModal(); }
-function setManual(){ modalState.status='manual'; modalState.form={date:todayISO()}; if(modalState.kind==='workout' && !modalState.exerciseRows) modalState.exerciseRows=[{}]; refreshModal(); }
 function addExRow(){ modalState.exerciseRows = modalState.exerciseRows||[]; modalState.exerciseRows.push({}); refreshModal(); }
 function removeExRow(i){ modalState.exerciseRows.splice(i,1); refreshModal(); }
 function updateExRow(i,field,val){ modalState.exerciseRows[i][field] = val; }
 function refreshModal(){ document.getElementById('modal-backdrop')?.remove(); renderModal(); }
-
-async function handleFile(file){
-  if(!file) return;
-  if(!localStorage.getItem(LS_KEYS.apikey)){
-    modalState.status='manual'; modalState.error='사진 자동 인식은 지원하지 않아요. 아래에 값을 직접 입력해주세요.'; modalState.form={date:todayISO()};
-    refreshModal(); return;
-  }
-  modalState.status='loading'; refreshModal();
-  try{
-    const base64 = await fileToBase64(file);
-    const result = await recognizeImage(base64, file.type||'image/jpeg', modalState.kind);
-    modalState.form = {date: result.date || todayISO(), ...result};
-    modalState.status='review'; modalState.error='';
-  }catch(e){
-    modalState.status='manual'; modalState.error='이미지 인식에 실패했습니다. 값을 직접 입력해주세요.'; modalState.form={date:todayISO()};
-  }
-  refreshModal();
-}
 
 function saveRecord(){
   const f = modalState.form;
