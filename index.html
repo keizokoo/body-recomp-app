@@ -463,7 +463,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-14-a (버그수정: 즐겨찾기 퀵애드 입력폼이 모바일 좁은 화면에서 오른쪽으로 넘치던 문제 수정)';
+const APP_BUILD_VERSION = '2026-08-14-a (머니트레일 앱 벤치마킹 8개: 삭제tombstone동기화/DATA_PATCHES선언적보정/동기화전후축소경고/가져오기취소백업/중복운동정리/일괄붙여넣기입력/인바디표화살표키이동/CSV내보내기+진단패널+항목별숨기기+SURMOUNT비교카드) — 이전: 2026-08-13-a(10개 신규기능: 운동다중저장버그수정/레코드삭제수정/특이일플래그+보정가이드/리마인더/클립보드복사/부작용로그/즐겨찾기식단/리포트인쇄/다크모드/허리둘레동기화점검)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -938,7 +938,9 @@ const SEED_SIDE_EFFECTS = [];
 const SEED_FAVORITES = [
   {id:'fav_seed_1', name:'단백질 쉐이크 2스쿱', calories:240, protein:48, carbs:6},
 ];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1'};
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1',
+  // 2026-08-14 추가(머니트레일 앱 벤치마킹): 삭제기록(tombstone), 데이터 패치 로그, 동기화 직전 백업(가져오기 취소용)
+  deletedIds:'brc_deletedids_v1', patchlog:'brc_patchlog_v1', presyncbackup:'brc_presyncbackup_v1'};
 // 2026-08-13 추가: 로컬 고유 id 생성기 — 운동/부작용/즐겨찾기처럼 "하루에 여러 건"이 가능한
 // 레코드를 날짜만으로 식별하면(기존 워크아웃 저장 로직처럼) 같은 날 두 번째 항목을 추가할 때
 // 첫 번째 항목이 통째로 사라지는 버그가 생긴다. 이를 막기 위해 항목마다 안정적인 id를 부여한다.
@@ -959,6 +961,18 @@ function loadArr(key, seed){
   }catch(e){ return seed; }
 }
 function saveArr(key, arr){ try{ localStorage.setItem(key, JSON.stringify(arr)); }catch(e){ console.error('저장 실패', e); } }
+// 2026-08-14 추가(머니트레일 벤치마킹): 배열이 아니라 객체(맵)를 저장/로드하는 범용 헬퍼.
+// deletedIds({inbody:{date:isoTime,...}, workout:{id:isoTime,...}, ...})나 패치 로그처럼
+// "배열이 아닌 JSON"을 다룰 때 loadArr/saveArr 대신 이걸 쓴다(구조는 동일, 이름만 명확히 구분).
+function loadObj(key, seed){
+  try{
+    const raw = localStorage.getItem(key);
+    if(raw) return JSON.parse(raw);
+    localStorage.setItem(key, JSON.stringify(seed));
+    return seed;
+  }catch(e){ return seed; }
+}
+function saveObj(key, obj){ try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){ console.error('저장 실패', e); } }
 function addWaistEntry(){
   const dateEl = document.getElementById('waistDateInput');
   const valEl = document.getElementById('waistValueInput');
@@ -966,9 +980,10 @@ function addWaistEntry(){
   const val = parseFloat(valEl.value);
   if(!date || isNaN(val) || val<=0){ alert('날짜와 허리둘레(cm)를 정확히 입력해주세요.'); return; }
   state.waist = state.waist.filter(w=>w.date!==date);
-  state.waist.push({date, waist: val});
+  state.waist.push({date, waist: val, _editedAt: new Date().toISOString()});
   state.waist.sort((a,b)=>a.date.localeCompare(b.date));
   saveArr(LS_KEYS.waist, state.waist);
+  clearTombstoneIfPresent_('waist', date);
   markUpdated();
   valEl.value = '';
   render();
@@ -976,6 +991,7 @@ function addWaistEntry(){
 function deleteWaistEntry(date){
   state.waist = state.waist.filter(w=>w.date!==date);
   saveArr(LS_KEYS.waist, state.waist);
+  markDeleted_('waist', date); // 2026-08-14: tombstone — 다음 클라우드 동기화 때 서버 옛 값으로 되살아나지 않도록
   render();
 }
 function loadAiNote(){
@@ -997,6 +1013,22 @@ function ensureWorkoutIds(arr){
   let changed = false;
   arr.forEach((w,i) => { if(!w.id){ w.id = `w_legacy_${i}`; changed = true; } });
   return {arr, changed};
+}
+// 2026-08-14 추가: w_legacy_N 형태의 id는 "배열에서 몇 번째냐"로 매길 뿐이라, 병합으로 배열
+// 순서가 바뀌면 같은 레코드도 다른 id를 받을 수 있다(불안정). tombstone·축소경고처럼 "이 레코드가
+// 그 레코드와 같은가"를 여러 동기화에 걸쳐 안정적으로 판별해야 하는 곳에서는, legacy id 대신
+// (날짜+이름) 조합처럼 순서와 무관한 키를 대신 쓴다. makeId()로 만든 진짜 id는 그대로 사용(안정적).
+function workoutKey_(r){
+  if(r.id && !String(r.id).startsWith('w_legacy_')) return r.id;
+  return `${r.date}::${(r.name||'').trim().toLowerCase().replace(/\s+/g,'')}`;
+}
+// tombstone은 오직 "진짜 고유id(makeId 발급)"일 때만 남긴다. legacy id는 (날짜+이름)이 같으면
+// 여러 레코드가 같은 키를 공유할 수 있어서(예: 중복정리 후 남긴 레코드와 방금 지운 레코드가
+// 같은 키), 그 키로 tombstone을 남기면 살아남은 레코드까지 다음 동기화 때 같이 사라질 위험이
+// 있다. 그래서 legacy id 레코드를 지울 때는 tombstone 없이 로컬 제거만 한다(어차피 seed 시절의
+// 오래된 기록이라 최근 동기화 윈도우 밖일 가능성이 높음).
+function markDeletedWorkoutSafe_(r){
+  if(r.id && !String(r.id).startsWith('w_legacy_')) markDeleted_('workout', r.id);
 }
 
 let state = {
@@ -1021,12 +1053,95 @@ let state = {
   expandedTables: {},
   theme: localStorage.getItem(LS_KEYS.theme) || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
   notifEnabled: localStorage.getItem(LS_KEYS.notif) === '1',
+  // 2026-08-14 추가(머니트레일 벤치마킹 — tombstone 삭제 동기화): 항목을 삭제한 "시각"을
+  // 종류별로 기록. 클라우드 풀(pull) 병합 시 이 시각 이후 다시 만들어지지 않은 항목이면
+  // 서버에 남아있던 옛 값으로 되살아나지 않도록 걸러낸다. { inbody:{date:iso}, meal:{date:iso},
+  // steps:{date:iso}, waist:{date:iso}, workout:{id:iso} } 구조.
+  deletedIds: loadObj(LS_KEYS.deletedIds, {inbody:{}, meal:{}, steps:{}, waist:{}, workout:{}}),
+  lastSyncShrinkWarning: (()=>{ try{ const r = localStorage.getItem('brc_shrinkwarn_v1'); return r ? JSON.parse(r) : null; }catch(e){ return null; } })(),
 };
 {
   const fixed = ensureWorkoutIds(state.workouts);
   if(fixed.changed) saveArr(LS_KEYS.workout, state.workouts);
 }
 function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); }
+
+/* =========================================================
+   삭제 tombstone + 데이터 패치 시스템 (2026-08-14, 머니트레일 벤치마킹)
+   ---------------------------------------------------------
+   [배경] 이 문서에 정리된 반복 실수 이력과 머니트레일 앱이 먼저 겪은 문제가 같은 유형이었음:
+   (1) 로컬에서 삭제해도 클라우드 동기화(pull) 때 서버의 옛 값이 되살아나는 문제,
+   (2) 데이터 오류를 고칠 때마다 전용 함수를 새로 만들어 대응하다 반영을 잊는 문제.
+   머니트레일은 이 둘을 각각 tombstone 병합과 DATA_PATCHES 선언적 시스템으로 해결했고,
+   이 앱에도 같은 패턴을 이식한다.
+   [주의] 서버(Google Apps Script/Sheet) 쪽 코드(Code.gs)는 이 세션에 없어 함께 수정할 수
+   없다. 아래 tombstone은 "이 기기에서 삭제한 항목이 재동기화 때 이 기기 화면에 다시
+   나타나는 것"과 "최근 14일 이내 항목이면 다음 push 때 서버에서도 사라지는 것"까지는
+   해결하지만, 14일보다 오래된 기록을 삭제한 경우 서버 원본 정리는 여전히 Sheet에서 직접
+   해야 한다(기존 운영규칙과 동일). ========================================================= */
+function markDeleted_(target, key){
+  if(!state.deletedIds[target]) state.deletedIds[target] = {};
+  state.deletedIds[target][key] = new Date().toISOString();
+  saveObj(LS_KEYS.deletedIds, state.deletedIds);
+}
+// 병합된 배열에서, tombstone된 키인데 그 이후 다시 생성/수정(_editedAt이 더 최신)된 적이
+// 없으면 제거한다. keyFn: 레코드→키(날짜 또는 id) 변환 함수.
+function applyTombstone_(mergedArr, keyFn, deletedMap){
+  if(!deletedMap) return mergedArr;
+  return mergedArr.filter(r=>{
+    const delAt = deletedMap[keyFn(r)];
+    if(!delAt) return true;
+    return !!(r._editedAt && r._editedAt > delAt);
+  });
+}
+// 삭제 이후 같은 키로 다시 저장하면(재입력 등) 그 tombstone은 더 이상 유효하지 않으므로 정리.
+function clearTombstoneIfPresent_(target, key){
+  if(state.deletedIds[target] && state.deletedIds[target][key]){
+    delete state.deletedIds[target][key];
+    saveObj(LS_KEYS.deletedIds, state.deletedIds);
+  }
+}
+
+// ---------- 선언적 데이터 보정 시스템 (DATA_PATCHES) ----------
+// 데이터 오류/누락을 발견할 때마다 전용 함수를 새로 만드는 대신, 아래 배열에 항목만
+// 추가하면 된다. 적용 시점은 (1)앱 로드 직후 (2)클라우드 pull 병합 직후, 이 2곳으로 고정.
+// 모든 패치는 "이미 올바르면 아무 것도 하지 않는" 멱등 방식이라 반복 적용해도 안전하다.
+// 사용 예:
+//   {type:'fixField', target:'inbody', match:{date:'2026-07-20'}, field:'weight', value:75.2}
+//   {type:'addIfMissing', target:'meal', match:{date:'2026-07-20'}, record:{date:'2026-07-20', calories:1900, protein:150, carbs:170, note:'수동보정'}}
+//   {type:'removeIfExists', target:'workout', match:{id:'w_legacy_12'}}
+const DATA_PATCHES = [
+];
+const DATA_TARGET_ARR_ = {
+  inbody:()=>state.inbody, workout:()=>state.workouts, meal:()=>state.meals,
+  steps:()=>state.steps, waist:()=>state.waist,
+};
+const DATA_TARGET_KEY_ = {inbody:LS_KEYS.inbody, workout:LS_KEYS.workout, meal:LS_KEYS.meal, steps:LS_KEYS.steps, waist:LS_KEYS.waist};
+function applyDataPatches_(){
+  let changed = 0;
+  const touched = new Set();
+  DATA_PATCHES.forEach(p=>{
+    const getArr = DATA_TARGET_ARR_[p.target];
+    if(!getArr) return;
+    const arr = getArr();
+    const matchFn = r => Object.keys(p.match||{}).every(k => r[k]===p.match[k]);
+    if(p.type==='fixField'){
+      const rec = arr.find(matchFn);
+      if(rec && rec[p.field] !== p.value){ rec[p.field] = p.value; rec._editedAt = new Date().toISOString(); changed++; touched.add(p.target); }
+    } else if(p.type==='addIfMissing'){
+      if(!arr.find(matchFn)){ arr.push({...p.record, _editedAt: new Date().toISOString()}); changed++; touched.add(p.target); }
+    } else if(p.type==='removeIfExists'){
+      const idx = arr.findIndex(matchFn);
+      if(idx>=0){ arr.splice(idx,1); changed++; touched.add(p.target); }
+    }
+  });
+  touched.forEach(t => saveArr(DATA_TARGET_KEY_[t], DATA_TARGET_ARR_[t]()));
+  try{
+    saveObj(LS_KEYS.patchlog, {appliedAt:new Date().toISOString(), changedThisRun:changed, totalPatchesDefined:DATA_PATCHES.length});
+  }catch(e){}
+  return changed;
+}
+applyDataPatches_(); // (1) 로드 직후 적용 — cloudSync() 안에서 (2) pull 병합 직후에도 다시 호출됨
 function setTheme(t){
   state.theme = t;
   try{ localStorage.setItem(LS_KEYS.theme, t); }catch(e){}
@@ -1484,6 +1599,7 @@ function deleteInbodyEntry(date){
   if(!confirm(`${date} 인바디 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
   state.inbody = state.inbody.filter(r=>r.date!==date);
   saveArr(LS_KEYS.inbody, state.inbody);
+  markDeleted_('inbody', date); // 2026-08-14: tombstone
   markUpdated();
   render();
 }
@@ -1491,14 +1607,54 @@ function deleteMealEntry(date){
   if(!confirm(`${date} 식단 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
   state.meals = state.meals.filter(r=>r.date!==date);
   saveArr(LS_KEYS.meal, state.meals);
+  markDeleted_('meal', date); // 2026-08-14: tombstone
   markUpdated();
   render();
 }
 function deleteWorkoutEntry(id){
   if(!confirm('이 운동 기록을 삭제할까요? 되돌릴 수 없습니다.')) return;
+  const rec = state.workouts.find(r=>r.id===id);
   state.workouts = state.workouts.filter(r=>r.id!==id);
   saveArr(LS_KEYS.workout, state.workouts);
+  if(rec) markDeletedWorkoutSafe_(rec); // 2026-08-14: tombstone (진짜 id일 때만 — legacy id 충돌 방지)
   markUpdated();
+  render();
+}
+// =========================================================
+// 중복 운동기록 자동 탐지/정리 (2026-08-14, 머니트레일 벤치마킹)
+// ---------------------------------------------------------
+// 이 문서에 기록된 실제 사고들(2026-07-26 워크아웃 중복, 07-11/07-13 이름 표기만 다른
+// 중복행)과 같은 유형 — "같은 날짜 + 같은 운동 이름"이면 중복 후보로 본다(이름은 공백을
+// 정리하고 소문자로 비교해 사소한 표기 차이는 허용). 여러 건이 겹치면, 정보가 더 많은 쪽
+// (volume이 채워진 쪽 → 더 최근에 수정된 쪽)을 남기고 나머지는 tombstone 처리로 제거한다.
+// =========================================================
+function findDuplicateWorkoutGroups_(){
+  const groups = {};
+  state.workouts.forEach(w=>{
+    const key = `${w.date}::${(w.name||'').trim().toLowerCase().replace(/\s+/g,'')}`;
+    (groups[key] = groups[key]||[]).push(w);
+  });
+  return Object.values(groups).filter(g=>g.length>1);
+}
+function cleanupDuplicateWorkouts(){
+  const dupGroups = findDuplicateWorkoutGroups_();
+  if(!dupGroups.length){ alert('중복으로 보이는 운동 기록이 없어요.'); return; }
+  const preview = dupGroups.map(g=>`- ${g[0].date} "${g[0].name}" ${g.length}건 → 1건만 남김`).join('\n');
+  if(!confirm(`중복 후보 ${dupGroups.length}그룹을 찾았어요. 각 그룹에서 정보가 더 많은 1건만 남기고 나머지는 삭제할까요?\n\n${preview}`)) return;
+  let removed = 0;
+  const detail = [];
+  dupGroups.forEach(group=>{
+    const sorted = [...group].sort((a,b)=> (b.volume?1:0)-(a.volume?1:0) || (b._editedAt||'').localeCompare(a._editedAt||''));
+    sorted.slice(1).forEach(r=>{
+      state.workouts = state.workouts.filter(w=>w.id!==r.id);
+      markDeletedWorkoutSafe_(r);
+      removed++;
+      detail.push(`${r.date} ${r.name}`);
+    });
+  });
+  saveArr(LS_KEYS.workout, state.workouts);
+  markUpdated();
+  alert(`중복 운동기록 ${removed}건을 정리했어요.\n${detail.slice(0,10).join('\n')}${detail.length>10?'\n...':''}`);
   render();
 }
 function editWorkoutById(id){
@@ -2759,7 +2915,7 @@ function renderDashboard(){
       </div>
     </section>
 
-    <section class="card">
+    <section class="card" style="${isSectionHidden('maChart')?'display:none;':''}">
       <div class="section-label good">${secNum('00c')}체지방률·골격근량 이동평균 추세 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 단일 측정 노이즈를 걸러낸 MA7/MA14 추세선</span></div>
       <p class="p-dim" style="margin-bottom:14px;">인바디는 하루 컨디션(염분·수분·화장실 여부)에 따라 출렁여요. 실선(MA7)은 단기추세, 점선(MA14)은 더 완만한 장기추세를 보여줘요. 절대값보다 기울기(회귀선) 방향이 더 중요한 지표예요.</p>
       ${(() => {
@@ -2858,7 +3014,7 @@ function renderDashboard(){
       </div>
     </section>
 
-    <section>
+    <section style="${isSectionHidden('compChart')?'display:none;':''}">
       <div class="section-label">${secNum('02')}체성분 변화 (${ib[0].date.slice(5)} ~ 현재)</div>
       <div class="chart-grid">
         ${chartCard('체중', ib, 'weight', 'kg', '--c-weight')}
@@ -2868,7 +3024,7 @@ function renderDashboard(){
       </div>
     </section>
 
-    <section>
+    <section style="${isSectionHidden('strengthsWeaknesses')?'display:none;':''}">
       <div class="section-label">${secNum('02b')}잘하고 있는 점 &amp; 아쉬운 점 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.lastUpdated ? '최종 갱신 '+fmtDateTime(state.lastUpdated) : '매일 데이터로 자동 갱신'}</span></div>
       ${(() => {
         const {strengths, improvements} = computeStrengthsAndImprovements(ib, state.workouts, state.meals);
@@ -2947,8 +3103,10 @@ function saveEditCell(table, date, field, value){
   if(rec){
     const num = value==='' ? null : Number(value);
     rec[field] = (num===null || isNaN(num)) ? null : num;
+    rec._editedAt = new Date().toISOString(); // 2026-08-14: tombstone 판별용 수정시각
     const key = table==='inbody' ? LS_KEYS.inbody : table==='workout' ? LS_KEYS.workout : LS_KEYS.meal;
     saveArr(key, arr);
+    clearTombstoneIfPresent_(table, date);
     markUpdated();
   }
   editingCell = null;
@@ -2959,9 +3117,21 @@ function editableCell(table, date, field, value, decimals){
   if(isEditing){
     return `<input type="number" step="0.1" value="${value??''}" class="inline-edit-input" data-autofocus="1"
       onblur="saveEditCell('${table}','${date}','${field}',this.value)"
-      onkeydown="if(event.key==='Enter'){this.blur();} if(event.key==='Escape'){cancelEditCell();}">`;
+      onkeydown="if(event.key==='Enter'){this.blur();} else if(event.key==='Escape'){cancelEditCell();} else if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault(); moveEditCell('${table}','${date}','${field}',this.value,event.key==='ArrowDown'?'down':'up');}">`;
   }
   return `<span class="editable-cell" onclick="startEditCell('${table}','${date}','${field}')">${value==null?'—':fmt(value,decimals)}</span>`;
+}
+// 2026-08-14 추가(머니트레일 벤치마킹 — 스프레드시트형 화살표키 이동): 현재 셀 값을 저장한 뒤,
+// 같은 필드의 앞/다음 행으로 편집 위치를 옮긴다. 현재는 인바디 표에서만 인라인 편집을 쓰므로
+// table==='inbody'인 경우만 동작(다른 표는 아직 이 방식의 편집 UI가 없어 대상 없음).
+function moveEditCell(table, date, field, value, dir){
+  saveEditCell(table, date, field, value);
+  if(table!=='inbody') return;
+  const dates = sortedInbody().map(r=>r.date);
+  const idx = dates.indexOf(date);
+  const nextIdx = dir==='down' ? idx+1 : idx-1;
+  if(idx<0 || nextIdx<0 || nextIdx>=dates.length) return;
+  startEditCell(table, dates[nextIdx], field);
 }
 
 function renderInbodyTable(ma){
@@ -3137,6 +3307,23 @@ function renderGoal(){
       <div class="note-box" style="margin-top:14px;">
         체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
       </div>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('03z')}SURMOUNT-1 임상 기준 대비 골격근 보존 비율 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 머니트레일 앱의 "코스피 대비 내 수익률" 카드 벤치마킹</span></div>
+      <p class="p-dim">비율 = 골격근 %감소율 ÷ 체중 %감소율. 낮을수록 근육을 더 잘 지키며 감량 중이라는 뜻이에요. SURMOUNT-1 임상시험(Look et al. 2025, DEXA 실측, tirzepatide 투여군 72주 완주 기준)의 평균 비율 0.51을 기준선으로 비교해요. 이 비율 지표는 스케일-불변이라 프로그램이 아직 진행 중이어도 바로 비교할 수 있지만, 원 임상시험은 72주 완주 데이터라는 점은 참고하세요.</p>
+      <div style="margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:7px;">
+          <span>내 비율(6/5 시작 대비 누적): <b class="mono" style="font-size:15px; color:${muscleAssess.tone==='good'?'var(--c-good)':muscleAssess.tone==='warn'?'var(--c-warn)':'var(--c-neutral)'};">${fmt(muscleAssess.ratio,2)}</b></span>
+          <span>SURMOUNT-1 기준: <b class="mono">0.51</b></span>
+        </div>
+        <div style="position:relative; height:14px; border-radius:99px; background:var(--c-track); overflow:visible; margin-top:4px;">
+          <div style="position:absolute; left:0; top:0; height:100%; border-radius:99px; width:${Math.max(2,Math.min(100, (Math.max(0,muscleAssess.ratio)/1.2)*100))}%; background:${muscleAssess.tone==='good'?'linear-gradient(90deg,var(--c-gauge-from),var(--c-good))':muscleAssess.tone==='warn'?'linear-gradient(90deg,var(--c-gauge-from),var(--c-warn))':'linear-gradient(90deg,var(--c-gauge-from),var(--c-neutral))'};"></div>
+          <div style="position:absolute; left:${Math.min(100,(0.51/1.2)*100)}%; top:-4px; width:2px; height:22px; background:var(--c-goalmark);" title="SURMOUNT-1 기준선 0.51"></div>
+        </div>
+        <div style="font-size:11px; color:var(--text-faint); margin-top:7px;">막대 = 내 비율, 세로선 = SURMOUNT-1 기준선(0.51). 막대 끝이 세로선보다 왼쪽(낮음)이면 임상 평균보다 근육을 더 잘 지키고 있는 거예요.</div>
+      </div>
+      <div class="note-box" style="margin-top:14px;">체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}% (누적).</div>
     </section>
 
     <section class="card">
@@ -3436,6 +3623,151 @@ function copyReportText(){ copyTextToClipboard(buildReportCopyText(), 'report-co
 function copyTodayText(){ copyTextToClipboard(buildTodayCopyText(), 'today-copy-status', '복사됐어요! Claude 채팅에 붙여넣으세요.'); }
 function printReport(){ window.print(); }
 
+// =========================================================
+// 진단 패널 (2026-08-14, 머니트레일 벤치마킹)
+// ---------------------------------------------------------
+// "코드/데이터를 고쳤다고 안내받았는데 이 기기에 실제로 반영됐는지" 스스로 확인할 수 있게
+// 빌드버전·패치적용이력·최근 동기화·건수 등을 한 화면에 텍스트로 모아 보여준다. loadArr()가
+// localStorage 있으면 SEED를 무시하는 것, PWA 캐시로 화면이 안 바뀌는 것 등 이 문서에 반복
+// 기록된 "반영 여부 확인 불가" 유형 사고를 줄이기 위한 자가진단 도구.
+// =========================================================
+function generateDiagnostics(){
+  const lines = [];
+  lines.push(`[빌드] ${APP_BUILD_VERSION}`);
+  const now = new Date();
+  lines.push(`[기기 현재 시각] ${now.toString()}`);
+  lines.push('');
+  let patchLog = null;
+  try{ patchLog = JSON.parse(localStorage.getItem(LS_KEYS.patchlog)||'null'); }catch(e){}
+  lines.push('[데이터 패치 적용 이력] (DATA_PATCHES가 이 기기에 실제로 반영됐는지 확인용)');
+  lines.push(`  정의된 전체 패치: ${DATA_PATCHES.length}건`);
+  if(patchLog){
+    lines.push(`  마지막 적용 시각: ${fmtDateTime(patchLog.appliedAt)}`);
+    lines.push(`  마지막 실행에서 변경된 건수: ${patchLog.changedThisRun}건 (0이면 이미 전부 반영된 상태라는 뜻)`);
+  } else {
+    lines.push('  (아직 기록 없음)');
+  }
+  lines.push('');
+  lines.push('[레코드 건수]');
+  lines.push(`  인바디 ${state.inbody.length}건 · 운동 ${state.workouts.length}건 · 식단 ${state.meals.length}건 · 걸음수 ${state.steps.length}건 · 허리둘레 ${state.waist.length}건`);
+  const ibSorted = sortedInbody();
+  lines.push(`  인바디 최신 날짜: ${ibSorted.length ? ibSorted[ibSorted.length-1].date : '(없음)'}`);
+  lines.push('');
+  lines.push('[삭제 기록(tombstone) 건수]');
+  Object.keys(state.deletedIds).forEach(k=>{
+    const n = Object.keys(state.deletedIds[k]||{}).length;
+    if(n>0) lines.push(`  ${k}: ${n}건`);
+  });
+  lines.push('');
+  lines.push('[동기화]');
+  lines.push(`  마지막 로컬 갱신: ${state.lastUpdated ? fmtDateTime(state.lastUpdated) : '(없음)'}`);
+  const lastAuto = localStorage.getItem(LS_KEYS.lastautosync);
+  lines.push(`  마지막 자동동기화 성공: ${lastAuto ? fmtDateTime(lastAuto) : '(없음)'}`);
+  lines.push(`  가져오기 취소용 백업: ${localStorage.getItem(LS_KEYS.presyncbackup) ? '있음' : '없음'}`);
+  if(state.lastSyncShrinkWarning){
+    lines.push('');
+    lines.push(`[⚠ 최근 동기화 축소 경고 — ${fmtDateTime(state.lastSyncShrinkWarning.at)}]`);
+    state.lastSyncShrinkWarning.items.forEach(w=>lines.push(`  ${w}`));
+  }
+  return lines.join('\n');
+}
+function copyDiagnostics(){ copyTextToClipboard(generateDiagnostics(), 'diag-copy-status', '진단 정보가 복사됐어요!'); }
+
+// =========================================================
+// CSV 내보내기 (2026-08-14, 머니트레일 벤치마킹)
+// =========================================================
+function csvEscape_(v){
+  if(v===null || v===undefined) return '';
+  const s = String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+function downloadCSV_(filename, rows){
+  const csv = rows.map(row=>row.map(csvEscape_).join(',')).join('\n');
+  const blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function exportAllCSV(){
+  downloadCSV_('inbody.csv', [['날짜','체중','골격근','체지방량','체지방률','BMR'], ...sortedInbody().map(r=>[r.date,r.weight,r.muscle,r.fat,r.fatPct,r.bmr])]);
+  setTimeout(()=>{
+    downloadCSV_('workouts.csv', [['날짜','이름','부위','볼륨','칼로리','메모'], ...[...state.workouts].sort((a,b)=>a.date.localeCompare(b.date)).map(r=>[r.date,r.name,r.part,r.volume,r.calories,r.note])]);
+  }, 350);
+  setTimeout(()=>{
+    downloadCSV_('meals.csv', [['날짜','칼로리','단백질','탄수화물','특이일','메모'], ...[...state.meals].sort((a,b)=>a.date.localeCompare(b.date)).map(r=>[r.date,r.calories,r.protein,r.carbs,r.specialDayType||'',r.note])]);
+  }, 700);
+}
+
+// =========================================================
+// 일괄 붙여넣기 입력 (2026-08-14, 머니트레일 벤치마킹 — parseDividendBulkText 패턴)
+// ---------------------------------------------------------
+// 여러 줄의 탭/쉼표 구분 텍스트를 한 번에 파싱해서 식단 또는 운동 기록으로 등록한다.
+// 형식: 식단 = 날짜,칼로리,단백질,탄수화물,메모(선택) / 운동 = 날짜,이름,부위,볼륨,칼로리,메모(선택)
+// 한 줄이라도 형식 오류가 있으면 전체를 취소하고 어느 줄이 문제인지 알려준다(부분 반영 방지).
+// =========================================================
+function parseBulkPasteText_(raw, kind){
+  const lines = raw.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  return lines.map(line=>{
+    const cols = line.split(/\t|,/).map(c=>c.trim());
+    if(kind==='meal'){
+      const [date,cal,protein,carbs,note] = cols;
+      if(!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return {raw:line, error:'날짜가 YYYY-MM-DD 형식이 아니에요'};
+      if(cal===undefined || cal==='' || isNaN(Number(cal))) return {raw:line, error:'칼로리를 숫자로 읽을 수 없어요'};
+      return {raw:line, date, calories:Number(cal), protein:(protein&&protein!=='')?Number(protein):null, carbs:(carbs&&carbs!=='')?Number(carbs):null, note:note||''};
+    }
+    const [date,name,part,volume,cal,note] = cols;
+    if(!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return {raw:line, error:'날짜가 YYYY-MM-DD 형식이 아니에요'};
+    if(!name) return {raw:line, error:'운동 이름이 비어있어요'};
+    return {raw:line, date, name, part:part||'', volume:volume||null, calories:(cal&&cal!=='')?Number(cal):null, note:note||''};
+  });
+}
+function applyBulkPaste(){
+  const kindSel = document.getElementById('bulk-paste-kind').value;
+  const ta = document.getElementById('bulk-paste-input');
+  const parsed = parseBulkPasteText_(ta.value, kindSel);
+  const errors = parsed.filter(p=>p.error);
+  if(!parsed.length){ alert('붙여넣은 내용이 없어요.'); return; }
+  if(errors.length){
+    alert(`${errors.length}줄에서 형식 오류가 있어 전체를 취소했어요(부분 반영 방지):\n` + errors.slice(0,6).map(e=>`- "${e.raw}" → ${e.error}`).join('\n'));
+    return;
+  }
+  if(!confirm(`${parsed.length}건을 ${kindSel==='meal'?'식단':'운동'} 기록으로 추가할까요?${kindSel==='meal'?' (같은 날짜의 기존 식단 기록은 덮어씁니다)':''}`)) return;
+  parsed.forEach(p=>{
+    if(kindSel==='meal'){
+      const rec = {date:p.date, calories:p.calories, protein:p.protein, carbs:p.carbs, note:p.note, specialDayType:null, _editedAt:new Date().toISOString()};
+      state.meals = [...state.meals.filter(r=>r.date!==rec.date), rec];
+      clearTombstoneIfPresent_('meal', rec.date);
+    } else {
+      state.workouts = [...state.workouts, {id:makeId('w'), date:p.date, name:p.name, part:p.part, volume:p.volume, calories:p.calories, note:p.note, _editedAt:new Date().toISOString()}];
+    }
+  });
+  saveArr(kindSel==='meal' ? LS_KEYS.meal : LS_KEYS.workout, kindSel==='meal' ? state.meals : state.workouts);
+  markUpdated();
+  ta.value = '';
+  alert(`${parsed.length}건을 추가했어요.`);
+  render();
+}
+
+// =========================================================
+// 항목별(카드/그래프) 숨기기 — 대시보드 표시 세분화 (2026-08-14, 머니트레일 벤치마킹)
+// 기존 "추적관리 탭" on/off보다 더 세분화된 단위. localStorage에 숨긴 항목 id만 저장.
+// =========================================================
+const HIDEABLE_SECTIONS = [
+  {id:'strengthsWeaknesses', label:'잘하고 있는 점 & 아쉬운 점'},
+  {id:'compChart', label:'체성분 변화 그래프 4종'},
+  {id:'maChart', label:'7일 이동평균 추세'},
+];
+function loadHiddenSections(){ try{ return JSON.parse(localStorage.getItem('brc_hiddensections_v1')||'[]'); }catch(e){ return []; } }
+function isSectionHidden(id){ return loadHiddenSections().includes(id); }
+function toggleSectionHidden_(id){
+  const cur = loadHiddenSections();
+  const next = cur.includes(id) ? cur.filter(x=>x!==id) : [...cur, id];
+  localStorage.setItem('brc_hiddensections_v1', JSON.stringify(next));
+  render();
+}
+
 function renderSettings(){
   const cloudUrl = localStorage.getItem(LS_KEYS.cloudurl) || '';
   const lastSync = state.lastUpdated;
@@ -3448,6 +3780,13 @@ function renderSettings(){
           <div style="font-size:12px; color:var(--text-dim); margin-top:2px;">마운자로 투여 차수별 인바디 변화 — 평소엔 숨기고 필요할 때만 켜서 보기</div>
         </div>
         <button class="btn ${state.showMounjaro?'btn-primary':''} btn-sm" onclick="toggleMounjaroTab()">${state.showMounjaro?'표시 중 · 끄기':'꺼짐 · 켜기'}</button>
+      </div>
+      <div class="note-box" style="margin-top:14px;">
+        <div style="font-size:12.5px; font-weight:700; color:var(--text); margin-bottom:8px;">대시보드 항목별 표시 (2026-08-14 추가, 머니트레일 벤치마킹)</div>
+        ${HIDEABLE_SECTIONS.map(s => `<div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0;">
+          <span style="font-size:12.5px; color:var(--text-dim);">${s.label}</span>
+          <button class="mini-btn" onclick="toggleSectionHidden_('${s.id}')">${isSectionHidden(s.id)?'숨김 · 다시 보기':'표시 중 · 숨기기'}</button>
+        </div>`).join('')}
       </div>
     </section>
 
@@ -3478,12 +3817,12 @@ function renderSettings(){
       ${state.favorites.length ? `<div class="fav-chip-row" style="margin-bottom:14px;">
         ${state.favorites.map(fv => `<span class="fav-chip">${esc(fv.name)} <span class="fav-macro">${fv.calories}kcal·P${fv.protein}g·C${fv.carbs}g</span> <button class="mini-btn danger" style="margin-left:4px;" onclick="deleteFavorite('${fv.id}')">삭제</button></span>`).join('')}
       </div>` : `<div class="sw-empty" style="margin-bottom:14px;">등록된 즐겨찾기가 없어요.</div>`}
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:6px; width:100%; max-width:560px; box-sizing:border-box;">
-        <input id="fav-name-input" placeholder="이름 (예: 단백질 쉐이크)" style="width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
-        <input id="fav-cal-input" type="number" placeholder="kcal" style="width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <input id="fav-protein-input" type="number" placeholder="단백g" style="width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <input id="fav-carbs-input" type="number" placeholder="탄수g" style="width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="addFavorite()">추가</button>
+      <div style="display:grid; grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr auto; gap:6px; max-width:560px;">
+        <input id="fav-name-input" placeholder="이름 (예: 단백질 쉐이크)" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
+        <input id="fav-cal-input" type="number" placeholder="kcal" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <input id="fav-protein-input" type="number" placeholder="단백g" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <input id="fav-carbs-input" type="number" placeholder="탄수g" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <button class="btn btn-primary btn-sm" onclick="addFavorite()">추가</button>
       </div>
     </section>
 
@@ -3506,6 +3845,54 @@ function renderSettings(){
         <span id="sync-status">${lastSync ? `마지막 갱신: ${fmtDateTime(lastSync)}` : '아직 동기화한 적 없음'}</span><br>
         Apps Script 배포 코드는 함께 받으신 <b>body-recomp-sync-Code.gs</b> 파일 안내를 따라 한 번만 설정하면 됩니다. URL이 저장되어 있으면 이후엔 앱을 열 때마다 자동으로 동기화돼요.
         <br>⚠️ 동기화 중에는 <b>이 화면을 벗어나지 마세요</b> — 다른 앱으로 전환하거나 화면을 끄면 모바일 브라우저가 통신을 일시정지시켜 동기화가 실패할 수 있습니다(브라우저 공통 동작). 25초 넘게 응답이 없으면 자동으로 시간 초과 처리됩니다.
+      </div>
+      ${state.lastSyncShrinkWarning ? `<div class="reminder-banner" style="margin-top:12px; margin-bottom:0;">
+        <div class="alert-icon tone-warn">${ICONS.target}</div>
+        <div>
+          <div class="rb-title">⚠ 마지막 동기화(${fmtDateTime(state.lastSyncShrinkWarning.at)})에서 설명되지 않는 데이터 축소가 감지됐어요</div>
+          <div class="rb-detail">${state.lastSyncShrinkWarning.items.map(esc).join('<br>')}<br>직접 삭제한 기억이 없다면 아래 "가져오기 취소"로 되돌린 뒤 다시 동기화해보세요.</div>
+        </div>
+      </div>` : ''}
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn btn-sm" onclick="restoreBeforePullBackup()">↩ 가져오기 취소 (동기화 직전으로 되돌리기)</button>
+        <button class="btn btn-sm" onclick="cleanupDuplicateWorkouts()">🧹 중복 운동기록 정리</button>
+      </div>
+      <div class="note-box" style="margin-top:10px; font-size:11px;">
+        가져오기 취소 = 가장 최근 "동기화"가 시작되기 직전 상태(인바디/운동/식단/걸음수/허리둘레)로 되돌립니다. 동기화 한 번 전까지만 되돌릴 수 있어요(머니트레일 앱의 restoreBeforePullBackup 벤치마킹).
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('05c')}일괄 붙여넣기 입력 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 여러 건을 한 번에</span></div>
+      <p class="p-dim">
+        여러 날짜의 기록을 줄바꿈으로 구분해 한 번에 붙여넣으면 파싱해서 등록해요(머니트레일 앱의 배당 일괄 붙여넣기 벤치마킹). 한 줄이라도 형식이 안 맞으면 전체를 취소하고 어느 줄이 문제인지 알려드려요.
+      </p>
+      <div class="field" style="max-width:260px; margin-bottom:8px;">
+        <label>종류</label>
+        <select id="bulk-paste-kind" style="padding:9px 10px; border-radius:8px; border:1px solid var(--border); background:var(--panel-alt); color:var(--text);">
+          <option value="meal">식단 (날짜,칼로리,단백질,탄수화물,메모)</option>
+          <option value="workout">운동 (날짜,이름,부위,볼륨,칼로리,메모)</option>
+        </select>
+      </div>
+      <textarea id="bulk-paste-input" class="ai-textarea" style="min-height:110px; font-family:var(--font-mono); font-size:12px;" placeholder="예)&#10;2026-08-10,1850,150,160,아침 스킵&#10;2026-08-11,1920,155,170,"></textarea>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-primary btn-sm" onclick="applyBulkPaste()">일괄 추가</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('05d')}데이터 내보내기 (CSV)</div>
+      <p class="p-dim">인바디·운동·식단 기록을 각각 CSV 파일로 내려받아요. 외부 분석이나 별도 백업 용도로 쓸 수 있어요.</p>
+      <button class="btn btn-sm" onclick="exportAllCSV()">⬇ CSV로 내보내기 (3개 파일)</button>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('05e')}데이터 진단 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 반영 여부 자가진단</span></div>
+      <p class="p-dim">코드나 데이터를 고쳤다는 안내를 받았는데 이 기기에 실제로 반영됐는지 애매할 때, 아래 내용을 복사해서 Claude 채팅에 붙여넣으면 확인할 수 있어요(머니트레일 앱의 진단 패널 벤치마킹).</p>
+      <pre style="white-space:pre-wrap; font-family:var(--font-mono); font-size:11px; line-height:1.6; background:var(--panel-alt); border-radius:var(--radius-sm); padding:12px; max-height:260px; overflow-y:auto; color:var(--text-dim);">${esc(generateDiagnostics())}</pre>
+      <div class="btn-row" style="margin-top:10px; align-items:center;">
+        <button class="btn btn-sm" onclick="copyDiagnostics()">진단 정보 복사</button>
+        <span id="diag-copy-status" class="msg-good" style="opacity:0; transition:opacity .3s;">복사됨</span>
       </div>
     </section>
 
@@ -3628,6 +4015,56 @@ function clearAiNote(){
 // (서버에서 삭제된 레코드가 로컬 캐시에 영구히 남아, 동기화할 때마다 다시 서버로
 // 재업로드되어 되살아나는 버그의 근본 원인이었음 — 2026-07-26 실제 발생·발견)
 // incoming에 없는 날짜(아직 서버에 한 번도 안 올라간 로컬 전용 데이터)는 그대로 보존.
+// =========================================================
+// 동기화 전후 데이터 축소 경고 + 가져오기 취소(Undo) (2026-08-14, 머니트레일 벤치마킹)
+// =========================================================
+function storeSizeSignature_(){
+  return {
+    inbody: state.inbody.map(r=>r.date),
+    workout: state.workouts.map(workoutKey_), // 2026-08-14: legacy id의 배열순서 의존성 때문에 순서와 무관한 안정 키 사용(오탐 방지)
+    meal: state.meals.map(r=>r.date),
+    steps: state.steps.map(r=>r.date),
+    waist: state.waist.map(r=>r.date),
+  };
+}
+// 병합 전후 키 목록을 비교해 "사라진 항목"을 찾되, 이 기기에서 의도적으로 삭제한(tombstone
+// 기록이 있는) 것은 정상 축소이므로 조용히 통과시키고, 설명되지 않는 축소만 경고로 남긴다.
+function diffShrink_(prevSig, nextSig, deletedIds){
+  const labels = {inbody:'인바디', workout:'운동', meal:'식단', steps:'걸음수', waist:'허리둘레'};
+  const warnings = [];
+  Object.keys(labels).forEach(k=>{
+    const prevArr = prevSig[k]||[], nextSet = new Set(nextSig[k]||[]);
+    const missing = prevArr.filter(x=>!nextSet.has(x));
+    if(!missing.length) return;
+    const dmap = deletedIds[k] || {};
+    const unexplained = missing.filter(key => !dmap[key]);
+    if(unexplained.length){
+      warnings.push(`${labels[k]} ${unexplained.length}건 사라짐 (${unexplained.slice(0,5).join(', ')}${unexplained.length>5?' 외':''})`);
+    }
+  });
+  return warnings;
+}
+// pull이 로컬을 덮어쓰기 직전 스냅샷 저장 — "가져오기 취소"로 되돌리는 대상.
+function backupBeforePull_(){
+  const snap = {at:new Date().toISOString(), inbody:state.inbody, workouts:state.workouts, meals:state.meals, steps:state.steps, waist:state.waist};
+  try{ localStorage.setItem(LS_KEYS.presyncbackup, JSON.stringify(snap)); }catch(e){}
+}
+function restoreBeforePullBackup(){
+  const raw = localStorage.getItem(LS_KEYS.presyncbackup);
+  if(!raw){ alert('되돌릴 백업이 없어요(아직 동기화 전이거나 이미 사용했어요).'); return; }
+  if(!confirm('가장 최근 클라우드 동기화 직전 상태로 되돌릴까요? 그 동기화 이후 로컬 변경사항은 사라집니다.')) return;
+  try{
+    const snap = JSON.parse(raw);
+    state.inbody = snap.inbody||[]; state.workouts = snap.workouts||[]; state.meals = snap.meals||[];
+    state.steps = snap.steps||[]; state.waist = snap.waist||[];
+    saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
+    saveArr(LS_KEYS.steps, state.steps); saveArr(LS_KEYS.waist, state.waist);
+    markUpdated();
+    alert('되돌렸습니다. 다시 필요하면 "지금 동기화"를 눌러주세요.');
+    render();
+  }catch(e){ alert('되돌리기 실패: ' + e.message); }
+}
+
 function mergeByDate_(existing, incoming){
   if(!incoming || !incoming.length) return existing;
   const incomingDates = new Set(incoming.map(r=>r.date));
@@ -3721,21 +4158,36 @@ async function cloudSync(silent){
       // 버튼을 누르는 순간 곧바로 되살아나는 버그가 있었음(2026-07-26 실제 발생·발견). 풀을
       // 먼저 해서 로컬을 서버 기준으로 정리(mergeByDate_ 등이 서버에 있는 날짜는 로컬 것을
       // 완전 교체)한 다음에 푸시해야 이런 재생성이 발생하지 않는다.
+      // 2026-08-14 추가(머니트레일 벤치마킹 — 가져오기 취소): pull이 로컬을 덮어쓰기 전
+      // 스냅샷을 남겨, 병합 결과가 이상하면 "가져오기 취소"로 즉시 되돌릴 수 있게 한다.
+      backupBeforePull_();
+      // 2026-08-14 추가(머니트레일 벤치마킹 — 동기화 전후 축소 경고): 병합 전 건수/키 스냅샷.
+      const prevSig_ = storeSizeSignature_();
       // 1) 시트의 최신 데이터를 먼저 가져와 로컬과 병합/정리(서버가 있는 날짜는 로컬 완전교체)
       const res = await fetchWithTimeout(url + (url.includes('?') ? '&' : '?') + 'ts=' + Date.now(), {}, SYNC_TIMEOUT_MS);
       const data = await res.json();
-      state.inbody = mergeByDate_(state.inbody, data.inbody);
-      state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts);
+      state.inbody = applyTombstone_(mergeByDate_(state.inbody, data.inbody), r=>r.date, state.deletedIds.inbody);
+      state.workouts = applyTombstone_(mergeWorkoutsByDate_(state.workouts, data.workouts), r=>r.id, state.deletedIds.workout);
       // 2026-08-13 추가: 서버(Sheet)에는 워크아웃 id 컬럼이 없어서(Code.gs 변경 전까지는)
       // pull로 들어온 항목엔 id가 비어있다. 최초 로드 때만 id를 채워주던 ensureWorkoutIds를
       // 동기화 직후에도 다시 돌려야, 방금 pull된 항목도 수정/삭제 버튼이 정상 동작한다.
       ensureWorkoutIds(state.workouts);
-      state.meals = mergeMealsByDate_(state.meals, data.meals);
-      state.steps = mergeByDate_(state.steps, data.steps);
-      state.waist = mergeByDate_(state.waist, data.waist);
+      state.meals = applyTombstone_(mergeMealsByDate_(state.meals, data.meals), r=>r.date, state.deletedIds.meal);
+      state.steps = applyTombstone_(mergeByDate_(state.steps, data.steps), r=>r.date, state.deletedIds.steps);
+      state.waist = applyTombstone_(mergeByDate_(state.waist, data.waist), r=>r.date, state.deletedIds.waist);
       saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
       saveArr(LS_KEYS.steps, state.steps);
       saveArr(LS_KEYS.waist, state.waist);
+      // 2026-08-14 추가: (2) 클라우드 pull 병합 직후 — DATA_PATCHES 두 번째 고정 적용 시점.
+      // pull이 서버의 옛 오류값으로 로컬을 덮어썼더라도, 이 시점에 다시 한번 보정이 적용된다.
+      applyDataPatches_();
+      // 2026-08-14 추가: 병합 후 건수/키 스냅샷을 비교해 "tombstone으로 설명 안 되는" 축소만 경고.
+      {
+        const nextSig_ = storeSizeSignature_();
+        const shrinkWarnings_ = diffShrink_(prevSig_, nextSig_, state.deletedIds);
+        state.lastSyncShrinkWarning = shrinkWarnings_.length ? {at:new Date().toISOString(), items:shrinkWarnings_} : null;
+        try{ localStorage.setItem('brc_shrinkwarn_v1', JSON.stringify(state.lastSyncShrinkWarning)); }catch(e){}
+      }
       if(data.aiAnalysis && (!state.aiNote || data.aiAnalysisDate >= state.aiNote.date)){
         state.aiNote = {date: data.aiAnalysisDate || todayISO(), text: data.aiAnalysis, syncedAt: new Date().toISOString()};
         saveAiNote(state.aiNote);
@@ -3961,16 +4413,18 @@ function saveRecord(){
   const f = modalState.form;
   if(!f.date){ alert('날짜를 입력해주세요.'); return; }
   if(modalState.kind==='inbody'){
-    const rec = {date:f.date, weight:num(f.weight), muscle:num(f.muscle), fat:num(f.fat), fatPct:num(f.fatPct), bmr:f.bmr?num(f.bmr):null};
+    const rec = {date:f.date, weight:num(f.weight), muscle:num(f.muscle), fat:num(f.fat), fatPct:num(f.fatPct), bmr:f.bmr?num(f.bmr):null, _editedAt:new Date().toISOString()};
     state.inbody = [...state.inbody.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.inbody, state.inbody);
+    clearTombstoneIfPresent_('inbody', rec.date);
   } else if(modalState.kind==='meal'){
     // 2026-08-13 추가: 특이일 유형(과식/음주/컨디션난조/외식 등) — 기존엔 note 자유텍스트의
     // 키워드 매칭에만 의존해 음주 등은 아예 감지가 안 됐음(computeSmartAlerts의
     // SPECIAL_DAY_KEYWORDS 참고). 이제 구조화된 필드로 명시적으로 남긴다.
-    const rec = {date:f.date, calories:num(f.calories), protein:num(f.protein), carbs:f.carbs?num(f.carbs):null, note:f.description||f.note||'', specialDayType: f.specialDayType||null};
+    const rec = {date:f.date, calories:num(f.calories), protein:num(f.protein), carbs:f.carbs?num(f.carbs):null, note:f.description||f.note||'', specialDayType: f.specialDayType||null, _editedAt:new Date().toISOString()};
     state.meals = [...state.meals.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.meal, state.meals);
+    clearTombstoneIfPresent_('meal', rec.date);
   } else {
     const validRows = (modalState.exerciseRows||[]).filter(r => r.name && r.name.trim());
     let rec;
@@ -3989,10 +4443,11 @@ function saveRecord(){
         volume: totalVol>0 ? `${totalVol.toLocaleString()}kg` : (f.volume||null),
         calories: f.calories?num(f.calories):null,
         note: f.note||'',
-        exercises
+        exercises,
+        _editedAt: new Date().toISOString()
       };
     } else {
-      rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||''};
+      rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||'', _editedAt: new Date().toISOString()};
     }
     // 2026-08-13 근본 수정: 기존엔 같은 날짜의 기존 워크아웃 기록을 전부 지우고 새 항목
     // 하나로 바꿔버려서, 하루에 두 번째 운동(예: 오전 근력 + 저녁 유산소)을 모달로 추가하면
@@ -4005,6 +4460,7 @@ function saveRecord(){
       state.workouts = [...state.workouts, rec];
     }
     saveArr(LS_KEYS.workout, state.workouts);
+    clearTombstoneIfPresent_('workout', rec.id);
   }
   markUpdated();
   closeModal();
@@ -4021,10 +4477,12 @@ function quickAddFavorite(favId, targetDate){
     existing.protein = (existing.protein||0) + (fav.protein||0);
     existing.carbs = (existing.carbs||0) + (fav.carbs||0);
     existing.note = existing.note ? `${existing.note} · ${fav.name}` : fav.name;
+    existing._editedAt = new Date().toISOString();
   } else {
-    state.meals.push({date, calories:fav.calories||0, protein:fav.protein||0, carbs:fav.carbs||0, note:fav.name, specialDayType:null});
+    state.meals.push({date, calories:fav.calories||0, protein:fav.protein||0, carbs:fav.carbs||0, note:fav.name, specialDayType:null, _editedAt:new Date().toISOString()});
   }
   saveArr(LS_KEYS.meal, state.meals);
+  clearTombstoneIfPresent_('meal', date);
   markUpdated();
   render();
 }
