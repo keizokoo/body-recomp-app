@@ -463,7 +463,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-16-b (버그 2차수정: parseSteps 정규식이 콤마 단독을 숫자로 오인해 0을 반환하던 문제 수정, 28건 전수 재검증 완료)';
+const APP_BUILD_VERSION = '2026-08-16-c (버그 3차수정: isInclineEntry가 "러닝머신"이라는 이름만 쓴 항목을 트레드밀로 인식 못하던 문제 수정, 8/13·8/15 재검증 완료)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -676,7 +676,9 @@ function isInclineEntry(w){
   // 인클라인 이력에 잘못 추가되는 걸 방지).
   const hasStructuredExercises = !!(w.exercises && w.exercises.length);
   const text = hasStructuredExercises ? `${w.name||''} ${w.part||''}` : `${w.name||''} ${w.part||''} ${w.note||''}`;
-  return text.includes('인클라인') || text.includes('트레드밀');
+  // 2026-08-16 3차 수정: "러닝머신"이라는 이름만 쓰고 "인클라인"/"트레드밀" 단어가
+  // 없는 항목(예: "저녁 러닝머신 1.93km")이 트레드밀로 인식 안 되던 문제 수정.
+  return text.includes('인클라인') || text.includes('트레드밀') || text.includes('러닝머신');
 }
 // 목표 심박존(105~125bpm)은 이 날짜에 처음 설정됨 — 그 이전 세션은 기준 미적용(참고용)으로만 표시
 const HR_TARGET_SET_DATE = '2026-07-12';
