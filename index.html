@@ -413,38 +413,38 @@ const SEED_INBODY = [
 ].map(r => ({date:r[0], weight:r[1], muscle:r[2], fat:r[3], fatPct:r[4], bmr:r[5]}));
 
 const SEED_WORKOUT = [
-  ["2026-06-06","어시스티드 머신 풀업 / 케이블 시티드로우 / 머신 플라이","상체(당기기+가슴)","5,640kg",310,"인클라인 트레드밀 5km, 45:17, 평균속도6.6km/h, 평균심박128bpm, 케이던스127spm, 5,772걸음"],
-  ["2026-06-07","머신 레그프레스 / 레그 익스텐션","하체","5,695kg",349,"인클라인 트레드밀 5km, 48:38, 평균속도6.1km/h, 평균심박132bpm, 케이던스128spm, 6,234걸음"],
-  ["2026-06-12","인클라인 트레드밀만","유산소",null,305,"4.10km, 34:17, 평균속도7.1km/h, 평균심박142bpm, 케이던스140spm, 4,830걸음"],
+  ["2026-06-06","어시스티드 머신 풀업 / 케이블 시티드로우 / 머신 플라이","상체(당기기+가슴)","5,640kg",310,"인클라인 트레드밀 5km, 45:17, 평균속도6.6km/h, 평균심박128bpm, 케이던스127spm, 5,772걸음",5772],
+  ["2026-06-07","머신 레그프레스 / 레그 익스텐션","하체","5,695kg",349,"인클라인 트레드밀 5km, 48:38, 평균속도6.1km/h, 평균심박132bpm, 케이던스128spm, 6,234걸음",6234],
+  ["2026-06-12","인클라인 트레드밀만","유산소",null,305,"4.10km, 34:17, 평균속도7.1km/h, 평균심박142bpm, 케이던스140spm, 4,830걸음",4830],
   ["2026-06-13","케이블 시티드로우 / 머신 플라이 / 덤벨 바이셉컬","상체(당기기+가슴+팔)","4,250kg",null,""],
-  ["2026-06-16","케이블 시티드로우 / 어시스티드 풀업 / 시티드 덤벨 숄더프레스","상체(당기기+어깨)","5,605kg",199,"인클라인 트레드밀 3.5km, 31:13, 평균속도6.7km/h, 평균심박138bpm, 케이던스125spm, 3,922걸음 · ⚠️숄더프레스: 오버헤드 동작, 목디스크 제약 확인 필요"],
-  ["2026-06-21","힙어브덕션 / 힙어덕션 / 바벨 와이드스쿼트 / 케이블 시티드로우","하체+상체","9,036kg",268,"인클라인 트레드밀 4km, 40:23, 평균속도5.9km/h, 평균심박138bpm, 케이던스126spm, 5,099걸음 · ⚠️바벨 와이드스쿼트: 백스쿼트 계열, 목디스크 제약 확인 필요"],
-  ["2026-06-22","인클라인 트레드밀만","유산소",null,302,"5km, 47:43, 평균속도6.2km/h, 평균심박139bpm, 케이던스126spm, 6,020걸음"],
-  ["2026-06-23","인클라인 트레드밀만","유산소",null,276,"4.5km, 42:12, 평균속도6.3km/h, 평균심박134bpm, 케이던스127spm, 5,386걸음"],
+  ["2026-06-16","케이블 시티드로우 / 어시스티드 풀업 / 시티드 덤벨 숄더프레스","상체(당기기+어깨)","5,605kg",199,"인클라인 트레드밀 3.5km, 31:13, 평균속도6.7km/h, 평균심박138bpm, 케이던스125spm, 3,922걸음 · ⚠️숄더프레스: 오버헤드 동작, 목디스크 제약 확인 필요",3922],
+  ["2026-06-21","힙어브덕션 / 힙어덕션 / 바벨 와이드스쿼트 / 케이블 시티드로우","하체+상체","9,036kg",268,"인클라인 트레드밀 4km, 40:23, 평균속도5.9km/h, 평균심박138bpm, 케이던스126spm, 5,099걸음 · ⚠️바벨 와이드스쿼트: 백스쿼트 계열, 목디스크 제약 확인 필요",5099],
+  ["2026-06-22","인클라인 트레드밀만","유산소",null,302,"5km, 47:43, 평균속도6.2km/h, 평균심박139bpm, 케이던스126spm, 6,020걸음",6020],
+  ["2026-06-23","인클라인 트레드밀만","유산소",null,276,"4.5km, 42:12, 평균속도6.3km/h, 평균심박134bpm, 케이던스127spm, 5,386걸음",5386],
   ["2026-06-24","랫풀다운 / 케이블 시티드로우 / 어시스티드 풀업 / 머신 레그프레스","상체+하체","13,410kg",null,""],
-  ["2026-06-26","인클라인 트레드밀만","유산소",null,325,"5km, 50:03, 평균속도5.9km/h, 평균심박133bpm, 케이던스123spm, 6,159걸음"],
+  ["2026-06-26","인클라인 트레드밀만","유산소",null,325,"5km, 50:03, 평균속도5.9km/h, 평균심박133bpm, 케이던스123spm, 6,159걸음",6159],
   ["2026-06-28","힙어브덕션 / 힙어덕션 / 머신 레그프레스 / 머신 핵스쿼트 / 런지","PT 전신순환","6,030kg",null,"실내 사이클(LifeFitness) 8.55km, 30:00, 평균속도17.1km/h, 평균심박121bpm, 케이던스67rpm, 평균파워48W, 최대심박129bpm"],
-  ["2026-06-30","원암 아이소레터럴로우 / 어시스티드 친업 / 케이블 시티드로우","상체(당기기)","7,150kg",248,"인클라인 트레드밀 4km, 40:06, 평균속도5.9km/h, 평균심박150bpm(평소보다 높음), 케이던스124spm, 4,994걸음"],
-  ["2026-07-01","힙어브덕션 / 바벨 와이드스쿼트","하체","4,095kg",277,"인클라인 트레드밀 4.5km, 44:59, 평균속도6.0km/h, 평균심박137bpm, 케이던스123spm, 5,571걸음 · ⚠️바벨 와이드스쿼트: 목디스크 제약 확인 필요"],
+  ["2026-06-30","원암 아이소레터럴로우 / 어시스티드 친업 / 케이블 시티드로우","상체(당기기)","7,150kg",248,"인클라인 트레드밀 4km, 40:06, 평균속도5.9km/h, 평균심박150bpm(평소보다 높음), 케이던스124spm, 4,994걸음",4994],
+  ["2026-07-01","힙어브덕션 / 바벨 와이드스쿼트","하체","4,095kg",277,"인클라인 트레드밀 4.5km, 44:59, 평균속도6.0km/h, 평균심박137bpm, 케이던스123spm, 5,571걸음 · ⚠️바벨 와이드스쿼트: 목디스크 제약 확인 필요",5571],
   ["2026-07-02","걷기 4.19km","유산소",null,342,""],
-  ["2026-07-03","힙어브덕션 / 힙어덕션 / 머신 레그프레스 / 머신 핵스쿼트","하체","6,404kg",932,"PT 하체(역대 최대) 689kcal(추정) + 인클라인 트레드밀 4.00km 40:04(측정 243kcal), 평균속도5.9km/h, 평균심박143bpm, 케이던스123spm, 4,962걸음"],
+  ["2026-07-03","힙어브덕션 / 힙어덕션 / 머신 레그프레스 / 머신 핵스쿼트","하체","6,404kg",932,"PT 하체(역대 최대) 689kcal(추정) + 인클라인 트레드밀 4.00km 40:04(측정 243kcal), 평균속도5.9km/h, 평균심박143bpm, 케이던스123spm, 4,962걸음",4962],
   ["2026-07-04","덤벨 플랫벤치프레스 / 케이블 체스트프레스 / 덤벨 레터럴레이즈 / 플레이트 숄더프레스 / 케이블 로프 트라이셉 익스텐션","상체(가슴+어깨+삼두)","4,790kg",972,"실내 사이클 2세션: ①18:14 133kcal 평균심박115/최대148bpm ②31:24 272kcal 평균심박128/최대147bpm (사이클 합계 405kcal) · ⚠️플레이트 숄더프레스: 오버헤드 동작, 목디스크 제약 확인 필요"],
-  ["2026-07-05","인클라인 트레드밀 5km","유산소",null,335,"53:52, 평균속도5.5km/h, 평균심박139bpm, 케이던스118spm, 6,397걸음 · (이전에 '완전휴식'으로 잘못 기록됐던 것을 정정)"],
-  ["2026-07-06","인클라인 트레드밀 5km","유산소",null,291,"52:04, 평균속도5.7km/h, 평균심박134bpm, 케이던스121spm, 6,338걸음 · (이전에 '완전휴식'으로 잘못 기록됐던 것을 정정)"],
+  ["2026-07-05","인클라인 트레드밀 5km","유산소",null,335,"53:52, 평균속도5.5km/h, 평균심박139bpm, 케이던스118spm, 6,397걸음 · (이전에 '완전휴식'으로 잘못 기록됐던 것을 정정)",6397],
+  ["2026-07-06","인클라인 트레드밀 5km","유산소",null,291,"52:04, 평균속도5.7km/h, 평균심박134bpm, 케이던스121spm, 6,338걸음 · (이전에 '완전휴식'으로 잘못 기록됐던 것을 정정)",6338],
   ["2026-07-07","완전 휴식 + 저강도 걷기","회복",null,null,"골격근 회복 목적 (확인된 워치 데이터 없음)"],
   ["2026-07-08","케이블 시티드로우 / 데드리프트 / 머신 랫풀다운 / 바벨 바이셉컬","등/팔","5,920kg",747,"PT 561 + 실내 사이클 9.97km 31:29 평균속도19.0km/h 평균심박119bpm 평균파워62W 최대134bpm(약186kcal)"],
   ["2026-07-09","혈당관리 낮 도보 2.99km","유산소",null,193,"오후10:47, 32:45, 평균속도5.4km/h, 평균심박105bpm(목표존105-125bpm 하단), 3,713걸음, 상승고도5m — 브리스크 페이스라 유산소 실적 확정(2026-07-15 세부데이터 확인 후 갱신)"],
   ["2026-07-10","힙어덕션 / 힙어브덕션 / 머신 레그프레스 / 바벨 바이셉컬","하체","15,990kg",456,"역대최대볼륨"],
   ["2026-07-10","혈당관리 낮 도보 2.37km","유산소",null,184,"오후12:02, 26:49, 평균속도5.3km/h, 평균심박109bpm(목표존105-125bpm 준수), 2,971걸음, 상승고도15m — 브리스크 페이스라 유산소 실적으로 소급 등록(2026-07-15 세부데이터 확인)"],
-  ["2026-07-11","상체(등·어깨) 기구 운동 + 인클라인 트레드밀 3.36km","상체+유산소",null,669,"기구운동 1:04:11, 평균심박108bpm/최대145bpm, 442kcal · 트레드밀 38:42, 평균속도5.2km/h, 평균심박127bpm, 4,263걸음, 227kcal"],
-  ["2026-07-12","인클라인 트레드밀 5.18km","유산소",null,337,"여행중, 어제 근력 후 오늘은 유산소만. 1:00:08, 평균속도5.1km/h, 평균심박140bpm(구간4 경계), 케이던스115spm, 6,919걸음"],
-  ["2026-07-13","머신체스트프레스/머신플라이/케이블체스트프레스/머신숄더프레스/덤벨레터럴레이즈/케이블로프트라이셉익스텐션 + 인클라인 트레드밀 2.33km","가슴·어깨·삼두+유산소","5,596kg",507,"근력 24세트/439회/69분/307kcal · 인클라인 40:02, 평균속도3.4km/h, 평균심박119bpm(목표존105-125bpm 준수), 200kcal, 3,682걸음"],
+  ["2026-07-11","상체(등·어깨) 기구 운동 + 인클라인 트레드밀 3.36km","상체+유산소",null,669,"기구운동 1:04:11, 평균심박108bpm/최대145bpm, 442kcal · 트레드밀 38:42, 평균속도5.2km/h, 평균심박127bpm, 4,263걸음, 227kcal",4263],
+  ["2026-07-12","인클라인 트레드밀 5.18km","유산소",null,337,"여행중, 어제 근력 후 오늘은 유산소만. 1:00:08, 평균속도5.1km/h, 평균심박140bpm(구간4 경계), 케이던스115spm, 6,919걸음",6919],
+  ["2026-07-13","머신체스트프레스/머신플라이/케이블체스트프레스/머신숄더프레스/덤벨레터럴레이즈/케이블로프트라이셉익스텐션 + 인클라인 트레드밀 2.33km","가슴·어깨·삼두+유산소","5,596kg",507,"근력 24세트/439회/69분/307kcal · 인클라인 40:02, 평균속도3.4km/h, 평균심박119bpm(목표존105-125bpm 준수), 200kcal, 3,682걸음",3682],
   ["2026-07-13","혈당관리 낮 도보 1.94km","유산소",null,131,"점심식사후 21:45, 평균속도5.3km/h, 평균심박114bpm(목표존105-125bpm 준수), 2,422걸음, 상승고도17m — 브리스크 페이스라 유산소 실적으로 소급 등록(2026-07-15 정책변경)"],
-  ["2026-07-14","공복 인클라인 트레드밀 2.63km","유산소",null,173,"기상직후 공복 06:21~07:01(40:04), 평균속도3.9km/h, 평균심박115bpm(목표존105-125bpm 준수), 케이던스94spm, 3,769걸음, 땀손실추정257ml"],
-  ["2026-07-15","공복 인클라인 트레드밀 3.10km","유산소",null,224,"기상직후 공복 06:32, 40:03, 평균속도4.6km/h, 평균심박116bpm(목표존105-125bpm 준수), 케이던스107spm, 4,300걸음, 땀손실추정290ml"],
+  ["2026-07-14","공복 인클라인 트레드밀 2.63km","유산소",null,173,"기상직후 공복 06:21~07:01(40:04), 평균속도3.9km/h, 평균심박115bpm(목표존105-125bpm 준수), 케이던스94spm, 3,769걸음, 땀손실추정257ml",3769],
+  ["2026-07-15","공복 인클라인 트레드밀 3.10km","유산소",null,224,"기상직후 공복 06:32, 40:03, 평균속도4.6km/h, 평균심박116bpm(목표존105-125bpm 준수), 케이던스107spm, 4,300걸음, 땀손실추정290ml",4300],
   ["2026-07-15","혈당관리 낮 도보 2.69km","유산소",null,180,"오전11:33, 29:36, 평균속도5.4km/h, 평균심박115bpm(목표존105-125bpm 준수), 3,340걸음, 상승고도15m, 날씨24.0℃ — 브리스크 페이스라 유산소 실적으로 등록"],
-  ["2026-07-16","공복 인클라인 트레드밀 3.15km","유산소",null,209,"기상직후 공복 06:10, 40:03, 평균속도4.7km/h, 평균심박116bpm(목표존105-125bpm 준수), 케이던스105spm, 4,234걸음, 땀손실추정298ml"],
-].map(r => ({date:r[0], name:r[1], part:r[2], volume:r[3], calories:r[4], note:r[5]}));
+  ["2026-07-16","공복 인클라인 트레드밀 3.15km","유산소",null,209,"기상직후 공복 06:10, 40:03, 평균속도4.7km/h, 평균심박116bpm(목표존105-125bpm 준수), 케이던스105spm, 4,234걸음, 땀손실추정298ml",4234]
+].map(r => ({date:r[0], name:r[1], part:r[2], volume:r[3], calories:r[4], note:r[5], treadmillSteps:r[6]||null}));
 
 const SEED_MEAL = [
   ["2026-07-01",2013,154,null,""],["2026-07-02",2048,130,null,""],
@@ -463,7 +463,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-16-c (버그 3차수정: isInclineEntry가 "러닝머신"이라는 이름만 쓴 항목을 트레드밀로 인식 못하던 문제 수정, 8/13·8/15 재검증 완료)';
+const APP_BUILD_VERSION = '2026-08-16-g (완전자동화: Claude가 구글드라이브 body-recomp-inbox 폴더에 JSON을 직접 올리면 앱조작 없이 시트에 반영됨. isInclineEntry가 treadmillSteps 필드 존재만으로도 트레드밀 세션을 확정 인식하도록 수정 — "인클라인/트레드밀/러닝머신" 단어가 텍스트에 전혀 없어도 NEAT 계산과 인클라인 이력 표 둘 다 정확히 잡힘)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -610,10 +610,18 @@ function parseSteps(text){
 }
 // 그날 인클라인 트레드밀 운동기록에 걸음수가 함께 적혀있으면, 그건 이미 일일 총 걸음수 안에 포함돼 있으므로
 // NEAT(순수 일상활동) 계산 시 총 걸음수에서 빼서 중복을 제거합니다.
+// 2026-08-16 4차 수정(구조 개선): note 자유텍스트에서 정규식으로 걸음수를 "추측"하는 방식은
+// 표현이 바뀔 때마다(새 문구, 키워드 누락 등) 또 놓칠 수 있는 구조적 한계가 있었음.
+// 이제 워크아웃 모달의 별도 입력칸(w.treadmillSteps)에 명시적으로 적은 값을 최우선으로 쓰고,
+// 그 값이 없는 과거 기록에 한해서만 기존 텍스트 파싱을 fallback으로 사용한다.
 function computeStepBreakdown(stepRec, workouts){
   const dayWorkouts = workouts.filter(w => w.date === stepRec.date);
   let treadmillSteps = 0;
   dayWorkouts.forEach(w => {
+    if(w.treadmillSteps!=null && Number(w.treadmillSteps)>0){
+      treadmillSteps += Number(w.treadmillSteps);
+      return;
+    }
     const text = `${w.name||''} ${w.note||''}`;
     if(isInclineEntry(w)){
       const s = parseSteps(text);
@@ -671,6 +679,12 @@ function parseDurationMin(text){
   return null;
 }
 function isInclineEntry(w){
+  // 2026-08-16 5차 수정: treadmillSteps 필드가 채워져 있으면(=Claude가 스크린샷을 보고
+  // 트레드밀 세션이라고 직접 판단해서 넣은 값) 그 자체로 트레드밀 세션이 확정이므로,
+  // name/part/note 어디에도 "인클라인"/"트레드밀"/"러닝머신" 단어가 전혀 없어도 최우선으로
+  // 인식한다. 이게 없으면 NEAT 계산(computeStepBreakdown)은 맞게 나와도 "인클라인 트레드밀
+  // 이력" 표(computeInclineHistory)는 여전히 저 세 단어가 있어야만 잡히는 구멍이 남는다.
+  if(w.treadmillSteps!=null && Number(w.treadmillSteps)>0) return true;
   // 2026-07-25 수정: classifyDayType과 동일한 이유로, exercises 구조화 데이터가 있는 항목은
   // note를 스캔하지 않음(근력세션 note에 "인클라인" 단어가 우연히/부정문으로 들어가도
   // 인클라인 이력에 잘못 추가되는 걸 방지).
@@ -1011,6 +1025,21 @@ function ensureWorkoutIds(arr){
   arr.forEach((w,i) => { if(!w.id){ w.id = `w_legacy_${i}`; changed = true; } });
   return {arr, changed};
 }
+// 2026-08-16 추가: treadmillSteps 구조화 필드 도입 시점 이전에 저장된(브라우저 localStorage/
+// 구글드라이브 동기화로 들어온) 기존 기록은 이 필드가 비어있다. ensureWorkoutIds와 같은 패턴으로,
+// 최초 로드 시 한 번 스캔해서 isInclineEntry(트레드밀/인클라인/러닝머신)이면서 treadmillSteps가
+// 없는 항목에 한해 기존 note 텍스트에서 걸음수를 파싱해 채워넣는다(SEED_WORKOUT뿐 아니라 실제
+// 저장된 데이터가 이미 다르게 존재하는 경우까지 커버하기 위함). 이미 값이 있는 항목은 건드리지 않음.
+function ensureTreadmillSteps(arr){
+  let changed = false;
+  arr.forEach(w => {
+    if(w.treadmillSteps==null && isInclineEntry(w)){
+      const s = parseSteps(`${w.name||''} ${w.note||''}`);
+      if(s){ w.treadmillSteps = s; changed = true; }
+    }
+  });
+  return {arr, changed};
+}
 
 let state = {
   inbody: loadArr(LS_KEYS.inbody, SEED_INBODY),
@@ -1037,7 +1066,8 @@ let state = {
 };
 {
   const fixed = ensureWorkoutIds(state.workouts);
-  if(fixed.changed) saveArr(LS_KEYS.workout, state.workouts);
+  const fixedSteps = ensureTreadmillSteps(state.workouts);
+  if(fixed.changed || fixedSteps.changed) saveArr(LS_KEYS.workout, state.workouts);
 }
 function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); }
 function setTheme(t){
@@ -1464,7 +1494,7 @@ function render(){
 }
 function tabBtn(key,label){ return `<button class="${state.tab===key?'active':''}" onclick="setTab('${key}')">${label}</button>`; }
 function setTab(t){ state.tab=t; render(); }
-function openModal(kind){ modalState.open=true; modalState.kind=kind||'inbody'; modalState.status='idle'; modalState.form={date:todayISO()}; modalState.error=''; modalState.editId=null; modalState.exerciseRows = modalState.kind==='workout' ? [{}] : []; render(); }
+function openModal(kind){ modalState.open=true; modalState.kind=kind||'inbody'; modalState.status='idle'; modalState.form={date:todayISO()}; modalState.error=''; modalState.editId=null; modalState.exerciseRows = modalState.kind==='workout' ? [{}] : []; modalState.workoutJsonText=''; render(); }
 function closeModal(){ modalState.open=false; render(); }
 
 // 2026-08-13 추가: 기존 레코드를 수정 모드로 모달에 불러오기(인바디/식단/운동 공통).
@@ -1479,10 +1509,10 @@ function openEditModal(kind, rec){
   if(kind==='workout'){
     if(rec.exercises && rec.exercises.length){
       modalState.exerciseRows = rec.exercises.map(e => ({name:e.name, part:e.part, sets:e.sets, reps:e.reps, weight:e.weight}));
-      modalState.form = {date:rec.date, calories:rec.calories, note:rec.note};
+      modalState.form = {date:rec.date, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps};
     } else {
       modalState.exerciseRows = [{}];
-      modalState.form = {date:rec.date, name:rec.name, part:rec.part, volume:rec.volume, calories:rec.calories, note:rec.note};
+      modalState.form = {date:rec.date, name:rec.name, part:rec.part, volume:rec.volume, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps};
     }
   } else if(kind==='meal'){
     modalState.exerciseRows = [];
@@ -3899,6 +3929,12 @@ function renderModal(){
         </div>
       ` : ''}
       ${modalState.kind==='workout' ? `
+        <div class="field">
+          <label>Claude가 만들어준 JSON 붙여넣기 (있으면 아래 개별 입력 없이 바로 등록)</label>
+          <textarea id="workout-json-input" class="ai-textarea" placeholder='[{"date":"2026-08-16","name":"인클라인 트레드밀 5km","part":"유산소","calories":310,"note":"45:17, 평균속도6.6km/h, 평균심박128bpm, 케이던스127spm","treadmillSteps":5772}]' oninput="modalState.workoutJsonText=this.value">${esc(modalState.workoutJsonText||'')}</textarea>
+          <button type="button" class="btn btn-sm" style="margin-top:6px;" onclick="importWorkoutJSON()">JSON으로 등록</button>
+          <div class="note-box" style="margin-top:6px;">삼성헬스 스크린샷을 Claude 채팅에 올리고 "이 앱 형식 JSON으로 만들어줘"라고 하면, 그 결과를 여기 붙여넣기만 하면 돼요. 트레드밀 걸음수는 note 문장 대신 treadmillSteps 숫자 필드에 담겨서 들어오기 때문에, Claude가 표현을 어떻게 쓰든 걸음수 인식이 안 놓쳐요.</div>
+        </div>
         <div class="ex-rows">
           ${(modalState.exerciseRows||[]).map((row,i) => `
             <div class="ex-row">
@@ -3920,6 +3956,7 @@ function renderModal(){
         ${field('part','부위 (상세입력 없을 때만 사용)', f.part)}
         ${field('volume','볼륨 (kg, 선택 — 상세입력 시 자동계산)', f.volume)}
         ${field('calories','소모 칼로리 (kcal, 선택)', f.calories)}
+        ${field('treadmillSteps','트레드밀/러닝머신 걸음수 (해당 시에만 입력 — 비고 텍스트 대신 여기 숫자로 입력하면 NEAT 계산에 정확히 반영됨)', f.treadmillSteps)}
         ${field('note','비고 (선택)', f.note)}
       ` : ''}
       <button class="btn-save" onclick="saveRecord()">저장</button>
@@ -3945,7 +3982,7 @@ function renderModal(){
 function field(key,label,val){
   return `<div class="field"><label>${label}</label><input data-field="${key}" value="${val!=null?esc(val):''}" oninput="modalState.form['${key}']=this.value"></div>`;
 }
-function setKind(k){ modalState.kind=k; modalState.status='idle'; modalState.form={date:todayISO()}; modalState.error=''; modalState.exerciseRows = k==='workout' ? [{}] : []; refreshModal(); }
+function setKind(k){ modalState.kind=k; modalState.status='idle'; modalState.form={date:todayISO()}; modalState.error=''; modalState.exerciseRows = k==='workout' ? [{}] : []; modalState.workoutJsonText=''; refreshModal(); }
 function setManual(){ modalState.status='manual'; modalState.form={date:todayISO()}; if(modalState.kind==='workout' && !modalState.exerciseRows) modalState.exerciseRows=[{}]; refreshModal(); }
 function addExRow(){ modalState.exerciseRows = modalState.exerciseRows||[]; modalState.exerciseRows.push({}); refreshModal(); }
 function removeExRow(i){ modalState.exerciseRows.splice(i,1); refreshModal(); }
@@ -4002,10 +4039,11 @@ function saveRecord(){
         volume: totalVol>0 ? `${totalVol.toLocaleString()}kg` : (f.volume||null),
         calories: f.calories?num(f.calories):null,
         note: f.note||'',
+        treadmillSteps: f.treadmillSteps?num(f.treadmillSteps):null,
         exercises
       };
     } else {
-      rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||''};
+      rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||'', treadmillSteps: f.treadmillSteps?num(f.treadmillSteps):null};
     }
     // 2026-08-13 근본 수정: 기존엔 같은 날짜의 기존 워크아웃 기록을 전부 지우고 새 항목
     // 하나로 바꿔버려서, 하루에 두 번째 운동(예: 오전 근력 + 저녁 유산소)을 모달로 추가하면
@@ -4021,6 +4059,47 @@ function saveRecord(){
   }
   markUpdated();
   closeModal();
+}
+// 2026-08-16 추가: 삼성헬스 스크린샷을 Claude 채팅에 올리면 Claude가 이 앱의 워크아웃 레코드
+// 형식(JSON)으로 값을 만들어주고, 그걸 여기 붙여넣기만 하면 등록되게 하는 기능. 기존엔
+// "Claude가 note 자유텍스트를 만들어주면 → 그걸 나중에 이 앱의 정규식이 다시 파싱"하는
+// 구조라 표현이 바뀔 때마다 걸음수를 놓치는 문제가 반복됐다(parseSteps 관련 3차 수정 이력 참고).
+// 이제 Claude가 처음부터 treadmillSteps 등 구조화된 필드값을 직접 채워서 JSON으로 주고,
+// 앱은 그 값을 그대로 신뢰해서 저장만 하므로 표현/문구에 좌우되지 않는다.
+// 기대 스키마: [{date, name, part, volume?, calories?, note?, treadmillSteps?, id?}, ...]
+// id가 있고 기존 기록에 같은 id가 있으면 그 기록을 수정, 없으면 새 기록으로 추가한다.
+function importWorkoutJSON(){
+  const el = document.getElementById('workout-json-input');
+  const raw = (el ? el.value : (modalState.workoutJsonText||'')).trim();
+  if(!raw){ alert('붙여넣은 JSON이 없어요.'); return; }
+  let parsed;
+  try{ parsed = JSON.parse(raw); }
+  catch(e){ alert('JSON 형식이 올바르지 않아요. Claude에게 이 앱 형식으로 다시 만들어달라고 해주세요.\n\n오류: ' + e.message); return; }
+  const arr = Array.isArray(parsed) ? parsed : [parsed];
+  if(!arr.length){ alert('빈 JSON이에요.'); return; }
+  if(arr.some(r => !r || !r.date)){ alert('date(YYYY-MM-DD)가 없는 항목이 있어요. 모든 항목에 날짜가 필요해요.'); return; }
+  let added = 0, updated = 0;
+  arr.forEach(r => {
+    const rec = {
+      id: r.id || makeId('w'),
+      date: r.date,
+      name: r.name || '',
+      part: r.part || '',
+      volume: r.volume || null,
+      calories: r.calories!=null ? num(r.calories) : null,
+      note: r.note || '',
+      treadmillSteps: r.treadmillSteps!=null ? num(r.treadmillSteps) : null,
+    };
+    const idx = state.workouts.findIndex(w => w.id === rec.id);
+    if(idx >= 0){ state.workouts[idx] = rec; updated++; }
+    else { state.workouts = [...state.workouts, rec]; added++; }
+  });
+  saveArr(LS_KEYS.workout, state.workouts);
+  markUpdated();
+  modalState.workoutJsonText = '';
+  alert(`등록 완료 — 신규 ${added}건${updated?`, 수정 ${updated}건`:''}.`);
+  closeModal();
+  render();
 }
 // 2026-08-13 추가: 즐겨찾기 음식을 오늘 식단에 원클릭으로 합산. 식단은 날짜당 1건(하루 총합)
 // 구조라, 모달을 열지 않고 오늘 레코드를 찾아 없으면 새로 만들고 있으면 매크로만 더한다.
