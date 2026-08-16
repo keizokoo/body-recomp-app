@@ -463,7 +463,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-14-a (버그수정: 즐겨찾기 퀵애드 입력폼이 모바일 좁은 화면에서 오른쪽으로 넘치던 문제 수정)';
+const APP_BUILD_VERSION = '2026-08-16-a (버그수정: NEAT 계산 시 트레드밀 걸음수 파싱 정규식이 "걸음→숫자" 순서 노트를 놓치던 문제 수정)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -592,10 +592,19 @@ const SPECIAL_DAY_ADVICE = {
 
 function parseSteps(text){
   if(!text) return null;
-  const m = text.match(/([\d,]+)\s*걸음/);
-  if(!m) return null;
-  const n = Number(m[1].replace(/,/g,''));
-  return isNaN(n) ? null : n;
+  // 2026-08-16 수정: 노트 표기가 "4,263걸음"(숫자→걸음)과 "걸음3,562"(걸음→숫자) 두 순서가
+  // 혼재돼있어(과거 세션마다 표기 순서가 달랐음), 두 패턴 모두 인식하도록 확장.
+  let m = text.match(/([\d,]+)\s*걸음/);
+  if(m){
+    const n = Number(m[1].replace(/,/g,''));
+    if(!isNaN(n)) return n;
+  }
+  m = text.match(/걸음\s*([\d,]+)/);
+  if(m){
+    const n = Number(m[1].replace(/,/g,''));
+    if(!isNaN(n)) return n;
+  }
+  return null;
 }
 // 그날 인클라인 트레드밀 운동기록에 걸음수가 함께 적혀있으면, 그건 이미 일일 총 걸음수 안에 포함돼 있으므로
 // NEAT(순수 일상활동) 계산 시 총 걸음수에서 빼서 중복을 제거합니다.
@@ -3478,12 +3487,12 @@ function renderSettings(){
       ${state.favorites.length ? `<div class="fav-chip-row" style="margin-bottom:14px;">
         ${state.favorites.map(fv => `<span class="fav-chip">${esc(fv.name)} <span class="fav-macro">${fv.calories}kcal·P${fv.protein}g·C${fv.carbs}g</span> <button class="mini-btn danger" style="margin-left:4px;" onclick="deleteFavorite('${fv.id}')">삭제</button></span>`).join('')}
       </div>` : `<div class="sw-empty" style="margin-bottom:14px;">등록된 즐겨찾기가 없어요.</div>`}
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px, 1fr)); gap:6px; width:100%; max-width:560px; box-sizing:border-box;">
-        <input id="fav-name-input" placeholder="이름 (예: 단백질 쉐이크)" style="width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
-        <input id="fav-cal-input" type="number" placeholder="kcal" style="width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <input id="fav-protein-input" type="number" placeholder="단백g" style="width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <input id="fav-carbs-input" type="number" placeholder="탄수g" style="width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="addFavorite()">추가</button>
+      <div style="display:grid; grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr auto; gap:6px; max-width:560px;">
+        <input id="fav-name-input" placeholder="이름 (예: 단백질 쉐이크)" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
+        <input id="fav-cal-input" type="number" placeholder="kcal" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <input id="fav-protein-input" type="number" placeholder="단백g" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <input id="fav-carbs-input" type="number" placeholder="탄수g" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <button class="btn btn-primary btn-sm" onclick="addFavorite()">추가</button>
       </div>
     </section>
 
