@@ -463,7 +463,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-16-a (버그수정: NEAT 계산 시 트레드밀 걸음수 파싱 정규식이 "걸음→숫자" 순서 노트를 놓치던 문제 수정)';
+const APP_BUILD_VERSION = '2026-08-16-b (버그 2차수정: parseSteps 정규식이 콤마 단독을 숫자로 오인해 0을 반환하던 문제 수정, 28건 전수 재검증 완료)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -592,17 +592,19 @@ const SPECIAL_DAY_ADVICE = {
 
 function parseSteps(text){
   if(!text) return null;
-  // 2026-08-16 수정: 노트 표기가 "4,263걸음"(숫자→걸음)과 "걸음3,562"(걸음→숫자) 두 순서가
-  // 혼재돼있어(과거 세션마다 표기 순서가 달랐음), 두 패턴 모두 인식하도록 확장.
-  let m = text.match(/([\d,]+)\s*걸음/);
+  // 2026-08-16 1차 수정: "숫자→걸음"/"걸음→숫자" 두 순서 다 인식하도록 확장했으나,
+  // [\d,]+ 가 쉼표 단독도 매칭해버려 "...spm, 걸음7268"의 콤마를 숫자로 오인,
+  // 0을 반환하며 조기 종료되는 2차 버그 발생(2026-08-16 재발견).
+  // 2026-08-16 2차 수정: 반드시 숫자로 시작하도록 \d[\d,]* 로 강제 + 0 이하 값은 무효 처리.
+  let m = text.match(/(\d[\d,]*)\s*걸음/);
   if(m){
     const n = Number(m[1].replace(/,/g,''));
-    if(!isNaN(n)) return n;
+    if(!isNaN(n) && n>0) return n;
   }
-  m = text.match(/걸음\s*([\d,]+)/);
+  m = text.match(/걸음\s*(\d[\d,]*)/);
   if(m){
     const n = Number(m[1].replace(/,/g,''));
-    if(!isNaN(n)) return n;
+    if(!isNaN(n) && n>0) return n;
   }
   return null;
 }
