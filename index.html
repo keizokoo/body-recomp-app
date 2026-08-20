@@ -264,6 +264,8 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .empty-state{text-align:center; padding:70px 20px; color:var(--text-faint); font-size:13.5px;}
 
 .ai-note-body{font-size:13.5px; line-height:1.75; color:var(--text); white-space:normal;}
+.ai-note-body p{margin:0 0 14px;}
+.ai-note-body p:last-child{margin-bottom:0;}
 textarea.ai-textarea{background:var(--panel-alt); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; color:var(--text); font-size:13px; font-family:var(--font-body); line-height:1.6; width:100%; min-height:140px; resize:vertical;}
 textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 
@@ -374,6 +376,11 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .theme-toggle{display:inline-flex; border-radius:var(--radius-pill); border:1px solid var(--border); overflow:hidden;}
 .theme-toggle button{padding:8px 14px; font-size:12.5px; font-weight:600; background:var(--panel); color:var(--text-dim); border:none; cursor:pointer;}
 .theme-toggle button.active{background:var(--brand-mark-bg); color:#fff;}
+/* 2026-08-18 추가: 설정 탭 안에 있던 화면 테마 토글을 상단바("기록추가" 버튼 왼쪽)로 이동하면서,
+   좁은 헤더 공간에 맞춘 축소 버전. 동작/구조는 .theme-toggle과 동일(setTheme 재사용), 크기만 축소. */
+.theme-toggle-mini{display:inline-flex; border-radius:var(--radius-pill); border:1px solid var(--border); overflow:hidden; flex-shrink:0;}
+.theme-toggle-mini button{padding:8px 10px; font-size:14px; line-height:1; background:var(--panel); color:var(--text-dim); border:none; cursor:pointer; display:flex; align-items:center;}
+.theme-toggle-mini button.active{background:var(--brand-mark-bg); color:#fff;}
 .se-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-bottom:10px;}
 .se-chip{font-size:12px; font-weight:600; padding:9px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer; text-align:center;}
 .se-chip.active{background:var(--c-warn-soft); border-color:var(--c-warn); color:var(--c-warn);}
@@ -922,14 +929,10 @@ function computeWorkoutInsights(workouts){
     insights.push({tone:'good', title:'회복 간격 원칙 준수', detail:'기록상 모든 부위가 48시간 이상 간격을 두고 재자극됐어요 — 회복 관리가 잘 되고 있어요.'});
   }
 
-  // 3) 목디스크 안전 준수
-  const riskEntries = workouts.filter(w => isNeckRisky(`${w.name||''} ${w.part||''} ${w.note||''}`));
-  if(riskEntries.length>0){
-    const dates = riskEntries.slice(-3).map(w=>w.date.slice(5)).join(', ');
-    insights.push({tone:'warn', title:'목디스크 위험 종목 감지', detail:`${dates} 기록에서 오버헤드프레스·바벨스쿼트 계열 종목이 확인됐어요. 이 종목들은 영구 제외 대상이라 PT와 다시 확인하는 걸 권장해요.`});
-  } else {
-    insights.push({tone:'good', title:'목디스크 안전 종목만 사용 중', detail:'최근 기록에서 오버헤드프레스·바벨스쿼트 등 위험 종목이 감지되지 않았어요.'});
-  }
+  // 2026-08-18: "목디스크 위험 종목 감지" 워닝이 계속 뜬다는 반복 피드백으로 이 인사이트 항목
+  // 자체를 완전히 삭제(이전에도 지워달라는 요청이 있었으나 반영이 안 되고 있었음). isNeckRisky
+  // 판정 로직 자체(workoutRow의 "목디스크 확인" 배지 등 다른 곳)는 그대로 두고, 여기 스마트
+  // 인사이트 카드에서만 제거함.
 
   // 4) 세션당 평균 볼륨(강도 밀도) 추이 — KPI카드의 '주간 총볼륨'과 달리, 세션 1회당 얼마나 알차게 채우는지를 봄
   const last14 = daysAgoList(14), last28 = daysAgoList(28);
@@ -1236,25 +1239,29 @@ function toLocalISO(d){
   const pad = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
+// 2026-08-18 추가: 날짜 문자열을 안전하게 ms 타임스탬프로 변환. 포맷이 다르거나(예: "YYYY-M-D"
+// vs "YYYY-MM-DD") 아예 없는 값이 들어와도 예외 없이 null을 반환해, 호출하는 쪽에서 "비교 불가"로
+// 다룰 수 있게 한다(cloudSync의 aiAnalysisDate 비교 참고).
+function parseDateSafe_(s){
+  if(!s) return null;
+  const t = new Date(s).getTime();
+  return isNaN(t) ? null : t;
+}
 const dowLabel = iso => ['일','월','화','수','목','금','토'][new Date(iso+'T00:00:00').getDay()];
 const esc = s => (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-// 2026-08-20 신설: "Claude 분석"/"Claude 종합 리포트" 문단 나누기 버그 수정.
-// 근거: 정희님이 이전에 "문단 나누기 개선했다"고 안내받았는데도 여전히 한 덩어리로 보인다고
-// 재확인함. 원인 재점검 — 기존 코드(esc(text).replace(/\n/g,'<br>'))는 텍스트에 실제 개행문자(\n)가
-// "있을 때만" 동작하는데, 화면에 붙여넣기된 실제 텍스트를 보면(설정 탭 textarea에도 줄바꿈 없이
-// 그대로 표시됨 — textarea는 개행을 브라우저가 그대로 보여주므로 JS 로직과 무관하게 원본에 개행이
-// 전혀 없다는 뜻) 원본 텍스트 자체에 개행이 하나도 없는 경우가 실제 원인이었음. 기존 로직은 "개행을
-// <br>로 바꾸는" 것만 했을 뿐 "개행이 아예 없는 긴 글"은 애초에 처리 대상이 아니었던 것 — 그래서
-// 지난 수정이 실질적 변화를 만들지 못함.
-// 수정: 1) \r\n·\r도 통일해서 처리 2) 실제 개행이 있으면 그대로 문단 구분 3) 개행이 전혀 없는
-// 경우(복사/붙여넣기·클라우드 동기화 과정에서 줄바꿈이 사라진 경우)에는 문장 2개씩 묶어 자동으로
-// 문단을 나눔(내용은 그대로, 순수 표시용 분할 — 마침표/물음표/느낌표 뒤 공백을 문장 경계로 판단하며
-// "70.8kg"처럼 숫자 소수점은 뒤에 공백이 없어 문장 경계로 오인하지 않음).
-// 문장 경계(.!? 뒤에 공백 또는 문자열 끝)에서만 자르는 수동 스캔 — 정규식 문자클래스로 "."을
-// 통째로 배제하는 방식은 "70.8kg"처럼 공백 없는 소수점에서 백트래킹이 꼬여 그 뒤 텍스트 일부가
-// 통째로 유실되는 버그가 있었음(2026-08-20 테스트 중 발견, 배포 전에 잡음). 아래 방식은 문자열
-// 전체를 처음부터 끝까지 한 번만 훑으며 자르기 때문에 어떤 경우에도 글자가 유실되지 않음.
+// 2026-08-18 추가: "Claude 분석" 카드가 줄바꿈만 <br>로 이어붙여 한 덩어리로 보여서 읽기 불편하다는
+// 피드백 반영 — 문단 단위로 나눠 문단 사이에 여백(margin)을 주는 방식으로 변경.
+// 붙여넣는 텍스트가 빈 줄로 문단을 구분해뒀으면 그 경계를 그대로 쓰고, 빈 줄이 전혀 없으면(한 줄씩
+// 쭉 이어진 텍스트) 줄바꿈 하나하나를 문단 경계로 대신 사용해 항상 읽기 좋게 나오도록 함.
+// 2026-08-20 추가: 위 두 단계(빈 줄 구분, 단일 줄바꿈 구분)로 문단을 나누는 로직은 원본 텍스트에
+// 개행이 "있을 때만" 동작하는데, 화면에 붙여넣기된 실제 텍스트를 보면(설정 탭 textarea에도 줄바꿈
+// 없이 그대로 표시됨 — textarea는 개행을 브라우저가 그대로 보여주므로 JS 로직과 무관하게 원본에
+// 개행이 전혀 없다는 뜻) 원본 텍스트 자체에 개행이 하나도 없는 경우가 "문단 나누기 안 됨" 재신고의
+// 실제 원인이었음(정희님 스크린샷으로 재현 확인, 2026-08-20). 문장 경계(.!? 뒤에 공백 또는 문자열
+// 끝)에서만 자르는 수동 스캔 — 정규식 문자클래스로 "."을 통째로 배제하는 방식은 "70.8kg"처럼 공백
+// 없는 소수점에서 백트래킹이 꼬여 그 뒤 텍스트 일부가 통째로 유실되는 버그가 있었음(2026-08-20
+// 테스트 중 발견, 배포 전에 잡음). 아래 방식은 문자열 전체를 처음부터 끝까지 한 번만 훑으며
+// 자르기 때문에 어떤 경우에도 글자가 유실되지 않음.
 function splitSentences(text){
   const result = [];
   let start = 0;
@@ -1268,19 +1275,24 @@ function splitSentences(text){
   if(start < text.length) result.push(text.slice(start).trim());
   return result.filter(s=>s.length>0);
 }
-function formatNoteText(text){
-  if(!text) return '';
-  const normalized = String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-  if(/\n/.test(normalized)){
-    return esc(normalized).replace(/\n/g,'<br>');
+function formatNoteHtml(text){
+  const normalized = esc(text).replace(/\r\n/g, '\n').trim();
+  if(!normalized) return '';
+  const blocks = normalized.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
+  if(blocks.length > 1){
+    return blocks.map(b => `<p>${b.replace(/\n/g,'<br>')}</p>`).join('');
+  }
+  const lines = normalized.split(/\n/).map(l=>l.trim()).filter(Boolean);
+  if(lines.length > 1){
+    return lines.map(l => `<p>${l}</p>`).join('');
   }
   const sentences = splitSentences(normalized);
-  if(sentences.length<=2) return esc(normalized);
+  if(sentences.length<=2) return `<p>${normalized}</p>`;
   const paragraphs = [];
   for(let i=0;i<sentences.length;i+=2){
     paragraphs.push(sentences.slice(i,i+2).join(' '));
   }
-  return paragraphs.map(p=>esc(p)).join('<br><br>');
+  return paragraphs.map(p => `<p>${p}</p>`).join('');
 }
 
 function sortedInbody(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
@@ -1561,9 +1573,13 @@ function HEADER_TEMPLATE(){
       </div>
       <div class="topbar-actions">
         <span class="${topSyncBadgeClass_()}" id="top-sync-badge"><span class="sync-dot"></span><span id="top-sync-badge-text">${topSyncBadgeText_()}</span></span>
+        <div class="theme-toggle-mini no-print" role="group" aria-label="화면 테마">
+          <button class="${state.theme==='light'?'active':''}" onclick="setTheme('light')" title="라이트 모드" aria-label="라이트 모드">☀️</button>
+          <button class="${state.theme==='dark'?'active':''}" onclick="setTheme('dark')" title="다크 모드" aria-label="다크 모드">🌙</button>
+        </div>
         <button class="btn btn-primary" onclick="openModal()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
-          기록 추가
+          기록추가
         </button>
       </div>
     </div>
@@ -2896,7 +2912,7 @@ function renderDashboard(){
     ${state.aiNote ? `
     <section class="card ai-note">
       <div class="section-label good">${secNum('00')}Claude 분석 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.aiNote.syncedAt ? fmtDateTime(state.aiNote.syncedAt) : state.aiNote.date} 갱신</span></div>
-      <div class="ai-note-body">${formatNoteText(state.aiNote.text)}</div>
+      <div class="ai-note-body">${formatNoteHtml(state.aiNote.text)}</div>
     </section>` : ''}
 
     <section class="card">
@@ -3119,11 +3135,16 @@ function editableCell(table, date, field, value, decimals){
 }
 
 function renderInbodyTable(ma){
+  // 2026-08-18: "전체 인바디 기록 표 보기"가 6/5(가장 오래된 기록)부터 나와서 최신 데이터를
+  // 보려면 계속 스크롤해야 한다는 피드백 반영 — ma는 sortedInbody() 기반 오름차순(과거→현재)
+  // 배열이라 다른 계산(이동평균 등)에는 그대로 써야 하므로, 여기 표시 직전에만 복사본을
+  // 뒤집어서 최신 날짜가 맨 위로 오게 함.
+  const rows = ma.slice().reverse();
   return `<div class="card" style="margin-top:12px; overflow-x:auto;">
     <table class="data-table">
       <thead><tr><th>날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th><th></th></tr></thead>
       <tbody>
-        ${ma.map(r=>`<tr>
+        ${rows.map(r=>`<tr>
           <td>${r.date}</td>
           <td>${editableCell('inbody', r.date, 'weight', r.weight, 1)}</td>
           <td>${editableCell('inbody', r.date, 'muscle', r.muscle, 1)}</td>
@@ -3494,7 +3515,7 @@ function renderReport(){
     <section class="card">
       <div class="section-label good">${secNum('07d')}Claude 종합 리포트 ${state.reportNote ? `<span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.reportNote.syncedAt ? fmtDateTime(state.reportNote.syncedAt) : state.reportNote.date} 갱신</span>` : ''}</div>
       ${state.reportNote
-        ? `<div class="ai-note-body">${formatNoteText(state.reportNote.text)}</div>`
+        ? `<div class="ai-note-body">${formatNoteHtml(state.reportNote.text)}</div>`
         : `<p class="p-dim">아직 등록된 종합 리포트가 없어요. Claude 채팅에서 받은 정기 리포트를 아래에 붙여넣거나, 클라우드 동기화로 자동 반영돼요.</p>`}
       <textarea id="report-note-input" class="ai-textarea" style="margin-top:10px;" placeholder="여기에 Claude의 종합 리포트를 붙여넣으세요...">${state.reportNote ? esc(state.reportNote.text) : ''}</textarea>
       <div class="btn-row" style="margin-top:10px;">
@@ -3602,17 +3623,6 @@ function renderSettings(){
           <div style="font-size:12px; color:var(--text-dim); margin-top:2px;">마운자로 투여 차수별 인바디 변화 — 평소엔 숨기고 필요할 때만 켜서 보기</div>
         </div>
         <button class="btn ${state.showMounjaro?'btn-primary':''} btn-sm" onclick="toggleMounjaroTab()">${state.showMounjaro?'표시 중 · 끄기':'꺼짐 · 켜기'}</button>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="section-label good">${secNum('05a2')}화면 테마</div>
-      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-        <div style="font-size:12.5px; color:var(--text-dim);">기기 설정을 따르거나 직접 밝게/어둡게 고정할 수 있어요.</div>
-        <div class="theme-toggle">
-          <button class="${state.theme==='light'?'active':''}" onclick="setTheme('light')">라이트</button>
-          <button class="${state.theme==='dark'?'active':''}" onclick="setTheme('dark')">다크</button>
-        </div>
       </div>
     </section>
 
@@ -3895,9 +3905,23 @@ async function cloudSync(silent){
       saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
       saveArr(LS_KEYS.steps, state.steps);
       saveArr(LS_KEYS.waist, state.waist);
-      if(data.aiAnalysis && (!state.aiNote || data.aiAnalysisDate >= state.aiNote.date)){
-        state.aiNote = {date: data.aiAnalysisDate || todayISO(), text: data.aiAnalysis, syncedAt: new Date().toISOString()};
-        saveAiNote(state.aiNote);
+      // 2026-08-18 수정: 대시보드 "Claude 분석"이 새 날짜 데이터가 들어와도 예전 날짜(예: 8/16)
+      // 내용에 계속 멈춰있다는 반복 제보 반영. 기존엔 data.aiAnalysisDate와 state.aiNote.date를
+      // 문자열로 그대로 >= 비교했는데, 서버(Meta 시트)가 aiAnalysisDate를 아예 안 내려주거나
+      // "YYYY-MM-DD"가 아닌 다른 포맷으로 내려주는 경우 문자열 비교가 항상 실패해(또는 NaN 취급되어)
+      // 로컬이 새 값으로 절대 갱신되지 못하는 경로가 있었음 — 이 앱은 "Google Sheet가 유일한
+      // 진실 공급원"이라는 원칙(위 mergeByDate_ 주석 참고)과도 어긋남. 날짜는 실제 Date 값으로
+      // 안전하게 파싱해 비교하고, 날짜 비교가 불가능한 경우(포맷 문제 등)에도 서버 내용이 로컬과
+      // 다르면 서버를 신뢰해 갱신하도록 폴백을 추가.
+      if(data.aiAnalysis){
+        const localMs = state.aiNote ? parseDateSafe_(state.aiNote.date) : null;
+        const serverMs = parseDateSafe_(data.aiAnalysisDate);
+        const contentChanged = !state.aiNote || data.aiAnalysis !== state.aiNote.text;
+        const serverIsNewerOrSame = !state.aiNote || localMs===null || serverMs===null || serverMs >= localMs;
+        if(contentChanged && serverIsNewerOrSame){
+          state.aiNote = {date: data.aiAnalysisDate || todayISO(), text: data.aiAnalysis, syncedAt: new Date().toISOString()};
+          saveAiNote(state.aiNote);
+        }
       }
       // 2026-08-04 추가: "리포트" 탭의 Claude 종합 리포트(comprehensiveReport)도 aiAnalysis와
       // 동일한 방식으로 Meta 시트 경유 pull. 단, Code.gs의 doGet()이 이 새 Meta 키를 실제로
@@ -4291,7 +4315,22 @@ if((localStorage.getItem(LS_KEYS.cloudurl)||'').trim()){
 // 전략도 network-first로 변경(아래 sw.js 참고)해서 향후 이런 문제가 재발하지 않도록 함.
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW 등록 실패:', err));
+    // 2026-08-18 추가: "앱 업데이트를 했는데도 예전 데이터/화면이 그대로 남아있다"는 반복 제보의
+    // 유력한 원인 중 하나로 서비스워커 캐싱을 다시 점검. updateViaCache:'none'을 주지 않으면
+    // 브라우저가 sw.js 자체를 자체 HTTP 캐시에 담아둘 수 있어, 서버에 새 sw.js를 올려도
+    // 클라이언트가 그 변경을 한동안(길게는 24시간) 못 알아채는 경우가 있음 — 매번 네트워크로
+    // sw.js 최신본을 확인하도록 강제. 또한 새 서비스워커가 활성화(controllerchange)되면 그
+    // 순간 자동으로 한 번 새로고침해서, 사용자가 수동으로 새로고침하지 않아도 최신 버전이
+    // 곧바로 반영되게 함(무한 새로고침 방지를 위해 세션당 한 번만 리로드).
+    navigator.serviceWorker.register('./sw.js', {updateViaCache: 'none'}).then(reg => {
+      reg.update().catch(()=>{});
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if(reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    }).catch(err => console.error('SW 등록 실패:', err));
   });
 }
 
