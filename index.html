@@ -2318,7 +2318,7 @@ function renderMounjaro(){
           <tbody>
             ${cycles.map(c => `<tr>
               <td>${c.cycle}차</td>
-              <td>${c.date} (목)</td>
+              <td>${c.date} (${dowLabel(c.date)})</td>
               <td>${c.dose}</td>
               <td>${!c.start||!c.end ? '—' : `${fmt(c.start.weight)}→${fmt(c.end.weight)}kg <span class="${c.weightDelta<=0?'good-text':'warn-text'}">(${c.weightDelta>0?'+':''}${fmt(c.weightDelta)})</span>`}</td>
               <td>${!c.start||!c.end ? '—' : `${fmt(c.start.muscle)}→${fmt(c.end.muscle)}kg <span class="${c.muscleDelta>=0?'good-text':'warn-text'}">(${c.muscleDelta>0?'+':''}${fmt(c.muscleDelta)})</span>`}</td>
