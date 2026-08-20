@@ -345,8 +345,11 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 @media(max-width:480px){.plan-grid{grid-template-columns:repeat(7,1fr); gap:3px;} .plan-label{display:none;}}
 
 .ex-rows{display:flex; flex-direction:column; gap:6px;}
-.ex-row{display:grid; grid-template-columns:1.6fr 1fr 0.7fr 0.7fr 0.8fr auto; gap:5px; align-items:center;}
-.ex-row input, .ex-row select{background:var(--panel-alt); border:1px solid var(--border); border-radius:8px; padding:7px 8px; color:var(--text); font-size:12px; font-family:var(--font-mono); width:100%;}
+/* 2026-08-20 수정: 즐겨찾기 입력행과 동일한 오버플로우 버그(그리드 트랙이 콘텐츠 최소너비 아래로
+   못 줄어듦)가 여기도 있어 flex-wrap으로 전환 — 좁은 화면에서 자동 줄바꿈됨. 각 입력의 너비는
+   markup의 인라인 flex-basis로 지정(종목명은 넓게, 세트/횟수/무게는 좁게). */
+.ex-row{display:flex; flex-wrap:wrap; gap:5px; align-items:center;}
+.ex-row input, .ex-row select{background:var(--panel-alt); border:1px solid var(--border); border-radius:8px; padding:7px 8px; color:var(--text); font-size:12px; font-family:var(--font-mono); min-width:0;}
 .ex-row select{font-family:var(--font-body);}
 .ex-row-del{background:none; border:none; color:var(--text-faint); font-size:14px; cursor:pointer; padding:4px;}
 .ex-row-del:hover{color:var(--c-warn);}
@@ -1235,6 +1238,50 @@ function toLocalISO(d){
 }
 const dowLabel = iso => ['일','월','화','수','목','금','토'][new Date(iso+'T00:00:00').getDay()];
 const esc = s => (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// 2026-08-20 신설: "Claude 분석"/"Claude 종합 리포트" 문단 나누기 버그 수정.
+// 근거: 정희님이 이전에 "문단 나누기 개선했다"고 안내받았는데도 여전히 한 덩어리로 보인다고
+// 재확인함. 원인 재점검 — 기존 코드(esc(text).replace(/\n/g,'<br>'))는 텍스트에 실제 개행문자(\n)가
+// "있을 때만" 동작하는데, 화면에 붙여넣기된 실제 텍스트를 보면(설정 탭 textarea에도 줄바꿈 없이
+// 그대로 표시됨 — textarea는 개행을 브라우저가 그대로 보여주므로 JS 로직과 무관하게 원본에 개행이
+// 전혀 없다는 뜻) 원본 텍스트 자체에 개행이 하나도 없는 경우가 실제 원인이었음. 기존 로직은 "개행을
+// <br>로 바꾸는" 것만 했을 뿐 "개행이 아예 없는 긴 글"은 애초에 처리 대상이 아니었던 것 — 그래서
+// 지난 수정이 실질적 변화를 만들지 못함.
+// 수정: 1) \r\n·\r도 통일해서 처리 2) 실제 개행이 있으면 그대로 문단 구분 3) 개행이 전혀 없는
+// 경우(복사/붙여넣기·클라우드 동기화 과정에서 줄바꿈이 사라진 경우)에는 문장 2개씩 묶어 자동으로
+// 문단을 나눔(내용은 그대로, 순수 표시용 분할 — 마침표/물음표/느낌표 뒤 공백을 문장 경계로 판단하며
+// "70.8kg"처럼 숫자 소수점은 뒤에 공백이 없어 문장 경계로 오인하지 않음).
+// 문장 경계(.!? 뒤에 공백 또는 문자열 끝)에서만 자르는 수동 스캔 — 정규식 문자클래스로 "."을
+// 통째로 배제하는 방식은 "70.8kg"처럼 공백 없는 소수점에서 백트래킹이 꼬여 그 뒤 텍스트 일부가
+// 통째로 유실되는 버그가 있었음(2026-08-20 테스트 중 발견, 배포 전에 잡음). 아래 방식은 문자열
+// 전체를 처음부터 끝까지 한 번만 훑으며 자르기 때문에 어떤 경우에도 글자가 유실되지 않음.
+function splitSentences(text){
+  const result = [];
+  let start = 0;
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    if((ch==='.'||ch==='!'||ch==='?') && (i+1>=text.length || /\s/.test(text[i+1]))){
+      result.push(text.slice(start, i+1).trim());
+      start = i+1;
+    }
+  }
+  if(start < text.length) result.push(text.slice(start).trim());
+  return result.filter(s=>s.length>0);
+}
+function formatNoteText(text){
+  if(!text) return '';
+  const normalized = String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  if(/\n/.test(normalized)){
+    return esc(normalized).replace(/\n/g,'<br>');
+  }
+  const sentences = splitSentences(normalized);
+  if(sentences.length<=2) return esc(normalized);
+  const paragraphs = [];
+  for(let i=0;i<sentences.length;i+=2){
+    paragraphs.push(sentences.slice(i,i+2).join(' '));
+  }
+  return paragraphs.map(p=>esc(p)).join('<br><br>');
+}
 
 function sortedInbody(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
 function movingAverage(arr, key, win){
@@ -2849,7 +2896,7 @@ function renderDashboard(){
     ${state.aiNote ? `
     <section class="card ai-note">
       <div class="section-label good">${secNum('00')}Claude 분석 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.aiNote.syncedAt ? fmtDateTime(state.aiNote.syncedAt) : state.aiNote.date} 갱신</span></div>
-      <div class="ai-note-body">${esc(state.aiNote.text).replace(/\n/g,'<br>')}</div>
+      <div class="ai-note-body">${formatNoteText(state.aiNote.text)}</div>
     </section>` : ''}
 
     <section class="card">
@@ -3447,7 +3494,7 @@ function renderReport(){
     <section class="card">
       <div class="section-label good">${secNum('07d')}Claude 종합 리포트 ${state.reportNote ? `<span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.reportNote.syncedAt ? fmtDateTime(state.reportNote.syncedAt) : state.reportNote.date} 갱신</span>` : ''}</div>
       ${state.reportNote
-        ? `<div class="ai-note-body">${esc(state.reportNote.text).replace(/\n/g,'<br>')}</div>`
+        ? `<div class="ai-note-body">${formatNoteText(state.reportNote.text)}</div>`
         : `<p class="p-dim">아직 등록된 종합 리포트가 없어요. Claude 채팅에서 받은 정기 리포트를 아래에 붙여넣거나, 클라우드 동기화로 자동 반영돼요.</p>`}
       <textarea id="report-note-input" class="ai-textarea" style="margin-top:10px;" placeholder="여기에 Claude의 종합 리포트를 붙여넣으세요...">${state.reportNote ? esc(state.reportNote.text) : ''}</textarea>
       <div class="btn-row" style="margin-top:10px;">
@@ -3585,12 +3632,17 @@ function renderSettings(){
       ${state.favorites.length ? `<div class="fav-chip-row" style="margin-bottom:14px;">
         ${state.favorites.map(fv => `<span class="fav-chip">${esc(fv.name)} <span class="fav-macro">${fv.calories}kcal·P${fv.protein}g·C${fv.carbs}g</span> <button class="mini-btn danger" style="margin-left:4px;" onclick="deleteFavorite('${fv.id}')">삭제</button></span>`).join('')}
       </div>` : `<div class="sw-empty" style="margin-bottom:14px;">등록된 즐겨찾기가 없어요.</div>`}
-      <div style="display:grid; grid-template-columns:1.4fr 0.8fr 0.8fr 0.8fr auto; gap:6px; max-width:560px;">
-        <input id="fav-name-input" placeholder="이름 (예: 단백질 쉐이크)" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
-        <input id="fav-cal-input" type="number" placeholder="kcal" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <input id="fav-protein-input" type="number" placeholder="단백g" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <input id="fav-carbs-input" type="number" placeholder="탄수g" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
-        <button class="btn btn-primary btn-sm" onclick="addFavorite()">추가</button>
+      <!-- 2026-08-20 수정: CSS Grid(1.4fr 0.8fr 0.8fr 0.8fr auto)는 모바일 좁은 화면에서 각 입력칸의
+           최소 콘텐츠 너비 때문에 트랙이 줄어들지 못하고 화면 오른쪽으로 넘침(정희님 스크린샷으로
+           재확인). flex-wrap으로 전환 — 이미 위 즐겨찾기 칩 목록(.fav-chip-row)에 쓰던 것과 동일한
+           패턴이라 좁은 화면에서는 자동으로 다음 줄로 줄바꿈됨. min-width:0으로 각 입력이 flex-basis
+           아래로도 실제로 줄어들 수 있게 함(grid 기본값 min-width:auto가 오버플로우의 근본 원인이었음). -->
+      <div style="display:flex; flex-wrap:wrap; gap:6px; max-width:560px;">
+        <input id="fav-name-input" placeholder="이름 (예: 단백질 쉐이크)" style="flex:1 1 150px; min-width:0; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
+        <input id="fav-cal-input" type="number" placeholder="kcal" style="flex:1 1 70px; min-width:0; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <input id="fav-protein-input" type="number" placeholder="단백g" style="flex:1 1 70px; min-width:0; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <input id="fav-carbs-input" type="number" placeholder="탄수g" style="flex:1 1 70px; min-width:0; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <button class="btn btn-primary btn-sm" onclick="addFavorite()" style="flex:0 0 auto;">추가</button>
       </div>
     </section>
 
@@ -4002,15 +4054,15 @@ function renderModal(){
         <div class="ex-rows">
           ${(modalState.exerciseRows||[]).map((row,i) => `
             <div class="ex-row">
-              <input placeholder="종목명" value="${esc(row.name||'')}" oninput="updateExRow(${i},'name',this.value)">
-              <select onchange="updateExRow(${i},'part',this.value)">
+              <input style="flex:1 1 140px;" placeholder="종목명" value="${esc(row.name||'')}" oninput="updateExRow(${i},'name',this.value)">
+              <select style="flex:1 1 90px;" onchange="updateExRow(${i},'part',this.value)">
                 <option value="">부위</option>
                 ${BODY_PARTS.map(p=>`<option value="${p}" ${row.part===p?'selected':''}>${p}</option>`).join('')}
                 <option value="유산소" ${row.part==='유산소'?'selected':''}>유산소</option>
               </select>
-              <input type="number" placeholder="세트" value="${row.sets??''}" oninput="updateExRow(${i},'sets',this.value)">
-              <input type="number" placeholder="횟수" value="${row.reps??''}" oninput="updateExRow(${i},'reps',this.value)">
-              <input type="number" placeholder="무게kg" value="${row.weight??''}" oninput="updateExRow(${i},'weight',this.value)">
+              <input style="flex:0 1 64px;" type="number" placeholder="세트" value="${row.sets??''}" oninput="updateExRow(${i},'sets',this.value)">
+              <input style="flex:0 1 64px;" type="number" placeholder="횟수" value="${row.reps??''}" oninput="updateExRow(${i},'reps',this.value)">
+              <input style="flex:0 1 74px;" type="number" placeholder="무게kg" value="${row.weight??''}" oninput="updateExRow(${i},'weight',this.value)">
               <button class="ex-row-del" onclick="removeExRow(${i})">✕</button>
             </div>`).join('')}
         </div>
