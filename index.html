@@ -2482,8 +2482,14 @@ function getWeeklyPlan(workouts, mondayDate){
     };
   });
   cardioSlots.forEach(di => { plan[dates[di]] = {type:'유산소', label: di===6 ? '인클라인 트레드밀(자율)' : '인클라인 트레드밀'}; });
-  const thuDate = dates[3];
-  if(state.mounjaroDoses.some(d=>d.date===thuDate)) plan[thuDate].label += '(투여일, 가볍게)';
+  // 2026-08-20 수정: 기존엔 이 주의 목요일(dates[3]) 한 칸만 확인해서 실제 투여기록과 일치하면
+  // "(투여일, 가볍게)" 라벨을 붙였음 — 1~10차가 전부 목요일이라 우연히 맞았을 뿐, 11차부터
+  // 요일이 바뀌면서(11차 실제 일요일) 그 주는 어느 칸에도 라벨이 안 붙는 문제가 있었음(정희님
+  // "투여일 기준으로 비교" 요청 반영 — 요일 가정을 완전히 버리고 이 주의 7일 전부를 실제 투여
+  // 기록과 대조).
+  dates.forEach(date => {
+    if(plan[date] && state.mounjaroDoses.some(d=>d.date===date)) plan[date].label += '(투여일, 가볍게)';
+  });
   return plan;
 }
 function planForDate(date, workouts){
