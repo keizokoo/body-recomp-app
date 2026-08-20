@@ -1159,11 +1159,28 @@ applyTheme();
 function checkReminders(){
   const results = [];
   const todayD = todayISO();
-  const dow = new Date(todayD+'T00:00:00').getDay(); // 4 = 목요일
-  if(dow===4){
-    const lastDose = state.mounjaroDoses[state.mounjaroDoses.length-1];
-    if(!lastDose || lastDose.date < todayD){
-      results.push({title:'오늘은 마운자로 투여일이에요', detail:'투여 후 이번 차수를 Sheet(Meta mounjaroDoses)에 기록해두는 걸 잊지 마세요 — 안 하면 대시보드/추적관리 탭이 지난 차수 기준으로 표시돼요.'});
+  // 2026-08-20 수정: 기존엔 "오늘이 목요일이면 투여일"로 요일을 하드코딩해서 판단했음(과거 주석
+  // "4 = 목요일" 참고). 그런데 11차부터 부작용으로 투여 간격이 7일→10일로 바뀌면서 요일 자체가
+  // 매번 달라지게 됐고(11차 실제 투여일 2026-08-16은 일요일, 10차 대비 10일 간격), 이 하드코딩
+  // 때문에 매주 목요일마다 "오늘 투여일" 오알림이 계속 발생함(정희님 2026-08-20 리포트로 확인).
+  // 요일 가정을 완전히 버리고, 실제 마지막 두 차수 사이의 간격(일수)으로 다음 예상 투여일을
+  // 역산해 그 날짜(또는 그 이후, 아직 새 차수가 기록 안 됐으면 매일) 기준으로 알림.
+  const doses = state.mounjaroDoses;
+  if(doses.length){
+    const lastDose = doses[doses.length-1];
+    const prevDose = doses.length>=2 ? doses[doses.length-2] : null;
+    let intervalDays = 7; // 직전 차수 기록이 없어 간격을 역산할 수 없을 때만 쓰는 폴백값
+    if(prevDose){
+      const diff = Math.round((new Date(lastDose.date+'T00:00:00') - new Date(prevDose.date+'T00:00:00'))/86400000);
+      if(diff>0) intervalDays = diff;
+    }
+    const expectedNextDate = toLocalISO(new Date(new Date(lastDose.date+'T00:00:00').getTime() + intervalDays*86400000));
+    if(lastDose.date < todayD && todayD >= expectedNextDate){
+      const overdueDays = Math.round((new Date(todayD+'T00:00:00') - new Date(expectedNextDate+'T00:00:00'))/86400000);
+      results.push({
+        title: overdueDays>0 ? `마운자로 투여 예정일(${expectedNextDate})이 지났어요` : '오늘은 마운자로 투여 예정일이에요',
+        detail: `최근 실제 투여 간격(${intervalDays}일, ${lastDose.date} 기준 역산)으로 계산한 예상일이에요. 투여 후 이번 차수를 Sheet(Meta mounjaroDoses)에 기록해두는 걸 잊지 마세요 — 안 하면 대시보드/추적관리 탭이 지난 차수 기준으로 표시돼요.`
+      });
     }
   }
   const lastInbody = sortedInbody().slice(-1)[0];
@@ -2248,11 +2265,19 @@ function renderMounjaro(){
   // 증량됐는데도 문구는 항상 2.5mg으로 표시됨) — 최신 차수의 실제 dose값을 그대로 노출.
   const latestDoseInfo = state.mounjaroDoses[state.mounjaroDoses.length-1];
   const latestDoseText = latestDoseInfo ? `현재 ${latestDoseInfo.dose} 유지 중` : '';
+  // 2026-08-20 수정: "매주 목요일 투여 중"도 마찬가지로 하드코딩 고정 텍스트였음 — 11차부터
+  // 간격이 7일→10일로 바뀌면서(요일도 목요일→일요일로 변경) 더 이상 사실과 다른 문구가 됨.
+  // 실제 마지막 두 차수 사이 간격을 역산해 표시(위 checkReminders()와 동일한 계산 방식).
+  const prevDoseInfo = state.mounjaroDoses.length>=2 ? state.mounjaroDoses[state.mounjaroDoses.length-2] : null;
+  const latestIntervalDays = (latestDoseInfo && prevDoseInfo)
+    ? Math.round((new Date(latestDoseInfo.date+'T00:00:00') - new Date(prevDoseInfo.date+'T00:00:00'))/86400000)
+    : null;
+  const intervalText = latestIntervalDays ? `최근 투여 간격 ${latestIntervalDays}일` : '투여 간격 데이터 부족';
 
   return `
     <section class="card">
       <div class="section-label good">${secNum('03b')}마운자로 투여 기록</div>
-      <p class="p-dim">매주 목요일 투여 중 · ${latestDoseText} · 현재 ${validCycles.length}차까지 진행됐고, 각 차수(투여일~다음 투여 전날)별 인바디 변화를 추적합니다.</p>
+      <p class="p-dim">${intervalText} · ${latestDoseText} · 현재 ${validCycles.length}차까지 진행됐고, 각 차수(투여일~다음 투여 전날)별 인바디 변화를 추적합니다.</p>
     </section>
 
     ${renderSideEffectSection()}
@@ -3628,7 +3653,7 @@ function renderSettings(){
 
     <section class="card">
       <div class="section-label good">${secNum('05a3')}리마인더 알림</div>
-      <p class="p-dim">매주 목요일 마운자로 투여, 인바디 기록 공백 2일 이상일 때 앱을 열면 안내 배너가 뜹니다. 브라우저 알림 권한을 허용하면 앱을 여는 순간 시스템 알림으로도 받을 수 있어요(진짜 백그라운드 푸시는 아니고, 앱을 열 때 조건을 검사하는 방식이에요).</p>
+      <p class="p-dim">마운자로는 요일 고정이 아니라 최근 실제 투여 간격을 기준으로 예상 투여일을 계산해 알려드리고, 인바디 기록 공백 2일 이상일 때도 앱을 열면 안내 배너가 뜹니다(2026-08-20 수정 — 이전엔 "매주 목요일"로 고정돼 있어 투여 간격이 바뀌면 오알림이 났음). 브라우저 알림 권한을 허용하면 앱을 여는 순간 시스템 알림으로도 받을 수 있어요(진짜 백그라운드 푸시는 아니고, 앱을 열 때 조건을 검사하는 방식이에요).</p>
       <div class="btn-row" style="margin-top:8px;">
         ${state.notifEnabled
           ? `<button class="btn btn-sm" onclick="disableNotif()">알림 꺼짐 상태로 전환</button><span class="chip good">허용됨</span>`
