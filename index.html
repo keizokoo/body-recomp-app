@@ -264,8 +264,6 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .empty-state{text-align:center; padding:70px 20px; color:var(--text-faint); font-size:13.5px;}
 
 .ai-note-body{font-size:13.5px; line-height:1.75; color:var(--text); white-space:normal;}
-.ai-note-body p{margin:0 0 14px;}
-.ai-note-body p:last-child{margin-bottom:0;}
 textarea.ai-textarea{background:var(--panel-alt); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; color:var(--text); font-size:13px; font-family:var(--font-body); line-height:1.6; width:100%; min-height:140px; resize:vertical;}
 textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 
@@ -373,11 +371,6 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .theme-toggle{display:inline-flex; border-radius:var(--radius-pill); border:1px solid var(--border); overflow:hidden;}
 .theme-toggle button{padding:8px 14px; font-size:12.5px; font-weight:600; background:var(--panel); color:var(--text-dim); border:none; cursor:pointer;}
 .theme-toggle button.active{background:var(--brand-mark-bg); color:#fff;}
-/* 2026-08-18 추가: 설정 탭 안에 있던 화면 테마 토글을 상단바("기록추가" 버튼 왼쪽)로 이동하면서,
-   좁은 헤더 공간에 맞춘 축소 버전. 동작/구조는 .theme-toggle과 동일(setTheme 재사용), 크기만 축소. */
-.theme-toggle-mini{display:inline-flex; border-radius:var(--radius-pill); border:1px solid var(--border); overflow:hidden; flex-shrink:0;}
-.theme-toggle-mini button{padding:8px 10px; font-size:14px; line-height:1; background:var(--panel); color:var(--text-dim); border:none; cursor:pointer; display:flex; align-items:center;}
-.theme-toggle-mini button.active{background:var(--brand-mark-bg); color:#fff;}
 .se-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-bottom:10px;}
 .se-chip{font-size:12px; font-weight:600; padding:9px 10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer; text-align:center;}
 .se-chip.active{background:var(--c-warn-soft); border-color:var(--c-warn); color:var(--c-warn);}
@@ -746,26 +739,84 @@ function computeCalorieTarget(bmr, eatKcal){
 // PR 기준을 쓰는 이유: PR이 갱신될 때마다 기준선도 자동으로 같이 움직여서 별도 재계산이 필요 없음.
 const CARB_TARGET_RANGES = { A:[130,150], B:[150,180], C:[180,210] };
 const CARB_VOLUME_PR_RATIO = 0.4;
+// 2026-08-20 주의: 부위 구분 없는 전체 세션 통합 PR. 하체는 기구 특성상 kg 총합이 구조적으로
+// 커서 이 값이 사실상 항상 하체 세션에서 나옴 — 부위별 비교나 탄수화물 목표 계산에는 쓰지 말 것
+// (그 용도는 아래 computeGroupVolumePR 사용). KPI카드 '역대 최고 볼륨(PR)'는 그룹별 카드로 대체됨.
 function computeMaxVolumePR(workouts){
   const vols = workouts.map(w=>parseVolume(w.volume)).filter(v=>v>0);
   return vols.length ? Math.max(...vols) : 0;
 }
+
+// 2026-08-20 신설: 부위 그룹별(하체 / 등·이두 / 가슴·어깨·삼두) 볼륨 PR 추적.
+// 근거: 정희님 확정(2026-08-20) — 하체 운동은 기구 특성상 kg 총합이 구조적으로 커서, 전체 세션을
+// 통틀어 하나의 PR로 비교하면 상체 세션이 항상 불리하게 평가됨(예: 하체 PR 15,990kg vs 가슴·어깨·
+// 삼두 최고치 4,790kg — 애초에 체급이 다른 비교). 이미 주간 로테이션에 쓰던 STRENGTH_GROUPS 3그룹
+// 분류를 그대로 재사용(정희님 확정 — 새 기준 만들지 않고 기존 3그룹 유지).
+// 혼합일(예: "하체+상체" 하루 기록)은 부위 수만큼 균등분배(정희님 확정) — 21일 부위별 볼륨 비중
+// 도넛차트에서 이미 쓰던 방식과 동일해 앱 전체 로직이 일관됨.
+function groupVolumeSplitForEntry(w){
+  const parts = inferPartsForEntry(w).filter(p=>BODY_PARTS.includes(p));
+  const v = parseVolume(w.volume);
+  const result = {};
+  if(!parts.length || v<=0) return result;
+  const perPart = v/parts.length;
+  parts.forEach(p=>{
+    const group = STRENGTH_GROUPS.find(g=>g.parts.includes(p));
+    if(group) result[group.label] = (result[group.label]||0) + perPart;
+  });
+  return result;
+}
+function groupVolumeForDate(workouts, date){
+  const totals = Object.fromEntries(STRENGTH_GROUPS.map(g=>[g.label,0]));
+  workouts.filter(w=>w.date===date).forEach(w=>{
+    const split = groupVolumeSplitForEntry(w);
+    Object.entries(split).forEach(([g,v])=>{ totals[g]+=v; });
+  });
+  return totals;
+}
+function computeGroupVolumePR(workouts){
+  const dates = [...new Set(workouts.map(w=>w.date))];
+  const maxByGroup = Object.fromEntries(STRENGTH_GROUPS.map(g=>[g.label,{vol:0,date:null}]));
+  dates.forEach(date=>{
+    const totals = groupVolumeForDate(workouts, date);
+    STRENGTH_GROUPS.forEach(g=>{
+      if(totals[g.label] > maxByGroup[g.label].vol) maxByGroup[g.label] = {vol: totals[g.label], date};
+    });
+  });
+  return maxByGroup;
+}
+
+// 2026-08-20 수정: 비교 기준(PR)을 전체 통합 PR → "그날 훈련한 부위 그룹의 PR"로 교체.
+// 근거: 정희님 확정(2026-08-20) — 등급 구간(A/B/C의 g 범위값)과 "볼륨≥PR의 40%면 C등급" 규칙
+// 구조는 그대로 두고, 비교 기준만 그룹별로 바꿈(부위별 등급 범위 자체는 분리하지 않음).
+// 하루에 여러 그룹을 훈련한 날(예: "하체+상체")은 그중 PR 대비 비율이 가장 높은 그룹 기준으로 판정.
 function computeCarbTarget(workouts, date){
   const dayType = classifyDayType(workouts, date);
   const hasStrength = dayType && (dayType.type==='근력' || dayType.type==='둘다');
   if(!hasStrength){
     return {tier:'A', range:CARB_TARGET_RANGES.A, reason:'근력 없는 날'};
   }
-  const dayVolume = workouts.filter(w=>w.date===date).reduce((s,w)=>s+parseVolume(w.volume),0);
-  const pr = computeMaxVolumePR(workouts);
-  if(pr<=0){
-    return {tier:'B', range:CARB_TARGET_RANGES.B, reason:'PR 데이터 없음(기본 B등급 적용)'};
+  const groupPR = computeGroupVolumePR(workouts);
+  const dayGroupVolume = groupVolumeForDate(workouts, date);
+  const trainedGroups = STRENGTH_GROUPS.map(g=>g.label).filter(label=>dayGroupVolume[label]>0);
+  if(!trainedGroups.length){
+    // 부위가 그룹으로 분류되지 않는 근력 기록(예: part 미기재) — 기존 폴백 유지
+    return {tier:'B', range:CARB_TARGET_RANGES.B, reason:'부위 미분류 볼륨(기본 B등급 적용)'};
   }
-  const threshold = pr*CARB_VOLUME_PR_RATIO;
-  if(dayVolume >= threshold){
-    return {tier:'C', range:CARB_TARGET_RANGES.C, reason:`오늘 볼륨 ${dayVolume.toLocaleString()}kg ≥ PR(${pr.toLocaleString()}kg)의 ${Math.round(CARB_VOLUME_PR_RATIO*100)}%(${Math.round(threshold).toLocaleString()}kg)`};
+  let best = null;
+  trainedGroups.forEach(label=>{
+    const pr = groupPR[label].vol;
+    const vol = dayGroupVolume[label];
+    const ratio = pr>0 ? vol/pr : 1; // 해당 그룹 최초 기록(PR 데이터 없음)이면 최고치로 간주
+    if(!best || ratio > best.ratio) best = {label, pr, vol, ratio};
+  });
+  const threshold = best.pr*CARB_VOLUME_PR_RATIO;
+  if(best.ratio >= CARB_VOLUME_PR_RATIO){
+    return {tier:'C', range:CARB_TARGET_RANGES.C, reason: best.pr>0
+      ? `오늘 ${best.label} 볼륨 ${Math.round(best.vol).toLocaleString()}kg ≥ ${best.label} PR(${Math.round(best.pr).toLocaleString()}kg)의 ${Math.round(CARB_VOLUME_PR_RATIO*100)}%(${Math.round(threshold).toLocaleString()}kg)`
+      : `오늘 ${best.label} ${Math.round(best.vol).toLocaleString()}kg — 해당 그룹 최초 기록(신규 PR)`};
   }
-  return {tier:'B', range:CARB_TARGET_RANGES.B, reason:`오늘 볼륨 ${dayVolume.toLocaleString()}kg < PR의 ${Math.round(CARB_VOLUME_PR_RATIO*100)}%(${Math.round(threshold).toLocaleString()}kg)`};
+  return {tier:'B', range:CARB_TARGET_RANGES.B, reason:`오늘 ${best.label} 볼륨 ${Math.round(best.vol).toLocaleString()}kg < ${best.label} PR의 ${Math.round(CARB_VOLUME_PR_RATIO*100)}%(${Math.round(threshold).toLocaleString()}kg)`};
 }
 
 function parseKm(text){
@@ -810,10 +861,16 @@ function computeWorkoutKPICards(workouts){
   const volPrev7Sum = wPrev7.reduce((s,w)=>s+parseVolume(w.volume),0);
   const volChangePct = volPrev7Sum>0 ? Math.round((vol7-volPrev7Sum)/volPrev7Sum*100) : null;
 
-  const allVolEntries = workouts.map(w=>({date:w.date, vol:parseVolume(w.volume), parts:inferPartsForEntry(w)})).filter(e=>e.vol>0);
-  const maxVol = allVolEntries.length ? Math.max(...allVolEntries.map(e=>e.vol)) : 0;
-  const prEntry = allVolEntries.find(e=>e.vol===maxVol);
-  const prRecent = prEntry && last14.includes(prEntry.date);
+  // 2026-08-20 변경: 부위 구분 없는 단일 '역대 최고 볼륨(PR)' 카드 1개 → 그룹별(하체/등·이두/
+  // 가슴·어깨·삼두) PR 카드 3개로 대체. 근거: 하체는 기구 특성상 kg 총합이 구조적으로 커서
+  // 단일 PR로는 항상 하체 세션만 표시되어 상체 세션의 실제 발전을 확인할 수 없었음(정희님 확정,
+  // 2026-08-20). computeGroupVolumePR/STRENGTH_GROUPS 정의는 위쪽 computeCarbTarget 근처 참고.
+  const groupPR = computeGroupVolumePR(workouts);
+  const groupPRCards = STRENGTH_GROUPS.map(g=>{
+    const pr = groupPR[g.label];
+    const prRecentGroup = pr.date && last14.includes(pr.date);
+    return {icon:'award', label:`${g.label} PR`, value: pr.vol>0?`${Math.round(pr.vol).toLocaleString()}kg`:'—', sub: pr.vol>0?`${pr.date}${prRecentGroup?' · 최근 14일 내 신기록 🔥':''}`:'기록 없음', tone: prRecentGroup?'good':'neutral'};
+  });
 
   return [
     {icon:'award', label:'이번주 운동일수', value:`${sessionDays7}일`, sub:'최근 7일 기준', tone: sessionDays7>=3?'good':'warn'},
@@ -821,7 +878,7 @@ function computeWorkoutKPICards(workouts){
     {icon:'target', label:'부위 커버리지', value:`${coverage7}/6`, sub:'최근 7일 동안 자극된 부위 수', tone: coverage7>=4?'good':(coverage7>=2?'neutral':'warn')},
     {icon: inclineCardTone==='warn'?'up':'down', label:'인클라인 트레드밀 심박존 준수', value: inclineCardValue, sub: inclineCardSub, tone: inclineCardTone},
     {icon: volChangePct===null?'target':(volChangePct>=0?'up':'down'), label:'주간 볼륨 변화율', value: volChangePct===null?'—':`${volChangePct>0?'+':''}${volChangePct}%`, sub: volChangePct===null?'비교 데이터 부족':`지난주 ${volPrev7Sum.toLocaleString()}kg → 이번주 ${vol7.toLocaleString()}kg`, tone: volChangePct===null?'neutral':(volChangePct>=0?'good':(volChangePct>=-15?'neutral':'warn'))},
-    {icon:'award', label:'역대 최고 볼륨(PR)', value: prEntry?`${prEntry.vol.toLocaleString()}kg`:'—', sub: prEntry?`${prEntry.date}${prEntry.parts.length?' · '+prEntry.parts.join('/'):''}${prRecent?' · 최근 14일 내 신기록 🔥':''}`:'기록 없음', tone: prRecent?'good':'neutral'},
+    ...groupPRCards,
   ];
 }
 
@@ -862,10 +919,14 @@ function computeWorkoutInsights(workouts){
     insights.push({tone:'good', title:'회복 간격 원칙 준수', detail:'기록상 모든 부위가 48시간 이상 간격을 두고 재자극됐어요 — 회복 관리가 잘 되고 있어요.'});
   }
 
-  // 2026-08-18: "목디스크 위험 종목 감지" 워닝이 계속 뜬다는 반복 피드백으로 이 인사이트 항목
-  // 자체를 완전히 삭제(이전에도 지워달라는 요청이 있었으나 반영이 안 되고 있었음). isNeckRisky
-  // 판정 로직 자체(workoutRow의 "목디스크 확인" 배지 등 다른 곳)는 그대로 두고, 여기 스마트
-  // 인사이트 카드에서만 제거함.
+  // 3) 목디스크 안전 준수
+  const riskEntries = workouts.filter(w => isNeckRisky(`${w.name||''} ${w.part||''} ${w.note||''}`));
+  if(riskEntries.length>0){
+    const dates = riskEntries.slice(-3).map(w=>w.date.slice(5)).join(', ');
+    insights.push({tone:'warn', title:'목디스크 위험 종목 감지', detail:`${dates} 기록에서 오버헤드프레스·바벨스쿼트 계열 종목이 확인됐어요. 이 종목들은 영구 제외 대상이라 PT와 다시 확인하는 걸 권장해요.`});
+  } else {
+    insights.push({tone:'good', title:'목디스크 안전 종목만 사용 중', detail:'최근 기록에서 오버헤드프레스·바벨스쿼트 등 위험 종목이 감지되지 않았어요.'});
+  }
 
   // 4) 세션당 평균 볼륨(강도 밀도) 추이 — KPI카드의 '주간 총볼륨'과 달리, 세션 1회당 얼마나 알차게 채우는지를 봄
   const last14 = daysAgoList(14), last28 = daysAgoList(28);
@@ -1172,30 +1233,8 @@ function toLocalISO(d){
   const pad = n => String(n).padStart(2,'0');
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
-// 2026-08-18 추가: 날짜 문자열을 안전하게 ms 타임스탬프로 변환. 포맷이 다르거나(예: "YYYY-M-D"
-// vs "YYYY-MM-DD") 아예 없는 값이 들어와도 예외 없이 null을 반환해, 호출하는 쪽에서 "비교 불가"로
-// 다룰 수 있게 한다(cloudSync의 aiAnalysisDate 비교 참고).
-function parseDateSafe_(s){
-  if(!s) return null;
-  const t = new Date(s).getTime();
-  return isNaN(t) ? null : t;
-}
 const dowLabel = iso => ['일','월','화','수','목','금','토'][new Date(iso+'T00:00:00').getDay()];
 const esc = s => (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-// 2026-08-18 추가: "Claude 분석" 카드가 줄바꿈만 <br>로 이어붙여 한 덩어리로 보여서 읽기 불편하다는
-// 피드백 반영 — 문단 단위로 나눠 문단 사이에 여백(margin)을 주는 방식으로 변경.
-// 붙여넣는 텍스트가 빈 줄로 문단을 구분해뒀으면 그 경계를 그대로 쓰고, 빈 줄이 전혀 없으면(한 줄씩
-// 쭉 이어진 텍스트) 줄바꿈 하나하나를 문단 경계로 대신 사용해 항상 읽기 좋게 나오도록 함.
-function formatNoteHtml(text){
-  const normalized = esc(text).replace(/\r\n/g, '\n').trim();
-  if(!normalized) return '';
-  const blocks = normalized.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean);
-  if(blocks.length > 1){
-    return blocks.map(b => `<p>${b.replace(/\n/g,'<br>')}</p>`).join('');
-  }
-  const lines = normalized.split(/\n/).map(l=>l.trim()).filter(Boolean);
-  return lines.map(l => `<p>${l}</p>`).join('');
-}
 
 function sortedInbody(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
 function movingAverage(arr, key, win){
@@ -1475,13 +1514,9 @@ function HEADER_TEMPLATE(){
       </div>
       <div class="topbar-actions">
         <span class="${topSyncBadgeClass_()}" id="top-sync-badge"><span class="sync-dot"></span><span id="top-sync-badge-text">${topSyncBadgeText_()}</span></span>
-        <div class="theme-toggle-mini no-print" role="group" aria-label="화면 테마">
-          <button class="${state.theme==='light'?'active':''}" onclick="setTheme('light')" title="라이트 모드" aria-label="라이트 모드">☀️</button>
-          <button class="${state.theme==='dark'?'active':''}" onclick="setTheme('dark')" title="다크 모드" aria-label="다크 모드">🌙</button>
-        </div>
         <button class="btn btn-primary" onclick="openModal()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg>
-          기록추가
+          기록 추가
         </button>
       </div>
     </div>
@@ -2814,7 +2849,7 @@ function renderDashboard(){
     ${state.aiNote ? `
     <section class="card ai-note">
       <div class="section-label good">${secNum('00')}Claude 분석 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.aiNote.syncedAt ? fmtDateTime(state.aiNote.syncedAt) : state.aiNote.date} 갱신</span></div>
-      <div class="ai-note-body">${formatNoteHtml(state.aiNote.text)}</div>
+      <div class="ai-note-body">${esc(state.aiNote.text).replace(/\n/g,'<br>')}</div>
     </section>` : ''}
 
     <section class="card">
@@ -3037,16 +3072,11 @@ function editableCell(table, date, field, value, decimals){
 }
 
 function renderInbodyTable(ma){
-  // 2026-08-18: "전체 인바디 기록 표 보기"가 6/5(가장 오래된 기록)부터 나와서 최신 데이터를
-  // 보려면 계속 스크롤해야 한다는 피드백 반영 — ma는 sortedInbody() 기반 오름차순(과거→현재)
-  // 배열이라 다른 계산(이동평균 등)에는 그대로 써야 하므로, 여기 표시 직전에만 복사본을
-  // 뒤집어서 최신 날짜가 맨 위로 오게 함.
-  const rows = ma.slice().reverse();
   return `<div class="card" style="margin-top:12px; overflow-x:auto;">
     <table class="data-table">
       <thead><tr><th>날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th><th></th></tr></thead>
       <tbody>
-        ${rows.map(r=>`<tr>
+        ${ma.map(r=>`<tr>
           <td>${r.date}</td>
           <td>${editableCell('inbody', r.date, 'weight', r.weight, 1)}</td>
           <td>${editableCell('inbody', r.date, 'muscle', r.muscle, 1)}</td>
@@ -3529,6 +3559,17 @@ function renderSettings(){
     </section>
 
     <section class="card">
+      <div class="section-label good">${secNum('05a2')}화면 테마</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:12.5px; color:var(--text-dim);">기기 설정을 따르거나 직접 밝게/어둡게 고정할 수 있어요.</div>
+        <div class="theme-toggle">
+          <button class="${state.theme==='light'?'active':''}" onclick="setTheme('light')">라이트</button>
+          <button class="${state.theme==='dark'?'active':''}" onclick="setTheme('dark')">다크</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
       <div class="section-label good">${secNum('05a3')}리마인더 알림</div>
       <p class="p-dim">매주 목요일 마운자로 투여, 인바디 기록 공백 2일 이상일 때 앱을 열면 안내 배너가 뜹니다. 브라우저 알림 권한을 허용하면 앱을 여는 순간 시스템 알림으로도 받을 수 있어요(진짜 백그라운드 푸시는 아니고, 앱을 열 때 조건을 검사하는 방식이에요).</p>
       <div class="btn-row" style="margin-top:8px;">
@@ -3802,23 +3843,9 @@ async function cloudSync(silent){
       saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
       saveArr(LS_KEYS.steps, state.steps);
       saveArr(LS_KEYS.waist, state.waist);
-      // 2026-08-18 수정: 대시보드 "Claude 분석"이 새 날짜 데이터가 들어와도 예전 날짜(예: 8/16)
-      // 내용에 계속 멈춰있다는 반복 제보 반영. 기존엔 data.aiAnalysisDate와 state.aiNote.date를
-      // 문자열로 그대로 >= 비교했는데, 서버(Meta 시트)가 aiAnalysisDate를 아예 안 내려주거나
-      // "YYYY-MM-DD"가 아닌 다른 포맷으로 내려주는 경우 문자열 비교가 항상 실패해(또는 NaN 취급되어)
-      // 로컬이 새 값으로 절대 갱신되지 못하는 경로가 있었음 — 이 앱은 "Google Sheet가 유일한
-      // 진실 공급원"이라는 원칙(위 mergeByDate_ 주석 참고)과도 어긋남. 날짜는 실제 Date 값으로
-      // 안전하게 파싱해 비교하고, 날짜 비교가 불가능한 경우(포맷 문제 등)에도 서버 내용이 로컬과
-      // 다르면 서버를 신뢰해 갱신하도록 폴백을 추가.
-      if(data.aiAnalysis){
-        const localMs = state.aiNote ? parseDateSafe_(state.aiNote.date) : null;
-        const serverMs = parseDateSafe_(data.aiAnalysisDate);
-        const contentChanged = !state.aiNote || data.aiAnalysis !== state.aiNote.text;
-        const serverIsNewerOrSame = !state.aiNote || localMs===null || serverMs===null || serverMs >= localMs;
-        if(contentChanged && serverIsNewerOrSame){
-          state.aiNote = {date: data.aiAnalysisDate || todayISO(), text: data.aiAnalysis, syncedAt: new Date().toISOString()};
-          saveAiNote(state.aiNote);
-        }
+      if(data.aiAnalysis && (!state.aiNote || data.aiAnalysisDate >= state.aiNote.date)){
+        state.aiNote = {date: data.aiAnalysisDate || todayISO(), text: data.aiAnalysis, syncedAt: new Date().toISOString()};
+        saveAiNote(state.aiNote);
       }
       // 2026-08-04 추가: "리포트" 탭의 Claude 종합 리포트(comprehensiveReport)도 aiAnalysis와
       // 동일한 방식으로 Meta 시트 경유 pull. 단, Code.gs의 doGet()이 이 새 Meta 키를 실제로
@@ -4212,22 +4239,7 @@ if((localStorage.getItem(LS_KEYS.cloudurl)||'').trim()){
 // 전략도 network-first로 변경(아래 sw.js 참고)해서 향후 이런 문제가 재발하지 않도록 함.
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    // 2026-08-18 추가: "앱 업데이트를 했는데도 예전 데이터/화면이 그대로 남아있다"는 반복 제보의
-    // 유력한 원인 중 하나로 서비스워커 캐싱을 다시 점검. updateViaCache:'none'을 주지 않으면
-    // 브라우저가 sw.js 자체를 자체 HTTP 캐시에 담아둘 수 있어, 서버에 새 sw.js를 올려도
-    // 클라이언트가 그 변경을 한동안(길게는 24시간) 못 알아채는 경우가 있음 — 매번 네트워크로
-    // sw.js 최신본을 확인하도록 강제. 또한 새 서비스워커가 활성화(controllerchange)되면 그
-    // 순간 자동으로 한 번 새로고침해서, 사용자가 수동으로 새로고침하지 않아도 최신 버전이
-    // 곧바로 반영되게 함(무한 새로고침 방지를 위해 세션당 한 번만 리로드).
-    navigator.serviceWorker.register('./sw.js', {updateViaCache: 'none'}).then(reg => {
-      reg.update().catch(()=>{});
-      let reloaded = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if(reloaded) return;
-        reloaded = true;
-        window.location.reload();
-      });
-    }).catch(err => console.error('SW 등록 실패:', err));
+    navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW 등록 실패:', err));
   });
 }
 
