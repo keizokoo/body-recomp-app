@@ -146,8 +146,9 @@ main{padding-top:12px; display:flex; flex-direction:column; gap:26px;}
 .hero-goal-item{background:var(--panel-alt); border-radius:var(--radius-sm); padding:14px 16px;}
 .hg-top{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px;}
 .hg-label{font-size:13px; font-weight:700; color:var(--text);}
-.hg-status{font-size:11px; font-weight:700; padding:3px 10px; border-radius:var(--radius-pill); background:var(--c-warn-soft); color:var(--c-warn); white-space:nowrap;}
+.hg-status{font-size:11px; font-weight:700; padding:3px 10px; border-radius:var(--radius-pill); background:var(--c-warn-soft); color:var(--c-warn); white-space:nowrap; font-family:var(--font-mono);}
 .hg-status.done{background:var(--c-good-soft); color:var(--c-good);}
+.hg-status.stable{background:var(--c-good-soft); color:var(--c-good); box-shadow:inset 0 0 0 1.5px var(--c-good);}
 .hg-bar{height:7px; border-radius:99px; background:var(--c-track); overflow:hidden;}
 .hg-fill{height:100%; border-radius:99px; background:linear-gradient(90deg, var(--c-gauge-from), var(--c-gauge-to));}
 .hg-foot{display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint); margin-top:7px; font-family:var(--font-mono);}
@@ -1337,6 +1338,34 @@ function blockMA7Delta(ib, field){
   const avg = arr => arr.reduce((s,r)=>s+Number(r[field]||0),0)/arr.length;
   return avg(current) - avg(previous);
 }
+/* 2026-08-23 추가: 1차/2차 체지방률 목표 "달성" 판정을 한 곳에서 통일해서 계산.
+   기존엔 대시보드(Live Tracking)·스마트알림·강점 리스트·목표 탭이 각자 last.fatPct(당일 원시값)로
+   "달성 완료 ✓"를 따로 판정하고 있었는데, 원시값은 하루 컨디션(수분·나트륨 등)에 따라 ±0.3~0.5%p씩
+   흔들려서 "오늘은 달성, 내일은 취소" 식으로 뒤집힐 수 있었음(실제로 2026-08-22 원시값 19.8%는 1차
+   목표 20% 미만이지만 같은 날 MA7은 20.19%로 아직 미달성 — 화면과 실제 확정 상태가 어긋나는 사례 발생).
+   정희님 프로젝트 규칙(핵심원칙 문서)에 이미 "1차 목표=MA7 기준 확정"이 명시돼 있어서, 그 규칙을
+   코드 전체에 일관 적용하는 단일 함수로 통합. tier: 'pending'(MA7도 미달성) / 'done'(MA7 달성,
+   MA14는 아직) / 'stable'(MA7+MA14 모두 달성 — 되돌림 걱정 없는 안정 확정). "확정" 자체는 항상 MA7
+   기준이고, MA14는 그 확정을 취소하지 않고 안정성만 보강한다(용어가 다른 시스템과 충돌하지 않도록). */
+function computeFatGoalStatus(ib){
+  if(!ib.length) return null;
+  const last = ib[ib.length-1];
+  const ma7 = movingAverage(ib,'fatPct',7);
+  const ma14 = movingAverage(ib,'fatPct',14);
+  const ma7Last = ma7[ma7.length-1].fatPctMA;
+  const ma14Last = ma14[ma14.length-1].fatPctMA;
+  const goals = FAT_GOALS.map(g => {
+    const totalDist = START_FAT_PCT - g.pct;
+    const progressed = Math.min(100, Math.max(0, ((START_FAT_PCT-ma7Last)/totalDist)*100));
+    const ma7Done = ma7Last <= g.pct;
+    const ma14Done = ma14Last <= g.pct;
+    const rawDone = last.fatPct <= g.pct;
+    const tier = ma7Done ? (ma14Done ? 'stable' : 'done') : 'pending';
+    const remain = Math.max(0, ma7Last - g.pct);
+    return {...g, progressed, ma7Done, ma14Done, rawDone, tier, remain, ma7Last, ma14Last};
+  });
+  return {last, ma7, ma14, ma7Last, ma14Last, goals};
+}
 /* 2026-07-22 추가: 특정 날짜 시점의 MA7 스냅샷(여러 필드 동시) — 4주간격(투여회차) 비교용.
    해당 날짜의 인바디 기록이 없으면 그 날짜 이전 가장 최근 기록을 기준으로 계산 */
 function ma7SnapshotAt(ib, date, fields){
@@ -1761,13 +1790,12 @@ function computeMuscleAssessment(startRec, endRec){
 /* ---------- 인사이트 계산 ---------- */
 function computeInsights(){
   const ib = sortedInbody();
-  if(ib.length===0) return {insights:[], first:null, last:null, ma:[]};
+  if(ib.length===0) return {insights:[], first:null, last:null, ma:[], goalStatus:null};
   const first = ib[0], last = ib[ib.length-1];
-  const ma = movingAverage(ib,'fatPct',7);
+  const goalStatus = computeFatGoalStatus(ib);
+  const ma = goalStatus.ma7;
+  const g20 = goalStatus.goals.find(g=>g.pct===20), g18 = goalStatus.goals.find(g=>g.pct===18);
 
-  const fatLossTotal = START_FAT_PCT - last.fatPct;
-  const achieveRate18 = Math.min(100, Math.max(0,(fatLossTotal/(START_FAT_PCT-18))*100));
-  const achieveRate20 = Math.min(100, Math.max(0,(fatLossTotal/(START_FAT_PCT-20))*100));
   const weightLoss = first.weight - last.weight;
   const fatMassLoss = first.fat - last.fat;
   const muscleAssess = computeMuscleAssessment(first, last);
@@ -1786,8 +1814,8 @@ function computeInsights(){
   const isNewFatPctRecord = minFatPctEntry && minFatPctEntry.date === last.date;
 
   const insights = [
-    {icon:'target', label:'1차(20%) 목표 달성률', value:`${fmt(achieveRate20,0)}%`, sub:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% (목표 20%)`, tone: achieveRate20>=100?'good':'neutral'},
-    {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(achieveRate18,0)}%`, sub:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% (목표 18%)`, tone: achieveRate18>=100?'good':'neutral'},
+    {icon:'target', label:'1차(20%) 목표 달성률', value:`${fmt(g20.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g20.ma7Last,2)}% (목표 20%, 오늘 실측 ${fmt(last.fatPct)}%)`, tone: g20.tier!=='pending'?'good':'neutral'},
+    {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(g18.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g18.ma7Last,2)}% (목표 18%, 오늘 실측 ${fmt(last.fatPct)}%)`, tone: g18.tier!=='pending'?'good':'neutral'},
     {icon:'down', label:'누적 체중 변화', value:`${fmt(weightLoss)}kg`, sub:`${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg`, tone:'good'},
     {icon:'down', label:'누적 체지방량 변화', value:`${fmt(fatMassLoss)}kg`, sub:`${fmt(first.fat)}kg → ${fmt(last.fat)}kg`, tone:'good'},
     {icon:'dumbbell', label:'체중감량 대비 골격근 보존', value: muscleAssess.muscleLoss<=0 ? '유지/증가' : `비율 ${fmt(muscleAssess.ratio,2)}`, sub: muscleAssess.muscleLoss<=0 ? `골격근 ${fmt(last.muscle)}kg — 감소 없음` : `골격근 -${fmt(muscleAssess.muscleLossPct,1)}% / 체중 -${fmt(muscleAssess.weightLossPct,1)}% · ${muscleAssess.label}(SURMOUNT-1 DEXA 실측 비율 0.51 기준)`, tone: muscleAssess.tone},
@@ -1795,7 +1823,7 @@ function computeInsights(){
     {icon:'award', label:'역대 최저 체중', value:`${fmt(minWeightEntry.weight)}kg`, sub:`${minWeightEntry.date}${isNewWeightRecord?' · 오늘 신기록 🏆':''}`, tone: isNewWeightRecord?'good':'neutral'},
     {icon:'award', label:'역대 최저 체지방률', value:`${fmt(minFatPctEntry.fatPct)}%`, sub:`${minFatPctEntry.date}${isNewFatPctRecord?' · 오늘 신기록 🏆':''}`, tone: isNewFatPctRecord?'good':'neutral'},
   ];
-  return {insights, first, last, ma};
+  return {insights, first, last, ma, goalStatus};
 }
 
 const ICONS = {
@@ -1814,6 +1842,7 @@ function computeSmartAlerts(ib, meals, workouts){
   const candidates = [];
   if(ib.length < 2) return [];
   const last = ib[ib.length-1];
+  const goalStatus = computeFatGoalStatus(ib);
   const push = (c) => candidates.push(c);
 
   // 1) 체지방량 정체
@@ -1945,7 +1974,7 @@ function computeSmartAlerts(ib, meals, workouts){
   }
 
   // 5) 7일 이동평균 체지방률 긍정 추세
-  const ma = movingAverage(ib, 'fatPct', 7);
+  const ma = goalStatus.ma7;
   const recentMA = ma.slice(-7);
   if(recentMA.length >= 5){
     const maTrend = recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA;
@@ -1956,11 +1985,13 @@ function computeSmartAlerts(ib, meals, workouts){
     }
   }
 
-  // 6) 목표 임박 격려 (18% 목표 90% 이상 달성)
-  const achieveRate18 = Math.min(100, Math.max(0, ((START_FAT_PCT-last.fatPct)/(START_FAT_PCT-18))*100));
-  if(achieveRate18 >= 90 && achieveRate18 < 100){
+  // 6) 목표 임박 격려 — MA7 기준 진행률 90% 이상인데 아직 MA7 확정 전인 경우
+  // (2026-08-23 개선: 당일 원시값 대신 MA7 기준으로 판정 — 원시값 기준으로는 하루 컨디션에 따라
+  // "코앞" 알림이 뜨다 말다 뒤집힐 수 있었음)
+  const g18Alert = goalStatus.goals.find(g=>g.pct===18);
+  if(g18Alert.tier==='pending' && g18Alert.progressed >= 90){
     push({tone:'good', icon:'target', score: 60,
-      title:'2차 목표(18%) 코앞', detail:`현재 달성률 ${fmt(achieveRate18,0)}% — 조금만 더 하면 최종 목표예요.`});
+      title:'2차 목표(18%) MA7 확정 임박', detail:`MA7(최근 7일 평균) 기준 진행률 ${fmt(g18Alert.progressed,0)}% — MA7이 ${fmt(g18Alert.remain,2)}%p만 더 내려오면 확정이에요.`});
   }
 
   // 7) 최근 측정 공백 (데이터 최신성)
@@ -1970,15 +2001,16 @@ function computeSmartAlerts(ib, meals, workouts){
       title:'최근 인바디 측정 공백', detail:`마지막 측정일이 ${last.date} — ${gapDays}일째예요. 추세 판단 정확도가 떨어질 수 있어요.`});
   }
 
-  // 8) 목표 도달 예상 기간 (최근 페이스 선형 추정)
-  if(ib.length >= 8 && achieveRate18 < 100){
-    const prev = ib[ib.length-8];
-    const paceWeek = (prev.fatPct - last.fatPct); // 7일간 감소량
-    if(paceWeek > 0){
-      const remain = last.fatPct - 18;
-      const weeksLeft = Math.ceil(remain / paceWeek);
+  // 8) 목표 도달 예상 기간 — blockMA7Delta(최근 1주 평균 vs 직전 1주 평균)로 통일
+  // (2026-08-23: 기존엔 "7일 전 원시값 - 오늘 원시값"이라 하루 컨디션에 좌우됐음. 텔레그램·체중/골격근
+  // 추세 계산과 동일한 방식으로 바꾸고, 남은 %p도 MA7 기준(g18Alert.remain)으로 통일)
+  if(g18Alert.tier==='pending'){
+    const delta = blockMA7Delta(ib, 'fatPct');
+    const paceWeek = delta===null ? null : -delta; // 양수 = 감소 중
+    if(paceWeek !== null && paceWeek > 0){
+      const weeksLeft = Math.ceil(g18Alert.remain / paceWeek);
       push({tone:'neutral', icon:'target', score: 38,
-        title:'최근 페이스 기준 목표 도달 예상', detail:`최근 7일 ${fmt(paceWeek,2)}%p 감소 페이스라면, 18% 목표까지 약 ${weeksLeft}주 남았어요.`});
+        title:'최근 페이스 기준 목표 도달 예상', detail:`최근 1주 평균 체지방률이 그 전주 평균보다 ${fmt(paceWeek,2)}%p 낮아지는 페이스라면, MA7 기준 18% 목표까지 약 ${weeksLeft}주 남았어요.`});
     }
   }
 
@@ -2398,8 +2430,8 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   const weightLoss = first.weight - last.weight;
   const fatMassLoss = first.fat - last.fat;
   const muscleAssess = computeMuscleAssessment(first, last);
-  const achieveRate18 = Math.min(100, Math.max(0, ((START_FAT_PCT-last.fatPct)/(START_FAT_PCT-18))*100));
-  const achieveRate20 = Math.min(100, Math.max(0, ((START_FAT_PCT-last.fatPct)/(START_FAT_PCT-20))*100));
+  const goalStatus = computeFatGoalStatus(ib);
+  const g20 = goalStatus.goals.find(g=>g.pct===20), g18 = goalStatus.goals.find(g=>g.pct===18);
 
   const last7Dates = Array.from({length:7}, (_,i) => { const d=new Date(today+'T00:00:00'); d.setDate(d.getDate()-i); return toLocalISO(d); });
   const workoutDaysLast7 = last7Dates.filter(d => { const t=classifyDayType(workouts,d); return t && t.type!=='휴식'; }).length;
@@ -2412,7 +2444,7 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
     return (m.calories||0) <= hi+50;
   }).length / recentMeals.length * 100) : null;
 
-  const ma = movingAverage(ib, 'fatPct', 7);
+  const ma = goalStatus.ma7;
   const recentMA = ma.slice(-7);
   const maTrend = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
 
@@ -2424,10 +2456,12 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   // 잘하고 있는 점 후보
   if(weightLoss > 0) strengths.push({title:'체중 꾸준히 감소', detail:`시작 대비 ${fmt(weightLoss)}kg 감량 (${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg)`});
   if(fatMassLoss > 0) strengths.push({title:'체지방량 감소', detail:`시작 대비 ${fmt(fatMassLoss)}kg 감량`});
-  if(achieveRate20 >= 100) strengths.push({title:'1차 목표(20%) 달성 완료 ✓', detail:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}%로 1차 목표를 이미 넘어섰어요.`});
-  else if(achieveRate20 >= 50) strengths.push({title:'1차 목표(20%) 절반 이상 달성', detail:`현재 달성률 ${fmt(achieveRate20,0)}%`});
-  if(achieveRate18 >= 100) strengths.push({title:'2차 목표(18%) 달성 완료 ✓', detail:`체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}%로 최종 목표까지 달성했어요!`});
-  else if(achieveRate18 >= 50) strengths.push({title:'2차 목표(18%) 절반 이상 달성', detail:`현재 달성률 ${fmt(achieveRate18,0)}%`});
+  if(g20.tier==='stable') strengths.push({title:'1차 목표(20%) 확정 ✓ · 안정 확인', detail:`MA7·MA14 모두 20% 아래로 내려와 되돌림 걱정 없이 1차 목표를 확정했어요 (MA7 ${fmt(g20.ma7Last,2)}%).`});
+  else if(g20.tier==='done') strengths.push({title:'1차 목표(20%) 확정 ✓ (MA7 기준)', detail:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g20.ma7Last,2)}%로 1차 목표를 확정했어요.`});
+  else if(g20.progressed >= 50) strengths.push({title:'1차 목표(20%) 절반 이상 달성', detail:`MA7 기준 진행률 ${fmt(g20.progressed,0)}%`});
+  if(g18.tier==='stable') strengths.push({title:'2차 목표(18%) 확정 ✓ · 안정 확인', detail:`MA7·MA14 모두 18% 아래로 내려와 되돌림 걱정 없이 최종 목표를 확정했어요 (MA7 ${fmt(g18.ma7Last,2)}%).`});
+  else if(g18.tier==='done') strengths.push({title:'2차 목표(18%) 확정 ✓ (MA7 기준)', detail:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g18.ma7Last,2)}%로 최종 목표를 확정했어요!`});
+  else if(g18.progressed >= 50) strengths.push({title:'2차 목표(18%) 절반 이상 달성', detail:`MA7 기준 진행률 ${fmt(g18.progressed,0)}%`});
   if(muscleAssess.tone === 'good') strengths.push({title:'골격근 보존 우수', detail: muscleAssess.muscleLoss<=0 ? `골격근량 감소 없이 유지 중 (현재 ${fmt(last.muscle)}kg)` : `체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}% — 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 낮아요`});
   if(workoutDaysLast7 >= 4) strengths.push({title:'꾸준한 운동 습관', detail:`최근 7일 중 ${workoutDaysLast7}일 운동`});
   if(proteinRate !== null && proteinRate >= 70) strengths.push({title:'단백질 섭취 잘 지킴', detail:`최근 10끼 중 ${fmt(proteinRate,0)}%에서 목표(${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g) 충족`});
@@ -2877,7 +2911,7 @@ function workoutRow(w){
   </div>`;
 }
 function renderDashboard(){
-  const {insights, last, ma} = computeInsights();
+  const {insights, last, ma, goalStatus} = computeInsights();
   // 2026-08-04: 동기화 표시가 대시보드 전용 배너 → 모든 탭 공통 상단바 배지로 바뀌면서
   // 여기서 배너를 그릴 필요가 없어짐(HEADER_TEMPLATE의 top-sync-badge가 그 역할을 대신함).
   if(!last) return `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
@@ -2896,9 +2930,9 @@ function renderDashboard(){
       </div>
       <div class="hero-grid">
         <div class="hero-figure">
-          ${gaugeSVG(last.fatPct, START_FAT_PCT, FAT_GOALS)}
-          <div class="gauge-value mono">${fmt(last.fatPct)}<span class="gauge-unit">%</span></div>
-          <div class="gauge-sub">현재 체지방률 · 시작 대비 ${fmt(START_FAT_PCT-last.fatPct)}%p 감소</div>
+          ${gaugeSVG(goalStatus.ma7Last, START_FAT_PCT, FAT_GOALS)}
+          <div class="gauge-value mono">${fmt(goalStatus.ma7Last,2)}<span class="gauge-unit">%</span></div>
+          <div class="gauge-sub">MA7(최근 7일 평균) 기준 · 시작 대비 ${fmt(START_FAT_PCT-goalStatus.ma7Last)}%p 감소 · 오늘 실측 ${fmt(last.fatPct)}%</div>
           ${maTrend7!==null ? `<div class="gauge-sub" style="margin-top:2px; font-size:11px; color:${maTrend7<=-0.05?'var(--c-good)':maTrend7>=0.05?'var(--c-warn)':'var(--text-faint)'};">7일 이동평균 대비 ${maTrend7>0?'+':''}${fmt(maTrend7,2)}%p ${maTrend7<=-0.05?'↓ 개선 중':maTrend7>=0.05?'↑ 정체/반등':'· 거의 변화 없음'}</div>` : ''}
           <div class="gauge-legend">
             <span><span class="legend-dot legend-dot-progress"></span>진행</span>
@@ -2914,30 +2948,41 @@ function renderDashboard(){
         </div>
       </div>
       <div class="hero-goals">
-        ${FAT_GOALS.map(g=>{
-          const totalDist = START_FAT_PCT-g.pct;
-          const progressed = Math.min(100, Math.max(0, ((START_FAT_PCT-last.fatPct)/totalDist)*100));
-          const done = last.fatPct<=g.pct;
-          const remain = Math.max(0, last.fatPct-g.pct);
+        ${goalStatus.goals.map(gs=>{
           const other = last.weight - last.muscle - last.fat;
           // [2026-07-29 변경] Live Tracking 1차/2차 목표 계산: 회복기준(33.2kg 고정) 대신
           // 오늘 실측 골격근량을 그대로 사용(목표탭 "오늘 실측 골격근 기준" 행과 동일 방식으로 통일)
           const targetMuscle = last.muscle;
-          const t = g.pct/100;
+          const t = gs.pct/100;
           const targetFat = t*(other+targetMuscle) / (1-t);
           const fatLossNeeded = Math.max(0, last.fat - targetFat);
+          // [2026-08-23 변경] 배지를 원시값(last.fatPct) 대신 MA7 기준으로 판정하도록 전면 교체.
+          // 점 2개(○○/●○/●●)로 MA7 확정·MA14 안정확인 2단계를 배지 1개에 압축 표시(B안 확정).
+          const dots = gs.tier==='pending' ? '○○' : gs.tier==='done' ? '●○' : '●●';
+          const badgeClass = gs.tier==='pending' ? '' : gs.tier==='done' ? 'done' : 'stable';
+          const badgeText = gs.tier==='pending' ? `${dots} ${fmt(gs.remain,2)}%p 남음` : `${dots} 확정`;
+          let detail;
+          if(gs.tier==='stable'){
+            detail = `체지방량 목표 달성 — MA7·MA14 모두 확인돼 되돌림 걱정 없이 유지 단계로 전환해도 좋아요.`;
+          } else if(gs.tier==='done'){
+            detail = `MA7(최근 7일 평균) 기준으로 목표를 확정했어요. MA14(최근 14일 평균 ${fmt(gs.ma14Last,2)}%)까지 목표 아래로 내려오면 안정 확정(●●)으로 바뀌어요.`;
+          } else if(gs.rawDone){
+            detail = `오늘 실측 체지방량은 이미 목표권(${fmt(last.fat)}kg)에 들어왔지만, 최근 1주 평균(MA7)은 아직 ${fmt(gs.ma7Last,2)}%로 목표 ${gs.pct}% 위에 있어 확정 전이에요.`;
+          } else {
+            detail = `현재 체지방량 ${fmt(last.fat)}kg → 약 <b>-${fmt(fatLossNeeded)}kg</b> 추가 감량 필요 (목표 체지방량 ${fmt(targetFat)}kg)`;
+          }
           return `<div class="hero-goal-item">
             <div class="hg-top">
-              <span class="hg-label">${g.label} <span class="dim">· 목표 ${g.pct}%</span></span>
-              <span class="hg-status ${done?'done':''}">${done?'달성 완료':`${fmt(remain)}%p 남음`}</span>
+              <span class="hg-label">${gs.label} <span class="dim">· 목표 ${gs.pct}%</span></span>
+              <span class="hg-status ${badgeClass}">${badgeText}</span>
             </div>
-            <div class="hg-bar"><div class="hg-fill" style="width:${progressed}%"></div></div>
-            <div class="hg-foot"><span>진행률 ${fmt(progressed,0)}%</span><span>${fmt(START_FAT_PCT)}% → ${fmt(last.fatPct)}% → ${g.pct}%</span></div>
-            <div class="hg-detail">${done ? '체지방량 목표 달성 — 유지 단계로 전환' : `현재 체지방량 ${fmt(last.fat)}kg → 약 <b>-${fmt(fatLossNeeded)}kg</b> 추가 감량 필요 (목표 체지방량 ${fmt(targetFat)}kg)`}</div>
+            <div class="hg-bar"><div class="hg-fill" style="width:${gs.progressed}%"></div></div>
+            <div class="hg-foot"><span>진행률 ${fmt(gs.progressed,0)}% (MA7 기준)</span><span>${fmt(START_FAT_PCT)}% → ${fmt(gs.ma7Last,2)}% → ${gs.pct}%</span></div>
+            <div class="hg-detail">${detail}</div>
           </div>`;
         }).join('')}
       </div>
-      <div class="note-box" style="margin-top:10px;">필요 감량치는 <b>오늘 실측 골격근량(${fmt(last.muscle)}kg)</b>이 그대로 유지된다는 가정으로 계산해요. 골격근이 늘면 이 값은 다음 측정 때 자동으로 갱신돼요.</div>
+      <div class="note-box" style="margin-top:10px;">배지의 점 2개는 각각 <b>MA7 확정</b> · <b>MA14 안정 확인</b>을 뜻해요(●●=둘 다 확인돼 되돌림 걱정 없는 상태). 필요 감량치는 <b>오늘 실측 골격근량(${fmt(last.muscle)}kg)</b>이 그대로 유지된다는 가정으로 계산해요. 골격근이 늘면 이 값은 다음 측정 때 자동으로 갱신돼요.</div>
     </section>
 
     ${state.aiNote ? `
@@ -3290,7 +3335,7 @@ function deltaSpan(delta, unit){
 
 /* ---------- 목표 ---------- */
 function renderGoal(){
-  const {last, ma} = computeInsights();
+  const {last, ma, goalStatus} = computeInsights();
   if(!last) return `<div class="empty-state">아직 기록이 없습니다.</div>`;
   const recentMA = ma.slice(-7);
   const maTrendDelta = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
@@ -3306,7 +3351,8 @@ function renderGoal(){
     const targetWeight = other + targetMuscle + targetFat;
     const fatLossNeeded = last.fat - targetFat;
     const muscleGainNeeded = targetMuscle - last.muscle;
-    const achieved = last.fatPct <= g.pct;
+    // 2026-08-23: 원시값 대신 MA7 확정 기준으로 통일(computeFatGoalStatus 공용 함수)
+    const achieved = goalStatus.goals.find(x=>x.pct===g.pct).ma7Done;
     return {g, targetFat, targetWeight, targetMuscle, fatLossNeeded, muscleGainNeeded, achieved, basisLabel:'회복 기준'};
   });
   // [2026-07-19 추가] 인바디를 매일 측정하므로, 골격근이 회복 기준값(33.2kg)까지 오른다고
@@ -3318,14 +3364,14 @@ function renderGoal(){
     const targetFat = t*(other+tm) / (1-t);
     const targetWeight = other + tm + targetFat;
     const fatLossNeeded = last.fat - targetFat;
-    const achieved = last.fatPct <= g.pct;
+    const achieved = goalStatus.goals.find(x=>x.pct===g.pct).ma7Done;
     return {g, targetFat, targetWeight, targetMuscle:tm, fatLossNeeded, muscleGainNeeded:0, achieved, basisLabel:'오늘 실측 골격근 기준'};
   });
 
   return `
     <section class="card">
       <div class="section-label good">${secNum('03')}목표 현황</div>
-      <h3 class="hero-heading">체지방률 ${fmt(START_FAT_PCT)}% → 현재 ${fmt(last.fatPct)}%</h3>
+      <h3 class="hero-heading">체지방률 ${fmt(START_FAT_PCT)}% → 현재 ${fmt(last.fatPct)}% <span class="dim" style="font-size:13px; font-weight:500;">(MA7 ${fmt(goalStatus.ma7Last,2)}%)</span></h3>
       <div class="ring-grid">
         ${calcRowsCurrent.map(r => {
           const totalFatToLose = Math.max(0.0001, first.fat - r.targetFat);
@@ -3341,7 +3387,7 @@ function renderGoal(){
         }).join('')}
       </div>
       <div class="note-box" style="margin-top:14px;">
-        체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
+        "달성 완료"는 당일 실측값이 아니라 <b>MA7(최근 7일 평균)</b>이 목표 아래로 내려온 시점을 기준으로 표시해요(하루 컨디션에 따른 오르내림으로 뒤집히지 않도록). 체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
       </div>
     </section>
 
