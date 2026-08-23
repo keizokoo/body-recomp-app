@@ -223,10 +223,12 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 @media(max-width:560px){.ring-grid{grid-template-columns:1fr;}}
 .ring-card{display:flex; flex-direction:column; align-items:center; padding:22px 10px; background:var(--panel-alt); border-radius:var(--radius);}
 .ring-label{font-size:13px; font-weight:600; color:var(--text); margin-top:12px;}
-.ring-status{margin-top:10px; font-size:12px; font-weight:700; padding:5px 13px; border-radius:var(--radius-pill);}
+.ring-status{margin-top:10px; font-size:12px; font-weight:700; padding:5px 13px; border-radius:var(--radius-pill); text-align:center; line-height:1.5;}
 .ring-status.done{background:var(--c-good-soft); color:var(--c-good);}
+.ring-status.stable{background:var(--c-good-soft); color:var(--c-good); box-shadow:inset 0 0 0 1.5px var(--c-good);}
 .ring-status.pending{background:var(--c-warn-soft); color:var(--c-warn);}
 .ring-num{font-family:var(--font-display); font-weight:700; fill:var(--text);}
+.ring-num-sub{font-family:var(--font-mono); fill:var(--text-faint);}
 
 .calc-table td, .calc-table th{padding:10px 10px;}
 .calc-table td:first-child{color:var(--text); font-weight:600; text-align:left;}
@@ -1357,12 +1359,13 @@ function computeFatGoalStatus(ib){
   const goals = FAT_GOALS.map(g => {
     const totalDist = START_FAT_PCT - g.pct;
     const progressed = Math.min(100, Math.max(0, ((START_FAT_PCT-ma7Last)/totalDist)*100));
+    const progressed14 = Math.min(100, Math.max(0, ((START_FAT_PCT-ma14Last)/totalDist)*100));
     const ma7Done = ma7Last <= g.pct;
     const ma14Done = ma14Last <= g.pct;
     const rawDone = last.fatPct <= g.pct;
     const tier = ma7Done ? (ma14Done ? 'stable' : 'done') : 'pending';
     const remain = Math.max(0, ma7Last - g.pct);
-    return {...g, progressed, ma7Done, ma14Done, rawDone, tier, remain, ma7Last, ma14Last};
+    return {...g, progressed, progressed14, ma7Done, ma14Done, rawDone, tier, remain, ma7Last, ma14Last};
   });
   return {last, ma7, ma14, ma7Last, ma14Last, goals};
 }
@@ -3349,11 +3352,14 @@ function renderGoal(){
     const t = g.pct/100;
     const targetFat = t*(other+targetMuscle) / (1-t);
     const targetWeight = other + targetMuscle + targetFat;
-    const fatLossNeeded = last.fat - targetFat;
+    // 2026-08-23: 이미 목표를 넘어선 경우 fatLossNeeded가 음수가 되면서 "-${fmt(음수)}" 표기가
+    // "--0.6kg"처럼 마이너스가 겹쳐 찍히는 표시 버그가 있었음 — 0 밑으로는 내려가지 않게 클램프.
+    const fatLossNeeded = Math.max(0, last.fat - targetFat);
     const muscleGainNeeded = targetMuscle - last.muscle;
-    // 2026-08-23: 원시값 대신 MA7 확정 기준으로 통일(computeFatGoalStatus 공용 함수)
-    const achieved = goalStatus.goals.find(x=>x.pct===g.pct).ma7Done;
-    return {g, targetFat, targetWeight, targetMuscle, fatLossNeeded, muscleGainNeeded, achieved, basisLabel:'회복 기준'};
+    // 원시값 대신 MA7 확정 기준으로 통일(computeFatGoalStatus 공용 함수)
+    const gs = goalStatus.goals.find(x=>x.pct===g.pct);
+    const achieved = gs.ma7Done;
+    return {g, gs, targetFat, targetWeight, targetMuscle, fatLossNeeded, muscleGainNeeded, achieved, basisLabel:'회복 기준'};
   });
   // [2026-07-19 추가] 인바디를 매일 측정하므로, 골격근이 회복 기준값(33.2kg)까지 오른다고
   // 가정하지 않고 "오늘 실측 골격근량 그대로 유지"된다는 보수적 가정으로도 1차/2차 목표에
@@ -3363,9 +3369,10 @@ function renderGoal(){
     const tm = last.muscle; // 오늘 실측 골격근량 고정(회복 가정 없음)
     const targetFat = t*(other+tm) / (1-t);
     const targetWeight = other + tm + targetFat;
-    const fatLossNeeded = last.fat - targetFat;
-    const achieved = goalStatus.goals.find(x=>x.pct===g.pct).ma7Done;
-    return {g, targetFat, targetWeight, targetMuscle:tm, fatLossNeeded, muscleGainNeeded:0, achieved, basisLabel:'오늘 실측 골격근 기준'};
+    const fatLossNeeded = Math.max(0, last.fat - targetFat); // 2026-08-23: 음수 클램프(이중 마이너스 버그 수정)
+    const gs = goalStatus.goals.find(x=>x.pct===g.pct);
+    const achieved = gs.ma7Done;
+    return {g, gs, targetFat, targetWeight, targetMuscle:tm, fatLossNeeded, muscleGainNeeded:0, achieved, basisLabel:'오늘 실측 골격근 기준'};
   });
 
   return `
@@ -3374,20 +3381,28 @@ function renderGoal(){
       <h3 class="hero-heading">체지방률 ${fmt(START_FAT_PCT)}% → 현재 ${fmt(last.fatPct)}% <span class="dim" style="font-size:13px; font-weight:500;">(MA7 ${fmt(goalStatus.ma7Last,2)}%)</span></h3>
       <div class="ring-grid">
         ${calcRowsCurrent.map(r => {
-          const totalFatToLose = Math.max(0.0001, first.fat - r.targetFat);
-          const achievedSoFar = first.fat - last.fat;
-          const progressed = r.achieved ? 100 : Math.min(100, Math.max(0, (achievedSoFar/totalFatToLose)*100));
+          // 2026-08-23 "완전한 C안": 링을 kg 기반 연속값 대신 MA7(바깥)·MA14(안쪽) 진행률로 통일.
+          // 두 링과 배지가 전부 같은 gs.tier 값에서 나오기 때문에 "링은 다 찼는데 미달성" 같은
+          // 모순이 구조적으로 생기지 않는다(직전 버전에서 실제로 발생했던 문제).
+          const gs = r.gs;
+          let statusText;
+          if(gs.tier==='stable') statusText = '확정 ✓ · 안정 확인';
+          else if(gs.tier==='done') statusText = '확정 ✓ (MA7 기준)';
+          else if(gs.rawDone) statusText = `오늘 실측 도달<br>MA7 ${fmt(gs.remain,2)}%p 남음`;
+          else statusText = `체지방 ${fmt(r.fatLossNeeded)}kg<br>감소 필요`;
           return `<div class="ring-card">
-            ${ringSVG(progressed, r.achieved)}
+            ${dualRingSVG(gs.progressed, gs.progressed14, gs.tier)}
             <div class="ring-label">${r.g.label} · ${r.g.pct}%</div>
-            <div class="ring-status ${r.achieved?'done':'pending'}">
-              ${r.achieved ? '달성 완료' : `체지방 ${fmt(r.fatLossNeeded)}kg 감소 필요`}
-            </div>
+            <div class="ring-status ${gs.tier}">${statusText}</div>
           </div>`;
         }).join('')}
       </div>
-      <div class="note-box" style="margin-top:14px;">
-        "달성 완료"는 당일 실측값이 아니라 <b>MA7(최근 7일 평균)</b>이 목표 아래로 내려온 시점을 기준으로 표시해요(하루 컨디션에 따른 오르내림으로 뒤집히지 않도록). 체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
+      <div class="gauge-legend" style="margin-top:2px;">
+        <span><span class="legend-dot" style="background:var(--c-ring-good)"></span>바깥 링 = MA7 진행률</span>
+        <span><span class="legend-dot" style="background:var(--c-neutral)"></span>안쪽 링 = MA14 진행률</span>
+      </div>
+      <div class="note-box" style="margin-top:12px;">
+        "확정"은 당일 실측값이 아니라 <b>MA7(최근 7일 평균)</b>이 목표 아래로 내려온 시점을 기준으로 표시해요(하루 컨디션에 따른 오르내림으로 뒤집히지 않도록). <b>MA14(최근 14일 평균)</b>까지 목표 아래로 내려오면 되돌림 걱정 없는 "안정 확인" 단계로 바뀝니다. 체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
       </div>
     </section>
 
@@ -3464,6 +3479,31 @@ function renderGoal(){
       </div>
     </section>
   `;
+}
+/* 2026-08-23 추가: 목표 탭 "완전한 C안" — 바깥 링(MA7 진행률)·안쪽 링(MA14 진행률)을 함께 그려서
+   "링은 다 찼는데 아직 미달성"처럼 서로 다른 기준이 섞여 모순으로 보이는 걸 구조적으로 방지.
+   두 링이 같은 tier(pending/done/stable) 값을 공유하므로 배지 문구와 항상 일치한다. */
+function dualRingSVG(ma7Pct, ma14Pct, tier){
+  const rOuter=42, rInner=28, sw=9, swIn=7;
+  const cOuter=2*Math.PI*rOuter, cInner=2*Math.PI*rInner;
+  const p7 = Math.min(100, Math.max(0, ma7Pct)), p14 = Math.min(100, Math.max(0, ma14Pct));
+  const offOuter = cOuter*(1-p7/100), offInner = cInner*(1-p14/100);
+  const gid = 'ring'+Math.random().toString(36).slice(2,7);
+  const outerTo = tier==='pending' ? 'var(--c-ring-warn)' : 'var(--c-ring-good)';
+  return `<svg width="112" height="112" viewBox="0 0 112 112">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" style="stop-color:var(--c-ring-from)"/>
+      <stop offset="100%" style="stop-color:${outerTo}"/>
+    </linearGradient></defs>
+    <circle cx="56" cy="56" r="${rOuter}" fill="none" style="stroke:var(--c-track)" stroke-width="${sw}"/>
+    <circle cx="56" cy="56" r="${rOuter}" fill="none" stroke="url(#${gid})" stroke-width="${sw}" stroke-linecap="round"
+      stroke-dasharray="${cOuter}" stroke-dashoffset="${offOuter}" transform="rotate(-90 56 56)"/>
+    <circle cx="56" cy="56" r="${rInner}" fill="none" style="stroke:var(--c-track)" stroke-width="${swIn}"/>
+    <circle cx="56" cy="56" r="${rInner}" fill="none" style="stroke:var(--c-neutral)" stroke-width="${swIn}" stroke-linecap="round"
+      stroke-dasharray="${cInner}" stroke-dashoffset="${offInner}" transform="rotate(-90 56 56)" opacity="0.85"/>
+    <text x="56" y="52" text-anchor="middle" class="ring-num" font-size="16">${fmt(p7,1)}%</text>
+    <text x="56" y="67" text-anchor="middle" class="ring-num-sub" font-size="9">MA14 ${fmt(p14,1)}%</text>
+  </svg>`;
 }
 function ringSVG(pct, done){
   const r=42, c=2*Math.PI*r, off = c*(1-pct/100);
