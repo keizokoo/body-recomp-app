@@ -230,6 +230,20 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .ring-num{font-family:var(--font-display); font-weight:700; fill:var(--text);}
 .ring-num-sub{font-family:var(--font-mono); fill:var(--text-faint);}
 
+/* 2026-08-23 추가: 목표 현황 "B안 통합 눈금자" — 1차/2차 목표를 도넛 2개 대신 눈금자 하나에 표시 */
+.ruler-wrap{padding:8px 6px 0;}
+.ruler-track{position:relative; height:16px; border-radius:99px; background:var(--c-track); margin:34px 0 26px;}
+.ruler-fill{position:absolute; left:0; top:0; height:100%; border-radius:99px; background:linear-gradient(90deg, var(--c-gauge-from), var(--c-gauge-to));}
+.ruler-tick{position:absolute; top:-6px; width:3px; height:28px; border-radius:2px; background:var(--c-goalmark);}
+.ruler-tick-label{position:absolute; top:-30px; font-size:11px; font-weight:700; color:var(--text); white-space:nowrap; transform:translateX(-50%);}
+.ruler-tick-sub{position:absolute; top:32px; font-size:10px; color:var(--text-faint); white-space:nowrap; transform:translateX(-50%); font-family:var(--font-mono);}
+.ruler-ma14{position:absolute; top:-6px; width:3px; height:28px; border-radius:2px; background:var(--c-neutral);}
+.ruler-endlabel{display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint); font-family:var(--font-mono);}
+.ruler-goalchips{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px;}
+@media(max-width:560px){.ruler-goalchips{grid-template-columns:1fr;}}
+.ruler-goalchip{display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--panel-alt); border-radius:var(--radius-sm); padding:10px 13px;}
+.ruler-goalchip .gc-label{font-size:12.5px; font-weight:700; color:var(--text);}
+
 .calc-table td, .calc-table th{padding:10px 10px;}
 .calc-table td:first-child{color:var(--text); font-weight:600; text-align:left;}
 .calc-table td:first-child, .calc-table td:nth-child(2){font-family:var(--font-body);}
@@ -3346,60 +3360,71 @@ function renderGoal(){
   const muscleAssess = computeMuscleAssessment(first, last);
 
   const other = last.weight - last.muscle - last.fat;
-  const targetMuscle = Math.max(last.muscle, MUSCLE_BASELINE);
 
-  const calcRows = FAT_GOALS.map(g => {
-    const t = g.pct/100;
-    const targetFat = t*(other+targetMuscle) / (1-t);
-    const targetWeight = other + targetMuscle + targetFat;
-    // 2026-08-23: 이미 목표를 넘어선 경우 fatLossNeeded가 음수가 되면서 "-${fmt(음수)}" 표기가
-    // "--0.6kg"처럼 마이너스가 겹쳐 찍히는 표시 버그가 있었음 — 0 밑으로는 내려가지 않게 클램프.
-    const fatLossNeeded = Math.max(0, last.fat - targetFat);
-    const muscleGainNeeded = targetMuscle - last.muscle;
-    // 원시값 대신 MA7 확정 기준으로 통일(computeFatGoalStatus 공용 함수)
-    const gs = goalStatus.goals.find(x=>x.pct===g.pct);
-    const achieved = gs.ma7Done;
-    return {g, gs, targetFat, targetWeight, targetMuscle, fatLossNeeded, muscleGainNeeded, achieved, basisLabel:'회복 기준'};
-  });
-  // [2026-07-19 추가] 인바디를 매일 측정하므로, 골격근이 회복 기준값(33.2kg)까지 오른다고
-  // 가정하지 않고 "오늘 실측 골격근량 그대로 유지"된다는 보수적 가정으로도 1차/2차 목표에
-  // 필요한 체지방 감량을 별도로 계산해서 함께 보여줌 (요청: 매일 실측 골격근량 기준 계산 추가).
+  // 2026-08-23: "회복 기준"(골격근 33.2kg까지 회복 가정) 행은 정희님 요청으로 제거하고
+  // "오늘 실측 골격근 기준" 한 가지로 통일. 매일 실측하는 골격근량을 그대로 쓰는 게
+  // 더 현실적이고, 표에 두 기준이 같이 있어 복잡했던 걸 단순화.
   const calcRowsCurrent = FAT_GOALS.map(g => {
     const t = g.pct/100;
     const tm = last.muscle; // 오늘 실측 골격근량 고정(회복 가정 없음)
     const targetFat = t*(other+tm) / (1-t);
     const targetWeight = other + tm + targetFat;
-    const fatLossNeeded = Math.max(0, last.fat - targetFat); // 2026-08-23: 음수 클램프(이중 마이너스 버그 수정)
+    const fatLossNeeded = Math.max(0, last.fat - targetFat); // 음수 클램프(이중 마이너스 버그 수정)
+    const surplus = Math.max(0, targetFat - last.fat); // 목표 대비 이미 초과 감량한 여유분(달성 시 표시)
     const gs = goalStatus.goals.find(x=>x.pct===g.pct);
     const achieved = gs.ma7Done;
-    return {g, gs, targetFat, targetWeight, targetMuscle:tm, fatLossNeeded, muscleGainNeeded:0, achieved, basisLabel:'오늘 실측 골격근 기준'};
+    return {g, gs, targetFat, targetWeight, targetMuscle:tm, fatLossNeeded, surplus, muscleGainNeeded:0, achieved, basisLabel:'오늘 실측 골격근 기준'};
   });
+
+  // 2026-08-23 "B안 통합 눈금자": 도넛 2개 대신 눈금자 하나에 1차/2차 목표 위치를 함께 표시.
+  // 채움(%)·목표 눈금·MA14 위치는 모두 같은 rulerTotal(시작→최종목표 구간) 위에서 계산되므로
+  // "링은 다 찼는데 미달성" 같은 모순이 구조적으로 생기지 않는다.
+  const rulerEnd = FAT_GOALS[FAT_GOALS.length-1].pct; // 최종(최저) 목표 = 18
+  const rulerTotal = START_FAT_PCT - rulerEnd;
+  const rulerFillPct = Math.min(100, Math.max(0, ((START_FAT_PCT-goalStatus.ma7Last)/rulerTotal)*100));
+  const rulerMa14Pct = Math.min(100, Math.max(0, ((START_FAT_PCT-goalStatus.ma14Last)/rulerTotal)*100));
 
   return `
     <section class="card">
       <div class="section-label good">${secNum('03')}목표 현황</div>
       <h3 class="hero-heading">체지방률 ${fmt(START_FAT_PCT)}% → 현재 ${fmt(last.fatPct)}% <span class="dim" style="font-size:13px; font-weight:500;">(MA7 ${fmt(goalStatus.ma7Last,2)}%)</span></h3>
-      <div class="ring-grid">
-        ${calcRowsCurrent.map(r => {
-          // 2026-08-23 "완전한 C안": 링을 kg 기반 연속값 대신 MA7(바깥)·MA14(안쪽) 진행률로 통일.
-          // 두 링과 배지가 전부 같은 gs.tier 값에서 나오기 때문에 "링은 다 찼는데 미달성" 같은
-          // 모순이 구조적으로 생기지 않는다(직전 버전에서 실제로 발생했던 문제).
-          const gs = r.gs;
-          let statusText;
-          if(gs.tier==='stable') statusText = '확정 ✓ · 안정 확인';
-          else if(gs.tier==='done') statusText = '확정 ✓ (MA7 기준)';
-          else if(gs.rawDone) statusText = `오늘 실측 도달<br>MA7 ${fmt(gs.remain,2)}%p 남음`;
-          else statusText = `체지방 ${fmt(r.fatLossNeeded)}kg<br>감소 필요`;
-          return `<div class="ring-card">
-            ${dualRingSVG(gs.progressed, gs.progressed14, gs.tier)}
-            <div class="ring-label">${r.g.label} · ${r.g.pct}%</div>
-            <div class="ring-status ${gs.tier}">${statusText}</div>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="gauge-legend" style="margin-top:2px;">
-        <span><span class="legend-dot" style="background:var(--c-ring-good)"></span>바깥 링 = MA7 진행률</span>
-        <span><span class="legend-dot" style="background:var(--c-neutral)"></span>안쪽 링 = MA14 진행률</span>
+      <div class="ruler-wrap">
+        <div class="ruler-track">
+          <div class="ruler-fill" style="width:${fmt(rulerFillPct,1)}%"></div>
+          ${FAT_GOALS.map(g => {
+            const pos = Math.min(100, Math.max(0, ((START_FAT_PCT-g.pct)/rulerTotal)*100));
+            const gs = goalStatus.goals.find(x=>x.pct===g.pct);
+            const tickColor = gs.tier==='pending' ? 'var(--c-goalmark)' : 'var(--c-good)';
+            return `<div class="ruler-tick" style="left:${pos}%; background:${tickColor};"></div>
+            <div class="ruler-tick-label" style="left:${pos}%;">${gs.tier==='pending' ? '' : '✓ '}${g.label} ${g.pct}%</div>`;
+          }).join('')}
+          <div class="ruler-ma14" style="left:${fmt(rulerMa14Pct,1)}%;" title="MA14 위치"></div>
+          <div class="ruler-tick-sub" style="left:${fmt(rulerMa14Pct,1)}%;">MA14 ${fmt(goalStatus.ma14Last,2)}%</div>
+        </div>
+        <div class="ruler-endlabel">
+          <span>시작 ${fmt(START_FAT_PCT)}%</span>
+          <span>MA7 현재 ${fmt(goalStatus.ma7Last,2)}%</span>
+          <span>최종 목표 ${fmt(rulerEnd)}%</span>
+        </div>
+        <div class="gauge-legend" style="margin-top:10px;">
+          <span><span class="legend-dot" style="background:var(--c-gauge-to)"></span>채움 = MA7 진행률</span>
+          <span><span class="legend-dot" style="background:var(--c-goalmark)"></span>세로선 = 목표 지점</span>
+          <span><span class="legend-dot" style="background:var(--c-neutral)"></span>파란선 = MA14 위치</span>
+        </div>
+        <div class="ruler-goalchips">
+          ${calcRowsCurrent.map(r => {
+            const gs = r.gs;
+            let statusText;
+            if(gs.tier==='stable') statusText = '확정 ✓ · 안정 확인';
+            else if(gs.tier==='done') statusText = '확정 ✓ (MA7 기준)';
+            else if(gs.rawDone) statusText = `오늘 실측 도달 · MA7 ${fmt(gs.remain,2)}%p 남음`;
+            else statusText = `체지방 ${fmt(r.fatLossNeeded)}kg 감소 필요`;
+            return `<div class="ruler-goalchip">
+              <span class="gc-label">${r.g.label} · ${r.g.pct}%</span>
+              <span class="ring-status ${gs.tier}" style="padding:4px 10px; border-radius:99px; font-size:11.5px; white-space:nowrap;">${statusText}</span>
+            </div>`;
+          }).join('')}
+        </div>
       </div>
       <div class="note-box" style="margin-top:12px;">
         "확정"은 당일 실측값이 아니라 <b>MA7(최근 7일 평균)</b>이 목표 아래로 내려온 시점을 기준으로 표시해요(하루 컨디션에 따른 오르내림으로 뒤집히지 않도록). <b>MA14(최근 14일 평균)</b>까지 목표 아래로 내려오면 되돌림 걱정 없는 "안정 확인" 단계로 바뀝니다. 체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
@@ -3407,16 +3432,17 @@ function renderGoal(){
     </section>
 
     <section class="card">
-      <div class="section-label">${secNum('04')}목표 달성에 필요한 변화량 (추정)</div>
+      <div class="section-label">${secNum('04')}목표 달성에 필요한 변화량 (오늘 실측 골격근 기준)</div>
       <div style="overflow-x:auto;">
         <table class="data-table calc-table">
-          <thead><tr><th style="text-align:left">목표</th><th>기준</th><th>목표 체지방률</th><th>필요 체지방 감량</th><th>필요 골격근량</th><th>골격근 증가분</th><th>예상 목표체중</th></tr></thead>
+          <thead><tr><th style="text-align:left">목표</th><th>목표 체지방률</th><th>필요 체지방 감량</th><th>필요 골격근량</th><th>골격근 증가분</th><th>예상 목표체중</th></tr></thead>
           <tbody>
-            ${[...calcRows, ...calcRowsCurrent].map(r => `<tr>
+            ${calcRowsCurrent.map(r => `<tr>
               <td>${r.g.label}</td>
-              <td class="dim">${r.basisLabel}</td>
               <td>${r.g.pct}%</td>
-              <td class="warn-text">${r.achieved?'<span style="font-family:var(--font-body)">달성</span>':`-${fmt(r.fatLossNeeded)}kg`}</td>
+              <td>${r.achieved
+                ? `<span class="badge hit" style="font-family:var(--font-body); font-size:11.5px; padding:3px 9px;">✓ +${fmt(r.surplus)}kg 여유</span>`
+                : `<span class="warn-text">${fmt(r.fatLossNeeded)}kg 필요</span>`}</td>
               <td>${fmt(r.targetMuscle)}kg</td>
               <td class="good-text">${r.muscleGainNeeded>0.05?`+${fmt(r.muscleGainNeeded)}kg`:'<span style="font-family:var(--font-body)">현 수준 유지</span>'}</td>
               <td>${fmt(r.targetWeight)}kg</td>
@@ -3425,7 +3451,7 @@ function renderGoal(){
         </table>
       </div>
       <div class="note-box" style="margin-top:14px;">
-        추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정합니다. <b>"회복 기준" 행</b>은 골격근량이 시작 기준값(${MUSCLE_BASELINE}kg) 이상으로 회복된다고 가정한 계산이고, <b>"오늘 실측 골격근 기준" 행</b>은 매일 측정하는 오늘자 골격근 실측치(${fmt(last.muscle)}kg)가 그대로 유지된다는 보수적 가정으로 계산해 필요 체지방 감량을 역산했습니다. 골격근이 실제로 늘면 "오늘 실측 기준" 행의 필요 감량치는 인바디 측정마다 갱신되어 줄어듭니다. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
+        추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정합니다. 매일 측정하는 오늘자 골격근 실측치(${fmt(last.muscle)}kg)가 그대로 유지된다는 보수적 가정으로 필요 체지방 감량을 역산했습니다 — 골격근이 실제로 늘면 필요 감량치는 인바디 측정마다 갱신되어 줄어듭니다. "✓ 여유" 표시는 위 목표 현황과 동일하게 <b>MA7 확정 기준</b>일 때만 뜨고, 여유분(kg)은 목표 체지방량보다 오늘 실측치가 얼마나 더 낮은지를 보여줘요. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
       </div>
     </section>
 
