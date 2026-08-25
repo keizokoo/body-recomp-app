@@ -1328,6 +1328,22 @@ function formatNoteHtml(text){
   }
   return paragraphs.map(p => `<p>${p}</p>`).join('');
 }
+// 2026-08-25 추가: "Claude 분석" 카드의 "갱신" 라벨이 항상 마지막 로컬 동기화 시각(syncedAt)만
+// 보여줘서, 어제(또는 그 이전) 작성된 분석이 오늘 그대로 남아있어도 앱을 열어 동기화만 되면
+// 라벨이 "오늘 갱신"으로 바뀌어 마치 오늘 분석인 것처럼 보이는 문제가 있었음(정희님 실제 리포트,
+// 2026-08-25 — 8/24 07:26에 쓴 분석이 8/25 저녁 라벨엔 "2026-08-25 20:41 갱신"으로 표시됨).
+// 분석이 다루는 "기준일"(aiNote.date, 즉 서버 aiAnalysisDate)을 주 라벨로 보여주고, 동기화
+// 시각은 부가정보로 분리. 기준일이 오늘보다 이전이면 경고 배지를 붙여 한눈에 알 수 있게 함.
+function aiNoteFreshnessLabel(note){
+  if(!note) return '';
+  const noteDate = note.date || null;
+  const todayD = todayISO();
+  const isStale = !!(noteDate && noteDate < todayD);
+  const dateLabel = noteDate ? `${noteDate} 기준 분석` : (note.syncedAt ? `${fmtDateTime(note.syncedAt)} 갱신` : '');
+  const syncPart = note.syncedAt ? ` · 동기화 ${fmtDateTime(note.syncedAt)}` : '';
+  const staleBadge = isStale ? ` <span style="color:var(--c-warn); font-weight:700;">⚠️ ${esc(noteDate)} 이후 새 분석 없음</span>` : '';
+  return dateLabel ? `· ${esc(dateLabel)}${syncPart}${staleBadge}` : '';
+}
 
 function sortedInbody(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
 function movingAverage(arr, key, win){
@@ -1903,7 +1919,10 @@ function computeSmartAlerts(ib, meals, workouts){
   // 3) 칼로리 목표 이탈 — 질병/컨디션난조/과식/음주 등 특이일은 제외하고 계산 (2026-07-25 개선,
   // 2026-08-13 개선: 이제 모달의 구조화된 specialDayType 필드가 있으면 그걸 우선 쓰고, 레거시
   // 데이터(필드가 없는 과거 기록)에 한해서만 note 텍스트 키워드 매칭으로 폴백한다.
-  const SPECIAL_DAY_KEYWORDS = ['설사','컨디션난조','몸살','장염','병원','속탈','메스꺼움','구토','식중독','감기'];
+  // 2026-08-25 추가: 건강검진/시술 전처치(장정결·금식)로 인한 의도적 저칼로리일도 특이일로
+  // 인식되도록 키워드 보강 — 기존엔 '설사' 등 증상 키워드만 있어서, 검진 준비로 미리 소식·금식한
+  // 날(예: 대장내시경 전날)은 특이일로 안 잡히고 그냥 "칼로리 부족"으로만 평가되는 문제가 있었음.
+  const SPECIAL_DAY_KEYWORDS = ['설사','컨디션난조','몸살','장염','병원','속탈','메스꺼움','구토','식중독','감기','검진','금식','장정결','시술'];
   const isSpecialDay = (m) => {
     if(m.specialDayType) return m.specialDayType !== 'none';
     return SPECIAL_DAY_KEYWORDS.some(k => (m.note||'').includes(k));
@@ -3004,7 +3023,7 @@ function renderDashboard(){
 
     ${state.aiNote ? `
     <section class="card ai-note">
-      <div class="section-label good">${secNum('00')}Claude 분석 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.aiNote.syncedAt ? fmtDateTime(state.aiNote.syncedAt) : state.aiNote.date} 갱신</span></div>
+      <div class="section-label good">${secNum('00')}Claude 분석 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">${aiNoteFreshnessLabel(state.aiNote)}</span></div>
       <div class="ai-note-body">${formatNoteHtml(state.aiNote.text)}</div>
     </section>` : ''}
 
@@ -3656,7 +3675,7 @@ function renderReport(){
     </section>
 
     <section class="card">
-      <div class="section-label good">${secNum('07d')}Claude 종합 리포트 ${state.reportNote ? `<span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.reportNote.syncedAt ? fmtDateTime(state.reportNote.syncedAt) : state.reportNote.date} 갱신</span>` : ''}</div>
+      <div class="section-label good">${secNum('07d')}Claude 종합 리포트 ${state.reportNote ? `<span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">${aiNoteFreshnessLabel(state.reportNote)}</span>` : ''}</div>
       ${state.reportNote
         ? `<div class="ai-note-body">${formatNoteHtml(state.reportNote.text)}</div>`
         : `<p class="p-dim">아직 등록된 종합 리포트가 없어요. Claude 채팅에서 받은 정기 리포트를 아래에 붙여넣거나, 클라우드 동기화로 자동 반영돼요.</p>`}
