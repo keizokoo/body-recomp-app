@@ -490,7 +490,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-08-20-mj3 (이 문구가 보이면 오늘 수정사항이 실제로 반영된 것 — 부위그룹별 볼륨PR/탄수화물목표, Claude분석·종합리포트 문단나누기, 즐겨찾기·운동기록 입력행 오버플로우, 마운자로 요일 하드코딩 3곳(리마인더 알림/차수별 상세 표/주간계획 그리드) 수정. 이전 빌드: 2026-08-16-g)';
+const APP_BUILD_VERSION = '2026-09-02-mj4 (이 문구가 보이면 오늘 수정사항이 실제로 반영된 것 — 4주간격(투여회차) 비교 카드에서 잠정(예정) 구간일 때 고정계산(4주 후) 날짜 대신 "(예정)"만 표시하도록 수정, 실제 불규칙 간격과 안 맞는 날짜로 인한 혼동 제거. 이전 빌드: 2026-08-20-mj3)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -2412,7 +2412,7 @@ function renderMounjaro(){
       ${intervals.map(iv => `
         <div style="margin-top:14px;">
           <div style="font-size:13px; font-weight:700; color:var(--text);">
-            ${iv.startCycleNum}차(${dLabel(iv.startDose.date)}) → ${iv.endCycleNum}차(${iv.isProvisional?'예정 ':''}${dLabel(iv.nominalEndDate)})
+            ${iv.startCycleNum}차(${dLabel(iv.startDose.date)}) → ${iv.endCycleNum}차${iv.isProvisional?'(예정)':`(${dLabel(iv.nominalEndDate)})`}
           </div>
           <div class="dim" style="font-size:11.5px; margin-top:2px;">
             ${iv.isProvisional
