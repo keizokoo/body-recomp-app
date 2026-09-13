@@ -490,7 +490,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-13-a (골격근 손실비율 계산 버그 수정 — 여행 중처럼 muscle 필드가 빈 값인 최신 행을 그대로 endRec으로 써서 "근육량 100% 감소"로 잘못 표시되던 문제, lastWithMuscle() 헬퍼로 muscle 데이터가 실제로 있는 마지막 행을 찾도록 수정. 이전 빌드: 2026-09-02-mj4)';
+const APP_BUILD_VERSION = '2026-09-13-b (기능 10종 추가: 유산소 구조화필드+인정기준 자동판정 / 저항운동 공백경보 / 골격근평가 신뢰도 캐비엇 / 허리둘레 통합참고 / 4주간격 일평균 변화율 컬럼 / 전체데이터 백업복원 / 부작용로그 교차분석 / 운동 특이조건 플래그 / 허리둘레 삭제 확인창 / 미사용 API직접호출 코드 제거. 이전 빌드: 2026-09-13-a)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -617,6 +617,22 @@ const SPECIAL_DAY_ADVICE = {
   eating_out: {calDelta:-100, carbDelta:0, note:'외식은 나트륨·지방이 평소보다 많을 수 있어요. 다음날은 평소 목표를 그대로 유지하면서 수분 섭취만 조금 늘려보세요.'},
 };
 
+// 2026-09-13 추가: 유산소(트레드밀 등) 세션도 note 자유텍스트 정규식(parseHR/parseDurationMin/parseKm)
+// 대신 구조화 필드(avgHR/durationMin/distanceKm)로 남길 수 있게 함 — treadmillSteps 필드를 도입해
+// 걸음수 파싱 문제를 근본 해결했던 선례(2026-08-16)와 동일한 패턴. 값이 있으면 note 파싱보다
+// 최우선으로 신뢰하고, 없는 과거 기록은 기존 정규식 파싱으로 그대로 폴백한다.
+// 유산소 "인정기준"(2026-09-13 개정): 평균심박 105bpm 이상 AND 시간 20분 이상, 2조건만
+// (거리조건은 폐지, 참고정보로만 기록) — CARDIO_HR_TARGET(105-125bpm 목표존 준수 여부)과는
+// 별개 개념이므로 혼동하지 않는다.
+const CARDIO_VALID_RULE = {minHR:105, minDurationMin:20};
+
+// 2026-09-13 추가: 운동 기록에도 식단의 specialDayType과 대칭되는 구조화된 "특이조건" 플래그.
+// 여행중/컨디션난조/장비제약 등으로 저항운동을 못 하거나 강도를 낮춘 세션임을 명시적으로 남기면,
+// 세션당 볼륨·PT비중 추세 같은 비교 지표가 그 세션을 "이상신호"로 잘못 해석하는 걸 방지할 수 있다.
+// (전체 공백 자체를 숨기지는 않음 — 저항운동 공백 경보는 이 플래그와 무관하게 항상 그대로 뜬다.)
+const WORKOUT_CONDITION_TYPES = ['travel','poor_condition','equipment_limit','injury'];
+const WORKOUT_CONDITION_LABELS = {travel:'여행중', poor_condition:'컨디션난조', equipment_limit:'장비제약(호텔 등)', injury:'부상/통증'};
+
 function parseSteps(text){
   if(!text) return null;
   // 2026-08-16 1차 수정: "숫자→걸음"/"걸음→숫자" 두 순서 다 인식하도록 확장했으나,
@@ -727,9 +743,11 @@ const HR_TARGET_SET_DATE = '2026-07-12';
 function computeInclineHistory(workouts){
   return workouts.filter(isInclineEntry).map(w => {
     const text = `${w.name||''} ${w.note||''}`;
-    const distanceKm = parseKm(text);
-    const avgHR = parseHR(text);
-    const durationMin = parseDurationMin(text);
+    // 2026-09-13 수정: 구조화 필드(avgHR/durationMin/distanceKm)가 있으면 note 정규식 파싱보다
+    // 최우선으로 신뢰한다. 없는 과거 기록은 기존 파싱 함수로 폴백.
+    const distanceKm = w.distanceKm!=null ? Number(w.distanceKm) : parseKm(text);
+    const avgHR = w.avgHR!=null ? Number(w.avgHR) : parseHR(text);
+    const durationMin = w.durationMin!=null ? Number(w.durationMin) : parseDurationMin(text);
     const isPreTarget = w.date < HR_TARGET_SET_DATE;
     const deviation = avgHR===null ? null : (avgHR < CARDIO_HR_TARGET.min ? CARDIO_HR_TARGET.min-avgHR : avgHR > CARDIO_HR_TARGET.max ? avgHR-CARDIO_HR_TARGET.max : 0);
     let verdict, tone;
@@ -738,7 +756,12 @@ function computeInclineHistory(workouts){
     else if(avgHR >= CARDIO_HR_TARGET.min && avgHR <= CARDIO_HR_TARGET.max){ verdict='목표존 적중'; tone='good'; }
     else if(avgHR < CARDIO_HR_TARGET.min){ verdict='목표존보다 낮음(강도↑ 여지)'; tone='neutral'; }
     else { verdict=`목표존 초과 (+${avgHR-CARDIO_HR_TARGET.max}bpm)`; tone='warn'; }
-    return {date:w.date, distanceKm, calories:w.calories, avgHR, durationMin, verdict, tone, isPreTarget, deviation};
+    // 2026-09-13 추가: 유산소 "인정기준"(평균심박 105bpm 이상 AND 20분 이상, 2조건) 자동 판정.
+    // avgHR/durationMin 둘 다 확보돼야 판정 가능 — 하나라도 없으면 '판정불가'로 표시하고
+    // 과거처럼 사람이 수동으로 정정하지 않아도 되게 한다.
+    const creditKnown = avgHR!==null && durationMin!==null;
+    const creditValid = creditKnown ? (avgHR>=CARDIO_VALID_RULE.minHR && durationMin>=CARDIO_VALID_RULE.minDurationMin) : null;
+    return {date:w.date, distanceKm, calories:w.calories, avgHR, durationMin, verdict, tone, isPreTarget, deviation, creditValid};
   }).sort((a,b)=>b.date.localeCompare(a.date));
 }
 
@@ -952,9 +975,11 @@ function computeWorkoutInsights(workouts){
   // 인사이트 카드에서만 제거함.
 
   // 4) 세션당 평균 볼륨(강도 밀도) 추이 — KPI카드의 '주간 총볼륨'과 달리, 세션 1회당 얼마나 알차게 채우는지를 봄
+  // 2026-09-13 추가: specialCondition(여행중/컨디션난조/장비제약/부상)이 표시된 세션은 애초에
+  // 평소 강도로 채울 수 없었던 게 알려진 세션이므로, 볼륨 하락을 잘못 경보하지 않도록 비교에서 제외.
   const last14 = daysAgoList(14), last28 = daysAgoList(28);
-  const recentSessions = workouts.filter(w=>last14.includes(w.date) && parseVolume(w.volume)>0);
-  const priorSessions = workouts.filter(w=>last28.includes(w.date) && !last14.includes(w.date) && parseVolume(w.volume)>0);
+  const recentSessions = workouts.filter(w=>last14.includes(w.date) && parseVolume(w.volume)>0 && !w.specialCondition);
+  const priorSessions = workouts.filter(w=>last28.includes(w.date) && !last14.includes(w.date) && parseVolume(w.volume)>0 && !w.specialCondition);
   if(recentSessions.length && priorSessions.length){
     const recentAvg = recentSessions.reduce((s,w)=>s+parseVolume(w.volume),0)/recentSessions.length;
     const priorAvg = priorSessions.reduce((s,w)=>s+parseVolume(w.volume),0)/priorSessions.length;
@@ -966,7 +991,7 @@ function computeWorkoutInsights(workouts){
 
   // 5) PT vs 자가운동 비중 추이 — 기록에 'PT' 표기가 있는 세션 비율 변화
   const ptRatio = (dates) => {
-    const sessions = workouts.filter(w=>dates.includes(w.date) && parseVolume(w.volume)>0);
+    const sessions = workouts.filter(w=>dates.includes(w.date) && parseVolume(w.volume)>0 && !w.specialCondition);
     if(!sessions.length) return null;
     const ptCount = sessions.filter(w=>`${w.name||''} ${w.note||''}`.includes('PT')).length;
     return {ratio: ptCount/sessions.length*100, total: sessions.length, ptCount};
@@ -1052,7 +1077,7 @@ const SEED_SIDE_EFFECTS = [];
 const SEED_FAVORITES = [
   {id:'fav_seed_1', name:'단백질 쉐이크 2스쿱', calories:240, protein:48, carbs:6},
 ];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', apikey:'brc_apikey_v3', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1'};
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1'};
 // 2026-08-13 추가: 로컬 고유 id 생성기 — 운동/부작용/즐겨찾기처럼 "하루에 여러 건"이 가능한
 // 레코드를 날짜만으로 식별하면(기존 워크아웃 저장 로직처럼) 같은 날 두 번째 항목을 추가할 때
 // 첫 번째 항목이 통째로 사라지는 버그가 생긴다. 이를 막기 위해 항목마다 안정적인 id를 부여한다.
@@ -1088,6 +1113,9 @@ function addWaistEntry(){
   render();
 }
 function deleteWaistEntry(date){
+  // 2026-09-13 수정: 다른 delete*Entry 함수들(인바디/식단/운동/부작용)은 전부 confirm()이 있는데
+  // 이 함수만 없어서 실수로 즉시 삭제될 위험이 있었음 — 일관성 있게 확인창 추가.
+  if(!confirm(`${date} 허리둘레 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
   state.waist = state.waist.filter(w=>w.date!==date);
   saveArr(LS_KEYS.waist, state.waist);
   render();
@@ -1206,6 +1234,20 @@ function checkReminders(){
     if(gapDays>=2){
       results.push({title:`인바디 기록이 ${gapDays}일째 없어요`, detail:'오늘 측정해서 기록해두면 MA7 추세 판단이 더 정확해져요(공백이 길수록 이동평균이 흔들려요).'});
     }
+  }
+  // 2026-09-13 추가: 저항운동 전체공백 경보 — 기존엔 인바디/마운자로 공백만 감지하고 저항운동
+  // 공백은 감지하는 곳이 없어서, 실제로 22일간 근력운동이 없었던 걸 Google Sheet를 직접 조회해서야
+  // 발견한 사고가 있었다(2026-09-13). computeWorkoutInsights의 부위밸런스 로직과 동일하게
+  // inferPartsForEntry(w).length>0(=실제 부위를 자극한 저항운동)만 카운트하고, 순수 유산소/휴식
+  // 기록은 공백을 못 채우는 걸로 간주한다.
+  const lastResistance = [...state.workouts].filter(w => inferPartsForEntry(w).length>0).map(w=>w.date).sort().slice(-1)[0];
+  if(lastResistance){
+    const rGapDays = Math.round((new Date(todayD+'T00:00:00') - new Date(lastResistance+'T00:00:00'))/86400000);
+    if(rGapDays>=5){
+      results.push({title:`저항운동이 ${rGapDays}일째 없어요`, detail:`마지막 저항운동 기록일이 ${lastResistance}예요. 여행·부상 등 알고 있는 이유가 있다면 기록 시 "특이조건"으로 표시해두면 추세 비교에서 자동 보정돼요.`});
+    }
+  } else if(state.workouts.length===0){
+    results.push({title:'저항운동 기록이 아직 없어요', detail:'운동 탭에서 첫 기록을 추가해보세요.'});
   }
   return results;
 }
@@ -1610,44 +1652,13 @@ function gaugeSVG(current, start, goals){
 }
 
 /* =========================================================
-   Claude Vision 사진 인식 (사용자 자신의 API 키 필요)
+   (2026-09-13 제거) 사진 자동 인식(Claude Vision 직접 호출) — 이 기능을 켤 수 있는 설정 화면 UI가
+   앱에 아예 없어 apikey가 저장될 방법이 없었고(handleFile의 분기가 항상 매뉴얼 입력으로 폴백),
+   실제로 100% 도달 불가능한 죽은 코드였다. 브라우저에 API 키를 저장하고 직접 api.anthropic.com을
+   호출하는 구조 자체가 "API 연동 방식은 하지 않기로 함"이라는 확정된 방향과도 맞지 않아 삭제.
+   기존 방식대로 삼성헬스 스크린샷을 Claude 채팅에 올려 이 앱 형식 JSON을 만들고, 운동 탭 모달의
+   "JSON 붙여넣기"(importWorkoutJSON) 또는 직접 입력으로 등록하면 된다.
 ========================================================= */
-function fileToBase64(file){
-  return new Promise((resolve,reject)=>{
-    const r = new FileReader();
-    r.onload = () => resolve(r.result.split(',')[1]);
-    r.onerror = () => reject(new Error('파일을 읽지 못했습니다'));
-    r.readAsDataURL(file);
-  });
-}
-async function recognizeImage(base64, mediaType, kind){
-  const apiKey = localStorage.getItem(LS_KEYS.apikey);
-  if(!apiKey) throw new Error('NO_KEY');
-  const prompts = {
-    inbody: `이 이미지는 InBody(체성분 분석) 결과지 사진입니다. 다음 JSON 형식으로만 답하세요. 다른 텍스트, 설명, 코드블록 표시 없이 순수 JSON만 출력하세요.
-{"date":"YYYY-MM-DD 또는 null","weight":숫자,"muscle":숫자,"fat":숫자,"fatPct":숫자,"bmr":숫자 또는 null}
-읽을 수 없는 항목은 null. 절대 추측 금지.`,
-    meal: `이 이미지는 식사 사진 또는 영양정보 화면입니다. 다음 JSON 형식으로만 답하세요. 다른 텍스트 없이 순수 JSON만 출력하세요.
-{"description":"요약","calories":숫자 또는 null,"protein":숫자 또는 null,"carbs":숫자 또는 null}
-정확히 알 수 없으면 null, 추측 금지. 가려지거나 검게 칠해진 항목은 무시.`,
-    workout: `이 이미지는 운동 기록 사진입니다. 다음 JSON 형식으로만 답하세요. 다른 텍스트 없이 순수 JSON만 출력하세요.
-{"name":"요약","part":"부위","volume":"총볼륨 문자열 또는 null","calories":숫자 또는 null}
-확인 불가 값은 null.`
-  };
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{ 'content-type':'application/json', 'x-api-key': apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-    body: JSON.stringify({ model:'claude-sonnet-5', max_tokens:1000, messages:[{role:'user', content:[
-      {type:'image', source:{type:'base64', media_type:mediaType, data:base64}},
-      {type:'text', text:prompts[kind]}
-    ]}]})
-  });
-  const data = await res.json();
-  if(data.error) throw new Error(data.error.message || '인식 실패');
-  const text = (data.content||[]).map(b=>b.text||'').join('\n');
-  const clean = text.replace(/```json|```/g,'').trim();
-  return JSON.parse(clean);
-}
 
 /* =========================================================
    렌더링
@@ -1724,12 +1735,14 @@ function openEditModal(kind, rec){
   modalState.error = '';
   modalState.editId = (kind==='workout') ? rec.id : null;
   if(kind==='workout'){
+    // 2026-09-13 수정: avgHR/durationMin/distanceKm/specialCondition도 다른 필드처럼 수정 모달을
+    // 열 때 기존값이 채워지도록 추가 — 안 하면 수정 시 매번 값이 비어 보이고 저장하면 지워짐.
     if(rec.exercises && rec.exercises.length){
       modalState.exerciseRows = rec.exercises.map(e => ({name:e.name, part:e.part, sets:e.sets, reps:e.reps, weight:e.weight}));
-      modalState.form = {date:rec.date, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps};
+      modalState.form = {date:rec.date, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps, avgHR:rec.avgHR, durationMin:rec.durationMin, distanceKm:rec.distanceKm, specialCondition:rec.specialCondition||''};
     } else {
       modalState.exerciseRows = [{}];
-      modalState.form = {date:rec.date, name:rec.name, part:rec.part, volume:rec.volume, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps};
+      modalState.form = {date:rec.date, name:rec.name, part:rec.part, volume:rec.volume, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps, avgHR:rec.avgHR, durationMin:rec.durationMin, distanceKm:rec.distanceKm, specialCondition:rec.specialCondition||''};
     }
   } else if(kind==='meal'){
     modalState.exerciseRows = [];
@@ -1809,31 +1822,65 @@ function checkMeasurementArtifact(recA, recB){
   return null;
 }
 
+// 2026-09-13 추가: 골격근 평가 신뢰도 체크 — 저항운동 장기공백이나 InBody 측정 간격이 벌어진
+// 상태(예: 여행중)에서 계산된 값을 "확정된 근육량 변화"로 단정하지 않고 판단보류로 다뤄야 한다는
+// 원칙(2026-09-13 세션 확정: 크레아틴 때문인지 BIA 노이즈인지 특정하지 않고 판단보류 유지)을
+// 매번 사람이 되새기지 않아도 되도록 코드로 명시한다. 두 조건 중 하나라도 해당하면 신뢰도 낮음.
+const MUSCLE_RELIABILITY_GAP_DAYS = 14; // 저항운동 공백 기준일수
+const MUSCLE_RELIABILITY_MEAS_GAP_DAYS = 5; // InBody 측정 불규칙 기준일수
+function assessMuscleReliability(endRec){
+  if(!endRec) return {reliable:true, reliabilityNote:''};
+  const reasons = [];
+  const resistanceDates = state.workouts.filter(w => inferPartsForEntry(w).length>0 && w.date<=endRec.date).map(w=>w.date).sort();
+  const lastR = resistanceDates.length ? resistanceDates[resistanceDates.length-1] : null;
+  const rGap = lastR ? Math.round((new Date(endRec.date+'T00:00:00') - new Date(lastR+'T00:00:00'))/86400000) : null;
+  if(rGap===null || rGap >= MUSCLE_RELIABILITY_GAP_DAYS){
+    reasons.push(rGap===null ? '저항운동 기록 없음' : `최근 저항운동 이후 ${rGap}일 경과`);
+  }
+  const ib = sortedInbody();
+  const idx = ib.findIndex(r=>r.date===endRec.date);
+  if(idx>0){
+    const measGap = Math.round((new Date(endRec.date+'T00:00:00') - new Date(ib[idx-1].date+'T00:00:00'))/86400000);
+    if(measGap >= MUSCLE_RELIABILITY_MEAS_GAP_DAYS) reasons.push(`직전 인바디 측정과 ${measGap}일 간격`);
+  }
+  return {reliable: reasons.length===0, reliabilityNote: reasons.length ? `측정 신뢰도 낮음(${reasons.join(', ')}) — 이 시점 골격근 변화는 확정판단 보류 권장.` : ''};
+}
+// 2026-09-13 추가: 허리둘레(waist)를 골격근/체지방 평가와 함께 참고할 수 있게 병기 —
+// 사용자가 명시적으로 지시한 "InBody 추세 + 운동수행능력 + 단백질 섭취 + 허리둘레 병행분석"
+// 프레임워크를 앱 코드에도 반영(그동안은 매번 채팅에서 수작업으로만 해왔음).
+function waistTrendNote(){
+  if(!state.waist || state.waist.length<2) return '';
+  const w = [...state.waist].sort((a,b)=>a.date.localeCompare(b.date));
+  const first = w[0], last = w[w.length-1];
+  const delta = last.waist - first.waist;
+  return ` 참고로 허리둘레는 ${first.date.slice(5)} ${fmt(first.waist,1)}cm → ${last.date.slice(5)} ${fmt(last.waist,1)}cm(${delta>0?'+':''}${fmt(delta,1)}cm)예요 — 체지방 변화와 같은 방향인지 함께 참고하세요.`;
+}
 function computeMuscleAssessment(startRec, endRec){
   // [2026-09-13 버그수정] endRec은 반드시 lastWithMuscle()로 골라야 함 — 단순 배열 마지막 행(ib[ib.length-1])을
   // 그대로 넘기면 여행 중 체중만 기록된 행처럼 muscle 필드가 빈 값("")인 경우 "33.2 - '' = 33.2"로 계산돼
   // "근육량 100% 감소"라는 잘못된 결과가 나옴(빈 문자열이 산술 연산에서 0으로 취급되는 JS 특성 때문).
   if(!startRec || !endRec || !(typeof endRec.muscle==='number' && endRec.muscle>0) || !(typeof startRec.muscle==='number' && startRec.muscle>0)){
-    return {muscleLoss:0, weightLoss:0, ratio:null, tone:'neutral', label:'데이터 부족'};
+    return {muscleLoss:0, weightLoss:0, ratio:null, tone:'neutral', label:'데이터 부족', reliable:true, reliabilityNote:''};
   }
   const muscleLoss = startRec.muscle - endRec.muscle; // 양수 = 감소
   const weightLoss = startRec.weight - endRec.weight; // 양수 = 감소
   const muscleLossPct = (muscleLoss/startRec.muscle)*100;
   const weightLossPct = (weightLoss/startRec.weight)*100;
   const BENCHMARK = 0.51; // SURMOUNT-1 DEXA 실측 비율 (제지방량 기준 상한선)
+  const reliability = assessMuscleReliability(endRec);
 
   if(muscleLoss <= 0){
-    return {muscleLoss, weightLoss, muscleLossPct, weightLossPct, ratio:0, tone:'good', label:'골격근 유지/증가'};
+    return {muscleLoss, weightLoss, muscleLossPct, weightLossPct, ratio:0, tone:'good', label:'골격근 유지/증가', ...reliability};
   }
   if(weightLossPct <= 0.3){
-    return {muscleLoss, weightLoss, muscleLossPct, weightLossPct, ratio:null, tone:'warn', label:'체중 변화 없이 골격근만 감소'};
+    return {muscleLoss, weightLoss, muscleLossPct, weightLossPct, ratio:null, tone:'warn', label:'체중 변화 없이 골격근만 감소', ...reliability};
   }
   const ratio = muscleLossPct/weightLossPct;
   let tone, label;
   if(ratio <= BENCHMARK*0.6){ tone='good'; label='임상 기준보다 우수'; }
   else if(ratio <= BENCHMARK){ tone='neutral'; label='임상 기준 범위 내'; }
   else { tone='warn'; label='임상 기준보다 근손실 비중 높음'; }
-  return {muscleLoss, weightLoss, muscleLossPct, weightLossPct, ratio, tone, label, benchmark:BENCHMARK};
+  return {muscleLoss, weightLoss, muscleLossPct, weightLossPct, ratio, tone, label, benchmark:BENCHMARK, ...reliability};
 }
 
 /* ---------- 인사이트 계산 ---------- */
@@ -1912,24 +1959,27 @@ function computeSmartAlerts(ib, meals, workouts){
   const muscleShortTrend = blockMA7Delta(ib, 'muscle');
   const shortTermText = muscleShortTrend===null ? '' :
     ` 최근 일주일 평균 근육량이 그 전주 평균보다 ${muscleShortTrend>0?'+':''}${fmt(muscleShortTrend,2)}kg${muscleShortTrend<=-0.15?' — 줄었어요':muscleShortTrend>=0.15?' — 늘었어요':' — 거의 그대로예요'}.`;
+  // 2026-09-13 추가: 측정 신뢰도(저항운동 공백/InBody 간격) 캐비엇 + 허리둘레 참고 문구를
+  // 모든 골격근 평가 카드에 공통으로 덧붙인다 — 단정적 결론 앞에 판단보류 신호를 함께 보여줌.
+  const muscleExtraContext = `${muscleAssess.reliabilityNote?' ⚠️ '+muscleAssess.reliabilityNote:''}${waistTrendNote()}`;
   if(muscleAssess.tone === 'warn'){
     if(muscleAssess.weightLossPct <= 0.3){
       push({tone:'warn', icon:'dumbbell', score: 88,
         title:'체중 변화 없이 골격근만 감소',
-        detail:`누적(6/5 대비): 골격근이 ${fmt(muscleAssess.muscleLoss)}kg 줄었는데 체중은 거의 안 줄었어요(${fmt(muscleAssess.weightLossPct,1)}%).${shortTermText} 결론: 단백질 섭취나 저항운동 부족일 수 있어요.`});
+        detail:`누적(6/5 대비): 골격근이 ${fmt(muscleAssess.muscleLoss)}kg 줄었는데 체중은 거의 안 줄었어요(${fmt(muscleAssess.weightLossPct,1)}%).${shortTermText} 결론: 단백질 섭취나 저항운동 부족일 수 있어요.${muscleExtraContext}`});
     } else {
       push({tone:'warn', icon:'dumbbell', score: 85,
         title:'체중감량 대비 근손실 비중 높음',
-        detail:`누적(6/5 대비): 체중은 ${fmt(muscleAssess.weightLossPct,1)}% 줄었는데 근육량은 ${fmt(muscleAssess.muscleLossPct,1)}% 줄었어요(몸무게 준 것 대비 근육이 같이 빠진 정도 ${fmt(muscleAssess.ratio,2)} — 연구에서 안전하다고 보는 기준선 0.51보다 높음).${shortTermText} 결론: 저항운동 볼륨이나 단백질 섭취를 점검해보세요.`});
+        detail:`누적(6/5 대비): 체중은 ${fmt(muscleAssess.weightLossPct,1)}% 줄었는데 근육량은 ${fmt(muscleAssess.muscleLossPct,1)}% 줄었어요(몸무게 준 것 대비 근육이 같이 빠진 정도 ${fmt(muscleAssess.ratio,2)} — 연구에서 안전하다고 보는 기준선 0.51보다 높음).${shortTermText} 결론: 저항운동 볼륨이나 단백질 섭취를 점검해보세요.${muscleExtraContext}`});
     }
   } else if(muscleAssess.tone === 'good' && muscleAssess.muscleLoss > 0){
     push({tone:'good', icon:'dumbbell', score: 55,
       title:'골격근 보존 우수 (임상 예상 대비)',
-      detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 임상 기준(0.51)보다 훨씬 낮아요.${shortTermText} 결론: 누적으로는 안전권이며 단기 흐름도 양호해요.`});
+      detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 임상 기준(0.51)보다 훨씬 낮아요.${shortTermText} 결론: 누적으로는 안전권이며 단기 흐름도 양호해요.${muscleExtraContext}`});
   } else if(muscleAssess.tone === 'neutral'){
     push({tone:'neutral', icon:'dumbbell', score: 38,
       title:'골격근 손실 — 임상 기준 범위 내',
-      detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 기준(0.51) 이내예요.${shortTermText} 결론: 누적 기준으로는 안전권이니, 단기 하락이 며칠 더 이어지는지만 지켜보면 돼요.`});
+      detail:`누적(6/5 대비): 체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 기준(0.51) 이내예요.${shortTermText} 결론: 누적 기준으로는 안전권이니, 단기 하락이 며칠 더 이어지는지만 지켜보면 돼요.${muscleExtraContext}`});
   }
 
   // 3) 칼로리 목표 이탈 — 질병/컨디션난조/과식/음주 등 특이일은 제외하고 계산 (2026-07-25 개선,
@@ -2230,6 +2280,16 @@ function computeMounjaroInsights(cycles){
     } else if(isLatest){
       detail += ' 아직 진행 중인 차수라 마지막에 반영될 여지는 있어요.';
     }
+    // 2026-09-13 추가: 부작용 로그(state.sideEffects)는 그동안 기록·목록표시만 되고 정체/악화
+    // 분석과는 전혀 연결돼 있지 않았음 — 같은 구간에 부작용 기록이 있으면 교차정보로 함께 안내.
+    if(worst.start && worst.end){
+      const seInRange = state.sideEffects.filter(s => s.date>=worst.start.date && s.date<=worst.end.date);
+      if(seInRange.length){
+        const severeCount = seInRange.filter(s=>s.severity==='severe').length;
+        const symptoms = [...new Set(seInRange.map(s=>s.symptom).filter(Boolean))];
+        detail += ` 참고로 같은 기간(${worst.start.date}~${worst.end.date})에 ${symptoms.join(', ')||'부작용'} ${seInRange.length}건이 기록됐어요${severeCount>0?`(심함 ${severeCount}건)`:''} — 부작용으로 인한 활동량·식욕 변화가 영향을 줬을 가능성도 함께 참고하세요.`;
+      }
+    }
     insights.push({tone: isWorsening && !artifact ? 'warn' : 'neutral', title: isWorsening ? `${worst.cycle}차 체지방 증가` : `${worst.cycle}차는 정체 구간`, detail});
   }
 
@@ -2250,10 +2310,11 @@ function computeMounjaroInsights(cycles){
   const first = done[0].start, lastEnd = done[done.length-1].end;
   if(first && lastEnd){
     const ma_ = computeMuscleAssessment(first, lastEnd);
+    const maExtraContext = `${ma_.reliabilityNote?' ⚠️ '+ma_.reliabilityNote:''}${waistTrendNote()}`;
     if(ma_.tone === 'good' && ma_.muscleLoss > 0){
-      insights.push({tone:'good', title:'전체 기간 골격근 보존 우수', detail:`1차 이후 체중 -${fmt(ma_.weightLossPct,1)}% 대비 골격근 -${fmt(ma_.muscleLossPct,1)}%, 비율 ${fmt(ma_.ratio,2)}로 tirzepatide DEXA 임상연구(SURMOUNT-1, Look et al. 2025) 실측 비율(0.51)보다 훨씬 낮아요 — 저항운동·단백질 전략이 효과적으로 작동 중이에요.`});
+      insights.push({tone:'good', title:'전체 기간 골격근 보존 우수', detail:`1차 이후 체중 -${fmt(ma_.weightLossPct,1)}% 대비 골격근 -${fmt(ma_.muscleLossPct,1)}%, 비율 ${fmt(ma_.ratio,2)}로 tirzepatide DEXA 임상연구(SURMOUNT-1, Look et al. 2025) 실측 비율(0.51)보다 훨씬 낮아요 — 저항운동·단백질 전략이 효과적으로 작동 중이에요.${maExtraContext}`});
     } else if(ma_.tone === 'warn'){
-      insights.push({tone:'warn', title:'전체 기간 골격근 손실 비중 높음', detail: ma_.weightLossPct<=0.3 ? `체중 변화 없이 골격근만 ${fmt(ma_.muscleLoss)}kg 줄었어요.` : `체중 -${fmt(ma_.weightLossPct,1)}% 대비 골격근 -${fmt(ma_.muscleLossPct,1)}%, 비율 ${fmt(ma_.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 높아요. 저항운동 볼륨이나 단백질 섭취를 늘리는 걸 고려해보세요.`});
+      insights.push({tone:'warn', title:'전체 기간 골격근 손실 비중 높음', detail: (ma_.weightLossPct<=0.3 ? `체중 변화 없이 골격근만 ${fmt(ma_.muscleLoss)}kg 줄었어요.` : `체중 -${fmt(ma_.weightLossPct,1)}% 대비 골격근 -${fmt(ma_.muscleLossPct,1)}%, 비율 ${fmt(ma_.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 높아요. 저항운동 볼륨이나 단백질 섭취를 늘리는 걸 고려해보세요.`) + maExtraContext});
     }
   }
 
@@ -2438,7 +2499,7 @@ function renderMounjaro(){
           <div style="overflow-x:auto; margin-top:8px;">
             <table class="data-table">
               <thead><tr>
-                <th style="text-align:left">지표</th><th>실측값 변화</th><th>MA7 기준 변화</th>
+                <th style="text-align:left">지표</th><th>실측값 변화</th><th>MA7 기준 변화</th><th>일평균(MA7 기준)</th>
               </tr></thead>
               <tbody>
                 ${FOUR_METRICS.map(m => {
@@ -2449,6 +2510,10 @@ function renderMounjaro(){
                   const rawGood = m.goodDir===1 ? rawDelta>=0 : rawDelta<=0;
                   const maGood = m.goodDir===1 ? maDelta>=0 : maDelta<=0;
                   const uraw = m.unitRaw || m.unit;
+                  // 2026-09-13 추가: 테이퍼링으로 회차 간격이 7일→9~16일로 불규칙해진 상황에서는
+                  // raw/MA delta만 비교하면 구간 길이가 다른 걸 놓치고 왜곡되므로, 경과일수로 나눈
+                  // 일평균 변화율을 항상 함께 표시한다("4주간격 비교 로직 재설계" 미해결 항목 반영).
+                  const perDay = iv.elapsedDays>0 ? maDelta/iv.elapsedDays : null;
                   return `<tr>
                     <td style="text-align:left">${m.label}</td>
                     <td>
@@ -2458,6 +2523,9 @@ function renderMounjaro(){
                     <td>
                       <div class="${maGood?'good-text':'warn-text'}" style="font-weight:600; font-size:13px;">${maDelta>0?'+':''}${fmt(maDelta)}${m.unit}</div>
                       <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(maStart)}${uraw} → ${fmt(maEnd)}${uraw}</div>
+                    </td>
+                    <td>
+                      <div class="dim" style="font-size:12px; font-family:var(--font-mono);">${perDay===null?'—':`${perDay>0?'+':''}${fmt(perDay,3)}${m.unit}/일`}</div>
                     </td>
                   </tr>`;
                 }).join('')}
@@ -2921,7 +2989,7 @@ function renderWorkoutTab(){
         return `${hist.length>15 ? expandToggleRow('inclineHistory', hist.length, '전체 이력 보기') : ''}
         <div style="overflow-x:auto; margin-top:10px;">
           <table class="data-table">
-            <thead><tr><th style="text-align:left">날짜</th><th>거리</th><th>시간</th><th>칼로리</th><th>평균심박</th><th style="text-align:left">검토</th></tr></thead>
+            <thead><tr><th style="text-align:left">날짜</th><th>거리</th><th>시간</th><th>칼로리</th><th>평균심박</th><th>유산소 인정</th><th style="text-align:left">검토</th></tr></thead>
             <tbody>
               ${shown.map(r => `<tr>
                 <td style="text-align:left">${r.date}</td>
@@ -2929,6 +2997,7 @@ function renderWorkoutTab(){
                 <td>${r.durationMin?fmt(r.durationMin,0)+'분':'—'}</td>
                 <td>${r.calories?r.calories+'kcal':'—'}</td>
                 <td class="${r.tone==='good'?'good-text':r.tone==='warn'?'warn-text':''}">${r.avgHR?r.avgHR+'bpm':'—'}</td>
+                <td class="${r.creditValid===true?'good-text':r.creditValid===false?'warn-text':''}" style="font-size:11.5px;">${r.creditValid===true?'인정':r.creditValid===false?'미인정':'판정불가'}</td>
                 <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body); font-size:12px;">${r.verdict}</td>
               </tr>`).join('')}
             </tbody>
@@ -2955,7 +3024,7 @@ function workoutRow(w){
   return `<div class="day-row" style="grid-template-columns:64px 1fr;">
     <div class="day-date">${w.date.slice(5)}<span class="dow">${dowLabel(w.date)}</span></div>
     <div>
-      <div style="font-size:13px; font-weight:600; color:var(--text);">${esc(w.name||'')} ${risky?'<span class="badge miss">목디스크 확인</span>':''}</div>
+      <div style="font-size:13px; font-weight:600; color:var(--text);">${esc(w.name||'')} ${risky?'<span class="badge miss">목디스크 확인</span>':''}${w.specialCondition?`<span class="badge miss">${esc(WORKOUT_CONDITION_LABELS[w.specialCondition]||w.specialCondition)}</span>`:''}</div>
       <div style="font-size:12px; color:var(--text-dim); margin-top:3px;">${parts.join(', ')||esc(w.part||'')}${w.volume?` · ${esc(String(w.volume))}`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
       ${w.note?`<div style="font-size:11.5px; color:var(--text-faint); margin-top:3px;">${esc(w.note)}</div>`:''}
       ${w.id ? `<div class="row-actions"><button class="mini-btn" onclick="editWorkoutById('${w.id}')">수정</button><button class="mini-btn danger" onclick="deleteWorkoutEntry('${w.id}')">삭제</button></div>` : ''}
@@ -3870,6 +3939,19 @@ function renderSettings(){
     </section>
 
     <section class="card">
+      <div class="section-label good">${secNum('06a2')}전체 데이터 백업/복원</div>
+      <p class="p-dim">클라우드 동기화와 별개로, 이 기기의 모든 기록(인바디·운동·식단·걸음수·허리둘레·마운자로·부작용·즐겨찾기·Claude 분석)을 파일 하나로 내려받아 둘 수 있어요. 기기 데이터가 손상되거나 실수로 지워졌을 때 이 파일로 복원할 수 있습니다.</p>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-primary btn-sm" onclick="exportAllData()">전체 데이터 내보내기(.json)</button>
+        <label class="btn btn-sm" style="cursor:pointer;">
+          백업 파일로 복원
+          <input type="file" accept="application/json" style="display:none" onchange="handleBackupFile(this.files[0])">
+        </label>
+      </div>
+      <div class="note-box" style="margin-top:14px;">⚠️ 복원하면 이 기기의 현재 데이터를 백업 파일 내용으로 완전히 덮어씁니다. 복원 전에 먼저 지금 상태를 한 번 내보내두는 걸 권장해요.</div>
+    </section>
+
+    <section class="card">
       <div class="section-label good">${secNum('06c')}앱 버전</div>
       <p class="p-dim" style="font-family:var(--font-mono); font-size:12px;">
         ${esc(APP_BUILD_VERSION)}
@@ -4192,6 +4274,55 @@ function saveCloudUrl(){
   render();
 }
 
+// 2026-09-13 추가: 전체 데이터 로컬 백업/복원. loadArr()는 localStorage에 기존 데이터가 있으면
+// SEED를 무조건 무시하는 구조라, 기기 데이터가 손상되거나 클라우드 동기화 URL이 없는 상태에서
+// 실수로 지워지면 복구 수단이 전혀 없었음. 클라우드 동기화와 별개로 언제든 스냅샷을 파일로
+// 내려받고, 필요할 때 그 파일로 이 기기 데이터를 되돌릴 수 있게 한다.
+function exportAllData(){
+  const payload = {
+    exportedAt: new Date().toISOString(),
+    appBuildVersion: APP_BUILD_VERSION,
+    inbody: state.inbody, workouts: state.workouts, meals: state.meals, steps: state.steps, waist: state.waist,
+    mounjaroDoses: state.mounjaroDoses, sideEffects: state.sideEffects, favorites: state.favorites,
+    aiNote: state.aiNote, reportNote: state.reportNote,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `body-recomp-backup-${todayISO()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+}
+function handleBackupFile(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let data;
+    try{ data = JSON.parse(reader.result); }
+    catch(e){ alert('백업 파일을 읽지 못했습니다(JSON 형식 오류): ' + e.message); return; }
+    if(!confirm('현재 기기의 데이터를 이 백업 파일 내용으로 전부 덮어씁니다. 되돌릴 수 없습니다 — 계속할까요?')) return;
+    if(Array.isArray(data.inbody)) state.inbody = data.inbody;
+    if(Array.isArray(data.workouts)) state.workouts = data.workouts;
+    if(Array.isArray(data.meals)) state.meals = data.meals;
+    if(Array.isArray(data.steps)) state.steps = data.steps;
+    if(Array.isArray(data.waist)) state.waist = data.waist;
+    if(Array.isArray(data.mounjaroDoses)) state.mounjaroDoses = data.mounjaroDoses;
+    if(Array.isArray(data.sideEffects)) state.sideEffects = data.sideEffects;
+    if(Array.isArray(data.favorites)) state.favorites = data.favorites;
+    if(data.aiNote){ state.aiNote = data.aiNote; saveAiNote(state.aiNote); }
+    if(data.reportNote){ state.reportNote = data.reportNote; saveReportNote(state.reportNote); }
+    ensureWorkoutIds(state.workouts); ensureTreadmillSteps(state.workouts);
+    saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
+    saveArr(LS_KEYS.steps, state.steps); saveArr(LS_KEYS.waist, state.waist);
+    saveArr(LS_KEYS.mounjaroDoses, state.mounjaroDoses); saveArr(LS_KEYS.sideEffects, state.sideEffects); saveArr(LS_KEYS.favorites, state.favorites);
+    markUpdated();
+    alert('백업 파일을 불러왔습니다.');
+    render();
+  };
+  reader.onerror = () => alert('파일을 읽지 못했습니다.');
+  reader.readAsText(file);
+}
+
 /* =========================================================
    기록 추가 모달
 ========================================================= */
@@ -4275,6 +4406,16 @@ function renderModal(){
         ${field('volume','볼륨 (kg, 선택 — 상세입력 시 자동계산)', f.volume)}
         ${field('calories','소모 칼로리 (kcal, 선택)', f.calories)}
         ${field('treadmillSteps','트레드밀/러닝머신 걸음수 (해당 시에만 입력 — 비고 텍스트 대신 여기 숫자로 입력하면 NEAT 계산에 정확히 반영됨)', f.treadmillSteps)}
+        <div class="note-box" style="margin:2px 0 6px;">아래 3개는 유산소(트레드밀 등) 세션일 때만 입력 — 비고 텍스트 대신 숫자로 입력하면 유산소 인정기준(평균심박 105bpm↑ AND 20분↑) 판정과 인클라인 이력표에 정확히 반영돼요.</div>
+        ${field('avgHR','평균심박 (bpm, 유산소 세션만)', f.avgHR)}
+        ${field('durationMin','소요시간 (분, 유산소 세션만)', f.durationMin)}
+        ${field('distanceKm','거리 (km, 선택·참고용)', f.distanceKm)}
+        <div class="field"><label>특이조건 (해당되면 선택)</label>
+          <div class="special-chip-row">
+            ${WORKOUT_CONDITION_TYPES.map(t => `<button type="button" class="special-chip ${f.specialCondition===t?'active':''}" onclick="modalState.form.specialCondition=(modalState.form.specialCondition==='${t}'?'':'${t}'); refreshModal();">${WORKOUT_CONDITION_LABELS[t]}</button>`).join('')}
+          </div>
+          <div class="note-box" style="margin-top:6px;">여행중·컨디션난조 등으로 강도를 낮춘 세션이면 표시해두세요 — 세션당 볼륨·PT비중 추세 비교에서 이 세션은 제외돼요.</div>
+        </div>
         ${field('note','비고 (선택)', f.note)}
       ` : ''}
       <button class="btn-save" onclick="saveRecord()">저장</button>
@@ -4307,21 +4448,11 @@ function removeExRow(i){ modalState.exerciseRows.splice(i,1); refreshModal(); }
 function updateExRow(i,field,val){ modalState.exerciseRows[i][field] = val; }
 function refreshModal(){ document.getElementById('modal-backdrop')?.remove(); renderModal(); }
 
-async function handleFile(file){
+function handleFile(file){
+  // 2026-09-13 수정: 사진 자동 인식(Claude Vision 직접 호출) 기능 제거 — 위 주석 참고.
+  // 항상 매뉴얼 입력으로 안내한다(기존에도 apikey 미설정으로 실질적으로 항상 이 경로였음).
   if(!file) return;
-  if(!localStorage.getItem(LS_KEYS.apikey)){
-    modalState.status='manual'; modalState.error='사진 자동 인식은 지원하지 않아요. 아래에 값을 직접 입력해주세요.'; modalState.form={date:todayISO()};
-    refreshModal(); return;
-  }
-  modalState.status='loading'; refreshModal();
-  try{
-    const base64 = await fileToBase64(file);
-    const result = await recognizeImage(base64, file.type||'image/jpeg', modalState.kind);
-    modalState.form = {date: result.date || todayISO(), ...result};
-    modalState.status='review'; modalState.error='';
-  }catch(e){
-    modalState.status='manual'; modalState.error='이미지 인식에 실패했습니다. 값을 직접 입력해주세요.'; modalState.form={date:todayISO()};
-  }
+  modalState.status='manual'; modalState.error='사진 자동 인식은 지원하지 않아요. 아래에 값을 직접 입력해주세요.'; modalState.form={date:todayISO()};
   refreshModal();
 }
 
@@ -4358,10 +4489,15 @@ function saveRecord(){
         calories: f.calories?num(f.calories):null,
         note: f.note||'',
         treadmillSteps: f.treadmillSteps?num(f.treadmillSteps):null,
+        avgHR: f.avgHR?num(f.avgHR):null,
+        durationMin: f.durationMin?num(f.durationMin):null,
+        distanceKm: f.distanceKm?num(f.distanceKm):null,
+        specialCondition: f.specialCondition||null,
         exercises
       };
     } else {
-      rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||'', treadmillSteps: f.treadmillSteps?num(f.treadmillSteps):null};
+      rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||'', treadmillSteps: f.treadmillSteps?num(f.treadmillSteps):null,
+        avgHR: f.avgHR?num(f.avgHR):null, durationMin: f.durationMin?num(f.durationMin):null, distanceKm: f.distanceKm?num(f.distanceKm):null, specialCondition: f.specialCondition||null};
     }
     // 2026-08-13 근본 수정: 기존엔 같은 날짜의 기존 워크아웃 기록을 전부 지우고 새 항목
     // 하나로 바꿔버려서, 하루에 두 번째 운동(예: 오전 근력 + 저녁 유산소)을 모달로 추가하면
@@ -4384,7 +4520,11 @@ function saveRecord(){
 // 구조라 표현이 바뀔 때마다 걸음수를 놓치는 문제가 반복됐다(parseSteps 관련 3차 수정 이력 참고).
 // 이제 Claude가 처음부터 treadmillSteps 등 구조화된 필드값을 직접 채워서 JSON으로 주고,
 // 앱은 그 값을 그대로 신뢰해서 저장만 하므로 표현/문구에 좌우되지 않는다.
-// 기대 스키마: [{date, name, part, volume?, calories?, note?, treadmillSteps?, id?}, ...]
+// 기대 스키마: [{date, name, part, volume?, calories?, note?, treadmillSteps?, avgHR?, durationMin?,
+// distanceKm?, specialCondition?, id?}, ...] — 2026-09-13 추가: avgHR/durationMin/distanceKm도
+// treadmillSteps와 동일한 이유로 구조화 필드로 받는다(유산소 세션일 때만 채움). 이 값들이 있으면
+// 유산소 인정기준(평균심박105bpm↑ AND 20분↑)이 note 표현과 무관하게 자동 판정된다.
+// specialCondition: 'travel'|'poor_condition'|'equipment_limit'|'injury' 중 하나(해당 시).
 // id가 있고 기존 기록에 같은 id가 있으면 그 기록을 수정, 없으면 새 기록으로 추가한다.
 function importWorkoutJSON(){
   const el = document.getElementById('workout-json-input');
@@ -4407,6 +4547,10 @@ function importWorkoutJSON(){
       calories: r.calories!=null ? num(r.calories) : null,
       note: r.note || '',
       treadmillSteps: r.treadmillSteps!=null ? num(r.treadmillSteps) : null,
+      avgHR: r.avgHR!=null ? num(r.avgHR) : null,
+      durationMin: r.durationMin!=null ? num(r.durationMin) : null,
+      distanceKm: r.distanceKm!=null ? num(r.distanceKm) : null,
+      specialCondition: r.specialCondition || null,
     };
     const idx = state.workouts.findIndex(w => w.id === rec.id);
     if(idx >= 0){ state.workouts[idx] = rec; updated++; }
