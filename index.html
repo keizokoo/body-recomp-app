@@ -1848,6 +1848,7 @@ function computeInsights(){
   const weightLoss = first.weight - last.weight;
   const fatMassLoss = first.fat - last.fat;
   const muscleAssess = computeMuscleAssessment(first, lastWithMuscle(ib));
+  const recentMA = ma.slice(-7);
   const maTrendDelta = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
   const sortedW = [...state.workouts].sort((a,b)=>b.date.localeCompare(a.date));
   const recentWorkout = sortedW[0];
