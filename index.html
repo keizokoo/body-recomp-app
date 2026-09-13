@@ -490,7 +490,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-02-mj4 (이 문구가 보이면 오늘 수정사항이 실제로 반영된 것 — 4주간격(투여회차) 비교 카드에서 잠정(예정) 구간일 때 고정계산(4주 후) 날짜 대신 "(예정)"만 표시하도록 수정, 실제 불규칙 간격과 안 맞는 날짜로 인한 혼동 제거. 이전 빌드: 2026-08-20-mj3)';
+const APP_BUILD_VERSION = '2026-09-13-a (골격근 손실비율 계산 버그 수정 — 여행 중처럼 muscle 필드가 빈 값인 최신 행을 그대로 endRec으로 써서 "근육량 100% 감소"로 잘못 표시되던 문제, lastWithMuscle() 헬퍼로 muscle 데이터가 실제로 있는 마지막 행을 찾도록 수정. 이전 빌드: 2026-09-02-mj4)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1346,6 +1346,17 @@ function aiNoteFreshnessLabel(note){
 }
 
 function sortedInbody(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
+// [2026-09-13 신규] 골격근(muscle) 필드가 실제로 채워진 마지막 기록을 찾는 헬퍼.
+// 여행 중처럼 체중만 기록되고 muscle/fat/fatPct/bmr이 비어있는 행이 배열 마지막에 오면
+// 단순히 ib[ib.length-1]을 쓰는 기존 방식이 골격근 비교를 완전히 틀리게 만들기 때문에,
+// 골격근 관련 계산(computeMuscleAssessment의 endRec)에는 항상 이 함수로 고른 값을 써야 함.
+function lastWithMuscle(arr){
+  for(let i=arr.length-1;i>=0;i--){
+    const m = arr[i].muscle;
+    if(typeof m==='number' && !isNaN(m) && m>0) return arr[i];
+  }
+  return null;
+}
 function movingAverage(arr, key, win){
   return arr.map((row,i) => {
     const slice = arr.slice(Math.max(0,i-win+1), i+1);
@@ -1799,7 +1810,12 @@ function checkMeasurementArtifact(recA, recB){
 }
 
 function computeMuscleAssessment(startRec, endRec){
-  if(!startRec || !endRec) return {muscleLoss:0, weightLoss:0, ratio:null, tone:'neutral', label:'데이터 부족'};
+  // [2026-09-13 버그수정] endRec은 반드시 lastWithMuscle()로 골라야 함 — 단순 배열 마지막 행(ib[ib.length-1])을
+  // 그대로 넘기면 여행 중 체중만 기록된 행처럼 muscle 필드가 빈 값("")인 경우 "33.2 - '' = 33.2"로 계산돼
+  // "근육량 100% 감소"라는 잘못된 결과가 나옴(빈 문자열이 산술 연산에서 0으로 취급되는 JS 특성 때문).
+  if(!startRec || !endRec || !(typeof endRec.muscle==='number' && endRec.muscle>0) || !(typeof startRec.muscle==='number' && startRec.muscle>0)){
+    return {muscleLoss:0, weightLoss:0, ratio:null, tone:'neutral', label:'데이터 부족'};
+  }
   const muscleLoss = startRec.muscle - endRec.muscle; // 양수 = 감소
   const weightLoss = startRec.weight - endRec.weight; // 양수 = 감소
   const muscleLossPct = (muscleLoss/startRec.muscle)*100;
@@ -1831,8 +1847,7 @@ function computeInsights(){
 
   const weightLoss = first.weight - last.weight;
   const fatMassLoss = first.fat - last.fat;
-  const muscleAssess = computeMuscleAssessment(first, last);
-  const recentMA = ma.slice(-7);
+  const muscleAssess = computeMuscleAssessment(first, lastWithMuscle(ib));
   const maTrendDelta = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
   const sortedW = [...state.workouts].sort((a,b)=>b.date.localeCompare(a.date));
   const recentWorkout = sortedW[0];
@@ -1892,7 +1907,7 @@ function computeSmartAlerts(ib, meals, workouts){
 
   // 2) 골격근 손실 평가 — 단기(최근 1주 평균 vs 지난주 평균)와 누적(6/5 대비 비율)을 함께 표시
   // (2026-07-25 개선, 2026-08-12 계산방식을 텔레그램과 통일 — blockMA7Delta 주석 참고)
-  const muscleAssess = computeMuscleAssessment(ib[0], last);
+  const muscleAssess = computeMuscleAssessment(ib[0], lastWithMuscle(ib));
   const muscleShortTrend = blockMA7Delta(ib, 'muscle');
   const shortTermText = muscleShortTrend===null ? '' :
     ` 최근 일주일 평균 근육량이 그 전주 평균보다 ${muscleShortTrend>0?'+':''}${fmt(muscleShortTrend,2)}kg${muscleShortTrend<=-0.15?' — 줄었어요':muscleShortTrend>=0.15?' — 늘었어요':' — 거의 그대로예요'}.`;
@@ -2465,7 +2480,7 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
 
   const weightLoss = first.weight - last.weight;
   const fatMassLoss = first.fat - last.fat;
-  const muscleAssess = computeMuscleAssessment(first, last);
+  const muscleAssess = computeMuscleAssessment(first, lastWithMuscle(ib));
   const goalStatus = computeFatGoalStatus(ib);
   const g20 = goalStatus.goals.find(g=>g.pct===20), g18 = goalStatus.goals.find(g=>g.pct===18);
 
@@ -3052,7 +3067,7 @@ function renderDashboard(){
         const recentFat = maFat.slice(-7), recentMuscle = maMuscle.slice(-7);
         const fatMATrend = recentFat.length>=2 ? recentFat[recentFat.length-1].fatPctMA - recentFat[0].fatPctMA : null;
         const muscleMATrend = recentMuscle.length>=2 ? recentMuscle[recentMuscle.length-1].muscleMA - recentMuscle[0].muscleMA : null;
-        const ma_musAssess = computeMuscleAssessment(ib[0], last); // 2026-07-25: 누적(6/5 대비) 비율을 단기 MA 추세와 함께 병기하기 위함
+        const ma_musAssess = computeMuscleAssessment(ib[0], lastWithMuscle(ib)); // 2026-07-25: 누적(6/5 대비) 비율을 단기 MA 추세와 함께 병기하기 위함
 
         let insightBlock = '';
         if(fatMATrend!==null && muscleMATrend!==null){
@@ -3376,7 +3391,7 @@ function renderGoal(){
   const recentMA = ma.slice(-7);
   const maTrendDelta = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
   const first = sortedInbody()[0];
-  const muscleAssess = computeMuscleAssessment(first, last);
+  const muscleAssess = computeMuscleAssessment(first, lastWithMuscle(sortedInbody()));
 
   const other = last.weight - last.muscle - last.fat;
 
@@ -3581,7 +3596,7 @@ function renderReport(){
   }
   const first = ib[0], last = ib[ib.length-1];
   const totalDays = Math.round((new Date(last.date+'T00:00:00')-new Date(first.date+'T00:00:00'))/86400000);
-  const assess = computeMuscleAssessment(first, last);
+  const assess = computeMuscleAssessment(first, lastWithMuscle(ib));
 
   // 최근 14일 vs 그 이전 14일 — MA7 스냅샷 기준 골격근/체지방 "절대 감소량" 비교
   // (사용자가 "최근 체지방 대비 골격근이 더 빠지는 느낌"을 데이터로 확인하기 위함)
@@ -3713,7 +3728,7 @@ function buildReportCopyText(){
   if(!ib.length) return '아직 인바디 데이터가 없어 리포트를 만들 수 없어요.';
   const first = ib[0], last = ib[ib.length-1];
   const totalDays = Math.round((new Date(last.date+'T00:00:00')-new Date(first.date+'T00:00:00'))/86400000);
-  const assess = computeMuscleAssessment(first, last);
+  const assess = computeMuscleAssessment(first, lastWithMuscle(ib));
   const mealCutoff = (() => { const d = new Date(todayISO()+'T00:00:00'); d.setDate(d.getDate()-14); return toLocalISO(d); })();
   const recentMeals = state.meals.filter(m=>m.date>=mealCutoff);
   const avgCal = recentMeals.length ? Math.round(recentMeals.reduce((s,m)=>s+(m.calories||0),0)/recentMeals.length) : null;
