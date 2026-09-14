@@ -490,7 +490,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-14-a (마운자로 투여 알림 삭제: 리마인더 배너·스마트인사이트 증량검토 카드 제거, 투여기록/4주간격 비교 등 분석기능은 유지. 이전 빌드: 2026-09-13-b)';
+const APP_BUILD_VERSION = '2026-09-14-b (인바디 데이터 없는 날(체중전용 기록, 여행 중 등)에서 골격근/체지방/체지방률이 null→0으로 취급돼 리포트·목표탭·대시보드·마운자로 차수비교·강점아쉬운점 등 다수 화면에서 수치가 왜곡되던 버그 일괄 수정(계기: 리포트탭 델타 -33.2/-21.1/-26.4, 목표탭 예상목표체중 89.9/87.7kg 오표시 리포트). 체성분 실측값이 있는 가장 최근 기록(lastBC) 기준으로 계산하도록 통일. 이전 빌드: 2026-09-14-a)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1426,7 +1426,9 @@ function computeFatGoalStatus(ib){
     const progressed14 = Math.min(100, Math.max(0, ((START_FAT_PCT-ma14Last)/totalDist)*100));
     const ma7Done = ma7Last <= g.pct;
     const ma14Done = ma14Last <= g.pct;
-    const rawDone = last.fatPct <= g.pct;
+    // 2026-09-14 수정: last.fatPct가 null(체중전용 기록)이면 null<=g.pct가 항상 true로
+    // 평가되어 목표 달성으로 잘못 표시되던 버그 수정 — null이면 판단 보류(false)
+    const rawDone = (last.fatPct!==null && last.fatPct!==undefined && !isNaN(last.fatPct)) ? (last.fatPct <= g.pct) : false;
     const tier = ma7Done ? (ma14Done ? 'stable' : 'done') : 'pending';
     const remain = Math.max(0, ma7Last - g.pct);
     return {...g, progressed, progressed14, ma7Done, ma14Done, rawDone, tier, remain, ma7Last, ma14Last};
@@ -1440,7 +1442,15 @@ function ma7SnapshotAt(ib, date, fields){
   if(!upto.length) return null;
   const win = upto.slice(-7);
   const out = {};
-  fields.forEach(f=>{ out[f] = win.reduce((s,r)=>s+r[f],0)/win.length; });
+  // 2026-09-14 수정: 기존엔 win.reduce((s,r)=>s+r[f],0)/win.length로 계산해서, 창 안에
+  // 골격근/체지방 없는 체중전용 기록(여행 중 등)이 섞이면 null이 0으로 취급되어 평균이
+  // 실제보다 크게 낮아지는 버그가 있었음(예: 7건 중 3건만 값 있어도 7로 나눔). movingAverage()의
+  // 기존 null-필터 패턴과 동일하게, 값 있는 레코드만 모아 그 개수로 나누도록 수정. 유효값이
+  // 하나도 없으면 null(계산 불가)을 반환 — 0으로 대체하지 않음.
+  fields.forEach(f=>{
+    const vals = win.map(r=>r[f]).filter(v=>v!==null&&v!==undefined&&!isNaN(v));
+    out[f] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+  });
   return out;
 }
 /* 2026-07-21 추가: MA7/MA14 추세 판단용 — 단순 두 점 차이 대신 최근 N개 지점에
@@ -1793,6 +1803,10 @@ function renderTab(){
 // 체중은 거의 그대로인데 체지방/골격근만 크게 바뀐 경우 — BIA 측정오차(수분상태 등) 가능성 판별
 function checkMeasurementArtifact(recA, recB){
   if(!recA || !recB) return null;
+  // 2026-09-14 수정: 체중전용 기록(여행 중 등, fat/weight가 null)이 recA/recB로 들어오면
+  // null이 산술연산에서 0으로 취급되어 weightDelta/fatDelta가 왜곡되던 버그 수정
+  if(recA.weight==null||isNaN(recA.weight)||recB.weight==null||isNaN(recB.weight)) return null;
+  if(recA.fat==null||isNaN(recA.fat)||recB.fat==null||isNaN(recB.fat)) return null;
   const weightDelta = Math.abs(recB.weight - recA.weight);
   const fatDelta = recB.fat - recA.fat;
   const days = Math.max(1, Math.round((new Date(recB.date+'T00:00:00')-new Date(recA.date+'T00:00:00'))/86400000));
@@ -1874,7 +1888,10 @@ function computeInsights(){
   const g20 = goalStatus.goals.find(g=>g.pct===20), g18 = goalStatus.goals.find(g=>g.pct===18);
 
   const weightLoss = first.weight - last.weight;
-  const fatMassLoss = first.fat - last.fat;
+  // 2026-09-14 수정: last(가장 최근 기록)가 체중전용(여행 중 등, fat=null)이면 fatMassLoss가
+  // first.fat - 0으로 왜곡되던 버그 수정 — 체지방 실측값이 있는 가장 최근 기록(lastBC) 기준으로 계산
+  const lastBC = lastWithMuscle(ib) || last;
+  const fatMassLoss = first.fat - lastBC.fat;
   const muscleAssess = computeMuscleAssessment(first, lastWithMuscle(ib));
   const recentMA = ma.slice(-7);
   const maTrendDelta = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
@@ -1886,7 +1903,9 @@ function computeInsights(){
   // 2026-08-04 추가(머니트레일 앱 벤치마킹): 근력볼륨엔 이미 "역대 최고 볼륨(PR)" 배지가 있었는데
   // 체성분 쪽엔 "역대 최저치 경신" 배지가 없었음 — 동일한 개념을 체중/체지방률에도 적용.
   const minWeightEntry = ib.reduce((min, r) => (min===null || r.weight < min.weight) ? r : min, null);
-  const minFatPctEntry = ib.reduce((min, r) => (min===null || r.fatPct < min.fatPct) ? r : min, null);
+  // 2026-09-14 수정: r.fatPct가 null(체중전용 기록)이면 비교연산에서 0으로 취급되어
+  // "역대 최저 체지방률"이 데이터 없는 오늘 기록으로 잘못 판정되던 버그 수정 — null 레코드는 후보에서 제외
+  const minFatPctEntry = ib.reduce((min, r) => (r.fatPct===null||r.fatPct===undefined||isNaN(r.fatPct)) ? min : ((min===null || r.fatPct < min.fatPct) ? r : min), null);
   const isNewWeightRecord = minWeightEntry && minWeightEntry.date === last.date;
   const isNewFatPctRecord = minFatPctEntry && minFatPctEntry.date === last.date;
 
@@ -1894,8 +1913,8 @@ function computeInsights(){
     {icon:'target', label:'1차(20%) 목표 달성률', value:`${fmt(g20.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g20.ma7Last,2)}% (목표 20%, 오늘 실측 ${fmt(last.fatPct)}%)`, tone: g20.tier!=='pending'?'good':'neutral'},
     {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(g18.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g18.ma7Last,2)}% (목표 18%, 오늘 실측 ${fmt(last.fatPct)}%)`, tone: g18.tier!=='pending'?'good':'neutral'},
     {icon:'down', label:'누적 체중 변화', value:`${fmt(weightLoss)}kg`, sub:`${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg`, tone:'good'},
-    {icon:'down', label:'누적 체지방량 변화', value:`${fmt(fatMassLoss)}kg`, sub:`${fmt(first.fat)}kg → ${fmt(last.fat)}kg`, tone:'good'},
-    {icon:'dumbbell', label:'체중감량 대비 골격근 보존', value: muscleAssess.muscleLoss<=0 ? '유지/증가' : `비율 ${fmt(muscleAssess.ratio,2)}`, sub: muscleAssess.muscleLoss<=0 ? `골격근 ${fmt(last.muscle)}kg — 감소 없음` : `골격근 -${fmt(muscleAssess.muscleLossPct,1)}% / 체중 -${fmt(muscleAssess.weightLossPct,1)}% · ${muscleAssess.label}(SURMOUNT-1 DEXA 실측 비율 0.51 기준)`, tone: muscleAssess.tone},
+    {icon:'down', label:'누적 체지방량 변화', value:`${fmt(fatMassLoss)}kg`, sub:`${fmt(first.fat)}kg → ${fmt(lastBC.fat)}kg${lastBC.date!==last.date?` (${lastBC.date} 기준, 최신 체성분 실측일)`:''}`, tone:'good'},
+    {icon:'dumbbell', label:'체중감량 대비 골격근 보존', value: muscleAssess.muscleLoss<=0 ? '유지/증가' : `비율 ${fmt(muscleAssess.ratio,2)}`, sub: muscleAssess.muscleLoss<=0 ? `골격근 ${fmt(lastBC.muscle)}kg — 감소 없음` : `골격근 -${fmt(muscleAssess.muscleLossPct,1)}% / 체중 -${fmt(muscleAssess.weightLossPct,1)}% · ${muscleAssess.label}(SURMOUNT-1 DEXA 실측 비율 0.51 기준)`, tone: muscleAssess.tone},
     {icon: maTrendDelta<=0?'down':'up', label:'최근 7일 체지방률 추세', value:`${maTrendDelta>=0?'+':''}${fmt(maTrendDelta,2)}%p`, sub:'이동평균 기준 (일일 노이즈 제외)', tone: maTrendDelta<=0?'good':'warn'},
     {icon:'award', label:'역대 최저 체중', value:`${fmt(minWeightEntry.weight)}kg`, sub:`${minWeightEntry.date}${isNewWeightRecord?' · 오늘 신기록 🏆':''}`, tone: isNewWeightRecord?'good':'neutral'},
     {icon:'award', label:'역대 최저 체지방률', value:`${fmt(minFatPctEntry.fatPct)}%`, sub:`${minFatPctEntry.date}${isNewFatPctRecord?' · 오늘 신기록 🏆':''}`, tone: isNewFatPctRecord?'good':'neutral'},
@@ -1923,14 +1942,17 @@ function computeSmartAlerts(ib, meals, workouts){
   const push = (c) => candidates.push(c);
 
   // 1) 체지방량 정체
-  if(ib.length >= 3){
-    const last3 = ib.slice(-3);
-    const fatVals = last3.map(r=>r.fat);
+  // 2026-09-14 수정: ib.slice(-3)로 뽑은 최근 3건에 체중전용 기록(fat=null, 여행 중 등)이
+  // 섞이면 Math.max/Math.min에서 null이 0으로 취급되어 spread가 실제보다 커져 정체 감지가
+  // 억제되던 버그 — 체지방 실측값이 있는 레코드만 걸러낸 뒤 최근 3건을 사용하도록 수정
+  const last3BC = ib.filter(r=>r.fat!==null&&r.fat!==undefined&&!isNaN(r.fat)).slice(-3);
+  if(last3BC.length >= 3){
+    const fatVals = last3BC.map(r=>r.fat);
     const spread = Math.max(...fatVals) - Math.min(...fatVals);
     if(spread <= 0.15){
       push({tone:'warn', icon:'target', score: 75 + (0.15-spread)*100,
         title:'체지방 감량 정체 감지',
-        detail:`최근 ${last3.length}회 측정에서 체지방량이 ${fmt(Math.min(...fatVals))}~${fmt(Math.max(...fatVals))}kg 사이에 머물러 있어요(${last3[0].date.slice(5)}~${last3[last3.length-1].date.slice(5)}). 정체기일 수 있어요 — 칼로리 재설정 여부를 확인해보세요.`});
+        detail:`최근 ${last3BC.length}회 측정에서 체지방량이 ${fmt(Math.min(...fatVals))}~${fmt(Math.max(...fatVals))}kg 사이에 머물러 있어요(${last3BC[0].date.slice(5)}~${last3BC[last3BC.length-1].date.slice(5)}). 정체기일 수 있어요 — 칼로리 재설정 여부를 확인해보세요.`});
     }
   }
 
@@ -2109,9 +2131,11 @@ function computeSmartAlerts(ib, meals, workouts){
   }
 
   // 10) 체지방 정체 + NEAT 교차검증 (활동량 문제인지 아닌지 판별)
+  // 2026-09-14 수정: ib.slice(-3)에 체중전용 기록(fat=null, 여행 중 등)이 섞이면 Math.max/Math.min에서
+  // null이 0으로 취급돼 정체 판정이 왜곡되던 버그 — 체지방 실측값이 있는 레코드만 사용
   if(ib.length >= 3 && state.steps && state.steps.length){
-    const last3fat = ib.slice(-3).map(r=>r.fat);
-    const isPlateau = (Math.max(...last3fat) - Math.min(...last3fat)) <= 0.2;
+    const last3fatV = ib.filter(r=>r.fat!==null&&r.fat!==undefined&&!isNaN(r.fat)).slice(-3);
+    const isPlateau = last3fatV.length>=3 && (Math.max(...last3fatV.map(r=>r.fat)) - Math.min(...last3fatV.map(r=>r.fat))) <= 0.2;
     if(isPlateau){
       const breakdowns = state.steps.map(s => ({...s, ...computeStepBreakdown(s, state.workouts)}));
       const last7 = daysAgoList(7), last14 = daysAgoList(14);
@@ -2155,13 +2179,18 @@ function computeMounjaroCycles(){
     const inCycle = ib.filter(r => r.date >= d.date && (!nextDate || r.date <= nextDate));
     const start = inCycle[0] || null;
     const end = inCycle[inCycle.length-1] || null;
+    // 2026-09-14 추가: end(구간의 가장 최근 기록)가 체중전용 기록(여행 중 등, muscle/fat=null)이면
+    // muscleDelta/fatDelta/fatPctDelta가 start.X - 0으로 왜곡됨 — 구간 내에서 체성분 실측값이
+    // 있는 시작/끝 기록(startBC/endBC)을 별도로 찾아 그 값으로만 델타를 계산
+    const startBC = inCycle.find(r => typeof r.muscle==='number' && !isNaN(r.muscle) && r.muscle>0) || null;
+    const endBC = lastWithMuscle(inCycle);
     return {
       ...d,
-      start, end, count: inCycle.length,
+      start, end, startBC, endBC, count: inCycle.length,
       weightDelta: (start && end) ? end.weight - start.weight : null,
-      muscleDelta: (start && end) ? end.muscle - start.muscle : null,
-      fatDelta: (start && end) ? end.fat - start.fat : null,
-      fatPctDelta: (start && end) ? end.fatPct - start.fatPct : null,
+      muscleDelta: (startBC && endBC) ? endBC.muscle - startBC.muscle : null,
+      fatDelta: (startBC && endBC) ? endBC.fat - startBC.fat : null,
+      fatPctDelta: (startBC && endBC) ? endBC.fatPct - startBC.fatPct : null,
     };
   });
 }
@@ -2208,9 +2237,15 @@ function computeDoseIntervalComparison(){
     const ma7Start = ma7SnapshotAt(ib, startRecord.date, fields);
     const ma7End = ma7SnapshotAt(ib, endRecord.date, fields);
 
+    // 2026-09-14 추가: 진행 중(잠정) 구간에서는 endRecord가 오늘(체중전용 기록, 여행 중 등)일 수
+    // 있어 골격근/체지방/체지방률이 null임 — "실측값 변화" 표에서 null이 0으로 취급돼 rawDelta가
+    // 왜곡되지 않도록, 체성분 실측값이 있는 시작/끝 기록(startRecordBC/endRecordBC)을 별도로 찾아둠
+    const startRecordBC = ib.find(r=>r.date>=startDose.date && typeof r.muscle==='number' && !isNaN(r.muscle) && r.muscle>0) || null;
+    const endRecordBC = lastWithMuscle(ib.filter(r=>r.date<=endRecord.date));
+
     results.push({
       startCycleNum, endCycleNum, startDose, nominalEndDate, isProvisional,
-      elapsedDays, fullIntervalDays, startRecord, endRecord, ma7Start, ma7End,
+      elapsedDays, fullIntervalDays, startRecord, endRecord, startRecordBC, endRecordBC, ma7Start, ma7End,
     });
     if(isProvisional) break; // 진행 중인 구간이면 그 다음(아직 오지도 않은) 구간은 만들지 않음
   }
@@ -2219,7 +2254,10 @@ function computeDoseIntervalComparison(){
 
 /* ---------- 마운자로 차수별 인사이트 (데이터 기반, 매번 재계산) ---------- */
 function computeMounjaroInsights(cycles){
-  const done = cycles.filter(c => c.end && c.weightDelta !== null);
+  // 2026-09-14 수정: fatDelta가 null인 차수(구간 전체가 체중전용 기록뿐인 경우, 예: 여행 중)가
+  // 섞이면 이 함수 곳곳의 fatDelta 산술연산(정렬·평균·비교)이 null을 0으로 취급해 왜곡됨 —
+  // fatDelta가 실제로 계산된 차수만 인사이트 대상으로 사용
+  const done = cycles.filter(c => c.end && c.weightDelta !== null && c.fatDelta !== null);
   if(done.length < 2) return [];
   const insights = [];
 
@@ -2428,9 +2466,13 @@ function renderMounjaro(){
               <td>${c.date} (${dowLabel(c.date)})</td>
               <td>${c.dose}</td>
               <td>${!c.start||!c.end ? '—' : `${fmt(c.start.weight)}→${fmt(c.end.weight)}kg <span class="${c.weightDelta<=0?'good-text':'warn-text'}">(${c.weightDelta>0?'+':''}${fmt(c.weightDelta)})</span>`}</td>
-              <td>${!c.start||!c.end ? '—' : `${fmt(c.start.muscle)}→${fmt(c.end.muscle)}kg <span class="${c.muscleDelta>=0?'good-text':'warn-text'}">(${c.muscleDelta>0?'+':''}${fmt(c.muscleDelta)})</span>`}</td>
-              <td>${!c.start||!c.end ? '—' : `${fmt(c.start.fat)}→${fmt(c.end.fat)}kg <span class="${c.fatDelta<=0?'good-text':'warn-text'}">(${c.fatDelta>0?'+':''}${fmt(c.fatDelta)})</span>`}</td>
-              <td>${!c.start||!c.end ? '—' : `${fmt(c.start.fatPct)}→${fmt(c.end.fatPct)}% <span class="${c.fatPctDelta<=0?'good-text':'warn-text'}">(${c.fatPctDelta>0?'+':''}${fmt(c.fatPctDelta)}%p)</span>`}</td>
+              <!-- 2026-09-14 수정: 진행 중 차수에서 c.end가 체중전용 기록(여행 중 등)이면
+                   c.end.muscle 등이 null이라 "→—kg"로 표시되면서도 델타는 startBC/endBC 기반의
+                   실제 값이 나와 서로 안 맞던 문제 — 표시값도 c.startBC/c.endBC로 통일하고,
+                   델타가 null이면 델타칸도 '—'로 표시(0으로 오인되지 않도록) -->
+              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.muscle)}→${fmt(c.endBC.muscle)}kg <span class="${c.muscleDelta===null?'':(c.muscleDelta>=0?'good-text':'warn-text')}">(${c.muscleDelta===null?'—':`${c.muscleDelta>0?'+':''}${fmt(c.muscleDelta)}`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:10.5px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
+              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.fat)}→${fmt(c.endBC.fat)}kg <span class="${c.fatDelta===null?'':(c.fatDelta<=0?'good-text':'warn-text')}">(${c.fatDelta===null?'—':`${c.fatDelta>0?'+':''}${fmt(c.fatDelta)}`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:10.5px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
+              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.fatPct)}→${fmt(c.endBC.fatPct)}% <span class="${c.fatPctDelta===null?'':(c.fatPctDelta<=0?'good-text':'warn-text')}">(${c.fatPctDelta===null?'—':`${c.fatPctDelta>0?'+':''}${fmt(c.fatPctDelta)}%p`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:10.5px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
               <td>${c.count}</td>
             </tr>`).join('')}
           </tbody>
@@ -2465,11 +2507,19 @@ function renderMounjaro(){
               </tr></thead>
               <tbody>
                 ${FOUR_METRICS.map(m => {
-                  const rawStart = iv.startRecord[m.key], rawEnd = iv.endRecord[m.key];
-                  const rawDelta = rawEnd - rawStart;
+                  // 2026-09-14 수정: weight는 항상 실측되지만 muscle/fat/fatPct는 체중전용 기록(여행
+                  // 중 등)에서 null일 수 있음 — 그런 키는 startRecord/endRecord 대신 체성분 실측값이
+                  // 있는 startRecordBC/endRecordBC를 사용해 null→0 왜곡을 방지
+                  const useBC = m.key !== 'weight';
+                  const sRec = useBC ? iv.startRecordBC : iv.startRecord;
+                  const eRec = useBC ? iv.endRecordBC : iv.endRecord;
+                  const rawStart = sRec ? sRec[m.key] : null, rawEnd = eRec ? eRec[m.key] : null;
+                  const rawValid = rawStart!==null&&rawStart!==undefined&&!isNaN(rawStart)&&rawEnd!==null&&rawEnd!==undefined&&!isNaN(rawEnd);
+                  const rawDelta = rawValid ? rawEnd - rawStart : null;
+                  const bcAsOfNote = (useBC && eRec && eRec.date!==iv.endRecord.date) ? ` (${eRec.date} 실측 기준)` : '';
                   const maStart = iv.ma7Start[m.key], maEnd = iv.ma7End[m.key];
                   const maDelta = maEnd - maStart;
-                  const rawGood = m.goodDir===1 ? rawDelta>=0 : rawDelta<=0;
+                  const rawGood = rawDelta===null ? null : (m.goodDir===1 ? rawDelta>=0 : rawDelta<=0);
                   const maGood = m.goodDir===1 ? maDelta>=0 : maDelta<=0;
                   const uraw = m.unitRaw || m.unit;
                   // 2026-09-13 추가: 테이퍼링으로 회차 간격이 7일→9~16일로 불규칙해진 상황에서는
@@ -2479,8 +2529,8 @@ function renderMounjaro(){
                   return `<tr>
                     <td style="text-align:left">${m.label}</td>
                     <td>
-                      <div class="${rawGood?'good-text':'warn-text'}" style="font-weight:700; font-size:13.5px;">${rawDelta>0?'+':''}${fmt(rawDelta)}${m.unit}</div>
-                      <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(rawStart)}${uraw} → ${fmt(rawEnd)}${uraw}</div>
+                      <div class="${rawGood===null?'':(rawGood?'good-text':'warn-text')}" style="font-weight:700; font-size:13.5px;">${rawDelta===null?'—':`${rawDelta>0?'+':''}${fmt(rawDelta)}${m.unit}`}</div>
+                      <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(rawStart)}${uraw} → ${fmt(rawEnd)}${uraw}${bcAsOfNote}</div>
                     </td>
                     <td>
                       <div class="${maGood?'good-text':'warn-text'}" style="font-weight:600; font-size:13px;">${maDelta>0?'+':''}${fmt(maDelta)}${m.unit}</div>
@@ -2510,7 +2560,9 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   const today = todayISO();
 
   const weightLoss = first.weight - last.weight;
-  const fatMassLoss = first.fat - last.fat;
+  // 2026-09-14 수정: last가 체중전용 기록이면 fatMassLoss가 first.fat - 0으로 왜곡되던 버그 수정
+  const lastBC = lastWithMuscle(ib) || last;
+  const fatMassLoss = first.fat - lastBC.fat;
   const muscleAssess = computeMuscleAssessment(first, lastWithMuscle(ib));
   const goalStatus = computeFatGoalStatus(ib);
   const g20 = goalStatus.goals.find(g=>g.pct===20), g18 = goalStatus.goals.find(g=>g.pct===18);
@@ -2526,11 +2578,19 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
     return (m.calories||0) <= hi+50;
   }).length / recentMeals.length * 100) : null;
 
+  // 2026-09-14 추가: "최근 10끼"가 실제로는 여행 등으로 며칠~열흘 전 식사일 수 있음 — 최신
+  // 데이터처럼 보이지 않도록 가장 최근 식사 기록일과 오늘 사이 공백일수를 함께 계산
+  const mealGapDays = recentMeals.length ? Math.round((new Date(today) - new Date(recentMeals[0].date)) / 86400000) : null;
+  const mealStaleNote = (mealGapDays !== null && mealGapDays >= 2) ? ` (최근 식사 기록이 ${mealGapDays}일 전인 ${recentMeals[0].date}까지 — 여행 등으로 기록 공백 중이면 최신 상태를 반영하지 못할 수 있어요)` : '';
+
   const ma = goalStatus.ma7;
   const recentMA = ma.slice(-7);
   const maTrend = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
 
-  const last3fat = ib.slice(-3).map(r=>r.fat);
+  // 2026-09-14 수정: 기존엔 ib.slice(-3)로 최근 3건(체중전용 기록 포함 가능)을 뽑은 뒤 r.fat이
+  // null이면 Math.max/Math.min에서 0으로 취급되어 fatSpread(체지방 정체 판정 폭)가 실제보다
+  // 과장되게 커지던 버그가 있었음 — 체지방 실측값이 있는 레코드만 걸러낸 뒤 최근 3건을 사용하도록 수정
+  const last3fat = ib.filter(r=>r.fat!==null&&r.fat!==undefined&&!isNaN(r.fat)).slice(-3).map(r=>r.fat);
   const fatSpread = last3fat.length>=3 ? Math.max(...last3fat)-Math.min(...last3fat) : null;
 
   const lastLogGapDays = Math.round((new Date(today) - new Date(last.date)) / 86400000);
@@ -2544,17 +2604,17 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   if(g18.tier==='stable') strengths.push({title:'2차 목표(18%) 확정 ✓ · 안정 확인', detail:`MA7·MA14 모두 18% 아래로 내려와 되돌림 걱정 없이 최종 목표를 확정했어요 (MA7 ${fmt(g18.ma7Last,2)}%).`});
   else if(g18.tier==='done') strengths.push({title:'2차 목표(18%) 확정 ✓ (MA7 기준)', detail:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g18.ma7Last,2)}%로 최종 목표를 확정했어요!`});
   else if(g18.progressed >= 50) strengths.push({title:'2차 목표(18%) 절반 이상 달성', detail:`MA7 기준 진행률 ${fmt(g18.progressed,0)}%`});
-  if(muscleAssess.tone === 'good') strengths.push({title:'골격근 보존 우수', detail: muscleAssess.muscleLoss<=0 ? `골격근량 감소 없이 유지 중 (현재 ${fmt(last.muscle)}kg)` : `체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}% — 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 낮아요`});
+  if(muscleAssess.tone === 'good') strengths.push({title:'골격근 보존 우수', detail: muscleAssess.muscleLoss<=0 ? `골격근량 감소 없이 유지 중 (현재 ${fmt(lastBC.muscle)}kg${lastBC.date!==last.date?`, ${lastBC.date} 기준`:''})` : `체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}% — 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 낮아요`});
   if(workoutDaysLast7 >= 4) strengths.push({title:'꾸준한 운동 습관', detail:`최근 7일 중 ${workoutDaysLast7}일 운동`});
-  if(proteinRate !== null && proteinRate >= 70) strengths.push({title:'단백질 섭취 잘 지킴', detail:`최근 10끼 중 ${fmt(proteinRate,0)}%에서 목표(${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g) 충족`});
-  if(calorieRate !== null && calorieRate >= 70) strengths.push({title:'칼로리 목표 준수 양호', detail:`최근 10끼 중 ${fmt(calorieRate,0)}%가 목표 범위 안`});
+  if(proteinRate !== null && proteinRate >= 70) strengths.push({title:'단백질 섭취 잘 지킴', detail:`최근 10끼 중 ${fmt(proteinRate,0)}%에서 목표(${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g) 충족${mealStaleNote}`});
+  if(calorieRate !== null && calorieRate >= 70) strengths.push({title:'칼로리 목표 준수 양호', detail:`최근 10끼 중 ${fmt(calorieRate,0)}%가 목표 범위 안${mealStaleNote}`});
   if(maTrend <= -0.2) strengths.push({title:'체지방률 추세 개선 중', detail:`7일 이동평균 기준 ${fmt(Math.abs(maTrend),2)}%p 하락`});
 
   // 아쉬운 점 후보
   if(fatSpread !== null && fatSpread <= 0.15) improvements.push({title:'체지방 감량 정체', detail:`최근 3회 측정에서 체지방량이 ${fmt(Math.min(...last3fat))}~${fmt(Math.max(...last3fat))}kg 사이 정체`});
   if(muscleAssess.tone === 'warn') improvements.push({title:'골격근 손실 비중 높음', detail: muscleAssess.weightLossPct<=0.3 ? `체중 변화 없이 골격근만 ${fmt(muscleAssess.muscleLoss)}kg 감소 — 단백질·저항운동 점검 필요` : `체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 높아요`});
-  if(proteinRate !== null && proteinRate < 50) improvements.push({title:'단백질 섭취 부족 빈도 높음', detail:`최근 10끼 중 목표 충족 ${fmt(proteinRate,0)}%뿐`});
-  if(calorieRate !== null && calorieRate < 50) improvements.push({title:'칼로리 목표 이탈 빈도 높음', detail:`최근 10끼 중 목표 범위 준수 ${fmt(calorieRate,0)}%뿐 — 목표 재설정이나 식단 조정이 필요할 수 있어요`});
+  if(proteinRate !== null && proteinRate < 50) improvements.push({title:'단백질 섭취 부족 빈도 높음', detail:`최근 10끼 중 목표 충족 ${fmt(proteinRate,0)}%뿐${mealStaleNote}`});
+  if(calorieRate !== null && calorieRate < 50) improvements.push({title:'칼로리 목표 이탈 빈도 높음', detail:`최근 10끼 중 목표 범위 준수 ${fmt(calorieRate,0)}%뿐 — 목표 재설정이나 식단 조정이 필요할 수 있어요${mealStaleNote}`});
   if(workoutDaysLast7 <= 2) improvements.push({title:'최근 운동 빈도 낮음', detail:`최근 7일 중 ${workoutDaysLast7}일만 운동`});
   if(ib.length >= 3){
     const last3w = ib.slice(-3).map(r=>r.weight);
@@ -3001,6 +3061,11 @@ function renderDashboard(){
   const ib = sortedInbody();
   const recentMA = ma.slice(-7);
   const maTrend7 = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : null;
+  // 2026-09-14 추가: 오늘이 체중전용 기록(여행 중 등, muscle/fat=null)이면 아래 목표 계산에서
+  // last.muscle/last.fat이 0으로 취급되어 목표체중이 비정상적으로 커지던 버그 수정 —
+  // 체성분 실측값이 있는 가장 최근 기록(lastBC) 기준으로 계산
+  const lastBC = lastWithMuscle(ib) || last;
+  const bcAsOf = lastBC.date!==last.date ? ` (${lastBC.date} 실측 기준)` : '';
 
   return `
     <section class="hero card">
@@ -3032,13 +3097,14 @@ function renderDashboard(){
       </div>
       <div class="hero-goals">
         ${goalStatus.goals.map(gs=>{
-          const other = last.weight - last.muscle - last.fat;
+          const other = last.weight - lastBC.muscle - lastBC.fat;
           // [2026-07-29 변경] Live Tracking 1차/2차 목표 계산: 회복기준(33.2kg 고정) 대신
           // 오늘 실측 골격근량을 그대로 사용(목표탭 "오늘 실측 골격근 기준" 행과 동일 방식으로 통일)
-          const targetMuscle = last.muscle;
+          // 2026-09-14 수정: "오늘"이 체중전용 기록이면 lastBC(체성분 실측값이 있는 최근 기록) 사용
+          const targetMuscle = lastBC.muscle;
           const t = gs.pct/100;
           const targetFat = t*(other+targetMuscle) / (1-t);
-          const fatLossNeeded = Math.max(0, last.fat - targetFat);
+          const fatLossNeeded = Math.max(0, lastBC.fat - targetFat);
           // [2026-08-23 변경] 배지를 원시값(last.fatPct) 대신 MA7 기준으로 판정하도록 전면 교체.
           // 점 2개(○○/●○/●●)로 MA7 확정·MA14 안정확인 2단계를 배지 1개에 압축 표시(B안 확정).
           const dots = gs.tier==='pending' ? '○○' : gs.tier==='done' ? '●○' : '●●';
@@ -3052,7 +3118,7 @@ function renderDashboard(){
           } else if(gs.rawDone){
             detail = `오늘 실측 체지방량은 이미 목표권(${fmt(last.fat)}kg)에 들어왔지만, 최근 1주 평균(MA7)은 아직 ${fmt(gs.ma7Last,2)}%로 목표 ${gs.pct}% 위에 있어 확정 전이에요.`;
           } else {
-            detail = `현재 체지방량 ${fmt(last.fat)}kg → 약 <b>-${fmt(fatLossNeeded)}kg</b> 추가 감량 필요 (목표 체지방량 ${fmt(targetFat)}kg)`;
+            detail = `현재 체지방량 ${fmt(lastBC.fat)}kg${bcAsOf} → 약 <b>-${fmt(fatLossNeeded)}kg</b> 추가 감량 필요 (목표 체지방량 ${fmt(targetFat)}kg)`;
           }
           return `<div class="hero-goal-item">
             <div class="hg-top">
@@ -3065,7 +3131,7 @@ function renderDashboard(){
           </div>`;
         }).join('')}
       </div>
-      <div class="note-box" style="margin-top:10px;">배지의 점 2개는 각각 <b>MA7 확정</b> · <b>MA14 안정 확인</b>을 뜻해요(●●=둘 다 확인돼 되돌림 걱정 없는 상태). 필요 감량치는 <b>오늘 실측 골격근량(${fmt(last.muscle)}kg)</b>이 그대로 유지된다는 가정으로 계산해요. 골격근이 늘면 이 값은 다음 측정 때 자동으로 갱신돼요.</div>
+      <div class="note-box" style="margin-top:10px;">배지의 점 2개는 각각 <b>MA7 확정</b> · <b>MA14 안정 확인</b>을 뜻해요(●●=둘 다 확인돼 되돌림 걱정 없는 상태). 필요 감량치는 <b>최근 실측 골격근량(${fmt(lastBC.muscle)}kg${bcAsOf})</b>이 그대로 유지된다는 가정으로 계산해요. 골격근이 늘면 이 값은 다음 측정 때 자동으로 갱신돼요.</div>
     </section>
 
     ${state.aiNote ? `
@@ -3129,7 +3195,7 @@ function renderDashboard(){
           }
           // 2026-07-25 추가: 단기(위 MA7 7일변화) 판정에 누적(6/5 대비 비율) 참고와 종합결론을 함께 붙여 표시
           const cumulativeText = ma_musAssess.muscleLoss<=0
-            ? ` (누적 참고: 6/5 대비 골격근 감소 없음 — 현재 ${fmt(last.muscle)}kg, 시작값 ${fmt(MUSCLE_BASELINE)}kg)`
+            ? ` (누적 참고: 6/5 대비 골격근 감소 없음 — 현재 ${fmt(lastBC.muscle)}kg${bcAsOf}, 시작값 ${fmt(MUSCLE_BASELINE)}kg)`
             : ma_musAssess.weightLossPct<=0.3
               ? ` (누적 참고: 체중 변화가 아직 적어 비율 계산 의미가 작아요)`
               : ` (누적 참고: 6/5 대비 체중 -${fmt(ma_musAssess.weightLossPct,1)}%·골격근 -${fmt(ma_musAssess.muscleLossPct,1)}%, 비율 ${fmt(ma_musAssess.ratio,2)} — SURMOUNT-1 0.51 기준 ${ma_musAssess.tone==='good'?'훨씬 안전권':ma_musAssess.tone==='neutral'?'기준 이내':'기준 초과'})`;
@@ -3378,7 +3444,10 @@ function dayRow(date, i, wArr, m, prev){
   let ibCol = `<span class="empty">기록 없음</span>`;
   if(i){
     const wDelta = prev ? i.weight - prev.weight : null;
-    const fDelta = prev ? i.fatPct - prev.fatPct : null;
+    // 2026-09-14 수정: i.fatPct 또는 prev.fatPct가 null(체중전용 기록)이면 산술연산에서 0으로
+    // 취급되어 실제로는 비교 불가능한 값이 큰 델타로 잘못 표시되던 버그 수정
+    const fPctValid = i.fatPct!==null&&i.fatPct!==undefined&&!isNaN(i.fatPct)&&prev&&prev.fatPct!==null&&prev.fatPct!==undefined&&!isNaN(prev.fatPct);
+    const fDelta = fPctValid ? i.fatPct - prev.fatPct : null;
     ibCol = `체중 <b class="mono">${fmt(i.weight)}kg</b>${deltaSpan(wDelta,'kg')}
       <br>골격근 <b class="mono">${fmt(i.muscle)}kg</b> · 체지방 <b class="mono">${fmt(i.fat)}kg</b>
       <br>체지방률 <b class="mono" style="color:var(--c-fatpct)">${fmt(i.fatPct)}%</b>${deltaSpan(fDelta,'%p')}
@@ -3425,18 +3494,24 @@ function renderGoal(){
   const first = sortedInbody()[0];
   const muscleAssess = computeMuscleAssessment(first, lastWithMuscle(sortedInbody()));
 
-  const other = last.weight - last.muscle - last.fat;
+  // 2026-09-14 수정: "오늘"이 체중전용 기록(여행 중 등, muscle/fat=null)이면 last.muscle/last.fat이
+  // 산술연산에서 0으로 취급되어 other(뼈·장기 등 추정치)가 부풀려지고, 그 결과 예상 목표체중이
+  // 89.9/87.7kg처럼 시작 체중보다도 높게 나오던 버그(사용자 리포트) — 체성분 실측값이 있는
+  // 가장 최근 기록(lastBC) 기준으로 계산하도록 수정
+  const lastBC = lastWithMuscle(sortedInbody()) || last;
+  const bcAsOf = lastBC.date!==last.date ? ` (${lastBC.date} 실측 기준)` : '';
+  const other = last.weight - lastBC.muscle - lastBC.fat;
 
   // 2026-08-23: "회복 기준"(골격근 33.2kg까지 회복 가정) 행은 정희님 요청으로 제거하고
   // "오늘 실측 골격근 기준" 한 가지로 통일. 매일 실측하는 골격근량을 그대로 쓰는 게
   // 더 현실적이고, 표에 두 기준이 같이 있어 복잡했던 걸 단순화.
   const calcRowsCurrent = FAT_GOALS.map(g => {
     const t = g.pct/100;
-    const tm = last.muscle; // 오늘 실측 골격근량 고정(회복 가정 없음)
+    const tm = lastBC.muscle; // 체성분 실측 골격근량 고정(회복 가정 없음) — 2026-09-14: lastBC로 수정
     const targetFat = t*(other+tm) / (1-t);
     const targetWeight = other + tm + targetFat;
-    const fatLossNeeded = Math.max(0, last.fat - targetFat); // 음수 클램프(이중 마이너스 버그 수정)
-    const surplus = Math.max(0, targetFat - last.fat); // 목표 대비 이미 초과 감량한 여유분(달성 시 표시)
+    const fatLossNeeded = Math.max(0, lastBC.fat - targetFat); // 음수 클램프(이중 마이너스 버그 수정)
+    const surplus = Math.max(0, targetFat - lastBC.fat); // 목표 대비 이미 초과 감량한 여유분(달성 시 표시)
     const gs = goalStatus.goals.find(x=>x.pct===g.pct);
     const achieved = gs.ma7Done;
     return {g, gs, targetFat, targetWeight, targetMuscle:tm, fatLossNeeded, surplus, muscleGainNeeded:0, achieved, basisLabel:'오늘 실측 골격근 기준'};
@@ -3517,7 +3592,7 @@ function renderGoal(){
         </table>
       </div>
       <div class="note-box" style="margin-top:14px;">
-        추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정합니다. 매일 측정하는 오늘자 골격근 실측치(${fmt(last.muscle)}kg)가 그대로 유지된다는 보수적 가정으로 필요 체지방 감량을 역산했습니다 — 골격근이 실제로 늘면 필요 감량치는 인바디 측정마다 갱신되어 줄어듭니다. "✓ 여유" 표시는 위 목표 현황과 동일하게 <b>MA7 확정 기준</b>일 때만 뜨고, 여유분(kg)은 목표 체지방량보다 오늘 실측치가 얼마나 더 낮은지를 보여줘요. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
+        추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정합니다. 가장 최근 체성분 실측치(골격근 ${fmt(lastBC.muscle)}kg, 체지방 ${fmt(lastBC.fat)}kg${bcAsOf})가 그대로 유지된다는 보수적 가정으로 필요 체지방 감량을 역산했습니다 — 골격근이 실제로 늘면 필요 감량치는 인바디 측정마다 갱신되어 줄어듭니다. "✓ 여유" 표시는 위 목표 현황과 동일하게 <b>MA7 확정 기준</b>일 때만 뜨고, 여유분(kg)은 목표 체지방량보다 실측치가 얼마나 더 낮은지를 보여줘요. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
       </div>
     </section>
 
@@ -3556,14 +3631,18 @@ function renderGoal(){
       <div class="section-label good">${secNum('05')}추천 가이드</div>
       <div class="guide-list">
         ${(() => {
-          const targetLow = Math.round(last.bmr*1.5-550), targetHigh = targetLow+100;
+          // 2026-09-14 수정: "오늘"이 체중전용 기록이면 last.bmr이 null이라 NaN*1.5-550으로
+          // "NaNkcal"이 표시되던 버그 — bmr 실측값이 있는 가장 최근 기록(lastBC) 사용
+          const bmrRef = (lastBC.bmr!==null && lastBC.bmr!==undefined && !isNaN(lastBC.bmr)) ? lastBC.bmr : null;
+          if(bmrRef===null) return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 최신 BMR × 1.5 − 550kcal 공식을 유지하세요. 최근 BMR 실측값이 없어 권장 칼로리를 계산할 수 없어요 — 다음 InBody 측정 후 갱신됩니다.</div>`;
+          const targetLow = Math.round(bmrRef*1.5-550), targetHigh = targetLow+100;
           const midCal = Math.round((targetLow+targetHigh)/2);
           const proteinMid = Math.round((PROTEIN_TARGET.min+PROTEIN_TARGET.max)/2);
           const proteinKcal = proteinMid*4;
           const remainKcal = midCal - proteinKcal;
           const carbG = Math.round(remainKcal*0.55/4);
           const fatG = Math.round(remainKcal*0.45/9);
-          return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 최신 BMR × 1.5 − 550kcal 공식을 유지하세요. 현재 BMR ${last.bmr}kcal 기준 <b>${targetLow}~${targetHigh}kcal</b>가 권장 범위예요. 매크로는 단백질 ${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g 기준으로 잡으면 대략 <b>단백질 ${proteinMid}g · 탄수화물 ${carbG}g · 지방 ${fatG}g</b>(약 ${midCal}kcal)이 기준값이에요.</div>`;
+          return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 최신 BMR × 1.5 − 550kcal 공식을 유지하세요. 최근 BMR ${bmrRef}kcal${bcAsOf} 기준 <b>${targetLow}~${targetHigh}kcal</b>가 권장 범위예요. 매크로는 단백질 ${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g 기준으로 잡으면 대략 <b>단백질 ${proteinMid}g · 탄수화물 ${carbG}g · 지방 ${fatG}g</b>(약 ${midCal}kcal)이 기준값이에요.</div>`;
         })()}
         <div class="guide-item"><span class="guide-num">02</span>tirzepatide DEXA 임상연구(SURMOUNT-1, Look et al. 2025, Diabetes Obes Metab)의 실측치로 계산하면 체중 -21.3% 대비 제지방량 -10.9%, 비율 0.51이에요. 지금 정희님의 골격근 비율은 ${muscleAssess.muscleLoss<=0 ? '0 (감소 없음)' : fmt(muscleAssess.ratio,2)}로 ${muscleAssess.tone==='good' ? '0.51보다 뚜렷이 낮아 근육을 잘 보존하고 있어요' : muscleAssess.tone==='neutral' ? '0.51 이내로 임상 기준 범위 안이에요' : '0.51을 넘어 저항운동 볼륨과 단백질 섭취를 점검할 필요가 있어요'}. 이 비율을 0.51 아래로 유지하는 게 목표예요.</div>
         <div class="guide-item"><span class="guide-num">03</span>체지방률의 일일 변화는 BIA 특성상 수분·글리코겐 상태에 따라 흔들릴 수 있습니다. 하루 단위 반등에 일희일비하지 말고 7일 이동평균으로 추세를 판단하세요. 현재 추세는 ${maTrendDelta<=0?'하락(개선) 중':'상승(정체) 중'}입니다.</div>
@@ -3628,6 +3707,11 @@ function renderReport(){
   }
   const first = ib[0], last = ib[ib.length-1];
   const totalDays = Math.round((new Date(last.date+'T00:00:00')-new Date(first.date+'T00:00:00'))/86400000);
+  // 2026-09-14 수정: "최신값"이 체중전용 기록(여행 중 등, muscle/fat/fatPct=null)이면 아래
+  // deltaRow에서 null이 0으로 취급되어 골격근량/체지방량/체지방률 변화가 "-33.2 -21.1 -26.4"처럼
+  // 시작값을 그대로 음수화한 값으로 잘못 표시되던 버그(사용자 리포트) — 체성분 실측값이 있는
+  // 가장 최근 기록(lastBC) 기준으로 계산
+  const lastBC = lastWithMuscle(ib) || last;
   const assess = computeMuscleAssessment(first, lastWithMuscle(ib));
 
   // 최근 14일 vs 그 이전 14일 — MA7 스냅샷 기준 골격근/체지방 "절대 감소량" 비교
@@ -3656,11 +3740,17 @@ function renderReport(){
   const avgProt = recentMeals.length ? Math.round(recentMeals.reduce((s,m)=>s+(m.protein||0),0)/recentMeals.length) : null;
   const avgCarb = recentMeals.length ? Math.round(recentMeals.reduce((s,m)=>s+(m.carbs||0),0)/recentMeals.length) : null;
 
-  const deltaRow = (label, sVal, eVal, unit, goodDir) => {
-    const delta = eVal - sVal;
-    const good = goodDir==='down' ? delta<=0 : delta>=0;
-    return `<tr><td style="text-align:left; font-family:var(--font-body);">${label}</td><td>${fmt(sVal,1)}${unit}</td><td>${fmt(eVal,1)}${unit}</td>
-      <td style="color:${good?'var(--c-good, #3ecf8e)':'var(--c-warn, #ffb648)'}">${delta>0?'+':''}${fmt(delta,1)}${unit}</td></tr>`;
+  // 2026-09-14 수정: sVal/eVal 중 하나라도 null이면 delta = eVal - sVal 연산에서 null이 0으로
+  // 취급되어 완전히 잘못된 변화량이 표시되던 버그 수정 — 값이 둘 다 있을 때만 delta 계산,
+  // 아니면 '—'로 표시(판단 보류). asOfNote가 있으면 라벨 아래 실측 기준일을 덧붙여 보여줌.
+  const deltaRow = (label, sVal, eVal, unit, goodDir, asOfNote) => {
+    const validS = sVal!==null&&sVal!==undefined&&!isNaN(sVal);
+    const validE = eVal!==null&&eVal!==undefined&&!isNaN(eVal);
+    const delta = (validS&&validE) ? eVal - sVal : null;
+    const good = delta===null ? null : (goodDir==='down' ? delta<=0 : delta>=0);
+    const deltaText = delta===null ? '—' : `${delta>0?'+':''}${fmt(delta,1)}${unit}`;
+    return `<tr><td style="text-align:left; font-family:var(--font-body);">${label}${asOfNote?`<div style="font-size:10.5px; color:var(--text-faint); font-weight:400;">${asOfNote}</div>`:''}</td><td>${fmt(sVal,1)}${unit}</td><td>${fmt(eVal,1)}${unit}</td>
+      <td style="color:${good===null?'var(--text-faint)':good?'var(--c-good, #3ecf8e)':'var(--c-warn, #ffb648)'}">${deltaText}</td></tr>`;
   };
 
   return `
@@ -3678,9 +3768,9 @@ function renderReport(){
         <thead><tr><th style="text-align:left">지표</th><th>시작값(${first.date})</th><th>최신값(${last.date})</th><th>변화</th></tr></thead>
         <tbody>
           ${deltaRow('체중','weight' in first?first.weight:null, last.weight,'kg','down')}
-          ${deltaRow('골격근량', first.muscle, last.muscle, 'kg', 'up')}
-          ${deltaRow('체지방량', first.fat, last.fat, 'kg', 'down')}
-          ${deltaRow('체지방률', first.fatPct, last.fatPct, '%', 'down')}
+          ${deltaRow('골격근량', first.muscle, lastBC.muscle, 'kg', 'up', lastBC.date!==last.date?`${lastBC.date} 실측 기준(최신일은 체중전용 기록)`:null)}
+          ${deltaRow('체지방량', first.fat, lastBC.fat, 'kg', 'down', lastBC.date!==last.date?`${lastBC.date} 실측 기준(최신일은 체중전용 기록)`:null)}
+          ${deltaRow('체지방률', first.fatPct, lastBC.fatPct, '%', 'down', lastBC.date!==last.date?`${lastBC.date} 실측 기준(최신일은 체중전용 기록)`:null)}
         </tbody>
       </table>
     </section>
@@ -3760,6 +3850,9 @@ function buildReportCopyText(){
   if(!ib.length) return '아직 인바디 데이터가 없어 리포트를 만들 수 없어요.';
   const first = ib[0], last = ib[ib.length-1];
   const totalDays = Math.round((new Date(last.date+'T00:00:00')-new Date(first.date+'T00:00:00'))/86400000);
+  // 2026-09-14 수정: last가 체중전용 기록이면 골격근/체지방 변화 라인이 시작값을 그대로
+  // 음수화한 값으로 왜곡되던 버그 — renderReport()와 동일하게 lastBC 기준으로 계산
+  const lastBC = lastWithMuscle(ib) || last;
   const assess = computeMuscleAssessment(first, lastWithMuscle(ib));
   const mealCutoff = (() => { const d = new Date(todayISO()+'T00:00:00'); d.setDate(d.getDate()-14); return toLocalISO(d); })();
   const recentMeals = state.meals.filter(m=>m.date>=mealCutoff);
@@ -3772,9 +3865,9 @@ function buildReportCopyText(){
   const lines = [];
   lines.push(`[바디 리컴포지션 종합 리포트] ${first.date} ~ ${last.date} (${totalDays}일)`);
   lines.push(`체중 ${fmt(first.weight)}kg → ${fmt(last.weight)}kg (${fmt(last.weight-first.weight,1)}kg)`);
-  lines.push(`골격근량 ${fmt(first.muscle)}kg → ${fmt(last.muscle)}kg (${fmt(last.muscle-first.muscle,1)}kg)`);
-  lines.push(`체지방량 ${fmt(first.fat)}kg → ${fmt(last.fat)}kg (${fmt(last.fat-first.fat,1)}kg)`);
-  lines.push(`체지방률 ${fmt(first.fatPct)}% → ${fmt(last.fatPct)}% (${fmt(last.fatPct-first.fatPct,1)}%p)`);
+  lines.push(`골격근량 ${fmt(first.muscle)}kg → ${fmt(lastBC.muscle)}kg (${fmt(lastBC.muscle-first.muscle,1)}kg)${lastBC.date!==last.date?` [${lastBC.date} 실측 기준]`:''}`);
+  lines.push(`체지방량 ${fmt(first.fat)}kg → ${fmt(lastBC.fat)}kg (${fmt(lastBC.fat-first.fat,1)}kg)${lastBC.date!==last.date?` [${lastBC.date} 실측 기준]`:''}`);
+  lines.push(`체지방률 ${fmt(first.fatPct)}% → ${fmt(lastBC.fatPct)}% (${fmt(lastBC.fatPct-first.fatPct,1)}%p)${lastBC.date!==last.date?` [${lastBC.date} 실측 기준]`:''}`);
   lines.push(`골격근 손실비율(SURMOUNT-1 0.51 기준 참고): ${assess.ratio!==null?fmt(assess.ratio,2):'—'} — ${assess.label}`);
   lines.push(`전체기간 근력 세션 수: ${strengthSessions}회`);
   if(avgCal!==null) lines.push(`최근 14일 평균 섭취: 칼로리 ${avgCal}kcal / 단백질 ${avgProt}g / 탄수화물 ${avgCarb}g`);
