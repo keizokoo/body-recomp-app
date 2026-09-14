@@ -490,7 +490,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-13-b (기능 10종 추가: 유산소 구조화필드+인정기준 자동판정 / 저항운동 공백경보 / 골격근평가 신뢰도 캐비엇 / 허리둘레 통합참고 / 4주간격 일평균 변화율 컬럼 / 전체데이터 백업복원 / 부작용로그 교차분석 / 운동 특이조건 플래그 / 허리둘레 삭제 확인창 / 미사용 API직접호출 코드 제거. 이전 빌드: 2026-09-13-a)';
+const APP_BUILD_VERSION = '2026-09-14-a (마운자로 투여 알림 삭제: 리마인더 배너·스마트인사이트 증량검토 카드 제거, 투여기록/4주간격 비교 등 분석기능은 유지. 이전 빌드: 2026-09-13-b)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1204,30 +1204,11 @@ applyTheme();
 function checkReminders(){
   const results = [];
   const todayD = todayISO();
-  // 2026-08-20 수정: 기존엔 "오늘이 목요일이면 투여일"로 요일을 하드코딩해서 판단했음(과거 주석
-  // "4 = 목요일" 참고). 그런데 11차부터 부작용으로 투여 간격이 7일→10일로 바뀌면서 요일 자체가
-  // 매번 달라지게 됐고(11차 실제 투여일 2026-08-16은 일요일, 10차 대비 10일 간격), 이 하드코딩
-  // 때문에 매주 목요일마다 "오늘 투여일" 오알림이 계속 발생함(정희님 2026-08-20 리포트로 확인).
-  // 요일 가정을 완전히 버리고, 실제 마지막 두 차수 사이의 간격(일수)으로 다음 예상 투여일을
-  // 역산해 그 날짜(또는 그 이후, 아직 새 차수가 기록 안 됐으면 매일) 기준으로 알림.
-  const doses = state.mounjaroDoses;
-  if(doses.length){
-    const lastDose = doses[doses.length-1];
-    const prevDose = doses.length>=2 ? doses[doses.length-2] : null;
-    let intervalDays = 7; // 직전 차수 기록이 없어 간격을 역산할 수 없을 때만 쓰는 폴백값
-    if(prevDose){
-      const diff = Math.round((new Date(lastDose.date+'T00:00:00') - new Date(prevDose.date+'T00:00:00'))/86400000);
-      if(diff>0) intervalDays = diff;
-    }
-    const expectedNextDate = toLocalISO(new Date(new Date(lastDose.date+'T00:00:00').getTime() + intervalDays*86400000));
-    if(lastDose.date < todayD && todayD >= expectedNextDate){
-      const overdueDays = Math.round((new Date(todayD+'T00:00:00') - new Date(expectedNextDate+'T00:00:00'))/86400000);
-      results.push({
-        title: overdueDays>0 ? `마운자로 투여 예정일(${expectedNextDate})이 지났어요` : '오늘은 마운자로 투여 예정일이에요',
-        detail: `최근 실제 투여 간격(${intervalDays}일, ${lastDose.date} 기준 역산)으로 계산한 예상일이에요. 투여 후 이번 차수를 Sheet(Meta mounjaroDoses)에 기록해두는 걸 잊지 마세요 — 안 하면 대시보드/추적관리 탭이 지난 차수 기준으로 표시돼요.`
-      });
-    }
-  }
+  // 2026-09-14 삭제: 마운자로 투여 예정일 리마인더(요일 하드코딩 → 간격역산 방식으로
+  // 2026-08-20에 한 번 고쳤던 바로 그 기능)를 사용자 요청으로 완전히 제거함 — "투여는
+  // 알아서 할 테니 마운자로 관련 알림은 모두 삭제해달라"는 명시적 요청(2026-09-14).
+  // state.mounjaroDoses 자체(추적관리 탭의 투여 기록·4주간격 비교 등 분석 기능)는
+  // 알림이 아니라 데이터이므로 그대로 유지 — 여기서 지운 건 사전 리마인더 배너/알림뿐.
   const lastInbody = sortedInbody().slice(-1)[0];
   if(lastInbody){
     const gapDays = Math.round((new Date(todayD+'T00:00:00') - new Date(lastInbody.date+'T00:00:00'))/86400000);
@@ -2153,29 +2134,10 @@ function computeSmartAlerts(ib, meals, workouts){
     }
   }
 
-  // 11) 마운자로 4주간격(투여회차) 비교 — 감량 속도 변화(증량 판단용)
-  {
-    const intervals = computeDoseIntervalComparison();
-    if(intervals.length >= 2){
-      const prev = intervals[intervals.length-2], curr = intervals[intervals.length-1];
-      const prevRate = (prev.ma7Start.fatPct - prev.ma7End.fatPct) / prev.fullIntervalDays;
-      const currRate = (curr.ma7Start.fatPct - curr.ma7End.fatPct) / curr.elapsedDays;
-      if(prevRate > 0){
-        const ratioPct = Math.round((currRate/prevRate)*100);
-        const p1 = `${prev.startCycleNum}차→${prev.endCycleNum}차`;
-        const p2 = `${curr.startCycleNum}차→${curr.endCycleNum}차${curr.isProvisional?'(잠정)':''}`;
-        if(ratioPct <= 70){
-          push({tone:'neutral', icon:'target', score: 78,
-            title:'4주간격 비교 — 감량 속도 둔화',
-            detail:`${p1} 구간 체지방률 MA7 기준 하루평균 ${fmt(prevRate,3)}%p/일 감소에서, ${p2} 구간 ${fmt(currRate,3)}%p/일로 이전 구간의 약 ${ratioPct}% 수준으로 느려졌어요${curr.isProvisional?`(${curr.elapsedDays}/${curr.fullIntervalDays}일 경과 시점 잠정치)`:''}. 마운자로 증량 여부를 검토해볼 시점일 수 있어요 — 추적관리 탭 '4주간격(투여회차) 비교'에서 자세히 보세요.`});
-        } else if(ratioPct >= 130){
-          push({tone:'good', icon:'down', score: 50,
-            title:'4주간격 비교 — 감량 속도 유지/가속',
-            detail:`${p1} 대비 ${p2} 구간 체지방률 감소 속도가 오히려 빨라졌어요(이전 대비 ${ratioPct}%). 현재 루틴이 잘 맞고 있어요.`});
-        }
-      }
-    }
-  }
+  // 2026-09-14 삭제: 11) 마운자로 4주간격 비교 기반 "증량 검토" 알림 — 사용자 요청으로
+  // 제거함("투여는 알아서 할 테니 마운자로 관련 알림은 모두 삭제"). 4주간격 비교 표 자체
+  // (computeDoseIntervalComparison, 추적관리 탭)는 그대로 남아있어 원할 때 직접 볼 수 있음 —
+  // 여기서 지운 건 홈 탭에 자동으로 떠서 증량을 권하던 스마트 인사이트 카드뿐.
 
   if(candidates.length === 0){
     return [{tone:'good', icon:'target', title:'특이사항 없음', detail:'체중·체지방·골격근량·섭취 칼로리 모두 계획 범위 안에서 안정적으로 진행되고 있어요.'}];
@@ -3875,7 +3837,7 @@ function renderSettings(){
 
     <section class="card">
       <div class="section-label good">${secNum('05a3')}리마인더 알림</div>
-      <p class="p-dim">마운자로는 요일 고정이 아니라 최근 실제 투여 간격을 기준으로 예상 투여일을 계산해 알려드리고, 인바디 기록 공백 2일 이상일 때도 앱을 열면 안내 배너가 뜹니다(2026-08-20 수정 — 이전엔 "매주 목요일"로 고정돼 있어 투여 간격이 바뀌면 오알림이 났음). 브라우저 알림 권한을 허용하면 앱을 여는 순간 시스템 알림으로도 받을 수 있어요(진짜 백그라운드 푸시는 아니고, 앱을 열 때 조건을 검사하는 방식이에요).</p>
+      <p class="p-dim">인바디 기록 공백 2일 이상, 저항운동 공백 5일 이상일 때 앱을 열면 안내 배너가 뜹니다. 브라우저 알림 권한을 허용하면 앱을 여는 순간 시스템 알림으로도 받을 수 있어요(진짜 백그라운드 푸시는 아니고, 앱을 열 때 조건을 검사하는 방식이에요). 마운자로 투여 예정일 리마인더는 2026-09-14 요청으로 삭제했어요 — 투여는 직접 관리하시는 걸로 변경됨.</p>
       <div class="btn-row" style="margin-top:8px;">
         ${state.notifEnabled
           ? `<button class="btn btn-sm" onclick="disableNotif()">알림 꺼짐 상태로 전환</button><span class="chip good">허용됨</span>`
