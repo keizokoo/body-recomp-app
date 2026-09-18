@@ -499,7 +499,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-19-b (머니트레일 벤치마킹 5종 적용: ①삭제 동기화/tombstone — 로컬에서 지운 기록이 다음 동기화 때 서버에 남은 옛 값으로 되살아나던 구조적 결함 수정, ②push 직전 데이터 급감 경고 — 기간만료/삭제로 설명되지 않는 감소만 골라 경고, ③선언형 데이터 패치 시스템(DATA_PATCHES) — 앱 로드+동기화 직후 자동·멱등 적용, 설정탭에서 반영 여부 확인 가능, ④로컬 백업 이력(최근 10개) — 동기화/가져오기 직전 자동 스냅샷 + 설정탭 복원 버튼, ⑤필드(레코드) 단위 타임스탬프 우선 병합 — 서버 무조건 우선 대신 updatedAt 비교, 부수적으로 운동은 id 매칭으로 바꿔 "미동기화 신규 운동이 같은날 다른 운동 pull에 휩쓸려 사라지는" 잠재 버그도 함께 수정. 서버(Code.gs)는 InBody/Workouts/Meals/Waist 시트에 updatedAt 컬럼 추가(기존 시트도 자동 보강))';
+const APP_BUILD_VERSION = '2026-09-19-c (코드 전체 분석 기반 20개 개선사항 적용: 동기화 — 목표값(goals)/부작용·즐겨찾기/걸음수 클라우드 양방향 동기화 추가, 텔레그램이 goals 값 사용하도록 수정, 저항운동 공백판정 클라이언트·서버 로직 통일; 분석 — 허리둘레×체지방량 교차검증 카드, 걸음수 편차 칼로리목표 참고문구, 식사기록 공백 단독 경고, 칼로리 이탈 중복체크 "최근추세/오늘단기" 구분; 운동 — 종목별 1RM 추이·정체 감지, PT세션 구조화 필드(ptSession) 전환, 상세입력 없을 시 PR 미감지 안내; 텔레그램 — 식사공백/칼로리·단백질 미달/체지방률 추세정체 알림 추가; 기타 — 허리둘레 측정조건(공복여부) 필드, 낡은 안내문구·JSON 예시 갱신, 유지보수 원칙 주석 보강(SPECIAL_DAY_KEYWORDS 레거시 명시, DATA_PATCHES 우선사용). 이전 빌드의 머니트레일 벤치마킹 5종은 그대로 유지)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -643,6 +643,16 @@ const CARDIO_VALID_RULE = {minHR:105, minDurationMin:20};
 // (전체 공백 자체를 숨기지는 않음 — 저항운동 공백 경보는 이 플래그와 무관하게 항상 그대로 뜬다.)
 const WORKOUT_CONDITION_TYPES = ['travel','poor_condition','equipment_limit','injury'];
 const WORKOUT_CONDITION_LABELS = {travel:'여행중', poor_condition:'컨디션난조', equipment_limit:'장비제약(호텔 등)', injury:'부상/통증'};
+// 2026-09-19 추가(20선 16번): PT(개인레슨) 세션 판정이 그동안 `${name} ${note}`.includes('PT')
+// 텍스트 부분일치 하나뿐이었음 — 단어 경계 없는 대소문자 구분 매칭이라 오탐/누락 가능성이 있었음.
+// specialCondition(여행중/컨디션난조 등)과는 성격이 달라(PT 세션도 볼륨·PR 비교에서 제외할 이유는
+// 없음) 같은 필드에 얹지 않고, 별도의 독립 boolean 필드(ptSession)로 구조화한다. 필드가 아직
+// 없는 레거시 기록(ptSession===null/undefined)에 한해서만 기존 텍스트 매칭으로 폴백.
+function isPTSession_(w){
+  if(w.ptSession===true) return true;
+  if(w.ptSession===false) return false;
+  return `${w.name||''} ${w.note||''}`.includes('PT');
+}
 
 function parseSteps(text){
   if(!text) return null;
@@ -865,7 +875,7 @@ function exerciseGroupKey_(name){
   return String(name||'').replace(/\s+/g,'').toLowerCase();
 }
 function computeExercisePRs(){
-  const groups = {}; // key -> {displayName, part, best:{oneRM,weight,reps,date}, lastDate}
+  const groups = {}; // key -> {displayName, part, best:{oneRM,weight,reps,date}, lastDate, sessions:[{date,oneRM,weight,reps}]}
   [...state.workouts].sort((a,b)=>a.date.localeCompare(b.date)).forEach(w=>{
     if(!Array.isArray(w.exercises)) return;
     w.exercises.forEach(ex=>{
@@ -873,16 +883,40 @@ function computeExercisePRs(){
       const oneRM = estimate1RM(ex.weight, ex.reps);
       if(oneRM==null) return;
       const key = exerciseGroupKey_(ex.name);
-      if(!groups[key]) groups[key] = {displayName: ex.name.trim(), part: ex.part||null, best:null, lastDate:null};
+      if(!groups[key]) groups[key] = {displayName: ex.name.trim(), part: ex.part||null, best:null, lastDate:null, sessions:[]};
       groups[key].displayName = ex.name.trim(); // 표시는 가장 최근에 쓴 표기 그대로
       if(ex.part) groups[key].part = ex.part;
       groups[key].lastDate = w.date;
+      // 2026-09-19 추가(20선 11번): 세션별(날짜별) 최고 추정1RM 히스토리도 함께 축적 — "역대 최고
+      // 1개"뿐이던 기존 PR 추적에 추이/정체 감지를 더하기 위함. 같은 날 여러 세트를 기록했으면
+      // 그날의 최고값만 세션 히스토리에 남긴다(중복 카운트 방지).
+      const lastSession = groups[key].sessions[groups[key].sessions.length-1];
+      if(lastSession && lastSession.date===w.date){
+        if(oneRM > lastSession.oneRM){ lastSession.oneRM = oneRM; lastSession.weight = Number(ex.weight); lastSession.reps = Number(ex.reps); }
+      } else {
+        groups[key].sessions.push({date:w.date, oneRM, weight:Number(ex.weight), reps:Number(ex.reps)});
+      }
       if(!groups[key].best || oneRM > groups[key].best.oneRM){
         groups[key].best = {oneRM, weight:Number(ex.weight), reps:Number(ex.reps), date:w.date};
       }
     });
   });
-  return Object.values(groups).filter(g=>g.best).sort((a,b)=> b.best.oneRM - a.best.oneRM);
+  const list = Object.values(groups).filter(g=>g.best);
+  // 최근 5회 세션의 추정1RM이 최고치 대비 3% 이내에서만 오가면 "정체"로 판정. 세션이 5회 미만이면
+  // 판정을 보류(plateau:null)해 데이터 부족을 정체로 오판하지 않는다.
+  const PLATEAU_SESSIONS = 5, PLATEAU_SPREAD_PCT = 3;
+  list.forEach(g=>{
+    if(g.sessions.length >= PLATEAU_SESSIONS){
+      const recent = g.sessions.slice(-PLATEAU_SESSIONS);
+      const rms = recent.map(s=>s.oneRM);
+      const maxRM = Math.max(...rms), minRM = Math.min(...rms);
+      const spreadPct = maxRM>0 ? ((maxRM-minRM)/maxRM)*100 : 0;
+      g.plateau = {isPlateau: spreadPct<=PLATEAU_SPREAD_PCT, recentN: PLATEAU_SESSIONS, spreadPct, sessions: recent};
+    } else {
+      g.plateau = null;
+    }
+  });
+  return list.sort((a,b)=> b.best.oneRM - a.best.oneRM);
 }
 // 최근 기록에 실제로 등장한 종목명 목록(1-A 자동완성 datalist용). 최신순으로 중복 제거.
 function distinctExerciseNames(){
@@ -1087,7 +1121,7 @@ function computeWorkoutInsights(workouts){
   const ptRatio = (dates) => {
     const sessions = workouts.filter(w=>dates.includes(w.date) && parseVolume(w.volume)>0 && !w.specialCondition);
     if(!sessions.length) return null;
-    const ptCount = sessions.filter(w=>`${w.name||''} ${w.note||''}`.includes('PT')).length;
+    const ptCount = sessions.filter(w=>isPTSession_(w)).length;
     return {ratio: ptCount/sessions.length*100, total: sessions.length, ptCount};
   };
   const recentPT = ptRatio(last14), priorPT = ptRatio(daysAgoList(28).filter(d=>!last14.includes(d)));
@@ -1171,7 +1205,14 @@ const SEED_SIDE_EFFECTS = [];
 const SEED_FAVORITES = [
   {id:'fav_seed_1', name:'단백질 쉐이크 2스쿱', calories:240, protein:48, carbs:6},
 ];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1', deletedIds:'brc_deletedids_v1', backupHistory:'brc_backuphistory_v1', pushSizeMeta:'brc_pushsizemeta_v1'};
+// 2026-09-19 명확화(20선 19번): 아래 키들의 "_v숫자" 접미사는 과거(DATA_PATCHES 도입 이전)에
+// 스키마가 바뀔 때마다 키 이름 자체를 새로 바꿔서(예: workout v5→v6) 마이그레이션하던 옛 방식의
+// 흔적이다. 이 방식은 예전 키에 남아있던 로컬 전용(아직 클라우드에 동기화 안 된) 데이터가 조용히
+// 버려질 위험이 있다 — 새 키는 비어있는 채로 시작하고, 예전 키의 내용을 자동으로 옮겨주지
+// 않기 때문. 이미 적용된 과거 마이그레이션을 지금 되돌릴 이유는 없어 그대로 두지만, **앞으로
+// 스키마를 또 바꿀 일이 생기면 키 이름을 바꾸는 이 방식 대신 아래 DATA_PATCHES(선언형 마이그레이션
+// 시스템, 기존 데이터를 그대로 보정하고 적용 여부를 로그로 확인 가능)를 우선 사용할 것.**
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1', deletedIds:'brc_deletedids_v1', backupHistory:'brc_backuphistory_v1', pushSizeMeta:'brc_pushsizemeta_v1', favoritesUpdatedAt:'brc_favorites_updatedat_v1'};
 /* ============================================================
    선언형 데이터 패치 시스템 (v1) — 2026-09-19 추가(머니트레일 벤치마킹)
    ============================================================
@@ -1186,7 +1227,9 @@ const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_mea
      - upsertRecord: {type:'upsertRecord', target:..., record:{...}} (같은 키가 이미 있으면 건너뜀)
      - ensureField: {type:'ensureField', target:..., field, default} (해당 필드가 undefined인 모든 레코드에 기본값 채움 — 스키마 마이그레이션용)
      - removeRecord: {type:'removeRecord', target:..., key:<date 또는 id>}
-   inbody/meals/waist는 date로, workouts는 id로 레코드를 식별한다(recordKeyField_ 참고). */
+   inbody/meals/waist는 date로, workouts는 id로 레코드를 식별한다(recordKeyField_ 참고).
+   [20선 19번] LS_KEYS의 "_v숫자" 키 이름 교체 방식(위 주석 참고)보다 이 시스템을 항상 우선
+   사용할 것 — 이유는 LS_KEYS 선언부 주석에 정리해둠. */
 const DATA_PATCH_LOG_KEY = 'brc_datapatch_log_v1';
 const DATA_PATCHES = [
   // 예시: {type:'ensureField', target:'workouts', field:'treadmillSteps', default:null},
@@ -1250,11 +1293,15 @@ function saveArr(key, arr){ try{ localStorage.setItem(key, JSON.stringify(arr));
 function addWaistEntry(){
   const dateEl = document.getElementById('waistDateInput');
   const valEl = document.getElementById('waistValueInput');
+  // 2026-09-19 추가(20선 14번): 측정 조건(아침 공복 여부) 체크박스 — 안내 문구로만 "같은
+  // 시간대에 재보라"고 요청하는 대신, 최소한의 구조화 필드 하나로 "이 값이 비교 가능한
+  // 조건인지"를 앱이 스스로 판단할 근거를 남긴다.
+  const fastingEl = document.getElementById('waistFastingInput');
   const date = dateEl.value;
   const val = parseFloat(valEl.value);
   if(!date || isNaN(val) || val<=0){ alert('날짜와 허리둘레(cm)를 정확히 입력해주세요.'); return; }
   state.waist = state.waist.filter(w=>w.date!==date);
-  state.waist.push({date, waist: val, updatedAt: new Date().toISOString()});
+  state.waist.push({date, waist: val, fasting: fastingEl ? !!fastingEl.checked : null, updatedAt: new Date().toISOString()});
   state.waist.sort((a,b)=>a.date.localeCompare(b.date));
   saveArr(LS_KEYS.waist, state.waist);
   unmarkDeleted_('waist', date); // 2026-09-19 추가: 삭제 의도 철회로 간주
@@ -1269,6 +1316,39 @@ function deleteWaistEntry(date){
   state.waist = state.waist.filter(w=>w.date!==date);
   saveArr(LS_KEYS.waist, state.waist);
   markDeleted_('waist', date); // 2026-09-19 추가: tombstone
+  render();
+}
+// 2026-09-19 추가(20선 4번): 이전까지 steps는 클라우드 pull로만 채워지고 앱 안에서 직접
+// 입력·수정·삭제하는 UI가 전혀 없어 완전 읽기 전용이었음 — waist와 동일한 패턴(날짜+숫자 1개)으로
+// 최소 입력 UI 추가. km/kcal/floors처럼 Sheet에만 있던 부가 필드는 기존 값이 있으면 보존하고,
+// 없으면 비워둔다(표에서 undefined로 안 보이게 렌더링 쪽에서 널 체크).
+function addStepEntry(){
+  const dateEl = document.getElementById('stepsDateInput');
+  const valEl = document.getElementById('stepsValueInput');
+  const date = dateEl.value;
+  const val = parseInt(valEl.value, 10);
+  if(!date || isNaN(val) || val<0){ alert('날짜와 걸음수를 정확히 입력해주세요.'); return; }
+  const existing = state.steps.find(s=>s.date===date);
+  state.steps = state.steps.filter(s=>s.date!==date);
+  state.steps.push({
+    date, steps: val,
+    km: existing && existing.km!=null ? existing.km : null,
+    kcal: existing && existing.kcal!=null ? existing.kcal : null,
+    floors: existing && existing.floors!=null ? existing.floors : null,
+    updatedAt: new Date().toISOString()
+  });
+  state.steps.sort((a,b)=>a.date.localeCompare(b.date));
+  saveArr(LS_KEYS.steps, state.steps);
+  unmarkDeleted_('steps', date); // 삭제 의도 철회로 간주(waist와 동일 패턴)
+  markUpdated();
+  valEl.value = '';
+  render();
+}
+function deleteStepEntry(date){
+  if(!confirm(`${date} 걸음수 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  state.steps = state.steps.filter(s=>s.date!==date);
+  saveArr(LS_KEYS.steps, state.steps);
+  markDeleted_('steps', date); // tombstone
   render();
 }
 function loadAiNote(){
@@ -1328,7 +1408,7 @@ let state = {
   reportHistory: loadArr(LS_KEYS.reportHistory, []),
   // 2026-09-19 추가(머니트레일 벤치마킹): 삭제 동기화(tombstone) — 카테고리별 {키: 삭제시각(ISO)}.
   // markDeleted_/unmarkDeleted_/applyTombstones_ 참고.
-  deletedIds: loadArr(LS_KEYS.deletedIds, {inbody:{}, workouts:{}, meals:{}, steps:{}, waist:{}}),
+  deletedIds: loadArr(LS_KEYS.deletedIds, {inbody:{}, workouts:{}, meals:{}, steps:{}, waist:{}, sideEffects:{}}),
   aiNote: loadAiNote(),
   reportNote: loadReportNote(),
   lastUpdated: localStorage.getItem(LS_KEYS.lastupdate) || null,
@@ -1923,10 +2003,10 @@ function openEditModal(kind, rec){
     // 열 때 기존값이 채워지도록 추가 — 안 하면 수정 시 매번 값이 비어 보이고 저장하면 지워짐.
     if(rec.exercises && rec.exercises.length){
       modalState.exerciseRows = rec.exercises.map(e => ({name:e.name, part:e.part, sets:e.sets, reps:e.reps, weight:e.weight}));
-      modalState.form = {date:rec.date, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps, avgHR:rec.avgHR, durationMin:rec.durationMin, distanceKm:rec.distanceKm, specialCondition:rec.specialCondition||''};
+      modalState.form = {date:rec.date, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps, avgHR:rec.avgHR, durationMin:rec.durationMin, distanceKm:rec.distanceKm, specialCondition:rec.specialCondition||'', ptSession:!!rec.ptSession};
     } else {
       modalState.exerciseRows = [{}];
-      modalState.form = {date:rec.date, name:rec.name, part:rec.part, volume:rec.volume, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps, avgHR:rec.avgHR, durationMin:rec.durationMin, distanceKm:rec.distanceKm, specialCondition:rec.specialCondition||''};
+      modalState.form = {date:rec.date, name:rec.name, part:rec.part, volume:rec.volume, calories:rec.calories, note:rec.note, treadmillSteps:rec.treadmillSteps, avgHR:rec.avgHR, durationMin:rec.durationMin, distanceKm:rec.distanceKm, specialCondition:rec.specialCondition||'', ptSession:!!rec.ptSession};
     }
   } else if(kind==='meal'){
     modalState.exerciseRows = [];
@@ -2045,6 +2125,68 @@ function waistTrendNote(){
   const first = w[0], last = w[w.length-1];
   const delta = last.waist - first.waist;
   return ` 참고로 허리둘레는 ${first.date.slice(5)} ${fmt(first.waist,1)}cm → ${last.date.slice(5)} ${fmt(last.waist,1)}cm(${delta>0?'+':''}${fmt(delta,1)}cm)예요 — 체지방 변화와 같은 방향인지 함께 참고하세요.`;
+}
+// 2026-09-19 추가(20선 6번): 프로젝트 메모리(overview.md)에 명시된 "두 번째 프레임워크(InBody
+// 추세·운동수행·단백질·허리둘레)" 4축 중 허리둘레가 waistTrendNote()의 단순 캡션 문장 하나로만
+// 쓰이고 있었음 — 체지방량(kg) 변화 방향과 허리둘레 변화 방향이 서로 같은지 교차검증하는 별도
+// 인사이트를 추가해, 이 축을 "장식"이 아니라 실제 판단 근거로 채운다.
+// 2026-09-19 추가(20선 8번): computeCalorieTarget(bmr, eatKcal)는 BMR×1.5-550 고정 활동계수만
+// 쓰고 그날의 실제 걸음수/NEAT를 입력으로 받지 않음 — 공식 자체를 바꾸는 대신, 최근 평균 대비
+// 걸음수가 크게 벗어난 날에 한해 칼로리 목표 옆에 참고 문구만 가볍게 덧붙인다.
+function stepsCalorieCaveatNote_(){
+  if(!state.steps || state.steps.length<4) return '';
+  const sorted = [...state.steps].sort((a,b)=>a.date.localeCompare(b.date));
+  const todayRec = sorted.find(s=>s.date===todayISO()) || sorted[sorted.length-1];
+  if(!todayRec || todayRec.steps==null) return '';
+  const baseline = sorted.filter(s=>s.date!==todayRec.date).slice(-14).filter(s=>s.steps!=null);
+  if(baseline.length<3) return '';
+  const avgSteps = baseline.reduce((s,b)=>s+b.steps,0)/baseline.length;
+  if(!avgSteps) return '';
+  const diffPct = ((todayRec.steps-avgSteps)/avgSteps)*100;
+  const dayLabel = todayRec.date===todayISO() ? '오늘' : `${todayRec.date} 최근 기록 기준`;
+  if(diffPct >= 40){
+    return ` 참고로 ${dayLabel} 걸음수(${fmt(todayRec.steps,0)}보)가 최근 평균(${fmt(avgSteps,0)}보)보다 ${fmt(diffPct,0)}% 많아요 — 활동량이 늘어난 날이라 실제 필요 칼로리는 위 목표보다 더 높을 수 있어요.`;
+  }
+  if(diffPct <= -40){
+    return ` 참고로 ${dayLabel} 걸음수(${fmt(todayRec.steps,0)}보)가 최근 평균(${fmt(avgSteps,0)}보)보다 ${fmt(Math.abs(diffPct),0)}% 적어요 — 활동량이 줄어든 날이라 실제 필요 칼로리는 위 목표보다 더 낮을 수 있어요.`;
+  }
+  return '';
+}
+function computeWaistFatCrossCheck(){
+  if(!state.waist || state.waist.length<2) return null;
+  const w = [...state.waist].sort((a,b)=>a.date.localeCompare(b.date));
+  const wFirst = w[0], wLast = w[w.length-1];
+  if(wFirst.date === wLast.date) return null;
+  const ib = sortedInbody().filter(r=>r.fat!=null && !isNaN(r.fat));
+  if(ib.length<2) return null;
+  // 허리둘레 측정일과 정확히 일치하는 인바디 체성분 실측일이 없을 수 있으므로, 허리둘레 첫/마지막
+  // 날짜에 가장 가까운 인바디 체지방량 실측치를 각각 매칭한다.
+  function closest(dateStr){
+    const target = new Date(dateStr).getTime();
+    return ib.reduce((best, r) => {
+      const d = Math.abs(new Date(r.date).getTime() - target);
+      return (!best || d < best.d) ? {r, d} : best;
+    }, null);
+  }
+  const fatFirstMatch = closest(wFirst.date);
+  const fatLastMatch = closest(wLast.date);
+  if(!fatFirstMatch || !fatLastMatch || fatFirstMatch.r.date === fatLastMatch.r.date) return null;
+  const waistDelta = wLast.waist - wFirst.waist;
+  const fatDelta = fatLastMatch.r.fat - fatFirstMatch.r.fat;
+  const sameDirection = (waistDelta<=0 && fatDelta<=0) || (waistDelta>=0 && fatDelta>=0);
+  let tone, text;
+  if(Math.abs(waistDelta) < 0.5 || Math.abs(fatDelta) < 0.1){
+    tone = 'neutral';
+    text = `허리둘레(${delta_(waistDelta)}cm)와 체지방량(${delta_(fatDelta)}kg) 변화가 아직 크지 않아 방향성을 판단하기 일러요 — 데이터가 더 쌓이면 다시 확인해보세요.`;
+  } else if(sameDirection){
+    tone = 'good';
+    text = `허리둘레(${delta_(waistDelta)}cm)와 체지방량(${delta_(fatDelta)}kg) 변화가 같은 방향이에요 — 두 지표가 서로를 뒷받침하고 있어요.`;
+  } else {
+    tone = 'warn';
+    text = `허리둘레(${delta_(waistDelta)}cm)와 체지방량(${delta_(fatDelta)}kg) 변화 방향이 서로 달라요 — 복부 외 부위 체지방 변화이거나 부종·측정 조건(공복 여부 등) 차이일 수 있어요. 같은 조건에서 재측정해 추이를 다시 확인해보세요.`;
+  }
+  function delta_(v){ return `${v>0?'+':''}${fmt(v,1)}`; }
+  return {tone, text, waistRange:`${wFirst.date.slice(5)}~${wLast.date.slice(5)}`, fatRange:`${fatFirstMatch.r.date.slice(5)}~${fatLastMatch.r.date.slice(5)}`};
 }
 function computeMuscleAssessment(startRec, endRec){
   // [2026-09-13 버그수정] endRec은 반드시 lastWithMuscle()로 골라야 함 — 단순 배열 마지막 행(ib[ib.length-1])을
@@ -2187,11 +2329,20 @@ function computeSmartAlerts(ib, meals, workouts){
   // 2026-08-25 추가: 건강검진/시술 전처치(장정결·금식)로 인한 의도적 저칼로리일도 특이일로
   // 인식되도록 키워드 보강 — 기존엔 '설사' 등 증상 키워드만 있어서, 검진 준비로 미리 소식·금식한
   // 날(예: 대장내시경 전날)은 특이일로 안 잡히고 그냥 "칼로리 부족"으로만 평가되는 문제가 있었음.
+  // 2026-09-19 명확화(20선 15번): 이 목록은 "레거시 전용" — specialDayType 구조화 필드 도입
+  // (2026-08-13) 이전에 저장된, 그 필드가 없는 과거 기록의 note 텍스트를 사후 판정하기 위한
+  // 하위호환용일 뿐이다. 새 기록은 항상 위 isSpecialDay()가 specialDayType을 우선 쓰므로 이
+  // 키워드 배열을 타지 않는다 — "지금도 신규 기록에 쓰이는 감지 방식"으로 착각해 여기에 새
+  // 표현을 추가하기보다는, 새 특이일 유형은 모달의 SPECIAL_DAY_TYPES/specialDayType 쪽에 추가할 것.
   const SPECIAL_DAY_KEYWORDS = ['설사','컨디션난조','몸살','장염','병원','속탈','메스꺼움','구토','식중독','감기','검진','금식','장정결','시술'];
   const isSpecialDay = (m) => {
     if(m.specialDayType) return m.specialDayType !== 'none';
     return SPECIAL_DAY_KEYWORDS.some(k => (m.note||'').includes(k));
   };
+  // 2026-09-19 수정(20선 10번): 이 블록(최근 5끼 평균, ±150kcal 여유)과 아래 3b) 블록(오늘 하루
+  // 실측, 여유 없음)은 둘 다 칼로리 이탈을 판정하지만 기준이 달라 같은 날 서로 다른 결론(한쪽은
+  // 조용한데 다른 쪽은 경고)이 날 수 있음 — 두 카드가 동시에 떠도 모순처럼 안 보이도록 제목에
+  // "최근 추세"/"오늘 단기"를 명시하고 여유폭을 문구에 직접 노출.
   if(last.bmr && meals.length >= 5){
     const targetLow = Math.round(last.bmr*1.5-550);
     const targetHigh = targetLow+100;
@@ -2204,12 +2355,12 @@ function computeSmartAlerts(ib, meals, workouts){
       const avgCal = recent5.reduce((s,m)=>s+(m.calories||0),0)/recent5.length;
       if(avgCal > targetHigh+150){
         push({tone:'warn', icon:'up', score: 80,
-          title:'섭취 칼로리가 목표보다 높아요',
-          detail:`목표 ${targetLow}~${targetHigh}kcal인데, 최근 정상섭취 ${recent5.length}끼 평균 ${fmt(avgCal,0)}kcal예요.${excludeNote}`});
+          title:'섭취 칼로리가 목표보다 높아요 (최근 추세)',
+          detail:`목표 ${targetLow}~${targetHigh}kcal(±150kcal 여유 적용)인데, 최근 정상섭취 ${recent5.length}끼 평균 ${fmt(avgCal,0)}kcal예요. 아래 "오늘 단기" 카드와 결론이 다를 수 있어요 — 이쪽은 며칠간의 추세, 아래는 오늘 하루만 봐요.${excludeNote}`});
       } else if(avgCal < targetLow-150){
         push({tone:'warn', icon:'down', score: 83,
-          title:'섭취 칼로리가 너무 낮아요',
-          detail:`목표 ${targetLow}~${targetHigh}kcal인데, 최근 정상섭취 ${recent5.length}끼 평균 ${fmt(avgCal,0)}kcal예요. 과도한 저칼로리는 근손실·대사저하 위험이 있어요.${excludeNote}`});
+          title:'섭취 칼로리가 너무 낮아요 (최근 추세)',
+          detail:`목표 ${targetLow}~${targetHigh}kcal(±150kcal 여유 적용)인데, 최근 정상섭취 ${recent5.length}끼 평균 ${fmt(avgCal,0)}kcal예요. 과도한 저칼로리는 근손실·대사저하 위험이 있어요.${excludeNote}`});
       }
     }
     if(ib.length >= 8){
@@ -2238,10 +2389,10 @@ function computeSmartAlerts(ib, meals, workouts){
       if(calIntake!==null && carbIntake!==null){
         const calDelta = calIntake < calTarget.targetLow ? calIntake-calTarget.targetLow : (calIntake > calTarget.targetHigh ? calIntake-calTarget.targetHigh : 0);
         const carbDelta = carbIntake < carbTarget.range[0] ? carbIntake-carbTarget.range[0] : (carbIntake > carbTarget.range[1] ? carbIntake-carbTarget.range[1] : 0);
-        detail += ` 현재 섭취 ${fmt(calIntake,0)}kcal(델타 ${calDelta===0?'범위내':(calDelta>0?'+':'')+fmt(calDelta,0)}) / 탄수 ${fmt(carbIntake,0)}g(델타 ${carbDelta===0?'범위내':(carbDelta>0?'+':'')+fmt(carbDelta,0)}).`;
+        detail += ` 현재 섭취 ${fmt(calIntake,0)}kcal(델타 ${calDelta===0?'범위내':(calDelta>0?'+':'')+fmt(calDelta,0)}, 여유 없이 정확히 비교) / 탄수 ${fmt(carbIntake,0)}g(델타 ${carbDelta===0?'범위내':(carbDelta>0?'+':'')+fmt(carbDelta,0)}).`;
         if(calDelta!==0 || carbDelta!==0) tone = 'warn'; else tone = 'good';
       }
-      push({tone, icon:'target', score: 58, title:`오늘 목표 (칼로리 EAT보정 + 탄수 ${carbTarget.tier}등급)`, detail});
+      push({tone, icon:'target', score: 58, title:`오늘 목표 (오늘 단기 · 칼로리 EAT보정 + 탄수 ${carbTarget.tier}등급)`, detail});
     }
   }
 
@@ -2300,6 +2451,23 @@ function computeSmartAlerts(ib, meals, workouts){
   if(gapDays >= 3){
     push({tone:'warn', icon:'target', score: 60 + gapDays*3,
       title:'최근 인바디 측정 공백', detail:`마지막 측정일이 ${last.date} — ${gapDays}일째예요. 추세 판단 정확도가 떨어질 수 있어요.`});
+  }
+
+  // 7b) 2026-09-19 추가(20선 9번): 인바디 공백(위 7번)·저항운동 공백(checkReminders())은 각각
+  // 독립 알림 후보가 있는데, 식사기록 공백은 mealStaleNote처럼 다른 지표 문장 뒤에 괄호로 붙는
+  // 캐비어트만 있고 단독 경고가 없었음 — 동일한 "N일째 공백" 패턴으로 독립 후보 추가.
+  if(meals && meals.length){
+    const lastMealDate = [...meals].map(m=>m.date).sort().slice(-1)[0];
+    const mealGapDaysAlert = Math.round((new Date(todayISO()+'T00:00:00') - new Date(lastMealDate+'T00:00:00'))/86400000);
+    if(mealGapDaysAlert >= 2){
+      push({tone:'warn', icon:'target', score: 55 + mealGapDaysAlert*3,
+        title:'최근 식사 기록 공백',
+        detail:`마지막 식사 기록일이 ${lastMealDate} — ${mealGapDaysAlert}일째예요. 칼로리·단백질 목표 준수율 계산이 최신 상태를 반영하지 못하고 있을 수 있어요.`});
+    }
+  } else {
+    push({tone:'warn', icon:'target', score: 50,
+      title:'식사 기록이 아직 없어요',
+      detail:'식단 탭에서 첫 기록을 추가하면 칼로리·단백질 목표 준수율을 계산할 수 있어요.'});
   }
 
   // 8) 목표 도달 예상 기간 — blockMA7Delta(최근 1주 평균 vs 직전 1주 평균)로 통일
@@ -2542,8 +2710,10 @@ function addSideEffect(){
   const date = document.getElementById('se-date-input').value || todayISO();
   const note = document.getElementById('se-note-input') ? document.getElementById('se-note-input').value.trim() : '';
   if(!sideEffectForm.symptom){ alert('증상을 하나 선택해주세요.'); return; }
-  state.sideEffects.push({id:makeId('se'), date, symptom:sideEffectForm.symptom, severity:sideEffectForm.severity, note});
+  const newSE = {id:makeId('se'), date, symptom:sideEffectForm.symptom, severity:sideEffectForm.severity, note, updatedAt: new Date().toISOString()};
+  state.sideEffects.push(newSE);
   saveArr(LS_KEYS.sideEffects, state.sideEffects);
+  unmarkDeleted_('sideEffects', newSE.id); // 2026-09-19 추가(20선 3번): 신규 id라 사실상 no-op이지만, 다른 add* 함수들과의 일관성을 위해 호출
   sideEffectForm = {symptom:'', severity:'mild', note:''};
   markUpdated();
   render();
@@ -2552,6 +2722,7 @@ function deleteSideEffect(id){
   if(!confirm('이 부작용 기록을 삭제할까요?')) return;
   state.sideEffects = state.sideEffects.filter(s=>s.id!==id);
   saveArr(LS_KEYS.sideEffects, state.sideEffects);
+  markDeleted_('sideEffects', id); // 2026-09-19 추가(20선 3번): 클라우드 동기화 대상이 됐으므로 tombstone 필요
   render();
 }
 function renderSideEffectForm(){
@@ -3140,7 +3311,14 @@ function renderWorkoutTab(){
       <div class="section-label good">${secNum('W4b')}NEAT / 걸음수</div>
       ${(() => {
         const steps = [...state.steps].sort((a,b)=>b.date.localeCompare(a.date));
-        if(steps.length===0) return `<div class="empty-state" style="padding:30px 10px;">걸음수 기록이 없습니다.</div>`;
+        // 2026-09-19 추가(20선 4번): 이전까지 steps는 클라우드 pull로만 채워지는 읽기 전용
+        // 데이터였음 — 허리둘레 입력 폼과 동일한 패턴으로 날짜+걸음수 입력 UI 추가.
+        const stepsInputRow = `<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0;">
+          <input type="date" id="stepsDateInput" value="${todayISO()}" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
+          <input type="number" step="1" id="stepsValueInput" placeholder="걸음 수" style="width:100px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+          <button onclick="addStepEntry()" class="btn-primary" style="padding:8px 18px; border-radius:8px; border:none; background:var(--c-neutral); color:#fff; font-weight:600; cursor:pointer;">추가</button>
+        </div>`;
+        if(steps.length===0) return stepsInputRow + `<div class="empty-state" style="padding:30px 10px;">걸음수 기록이 없습니다. 위에서 날짜와 걸음 수를 입력해 추가해보세요.</div>`;
         const breakdowns = steps.map(s => ({...s, ...computeStepBreakdown(s, workouts)}));
         const last7 = daysAgoList(7), last14 = daysAgoList(14);
         const recent7 = breakdowns.filter(b=>last7.includes(b.date));
@@ -3159,6 +3337,7 @@ function renderWorkoutTab(){
         }
 
         return `
+          ${stepsInputRow}
           <div class="insight-grid" style="margin-bottom:16px;">
             <div class="card insight tone-neutral">
               <div class="ic-label"><span class="ic-icon">${ICONS.award}</span>최근 7일 평균 총 걸음</div>
@@ -3180,15 +3359,16 @@ function renderWorkoutTab(){
           ${state.expandedTables['stepsTable'] ? `
           <div style="overflow-x:auto; margin-top:10px;">
             <table class="data-table">
-              <thead><tr><th style="text-align:left">날짜</th><th>총 걸음</th><th>트레드밀</th><th>NEAT</th><th>거리</th><th>칼로리</th></tr></thead>
+              <thead><tr><th style="text-align:left">날짜</th><th>총 걸음</th><th>트레드밀</th><th>NEAT</th><th>거리</th><th>칼로리</th><th></th></tr></thead>
               <tbody>
                 ${breakdowns.map(b => `<tr>
                   <td style="text-align:left">${b.date}</td>
                   <td>${b.total.toLocaleString()}</td>
                   <td class="${b.treadmillSteps>0?'warn-text':''}">${b.treadmillSteps>0?'-'+b.treadmillSteps.toLocaleString():'—'}</td>
                   <td class="good-text">${b.neat.toLocaleString()}</td>
-                  <td>${b.km}km</td>
-                  <td>${b.kcal}kcal</td>
+                  <td>${b.km!=null?b.km+'km':'—'}</td>
+                  <td>${b.kcal!=null?b.kcal+'kcal':'—'}</td>
+                  <td><button onclick="deleteStepEntry('${b.date}')" style="background:none; border:none; color:var(--text-faint); cursor:pointer; font-family:var(--font-body); font-size:12px;">삭제</button></td>
                 </tr>`).join('')}
               </tbody>
             </table>
@@ -3232,7 +3412,7 @@ function renderWorkoutTab(){
         const shown = state.expandedTables['exercisePRs'] ? prs : prs.slice(0,8);
         return `<div style="overflow-x:auto;">
           <table class="data-table">
-            <thead><tr><th style="text-align:left">종목</th><th style="text-align:left">부위</th><th>추정 1RM</th><th style="text-align:left">최고기록</th><th style="text-align:left">최근 기록일</th></tr></thead>
+            <thead><tr><th style="text-align:left">종목</th><th style="text-align:left">부위</th><th>추정 1RM</th><th style="text-align:left">최고기록</th><th style="text-align:left">최근 기록일</th><th style="text-align:left">추이</th></tr></thead>
             <tbody>
               ${shown.map(p => `<tr>
                 <td style="text-align:left; font-family:var(--font-body); font-weight:600;">${esc(p.displayName)}</td>
@@ -3240,12 +3420,13 @@ function renderWorkoutTab(){
                 <td class="mono" style="font-weight:700; color:var(--c-accent-strong);">${Math.round(p.best.oneRM)}kg</td>
                 <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body);">${p.best.weight}kg×${p.best.reps}회 (${p.best.date.slice(5)})</td>
                 <td style="text-align:left; color:var(--text-faint); font-family:var(--font-body);">${p.lastDate}</td>
+                <td style="text-align:left; font-family:var(--font-body); font-size:11.5px;">${!p.plateau ? `<span style="color:var(--text-faint);">데이터 부족(5회↑ 필요)</span>` : p.plateau.isPlateau ? `<span class="warn-text">정체(최근 ${p.plateau.recentN}회 ±${fmt(p.plateau.spreadPct,1)}%)</span>` : `<span class="good-text">진행 중</span>`}</td>
               </tr>`).join('')}
             </tbody>
           </table>
         </div>
         ${prs.length>8 ? expandToggleRow('exercisePRs', prs.length, '전체 종목 보기') : ''}
-        <div class="note-box" style="margin-top:10px;">Epley 공식 기반 추정치라 실측 1RM과 다를 수 있어요. 새 PR을 달성하면(클라우드 동기화 시) 텔레그램으로도 알려드려요. 종목명은 공백 유무와 무관하게 자동으로 같은 종목으로 묶여요(예: "덤벨로우"="덤벨 로우").</div>`;
+        <div class="note-box" style="margin-top:10px;">Epley 공식 기반 추정치라 실측 1RM과 다를 수 있어요. 새 PR을 달성하면(클라우드 동기화 시) 텔레그램으로도 알려드려요. 종목명은 공백 유무와 무관하게 자동으로 같은 종목으로 묶여요(예: "덤벨로우"="덤벨 로우"). "추이" 열은 최근 5회 세션의 추정 1RM이 서로 3% 이내에서만 오가면 "정체"로 표시해요(5회 미만이면 판정 보류).</div>`;
       })()}
     </section>
 
@@ -3841,28 +4022,39 @@ function renderGoal(){
       <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:12px 0;">
         <input type="date" id="waistDateInput" value="${todayISO()}" style="padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text);">
         <input type="number" step="0.1" id="waistValueInput" placeholder="cm" style="width:80px; padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text);">
+        <label style="display:flex; align-items:center; gap:5px; font-size:12.5px; color:var(--text-dim); font-family:var(--font-body); cursor:pointer;"><input type="checkbox" id="waistFastingInput" checked style="cursor:pointer;">아침 공복 측정</label>
         <button onclick="addWaistEntry()" class="btn-primary" style="padding:8px 18px; border-radius:8px; border:none; background:var(--c-waist); color:#fff; font-weight:600; cursor:pointer;">추가</button>
       </div>
       ${state.waist.length ? chartCard('허리둘레', [...state.waist].sort((a,b)=>a.date.localeCompare(b.date)), 'waist', 'cm', '--c-waist', null, null) : `<div class="empty-state">아직 기록된 허리둘레가 없어요. 위에서 날짜와 cm를 입력해 추가해보세요.</div>`}
+      ${(() => {
+        // 2026-09-19 추가(20선 6번): 체지방량(kg) 변화 방향과 허리둘레 변화 방향 교차검증 카드.
+        const wfx = computeWaistFatCrossCheck();
+        if(!wfx) return '';
+        return `<div class="alert-item ${wfx.tone==='warn'?'tone-warn-item':wfx.tone==='good'?'tone-good-item':''}" style="margin-top:12px;">
+          <div class="alert-icon tone-${wfx.tone}">${wfx.tone==='warn'?ICONS.up:wfx.tone==='good'?ICONS.down:ICONS.target}</div>
+          <div class="alert-body"><div class="alert-title tone-${wfx.tone}">허리둘레 × 체지방량 교차검증 <span class="dim" style="font-weight:500;">(허리 ${wfx.waistRange} · 체지방 ${wfx.fatRange})</span></div><div class="alert-detail">${wfx.text}</div></div>
+        </div>`;
+      })()}
       ${state.waist.length ? `<div style="overflow-x:auto; margin-top:12px;">
         <table class="data-table">
-          <thead><tr><th style="text-align:left">날짜</th><th>허리둘레</th><th></th></tr></thead>
+          <thead><tr><th style="text-align:left">날짜</th><th>허리둘레</th><th>측정조건</th><th></th></tr></thead>
           <tbody>
             ${[...state.waist].sort((a,b)=>b.date.localeCompare(a.date)).map(w => `<tr>
               <td>${w.date}</td>
               <td>${fmt(w.waist)}cm</td>
+              <td>${w.fasting===false?'<span class="badge miss">공복 아님</span>':w.fasting===true?'<span style="color:var(--text-faint); font-size:11.5px;">공복</span>':'<span style="color:var(--text-faint); font-size:11.5px;">—</span>'}</td>
               <td><button onclick="deleteWaistEntry('${w.date}')" style="background:none; border:none; color:var(--text-faint); cursor:pointer; font-family:var(--font-body); font-size:12px;">삭제</button></td>
             </tr>`).join('')}
           </tbody>
         </table>
       </div>` : ''}
       <div class="note-box" style="margin-top:14px;">
-        <!-- 2026-08-13 확인: 클라이언트(cloudSync)는 이미 waist를 push/pull 요청에 포함해서
-             보내고 있음(mergeByDate_·recentWindow_ 모두 적용됨) — 다만 Google Apps Script
-             (Code.gs)가 이 waist 키를 실제로 시트에 쓰고/읽어주는지는 이 세션에서 Code.gs
-             원본이 없어 확인 불가. "요청을 보냈다"와 "서버가 실제로 처리한다"는 다른 얘기라
-             문구를 사실 그대로 정정함(행위≠결과확인 원칙). -->
-        허리둘레는 앱이 다른 기록과 함께 클라우드로 보내려고는 하지만, <b>Google Apps Script(Code.gs)가 이 항목을 처리하도록 돼있는지는 아직 확인되지 않았습니다.</b> Code.gs에 Waist 시트 처리가 없다면 실제로는 이 기기에만 남아있는 상태일 수 있어요. 다른 기기에서도 같이 보시려면 Code.gs 파일을 다음 채팅에 올려주세요 — 필요한 부분을 확인해서 채워드릴게요.
+        <!-- 2026-09-19 갱신: Code.gs 원본을 직접 확인해 SHEETS.waist(220줄)/applyIncoming_의
+             upsertSheet_ 호출/doGet() 응답 필드(waist: readSheet_(...))까지 모두 존재함을
+             확인함 — 허리둘레 클라우드 동기화는 서버까지 완전히 구현·확인된 상태(행위≠결과확인
+             원칙에 따라 실제 코드로 재확인 후 문구 갱신). 기존의 "아직 확인 안 됨" 문구는 낡은
+             정보였으므로 교체. -->
+        허리둘레는 인바디·운동·식단과 동일하게 Google Apps Script(Code.gs)의 Waist 시트를 통해 정상적으로 클라우드 동기화됩니다. 다른 기기에서도 동기화 버튼만 누르면 함께 반영돼요.
       </div>
     </section>
 
@@ -3881,7 +4073,7 @@ function renderGoal(){
           const remainKcal = midCal - proteinKcal;
           const carbG = Math.round(remainKcal*0.55/4);
           const fatG = Math.round(remainKcal*0.45/9);
-          return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 최신 BMR × 1.5 − 550kcal 공식을 유지하세요. 최근 BMR ${bmrRef}kcal${bcAsOf} 기준 <b>${targetLow}~${targetHigh}kcal</b>가 권장 범위예요. 매크로는 단백질 ${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g 기준으로 잡으면 대략 <b>단백질 ${proteinMid}g · 탄수화물 ${carbG}g · 지방 ${fatG}g</b>(약 ${midCal}kcal)이 기준값이에요.</div>`;
+          return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 최신 BMR × 1.5 − 550kcal 공식을 유지하세요. 최근 BMR ${bmrRef}kcal${bcAsOf} 기준 <b>${targetLow}~${targetHigh}kcal</b>가 권장 범위예요. 매크로는 단백질 ${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g 기준으로 잡으면 대략 <b>단백질 ${proteinMid}g · 탄수화물 ${carbG}g · 지방 ${fatG}g</b>(약 ${midCal}kcal)이 기준값이에요.${stepsCalorieCaveatNote_()}</div>`;
         })()}
         <div class="guide-item"><span class="guide-num">02</span>tirzepatide DEXA 임상연구(SURMOUNT-1, Look et al. 2025, Diabetes Obes Metab)의 실측치로 계산하면 체중 -21.3% 대비 제지방량 -10.9%, 비율 0.51이에요. 지금 정희님의 골격근 비율은 ${muscleAssess.muscleLoss<=0 ? '0 (감소 없음)' : fmt(muscleAssess.ratio,2)}로 ${muscleAssess.tone==='good' ? '0.51보다 뚜렷이 낮아 근육을 잘 보존하고 있어요' : muscleAssess.tone==='neutral' ? '0.51 이내로 임상 기준 범위 안이에요' : '0.51을 넘어 저항운동 볼륨과 단백질 섭취를 점검할 필요가 있어요'}. 이 비율을 0.51 아래로 유지하는 게 목표예요.</div>
         <div class="guide-item"><span class="guide-num">03</span>체지방률의 일일 변화는 BIA 특성상 수분·글리코겐 상태에 따라 흔들릴 수 있습니다. 하루 단위 반등에 일희일비하지 말고 7일 이동평균으로 추세를 판단하세요. 현재 추세는 ${maTrendDelta<=0?'하락(개선) 중':'상승(정체) 중'}입니다.</div>
@@ -4072,7 +4264,14 @@ function renderReport(){
               <summary style="cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text);">${esc(h.date||'날짜 미상')} · ${h.type==='aiAnalysis'?'Claude 분석':'종합 리포트'}</summary>
               <div class="ai-note-body" style="margin-top:8px; font-size:12.5px;">${formatNoteHtml(h.content||'')}</div>
             </details>`).join('')}
-        </div>` : `<p class="p-dim" style="margin-top:6px;">아직 쌓인 히스토리가 없어요 — 분석을 갱신하면 다음 동기화부터 여기 쌓이기 시작해요.</p>`}
+        </div>
+        ${state.reportHistory.length>=30 ? `<div class="note-box" style="margin-top:10px;">
+          <!-- 2026-09-19 추가(20선 17번): 서버(ReportHistory 시트)는 계속 무제한으로 쌓이지만
+               Code.gs doGet()이 앱에는 최신 30건만 내려줌(.slice(0,30)) — 30건이 다 찬 상태라는 건
+               그보다 오래된 기록이 시트에는 있어도 여기서는 더 이상 조회할 수 없다는 뜻이라, 혼란을
+               막기 위해 안내를 표시. -->
+          최신 30건까지만 앱에서 조회할 수 있어요(그 이전 기록은 Google Sheet의 ReportHistory 탭에는 계속 남아있지만, 여기서는 안 보여요). 더 오래된 분석이 필요하면 원본 Sheet를 직접 확인해주세요.
+        </div>` : ''}` : `<p class="p-dim" style="margin-top:6px;">아직 쌓인 히스토리가 없어요 — 분석을 갱신하면 다음 동기화부터 여기 쌓이기 시작해요.</p>`}
     </section>
   `;
 }
@@ -4479,7 +4678,10 @@ function clearAiNote(){
 // 똑같은 문제를 겪고 tombstone으로 해결한 이력이 있어 동일 패턴 적용). 삭제 시각을 별도로
 // 남겨두고, 병합 뒤 그 시각 이후로 다시 저장(재생성/수정)되지 않은 레코드만 걸러낸다.
 function markDeleted_(category, key){
-  if(!state.deletedIds) state.deletedIds = {inbody:{}, workouts:{}, meals:{}};
+  // 2026-09-19 수정(20선 3번 작업 중 발견): 기존 폴백 기본값에 steps/waist/sideEffects가
+  // 빠져있던 사소한 불일치를 함께 정리(state.deletedIds가 정상 초기화된 경우엔 어차피 안 쓰이는
+  // 방어 코드라 실사용 영향은 없었음).
+  if(!state.deletedIds) state.deletedIds = {inbody:{}, workouts:{}, meals:{}, steps:{}, waist:{}, sideEffects:{}};
   if(!state.deletedIds[category]) state.deletedIds[category] = {};
   state.deletedIds[category][key] = new Date().toISOString();
   saveArr(LS_KEYS.deletedIds, state.deletedIds);
@@ -4707,6 +4909,9 @@ async function cloudSync(silent){
         meals: mergeDeletedMap_(state.deletedIds.meals, cloudDeletedIds.meals),
         steps: mergeDeletedMap_(state.deletedIds.steps, cloudDeletedIds.steps),
         waist: mergeDeletedMap_(state.deletedIds.waist, cloudDeletedIds.waist),
+        // 2026-09-19 추가(20선 3번): 부작용 기록도 다른 date-keyed 레코드와 동일하게
+        // tombstone 동기화 대상에 포함.
+        sideEffects: mergeDeletedMap_(state.deletedIds.sideEffects, cloudDeletedIds.sideEffects),
       };
       saveArr(LS_KEYS.deletedIds, state.deletedIds);
       state.inbody = mergeByDate_(state.inbody, data.inbody, state.deletedIds.inbody);
@@ -4718,9 +4923,16 @@ async function cloudSync(silent){
       state.meals = mergeMealsByDate_(state.meals, data.meals, state.deletedIds.meals);
       state.steps = mergeByDate_(state.steps, data.steps, state.deletedIds.steps);
       state.waist = mergeByDate_(state.waist, data.waist, state.deletedIds.waist);
+      // 2026-09-19 추가(20선 3번): 부작용(SideEffects) 시트도 workouts와 동일하게 matchField
+      // (symptom)로 같은 날짜에 여러 건이 있을 수 있는 구조라 mergeWorkoutsByDate_를 그대로
+      // 재사용(해당 함수는 r.id/r.date만 참조하는 범용 로직). Sheet에는 id 컬럼이 없어 pull로
+      // 들어온 항목은 id가 비어있으므로, workouts와 동일하게 ensureWorkoutIds로 id를 채운다.
+      state.sideEffects = mergeWorkoutsByDate_(state.sideEffects, data.sideEffects, state.deletedIds.sideEffects);
+      ensureWorkoutIds(state.sideEffects);
       saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
       saveArr(LS_KEYS.steps, state.steps);
       saveArr(LS_KEYS.waist, state.waist);
+      saveArr(LS_KEYS.sideEffects, state.sideEffects);
       // 2026-08-18 수정: 대시보드 "Claude 분석"이 새 날짜 데이터가 들어와도 예전 날짜(예: 8/16)
       // 내용에 계속 멈춰있다는 반복 제보 반영. 기존엔 data.aiAnalysisDate와 state.aiNote.date를
       // 문자열로 그대로 >= 비교했는데, 서버(Meta 시트)가 aiAnalysisDate를 아예 안 내려주거나
@@ -4770,6 +4982,40 @@ async function cloudSync(silent){
         state.reportHistory = data.reportHistory;
         saveArr(LS_KEYS.reportHistory, state.reportHistory);
       }
+      // 2026-09-19 추가(20선 1번): 설정탭 목표값(goals)도 aiNote와 동일한 "타임스탬프 비교 후
+      // 더 최신 쪽 채택" 방식으로 pull. goals는 통째로 교체되는 단일 객체라(개별 필드 병합 아님)
+      // updatedAt이 없는 쪽(예: 이 기능 출시 이전에 저장된 로컬 goals)은 항상 밀리도록 처리.
+      if(data.goals){
+        try{
+          const parsedGoals = typeof data.goals === 'string' ? JSON.parse(data.goals) : data.goals;
+          if(parsedGoals && typeof parsedGoals==='object' && Object.keys(parsedGoals).length){
+            const localUpdatedAt = (state.goals && state.goals.updatedAt) || '';
+            const serverUpdatedAt = parsedGoals.updatedAt || '';
+            if(serverUpdatedAt >= localUpdatedAt){
+              state.goals = parsedGoals;
+              saveArr(LS_KEYS.goals, state.goals);
+              applyGoalOverrides_();
+            }
+          }
+        }catch(goalsErr){ console.error('goals 파싱 실패', goalsErr); }
+      }
+      // 2026-09-19 추가(20선 3번): 즐겨찾기(favorites)도 goals와 동일하게 updatedAt 비교 후
+      // 더 최신 쪽 채택. 서버 값을 그대로 신뢰해서 교체할 때는 서버가 보낸 updatedAt을 그대로
+      // 로컬에 반영해야(새로 touch하면 안 됨) 다음 push 때 다시 "로컬이 더 최신"으로 오판하지 않는다.
+      if(data.favorites){
+        try{
+          const parsedFavorites = typeof data.favorites === 'string' ? JSON.parse(data.favorites) : data.favorites;
+          if(parsedFavorites && typeof parsedFavorites==='object' && Array.isArray(parsedFavorites.items)){
+            const localFavUpdatedAt = getFavoritesUpdatedAt_();
+            const serverFavUpdatedAt = parsedFavorites.updatedAt || '';
+            if(serverFavUpdatedAt && serverFavUpdatedAt >= localFavUpdatedAt){
+              state.favorites = parsedFavorites.items;
+              saveArr(LS_KEYS.favorites, state.favorites);
+              try{ localStorage.setItem(LS_KEYS.favoritesUpdatedAt, serverFavUpdatedAt); }catch(favTsErr){}
+            }
+          }
+        }catch(favErr){ console.error('favorites 파싱 실패', favErr); }
+      }
       // 2026-09-19 추가(머니트레일 벤치마킹): 클라우드 병합 직후 데이터 패치 재적용(적용 시점 ②).
       // pull이 방금 서버 값으로 로컬을 덮어썼을 수 있으므로, 로드 시점에만 적용하면 동기화 한 번에
       // 패치가 무효화될 수 있다 — 병합 직후에도 항상 다시 적용해 패치된 상태가 유지되게 한다.
@@ -4787,6 +5033,12 @@ async function cloudSync(silent){
       const windowedWorkouts_ = recentWindow_(state.workouts);
       const windowedMeals_ = recentWindow_(state.meals);
       const windowedWaist_ = recentWindow_(state.waist);
+      // 2026-09-19 추가(20선 4번): steps는 Code.gs(applyIncoming_의 upsertSheet_/doGet의 readSheet_)엔
+      // 이미 완전히 구현돼 있었는데, 클라이언트 push 본문에만 빠져 있어 앱이 이 데이터에 대해
+      // 사실상 읽기 전용이었음 — 다른 date-keyed 레코드와 동일하게 windowed 배열로 push.
+      const windowedSteps_ = recentWindow_(state.steps);
+      // 2026-09-19 추가(20선 3번): sideEffects도 date 필드가 있어 recentWindow_ 그대로 적용 가능.
+      const windowedSideEffects_ = recentWindow_(state.sideEffects);
       const pushedInbodyDates_ = windowedInbody_.map(r=>r.date);
       // 2026-09-19 추가(머니트레일 벤치마킹): push 직전 데이터 급감 경고 — 직전 성공 push 때의
       // 서명(건수+키)과 비교해서, "기간 만료"나 "실제 삭제(tombstone)"로 설명되지 않는 감소가
@@ -4813,7 +5065,12 @@ async function cloudSync(silent){
         headers:{'Content-Type':'text/plain;charset=utf-8'},
         body: JSON.stringify({
           inbody: windowedInbody_, workouts: windowedWorkouts_, meals: windowedMeals_,
-          waist: windowedWaist_,
+          waist: windowedWaist_, steps: windowedSteps_,
+          // 2026-09-19 추가(20선 3번): 부작용/즐겨찾기 클라우드 동기화. sideEffects는 다른
+          // date-keyed 레코드와 동일하게 windowed 배열로, favorites는 단일 목록이라 goals와
+          // 동일한 "Meta 시트 JSON 통째 저장 + updatedAt 비교" 패턴으로 {items, updatedAt} 래핑.
+          sideEffects: windowedSideEffects_,
+          favorites: {items: state.favorites, updatedAt: getFavoritesUpdatedAt_()},
           aiAnalysis: state.aiNote ? state.aiNote.text : null,
           aiAnalysisDate: state.aiNote ? state.aiNote.date : null,
           comprehensiveReport: state.reportNote ? state.reportNote.text : null,
@@ -4822,6 +5079,10 @@ async function cloudSync(silent){
           // state.deletedIds에 반영해둔 tombstone 맵을 그대로 되돌려 보내, 다른 기기에서도
           // 이 삭제가 반영되게 한다(서버는 Meta 시트에 JSON 문자열로만 보관, 별도 로직 없음).
           deletedIds: state.deletedIds,
+          // 2026-09-19 추가(20선 1번): 설정탭 목표값(state.goals)이 그동안 로컬에만 저장되고
+          // 클라우드로는 전혀 전송되지 않아, 기기를 바꾸거나 캐시가 지워지면 커스텀 목표가
+          // 사라지는 문제가 있었음 — aiAnalysis와 동일한 Meta 시트 JSON 문자열 패턴으로 전송.
+          goals: state.goals,
         })
       }, SYNC_TIMEOUT_MS);
       // 2026-08-12 수정: "행위 수행(요청 전송)"≠"결과 확인(실제 반영)" 원칙 위반 버그 수정.
@@ -4954,6 +5215,7 @@ function saveGoalSettings(){
     cardioHR: {min:hrMin, max:hrMax},
     carbRanges: {A:[carbAMin,carbAMax], B:[carbBMin,carbBMax], C:[carbCMin,carbCMax]},
     protein,
+    updatedAt: new Date().toISOString(), // 2026-09-19 추가(20선 1번): 클라우드 동기화 시 최신값 판정용
   };
   saveArr(LS_KEYS.goals, state.goals);
   applyGoalOverrides_();
@@ -4962,7 +5224,7 @@ function saveGoalSettings(){
 }
 function resetGoalSettings(){
   if(!confirm('목표·기준값을 전부 기본값으로 되돌릴까요?')) return;
-  state.goals = {};
+  state.goals = {updatedAt: new Date().toISOString()}; // 2026-09-19 추가: 리셋도 "이벤트"로 동기화 전파되도록 타임스탬프 유지
   saveArr(LS_KEYS.goals, state.goals);
   applyGoalOverrides_();
   markUpdated();
@@ -5133,7 +5395,11 @@ function renderModal(){
       ${modalState.kind==='workout' ? `
         <div class="field">
           <label>Claude가 만들어준 JSON 붙여넣기 (있으면 아래 개별 입력 없이 바로 등록)</label>
-          <textarea id="workout-json-input" class="ai-textarea" placeholder='[{"date":"2026-08-16","name":"인클라인 트레드밀 5km","part":"유산소","calories":310,"note":"45:17, 평균속도6.6km/h, 평균심박128bpm, 케이던스127spm","treadmillSteps":5772}]' oninput="modalState.workoutJsonText=this.value">${esc(modalState.workoutJsonText||'')}</textarea>
+          <textarea id="workout-json-input" class="ai-textarea" placeholder='[{"date":"2026-09-19","name":"인클라인 트레드밀 5km","part":"유산소","calories":310,"note":"45:17, 케이던스127spm","treadmillSteps":5772,"avgHR":124,"durationMin":30,"distanceKm":1.6,"specialCondition":null}]' oninput="modalState.workoutJsonText=this.value">${esc(modalState.workoutJsonText||'')}</textarea>
+          <!-- 2026-09-19 갱신: avgHR/durationMin/distanceKm/specialCondition(2026-09-13 도입)이
+               빠진 구버전 예시였음 — 최신 구조화 필드를 예시에 포함해, 이 예시를 참고해 JSON을
+               만들 때 유산소 세션 정보가 note 자유텍스트 파싱으로 되돌아가지 않게 함. -->
+          <div class="note-box" style="margin-top:6px;">유산소 세션은 note 문장 대신 avgHR(평균심박)·durationMin(분)·distanceKm(km) 숫자 필드로 넣으면 인정기준(심박 105bpm 이상 AND 20분 이상) 판정과 이력 표에 정확히 반영돼요.</div>
           <button type="button" class="btn btn-sm" style="margin-top:6px;" onclick="importWorkoutJSON()">JSON으로 등록</button>
           <div class="note-box" style="margin-top:6px;">삼성헬스 스크린샷을 Claude 채팅에 올리고 "이 앱 형식 JSON으로 만들어줘"라고 하면, 그 결과를 여기 붙여넣기만 하면 돼요. 트레드밀 걸음수는 note 문장 대신 treadmillSteps 숫자 필드에 담겨서 들어오기 때문에, Claude가 표현을 어떻게 쓰든 걸음수 인식이 안 놓쳐요.</div>
         </div>
@@ -5156,7 +5422,7 @@ function renderModal(){
             </div>`).join('')}
         </div>
         <button class="link-btn" onclick="addExRow()">+ 종목 추가</button>
-        <div class="note-box" style="margin:2px 0 0;">종목을 추가하면 세트·무게 기준으로 부위별 회복상태와 볼륨이 자동 계산돼요. 비워두면 아래 요약 입력으로 기록됩니다.</div>
+        <div class="note-box" style="margin:2px 0 0;">종목을 추가하면 세트·무게 기준으로 부위별 회복상태와 볼륨이 자동 계산돼요. <b>비워두고 아래 요약 입력(운동 내용/부위)으로만 기록하면 PR(추정 1RM) 자동감지와 정체 판정이 이 세션에는 적용되지 않아요</b> — 무거운 무게를 들었어도 PR 알림이 안 올 수 있으니, PR을 추적하고 싶은 종목은 여기 상세입력으로 남겨주세요.</div>
         ${field('name','운동 내용 요약 (상세입력 없을 때만 사용)', f.name)}
         ${field('part','부위 (상세입력 없을 때만 사용)', f.part)}
         ${field('volume','볼륨 (kg, 선택 — 상세입력 시 자동계산)', f.volume)}
@@ -5166,6 +5432,7 @@ function renderModal(){
         ${field('avgHR','평균심박 (bpm, 유산소 세션만)', f.avgHR)}
         ${field('durationMin','소요시간 (분, 유산소 세션만)', f.durationMin)}
         ${field('distanceKm','거리 (km, 선택·참고용)', f.distanceKm)}
+        <div class="field"><label style="display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" ${f.ptSession?'checked':''} onchange="modalState.form.ptSession=this.checked; refreshModal();" style="cursor:pointer;">PT(개인레슨) 세션</label></div>
         <div class="field"><label>특이조건 (해당되면 선택)</label>
           <div class="special-chip-row">
             ${WORKOUT_CONDITION_TYPES.map(t => `<button type="button" class="special-chip ${f.specialCondition===t?'active':''}" onclick="modalState.form.specialCondition=(modalState.form.specialCondition==='${t}'?'':'${t}'); refreshModal();">${WORKOUT_CONDITION_LABELS[t]}</button>`).join('')}
@@ -5251,12 +5518,13 @@ function saveRecord(){
         durationMin: f.durationMin?num(f.durationMin):null,
         distanceKm: f.distanceKm?num(f.distanceKm):null,
         specialCondition: f.specialCondition||null,
+        ptSession: !!f.ptSession,
         exercises,
         updatedAt: new Date().toISOString(),
       };
     } else {
       rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||'', treadmillSteps: f.treadmillSteps?num(f.treadmillSteps):null,
-        avgHR: f.avgHR?num(f.avgHR):null, durationMin: f.durationMin?num(f.durationMin):null, distanceKm: f.distanceKm?num(f.distanceKm):null, specialCondition: f.specialCondition||null, updatedAt: new Date().toISOString()};
+        avgHR: f.avgHR?num(f.avgHR):null, durationMin: f.durationMin?num(f.durationMin):null, distanceKm: f.distanceKm?num(f.distanceKm):null, specialCondition: f.specialCondition||null, ptSession: !!f.ptSession, updatedAt: new Date().toISOString()};
     }
     // 2026-08-13 근본 수정: 기존엔 같은 날짜의 기존 워크아웃 기록을 전부 지우고 새 항목
     // 하나로 바꿔버려서, 하루에 두 번째 운동(예: 오전 근력 + 저녁 유산소)을 모달로 추가하면
@@ -5311,6 +5579,7 @@ function importWorkoutJSON(){
       durationMin: r.durationMin!=null ? num(r.durationMin) : null,
       distanceKm: r.distanceKm!=null ? num(r.distanceKm) : null,
       specialCondition: r.specialCondition || null,
+      ptSession: !!r.ptSession, // 2026-09-19 추가(20선 16번)
       updatedAt: new Date().toISOString(), // 2026-09-19 추가(머니트레일 벤치마킹): 필드(레코드) 단위 타임스탬프 우선 병합용
     };
     const idx = state.workouts.findIndex(w => w.id === rec.id);
@@ -5346,6 +5615,16 @@ function quickAddFavorite(favId, targetDate){
   markUpdated();
   render();
 }
+// 2026-09-19 추가(20선 3번): 즐겨찾기는 날짜 없는 짧은 목록이라 goals와 동일하게 Meta에
+// {items, updatedAt} 통째 JSON으로 동기화한다. state.favorites 자체는 기존처럼 단순 배열로
+// 유지하고(모달 즐겨찾기 칩 렌더링 등 기존 코드를 건드리지 않기 위함), 이 타임스탬프만 별도
+// localStorage 키로 관리해서 "더 최신 쪽 채택" 판정에 사용.
+function touchFavoritesUpdatedAt_(){
+  try{ localStorage.setItem(LS_KEYS.favoritesUpdatedAt, new Date().toISOString()); }catch(e){}
+}
+function getFavoritesUpdatedAt_(){
+  try{ return localStorage.getItem(LS_KEYS.favoritesUpdatedAt) || ''; }catch(e){ return ''; }
+}
 function addFavorite(){
   const name = document.getElementById('fav-name-input').value.trim();
   const cal = Number(document.getElementById('fav-cal-input').value);
@@ -5354,11 +5633,13 @@ function addFavorite(){
   if(!name || !cal){ alert('이름과 칼로리는 필수예요.'); return; }
   state.favorites.push({id:makeId('fav'), name, calories:cal, protein, carbs});
   saveArr(LS_KEYS.favorites, state.favorites);
+  touchFavoritesUpdatedAt_(); // 2026-09-19 추가(20선 3번): 클라우드 동기화 시 최신값 판정용
   render();
 }
 function deleteFavorite(id){
   state.favorites = state.favorites.filter(f=>f.id!==id);
   saveArr(LS_KEYS.favorites, state.favorites);
+  touchFavoritesUpdatedAt_(); // 2026-09-19 추가(20선 3번)
   render();
 }
 function inferPartFromName(name){
