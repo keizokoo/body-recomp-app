@@ -499,7 +499,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-19-a (설정탭 서버 트리거 등록 UI를 머니트레일 방식으로 변경: 개별 등록 버튼을 상태확인 성공 여부와 무관하게 항상 노출 — 기존엔 상태확인 자체가 권한오류로 실패하면 등록 버튼이 아예 안 보이던 구조적 문제 수정. 서버(Code.gs)도 handleTriggerStatus_ try/catch 누락 버그 수정(Failed to fetch 원인))';
+const APP_BUILD_VERSION = '2026-09-19-b (머니트레일 벤치마킹 5종 적용: ①삭제 동기화/tombstone — 로컬에서 지운 기록이 다음 동기화 때 서버에 남은 옛 값으로 되살아나던 구조적 결함 수정, ②push 직전 데이터 급감 경고 — 기간만료/삭제로 설명되지 않는 감소만 골라 경고, ③선언형 데이터 패치 시스템(DATA_PATCHES) — 앱 로드+동기화 직후 자동·멱등 적용, 설정탭에서 반영 여부 확인 가능, ④로컬 백업 이력(최근 10개) — 동기화/가져오기 직전 자동 스냅샷 + 설정탭 복원 버튼, ⑤필드(레코드) 단위 타임스탬프 우선 병합 — 서버 무조건 우선 대신 updatedAt 비교, 부수적으로 운동은 id 매칭으로 바꿔 "미동기화 신규 운동이 같은날 다른 운동 pull에 휩쓸려 사라지는" 잠재 버그도 함께 수정. 서버(Code.gs)는 InBody/Workouts/Meals/Waist 시트에 updatedAt 컬럼 추가(기존 시트도 자동 보강))';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1171,7 +1171,62 @@ const SEED_SIDE_EFFECTS = [];
 const SEED_FAVORITES = [
   {id:'fav_seed_1', name:'단백질 쉐이크 2스쿱', calories:240, protein:48, carbs:6},
 ];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1'};
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1', deletedIds:'brc_deletedids_v1', backupHistory:'brc_backuphistory_v1', pushSizeMeta:'brc_pushsizemeta_v1'};
+/* ============================================================
+   선언형 데이터 패치 시스템 (v1) — 2026-09-19 추가(머니트레일 벤치마킹)
+   ============================================================
+   [배경] 스키마를 바꾸거나(예: 워크아웃에 새 필드 추가) 특정 기록을 보정할 때마다 즉흥적으로
+   코드를 고치면 (1) 적용 시점을 빠뜨리기 쉽고 (2) 정희님이 "진짜 반영됐는지" 확인할 방법이
+   없었다("행위 수행 ≠ 결과 확인" 원칙과 정면으로 부딪히는 부분). 머니트레일이 이미 겪고 해결한
+   패턴을 그대로 이식: 아래 DATA_PATCHES 배열에 패치만 선언하면, 앱 로드 직후 + 클라우드
+   동기화(pull) 직후 두 곳에서 자동·멱등(이미 적용됐으면 건너뜀)으로 적용되고, 결과가
+   localStorage 로그로 남아 설정 화면(진단)에서 실제 반영 여부를 확인할 수 있다.
+   패치 타입:
+     - fixField: {type:'fixField', target:'inbody'|'workouts'|'meals'|'waist', key:<date 또는 id>, field, value}
+     - upsertRecord: {type:'upsertRecord', target:..., record:{...}} (같은 키가 이미 있으면 건너뜀)
+     - ensureField: {type:'ensureField', target:..., field, default} (해당 필드가 undefined인 모든 레코드에 기본값 채움 — 스키마 마이그레이션용)
+     - removeRecord: {type:'removeRecord', target:..., key:<date 또는 id>}
+   inbody/meals/waist는 date로, workouts는 id로 레코드를 식별한다(recordKeyField_ 참고). */
+const DATA_PATCH_LOG_KEY = 'brc_datapatch_log_v1';
+const DATA_PATCHES = [
+  // 예시: {type:'ensureField', target:'workouts', field:'treadmillSteps', default:null},
+  // 현재 적용할 패치 없음 — 필요할 때 이 배열에만 추가하면 됨.
+];
+function recordKeyField_(target){ return target==='workouts' ? 'id' : 'date'; }
+function applyDataPatches_(s){
+  if(!s) return 0;
+  let changed = 0;
+  ['inbody','workouts','meals','waist'].forEach(t=>{ if(!Array.isArray(s[t])) s[t]=[]; });
+  DATA_PATCHES.forEach(p=>{
+    const arr = s[p.target];
+    if(!Array.isArray(arr)) return;
+    const kf = recordKeyField_(p.target);
+    if(p.type==='fixField'){
+      const rec = arr.find(r=>r && r[kf]===p.key);
+      if(rec && rec[p.field]!==p.value){ rec[p.field]=p.value; changed++; }
+    } else if(p.type==='upsertRecord'){
+      const key = p.record[kf];
+      if(!arr.some(r=>r && r[kf]===key)){ arr.push({...p.record}); changed++; }
+    } else if(p.type==='ensureField'){
+      arr.forEach(r=>{ if(r && r[p.field]===undefined){ r[p.field]=p.default; changed++; } });
+    } else if(p.type==='removeRecord'){
+      const before = arr.length;
+      s[p.target] = arr.filter(r=>!(r && r[kf]===p.key));
+      changed += (before - s[p.target].length);
+    }
+  });
+  return changed;
+}
+// 진단(설정 탭)에서 "진짜 반영됐는지"를 언제든 확인할 수 있도록 적용 결과를 localStorage에 남긴다.
+function logDataPatchRun_(changedCount){
+  try{
+    localStorage.setItem(DATA_PATCH_LOG_KEY, JSON.stringify({
+      appliedAt: new Date().toISOString(),
+      totalPatchesDefined: DATA_PATCHES.length,
+      changedThisRun: changedCount
+    }));
+  }catch(e){}
+}
 // 2026-08-13 추가: 로컬 고유 id 생성기 — 운동/부작용/즐겨찾기처럼 "하루에 여러 건"이 가능한
 // 레코드를 날짜만으로 식별하면(기존 워크아웃 저장 로직처럼) 같은 날 두 번째 항목을 추가할 때
 // 첫 번째 항목이 통째로 사라지는 버그가 생긴다. 이를 막기 위해 항목마다 안정적인 id를 부여한다.
@@ -1199,9 +1254,10 @@ function addWaistEntry(){
   const val = parseFloat(valEl.value);
   if(!date || isNaN(val) || val<=0){ alert('날짜와 허리둘레(cm)를 정확히 입력해주세요.'); return; }
   state.waist = state.waist.filter(w=>w.date!==date);
-  state.waist.push({date, waist: val});
+  state.waist.push({date, waist: val, updatedAt: new Date().toISOString()});
   state.waist.sort((a,b)=>a.date.localeCompare(b.date));
   saveArr(LS_KEYS.waist, state.waist);
+  unmarkDeleted_('waist', date); // 2026-09-19 추가: 삭제 의도 철회로 간주
   markUpdated();
   valEl.value = '';
   render();
@@ -1212,6 +1268,7 @@ function deleteWaistEntry(date){
   if(!confirm(`${date} 허리둘레 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
   state.waist = state.waist.filter(w=>w.date!==date);
   saveArr(LS_KEYS.waist, state.waist);
+  markDeleted_('waist', date); // 2026-09-19 추가: tombstone
   render();
 }
 function loadAiNote(){
@@ -1269,6 +1326,9 @@ let state = {
   // 2026-09-18 추가(6번): Code.gs가 자동 아카이브한 지난 분석/리포트 히스토리(서버가 진실
   // 공급원 — cloudSync pull로만 갱신됨, 로컬에서 직접 추가하지 않음).
   reportHistory: loadArr(LS_KEYS.reportHistory, []),
+  // 2026-09-19 추가(머니트레일 벤치마킹): 삭제 동기화(tombstone) — 카테고리별 {키: 삭제시각(ISO)}.
+  // markDeleted_/unmarkDeleted_/applyTombstones_ 참고.
+  deletedIds: loadArr(LS_KEYS.deletedIds, {inbody:{}, workouts:{}, meals:{}, steps:{}, waist:{}}),
   aiNote: loadAiNote(),
   reportNote: loadReportNote(),
   lastUpdated: localStorage.getItem(LS_KEYS.lastupdate) || null,
@@ -1283,6 +1343,16 @@ let state = {
   const fixed = ensureWorkoutIds(state.workouts);
   const fixedSteps = ensureTreadmillSteps(state.workouts);
   if(fixed.changed || fixedSteps.changed) saveArr(LS_KEYS.workout, state.workouts);
+}
+{
+  // 2026-09-19 추가(머니트레일 벤치마킹): 앱 로드 직후 데이터 패치 적용(적용 시점 ①). 바뀐 게
+  // 있으면 각 카테고리를 다시 로컬 저장 — 멱등이라 매번 실행해도 이미 반영된 건 건드리지 않는다.
+  const patchN = applyDataPatches_(state);
+  if(patchN){
+    saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts);
+    saveArr(LS_KEYS.meal, state.meals); saveArr(LS_KEYS.waist, state.waist);
+  }
+  logDataPatchRun_(patchN);
 }
 // 2026-09-18 추가(5번·5-B): state.goals(설정탭에서 편집, 로컬저장 + 클라우드 동기화)가 있으면
 // FAT_GOALS/CARDIO_HR_TARGET/PROTEIN_TARGET/CARB_TARGET_RANGES를 그 값으로 덮어씀. 이 네 변수를
@@ -1871,6 +1941,7 @@ function deleteInbodyEntry(date){
   if(!confirm(`${date} 인바디 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
   state.inbody = state.inbody.filter(r=>r.date!==date);
   saveArr(LS_KEYS.inbody, state.inbody);
+  markDeleted_('inbody', date); // 2026-09-19 추가: 다음 동기화 때 서버에 남은 옛 값이 되살아나지 않도록 tombstone
   markUpdated();
   render();
 }
@@ -1878,6 +1949,7 @@ function deleteMealEntry(date){
   if(!confirm(`${date} 식단 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
   state.meals = state.meals.filter(r=>r.date!==date);
   saveArr(LS_KEYS.meal, state.meals);
+  markDeleted_('meals', date); // 2026-09-19 추가: tombstone
   markUpdated();
   render();
 }
@@ -1885,6 +1957,7 @@ function deleteWorkoutEntry(id){
   if(!confirm('이 운동 기록을 삭제할까요? 되돌릴 수 없습니다.')) return;
   state.workouts = state.workouts.filter(r=>r.id!==id);
   saveArr(LS_KEYS.workout, state.workouts);
+  markDeleted_('workouts', id); // 2026-09-19 추가: tombstone
   markUpdated();
   render();
 }
@@ -4264,16 +4337,47 @@ function renderSettings(){
     </section>
 
     <section class="card">
+      <div class="section-label good">${secNum('06a3')}로컬 백업 이력(최근 ${BACKUP_HISTORY_MAX}개)</div>
+      <p class="p-dim">위 파일 백업과 별개로, 이 기기 안에 최근 저장 시점이 자동으로 쌓여요(동기화 직전·가져오기 직전엔 자동, 아래 버튼으로는 언제든 수동 저장). 버튼 하나로 그 시점으로 바로 되돌릴 수 있습니다.</p>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-sm" onclick="manualBackupNow()">지금 백업</button>
+      </div>
+      <div style="margin-top:10px;">
+        ${(()=>{
+          const list = getBackupHistory_();
+          if(!list.length) return `<div class="p-dim" style="font-size:11.5px;">아직 저장된 백업 이력이 없어요.</div>`;
+          return list.map(entry => `
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); font-size:12px;">
+              <div><div style="font-weight:600;">${esc(fmtDateTime(entry.savedAt))}</div><div class="p-dim" style="font-size:10.5px;">${esc(entry.label||'')}</div></div>
+              <button class="btn btn-ghost btn-sm" onclick="restoreFromBackupHistory_('${entry.id}')">복원</button>
+            </div>
+          `).join('');
+        })()}
+      </div>
+    </section>
+
+    <section class="card">
       <div class="section-label good">${secNum('06c')}앱 버전</div>
       <p class="p-dim" style="font-family:var(--font-mono); font-size:12px;">
         ${esc(APP_BUILD_VERSION)}
       </p>
       <p class="p-dim" style="font-size:11.5px; margin-top:4px;">
         코드 수정 후 GitHub 업로드가 실제로 반영됐는지 확인할 때, 여기 버전 문구가 바뀌었는지만 보면 됩니다
-        (바뀌었으면 반영 성공, 그대로면 캐시 삭제 후 재접속 또는 업로드 재확인 필요).
+        (바뀌었으면 반영 성공, 그대로면 캐시 삭제 후 재확인 필요).
       </p>
+      ${dataPatchLogHTML_()}
     </section>
   `;
+}
+// 2026-09-19 추가(머니트레일 벤치마킹): DATA_PATCHES 적용 결과를 "말로만" 전달하지 않고 여기서
+// 직접 확인할 수 있게 한다 — logDataPatchRun_이 남긴 localStorage 로그를 그대로 보여줌.
+function dataPatchLogHTML_(){
+  let log = null;
+  try{ const raw = localStorage.getItem(DATA_PATCH_LOG_KEY); log = raw ? JSON.parse(raw) : null; }catch(e){ log = null; }
+  if(!log) return '';
+  return `<p class="p-dim" style="font-size:11.5px; margin-top:8px; border-top:1px solid var(--border); padding-top:8px;">
+    데이터 패치: 정의됨 ${esc(String(log.totalPatchesDefined))}건 · 마지막 적용 ${esc(fmtDateTime(log.appliedAt))} · 이번에 변경 ${esc(String(log.changedThisRun))}건
+  </p>`;
 }
 // 2026-07-17 추가: 동기화 배지는 render() 전체 재구성에 기대지 않고 직접 DOM을 조작해서
 // 클릭 즉시(같은 이벤트 핸들러 안에서) 화면에 반영되도록 함 — render() 타이밍에 의존하던
@@ -4369,27 +4473,95 @@ function clearAiNote(){
 // (서버에서 삭제된 레코드가 로컬 캐시에 영구히 남아, 동기화할 때마다 다시 서버로
 // 재업로드되어 되살아나는 버그의 근본 원인이었음 — 2026-07-26 실제 발생·발견)
 // incoming에 없는 날짜(아직 서버에 한 번도 안 올라간 로컬 전용 데이터)는 그대로 보존.
-function mergeByDate_(existing, incoming){
-  if(!incoming || !incoming.length) return existing;
-  const incomingDates = new Set(incoming.map(r=>r.date));
-  const kept = existing.filter(r => !incomingDates.has(r.date));
-  return [...kept, ...incoming];
+// 2026-09-19 추가(머니트레일 벤치마킹): 삭제 동기화(tombstone). 위 mergeByDate_ 계열은
+// "그 날짜에 서버 데이터가 있으면 통째로 서버 값 채택"하는 방식이라, 로컬에서 기록을 지워도
+// 다음 pull 때 서버(시트)에 남은 옛 행이 그대로 되살아나는 구조적 결함이 있었다(머니트레일도
+// 똑같은 문제를 겪고 tombstone으로 해결한 이력이 있어 동일 패턴 적용). 삭제 시각을 별도로
+// 남겨두고, 병합 뒤 그 시각 이후로 다시 저장(재생성/수정)되지 않은 레코드만 걸러낸다.
+function markDeleted_(category, key){
+  if(!state.deletedIds) state.deletedIds = {inbody:{}, workouts:{}, meals:{}};
+  if(!state.deletedIds[category]) state.deletedIds[category] = {};
+  state.deletedIds[category][key] = new Date().toISOString();
+  saveArr(LS_KEYS.deletedIds, state.deletedIds);
 }
-// 운동은 하루에 여러 건이 정상(예: 근력+유산소, 유산소 2회)이라 날짜만으로 병합하면 안 되지만,
-// "해당 날짜에 서버 데이터가 있으면 그 날짜의 로컬 레코드는 전부 서버 것으로 교체"하는 원칙은 동일.
-function mergeWorkoutsByDate_(existing, incoming){
-  if(!incoming || !incoming.length) return existing;
-  const incomingDates = new Set(incoming.map(r=>r.date));
-  const kept = existing.filter(r => !incomingDates.has(r.date));
-  return [...kept, ...incoming];
+// 삭제 이후 같은 키로 다시 저장(재생성/수정)되면 "삭제 의도 철회"로 보고 tombstone을 해제한다.
+// 이게 없으면 한 번 지운 날짜/id는 다시는 동기화로 못 살아나는 반대 방향 버그가 생긴다.
+function unmarkDeleted_(category, key){
+  if(state.deletedIds && state.deletedIds[category] && state.deletedIds[category][key] != null){
+    delete state.deletedIds[category][key];
+    saveArr(LS_KEYS.deletedIds, state.deletedIds);
+  }
 }
-// 2026-07-16 추가: 식단도 운동처럼 하루 여러 건이 정상(아침/점심/저녁/간식). 마찬가지로
-// "해당 날짜에 서버 데이터가 있으면 그 날짜의 로컬 레코드는 전부 서버 것으로 교체".
-function mergeMealsByDate_(existing, incoming){
-  if(!incoming || !incoming.length) return existing;
-  const incomingDates = new Set(incoming.map(r=>r.date));
-  const kept = existing.filter(r => !incomingDates.has(r.date));
-  return [...kept, ...incoming];
+function applyTombstones_(arr, deletedMap, keyFn){
+  if(!deletedMap || !Object.keys(deletedMap).length) return arr;
+  return (arr||[]).filter(r => !deletedMap[keyFn(r)]);
+}
+// pull 시점에 로컬·클라우드 deletedIds를 병합할 때 사용 — 키별로 더 최신(더 늦은) 삭제시각을 채택.
+function mergeDeletedMap_(localMap, cloudMap){
+  const result = {};
+  const keys = new Set([...Object.keys(localMap||{}), ...Object.keys(cloudMap||{})]);
+  keys.forEach(k=>{
+    const lt = (localMap||{})[k] || '';
+    const ct = (cloudMap||{})[k] || '';
+    result[k] = (lt >= ct) ? lt : ct;
+  });
+  return result;
+}
+// 2026-09-19 추가(머니트레일 벤치마킹): 필드(레코드) 단위 타임스탬프 우선 병합. 기존엔 "서버에
+// 그 날짜 데이터가 있으면 무조건 서버 값 채택"이었는데, 이러면 한 기기에서 방금 고친 값이 다른
+// 기기의(더 오래된) 자동 동기화로 되돌아갈 수 있었다. 이제 양쪽 다 updatedAt이 있으면 더 최신
+// 쪽을 채택하고, 한쪽에만 있거나 둘 다 없으면(기존 데이터 등) 여전히 "서버가 유일한 진실
+// 공급원"이라는 기존 원칙대로 서버 값을 신뢰한다 — 즉 이 기능이 없던 때와 동작이 동일하게 폴백.
+function pickNewerByUpdatedAt_(localRec, serverRec){
+  if(localRec.updatedAt && serverRec.updatedAt && localRec.updatedAt > serverRec.updatedAt) return localRec;
+  return serverRec;
+}
+function mergeByDate_(existing, incoming, deletedMap){
+  let merged;
+  if(!incoming || !incoming.length) merged = existing;
+  else {
+    const incomingByDate = new Map(incoming.map(r=>[r.date, r]));
+    const seenDates = new Set();
+    const kept = existing.map(localRec=>{
+      const serverRec = incomingByDate.get(localRec.date);
+      if(!serverRec) return localRec;
+      seenDates.add(localRec.date);
+      return pickNewerByUpdatedAt_(localRec, serverRec);
+    });
+    incoming.forEach(serverRec=>{ if(!seenDates.has(serverRec.date)) kept.push(serverRec); });
+    merged = kept;
+  }
+  return applyTombstones_(merged, deletedMap, r=>r.date);
+}
+// 운동은 하루에 여러 건이 정상(예: 근력+유산소, 유산소 2회)이라 날짜만으로 병합하면 안 됨.
+// tombstone은 개별 운동 id 단위로 걸어야 같은 날 다른 운동까지 함께 지워지지 않는다.
+// 2026-09-19 수정(머니트레일 벤치마킹): 기존엔 "그 날짜에 서버 데이터가 있으면 그 날짜의 로컬
+// 레코드를 전부(같은 id가 없어도) 서버 것으로 교체"했는데, 이러면 로컬에서 방금 추가했지만
+// 아직 push 안 된 새 운동이, 같은 날짜에 서버가 다른 운동 데이터를 갖고 있다는 이유만으로
+// pull 한 번에 통째로 사라지는 잠재적 데이터 유실 버그가 있었다(실제 재현 확인은 아직 안 했지만
+// 코드 경로상 명백함). 이제 id 기준으로 매칭해서, 서버에 없는 id(로컬 전용 새 항목)는 그대로
+// 보존하고, 같은 id가 양쪽에 있을 때만 updatedAt으로 최신 쪽을 채택한다.
+function mergeWorkoutsByDate_(existing, incoming, deletedMap){
+  let merged;
+  if(!incoming || !incoming.length) merged = existing;
+  else {
+    const incomingById = new Map(incoming.map(r=>[r.id, r]));
+    const seenIds = new Set();
+    const kept = existing.map(localRec=>{
+      const serverRec = incomingById.get(localRec.id);
+      if(!serverRec) return localRec; // 서버에 아직 없는 로컬 전용 항목(신규 미동기화 포함) 보존
+      seenIds.add(localRec.id);
+      return pickNewerByUpdatedAt_(localRec, serverRec);
+    });
+    incoming.forEach(serverRec=>{ if(!seenIds.has(serverRec.id)) kept.push(serverRec); });
+    merged = kept;
+  }
+  return applyTombstones_(merged, deletedMap, r=>r.id);
+}
+// 2026-07-16 추가: 식단도 운동처럼 하루 여러 건이 정상(아침/점심/저녁/간식)이었으나, 실제
+// 저장 로직(saveRecord)은 날짜당 1건(하루 총합)으로 관리하므로 mergeByDate_와 동일한 방식.
+function mergeMealsByDate_(existing, incoming, deletedMap){
+  return mergeByDate_(existing, incoming, deletedMap);
 }
 
 let syncing = false;
@@ -4434,6 +4606,59 @@ function recentWindow_(arr){
   const cutoffStr = toLocalISO(cutoff);
   return (arr||[]).filter(r => r.date >= cutoffStr);
 }
+function pushWindowCutoff_(){
+  const c = new Date(); c.setDate(c.getDate() - SYNC_RECENT_DAYS);
+  return toLocalISO(c);
+}
+// 2026-09-19 추가(머니트레일 벤치마킹): push 직전 데이터 급감 경고용 "서명"(건수+키 목록).
+// 이 앱은 recentWindow_로 최근 SYNC_RECENT_DAYS일만 push하므로, 단순 건수 비교만 하면 날짜가
+// 창 밖으로 자연스럽게 빠질 때마다 매번 오탐 경고가 뜬다 — 그래서 키(날짜/운동id) 목록까지
+// 같이 남겨서, 아래 pushSizeShrinkWarnings_에서 "진짜 사라진 것"만 골라낼 수 있게 한다.
+function storeSizeSignature_(windowed){
+  const inbodyKeys = (windowed.inbody||[]).map(r=>r.date);
+  const workoutKeys = (windowed.workouts||[]).map(r=>`${r.id}:${r.date}`);
+  const mealKeys = (windowed.meals||[]).map(r=>r.date);
+  const waistKeys = (windowed.waist||[]).map(r=>r.date);
+  return {
+    inbodyCount: inbodyKeys.length, workoutsCount: workoutKeys.length, mealsCount: mealKeys.length, waistCount: waistKeys.length,
+    inbodyKeys, workoutKeys, mealKeys, waistKeys
+  };
+}
+// prev(직전 성공 push 시점 서명) 대비 next(이번에 보낼 데이터)에서 줄어든 항목이 있으면 경고 문구를 만든다.
+// 단, (1) 날짜가 이번 push 기준 cutoff보다 오래돼 창 밖으로 자연스럽게 빠진 것, (2) 사용자가 실제로
+// 삭제(tombstone)한 것 — 이 두 가지는 "설명된 감소"로 보고 조용히 통과시키고, 그 외에만 경고한다.
+function pushSizeShrinkWarnings_(prev, next, cutoffStr, deletedIds){
+  if(!prev) return [];
+  const dIds = deletedIds || {};
+  const specs = [
+    {countKey:'inbodyCount', keyField:'inbodyKeys', label:'인바디 기록', dateOf:k=>k, delMap:dIds.inbody||{}, delKeyOf:k=>k},
+    {countKey:'workoutsCount', keyField:'workoutKeys', label:'운동 기록', dateOf:k=>k.split(':').slice(1).join(':'), delMap:dIds.workouts||{}, delKeyOf:k=>k.split(':')[0]},
+    {countKey:'mealsCount', keyField:'mealKeys', label:'식단 기록', dateOf:k=>k, delMap:dIds.meals||{}, delKeyOf:k=>k},
+    {countKey:'waistCount', keyField:'waistKeys', label:'허리둘레 기록', dateOf:k=>k, delMap:dIds.waist||{}, delKeyOf:k=>k},
+  ];
+  const warnings = [];
+  specs.forEach(spec=>{
+    if(next[spec.countKey] >= prev[spec.countKey]) return;
+    const prevKeys = prev[spec.keyField];
+    if(!prevKeys){
+      // 이 기기의 이전 저장 기록이 이 기능 추가 이전에 만들어진 것이라 키 목록이 없을 수 있음 — 건수만으로 판단
+      warnings.push(`${spec.label} ${prev[spec.countKey]}개 → ${next[spec.countKey]}개 (세부 항목은 확인 불가 — 기능 추가 이전 기록)`);
+      return;
+    }
+    const nextKeySet = new Set(next[spec.keyField] || []);
+    const missing = prevKeys.filter(k=>!nextKeySet.has(k));
+    const unexplained = missing.filter(k=>{
+      const d = spec.dateOf(k);
+      if(d && d < cutoffStr) return false;
+      if(spec.delMap[spec.delKeyOf(k)]) return false;
+      return true;
+    });
+    if(!unexplained.length) return;
+    const preview = unexplained.slice(0,6).join(', ') + (unexplained.length>6 ? ` 외 ${unexplained.length-6}건` : '');
+    warnings.push(`${spec.label} ${prev[spec.countKey]}개 → ${next[spec.countKey]}개 (사라진 항목: ${preview})`);
+  });
+  return warnings;
+}
 async function cloudSync(silent){
   try{
     const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
@@ -4458,6 +4683,10 @@ async function cloudSync(silent){
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
     try{
+      // 2026-09-19 추가(머니트레일 벤치마킹): pull이 로컬을 서버 값으로 덮어쓰기 전에, 지금 이
+      // 기기의 현재 상태를 로컬 백업 히스토리에 스냅샷 — 동기화가 잦아서(자동 동기화 포함) 매번
+      // 쌓으면 비슷한 시점으로 도배되므로 최소 6시간 간격을 둔다(수동/가져오기 백업은 간격 제한 없음).
+      pushBackupHistory_(snapshotForBackup_(), '동기화 전 자동 저장', 6*60*60*1000);
       // 2026-07-26 근본 수정: 순서를 "풀(pull) 먼저 → 로컬 정리 → 그다음 푸시(push)"로 변경.
       // 기존엔 로컬 캐시를 먼저 그대로 서버에 올린 뒤 서버 최신본을 받아왔는데, 이러면 로컬에
       // 남아있던 중복/삭제된 레코드가 매번 다시 서버로 재업로드되어, Sheet에서 지워도 동기화
@@ -4467,15 +4696,28 @@ async function cloudSync(silent){
       // 1) 시트의 최신 데이터를 먼저 가져와 로컬과 병합/정리(서버가 있는 날짜는 로컬 완전교체)
       const res = await fetchWithTimeout(url + (url.includes('?') ? '&' : '?') + 'ts=' + Date.now(), {}, SYNC_TIMEOUT_MS);
       const data = await res.json();
-      state.inbody = mergeByDate_(state.inbody, data.inbody);
-      state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts);
+      // 2026-09-19 추가(머니트레일 벤치마킹): 삭제 동기화(tombstone) — pull 시점에 로컬·클라우드
+      // deletedIds를 카테고리별로 병합(키마다 더 최신 삭제시각 채택)해서, 아래 merge 함수들이
+      // "이미 삭제된 항목이 서버에 남아있어도 되살리지 않게" 걸러낼 수 있게 한다.
+      let cloudDeletedIds = {};
+      try{ cloudDeletedIds = data.deletedIds ? (typeof data.deletedIds==='string' ? JSON.parse(data.deletedIds) : data.deletedIds) : {}; }catch(delParseErr){ cloudDeletedIds = {}; }
+      state.deletedIds = {
+        inbody: mergeDeletedMap_(state.deletedIds.inbody, cloudDeletedIds.inbody),
+        workouts: mergeDeletedMap_(state.deletedIds.workouts, cloudDeletedIds.workouts),
+        meals: mergeDeletedMap_(state.deletedIds.meals, cloudDeletedIds.meals),
+        steps: mergeDeletedMap_(state.deletedIds.steps, cloudDeletedIds.steps),
+        waist: mergeDeletedMap_(state.deletedIds.waist, cloudDeletedIds.waist),
+      };
+      saveArr(LS_KEYS.deletedIds, state.deletedIds);
+      state.inbody = mergeByDate_(state.inbody, data.inbody, state.deletedIds.inbody);
+      state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts, state.deletedIds.workouts);
       // 2026-08-13 추가: 서버(Sheet)에는 워크아웃 id 컬럼이 없어서(Code.gs 변경 전까지는)
       // pull로 들어온 항목엔 id가 비어있다. 최초 로드 때만 id를 채워주던 ensureWorkoutIds를
       // 동기화 직후에도 다시 돌려야, 방금 pull된 항목도 수정/삭제 버튼이 정상 동작한다.
       ensureWorkoutIds(state.workouts);
-      state.meals = mergeMealsByDate_(state.meals, data.meals);
-      state.steps = mergeByDate_(state.steps, data.steps);
-      state.waist = mergeByDate_(state.waist, data.waist);
+      state.meals = mergeMealsByDate_(state.meals, data.meals, state.deletedIds.meals);
+      state.steps = mergeByDate_(state.steps, data.steps, state.deletedIds.steps);
+      state.waist = mergeByDate_(state.waist, data.waist, state.deletedIds.waist);
       saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
       saveArr(LS_KEYS.steps, state.steps);
       saveArr(LS_KEYS.waist, state.waist);
@@ -4528,19 +4770,58 @@ async function cloudSync(silent){
         state.reportHistory = data.reportHistory;
         saveArr(LS_KEYS.reportHistory, state.reportHistory);
       }
+      // 2026-09-19 추가(머니트레일 벤치마킹): 클라우드 병합 직후 데이터 패치 재적용(적용 시점 ②).
+      // pull이 방금 서버 값으로 로컬을 덮어썼을 수 있으므로, 로드 시점에만 적용하면 동기화 한 번에
+      // 패치가 무효화될 수 있다 — 병합 직후에도 항상 다시 적용해 패치된 상태가 유지되게 한다.
+      {
+        const syncPatchN_ = applyDataPatches_(state);
+        if(syncPatchN_){
+          saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts);
+          saveArr(LS_KEYS.meal, state.meals); saveArr(LS_KEYS.waist, state.waist);
+        }
+        logDataPatchRun_(syncPatchN_);
+      }
       // 2) 이제 서버 기준으로 정리된(중복 제거된) 로컬 데이터를 다시 시트로 전송 —
       //    이미 서버와 정합된 상태라 이 단계에서 새로운 중복이 생기지 않는다.
-      const pushedInbodyDates_ = recentWindow_(state.inbody).map(r=>r.date);
+      const windowedInbody_ = recentWindow_(state.inbody);
+      const windowedWorkouts_ = recentWindow_(state.workouts);
+      const windowedMeals_ = recentWindow_(state.meals);
+      const windowedWaist_ = recentWindow_(state.waist);
+      const pushedInbodyDates_ = windowedInbody_.map(r=>r.date);
+      // 2026-09-19 추가(머니트레일 벤치마킹): push 직전 데이터 급감 경고 — 직전 성공 push 때의
+      // 서명(건수+키)과 비교해서, "기간 만료"나 "실제 삭제(tombstone)"로 설명되지 않는 감소가
+      // 있으면 실수로 데이터가 통째로 날아가는 상황을 push 전에 미리 잡아낸다.
+      const pushSig_ = storeSizeSignature_({inbody:windowedInbody_, workouts:windowedWorkouts_, meals:windowedMeals_, waist:windowedWaist_});
+      let prevPushSig_ = null;
+      try{ const raw_ = localStorage.getItem(LS_KEYS.pushSizeMeta); prevPushSig_ = raw_ ? JSON.parse(raw_).sig : null; }catch(sigErr){ prevPushSig_ = null; }
+      const shrinkWarnings_ = pushSizeShrinkWarnings_(prevPushSig_, pushSig_, pushWindowCutoff_(), state.deletedIds);
+      if(shrinkWarnings_.length){
+        if(silent){
+          console.warn('자동 동기화 보류 — 직전 저장 대비 데이터가 줄어들어 안전하게 건너뜁니다:', shrinkWarnings_);
+          syncUiStatus = {phase:'error', at: new Date().toISOString(), message: `자동 저장 보류(데이터 감소 감지): ${shrinkWarnings_.join(' / ')}`};
+          paintSyncBadge();
+          return;
+        }
+        if(!confirm(`직전 저장 때보다 아래 항목이 줄어들어 있어요:\n${shrinkWarnings_.join('\n')}\n\n의도적으로 삭제하신 게 맞다면 "확인"을 눌러 계속 저장하세요. 아니라면 "취소"를 누르고 먼저 데이터를 확인해주세요.`)){
+          syncUiStatus = {phase:'error', at: new Date().toISOString(), message: '데이터 감소가 감지되어 저장을 취소했습니다.'};
+          paintSyncBadge();
+          return;
+        }
+      }
       const postRes_ = await fetchWithTimeout(url, {
         method:'POST',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
         body: JSON.stringify({
-          inbody: recentWindow_(state.inbody), workouts: recentWindow_(state.workouts), meals: recentWindow_(state.meals),
-          waist: recentWindow_(state.waist),
+          inbody: windowedInbody_, workouts: windowedWorkouts_, meals: windowedMeals_,
+          waist: windowedWaist_,
           aiAnalysis: state.aiNote ? state.aiNote.text : null,
           aiAnalysisDate: state.aiNote ? state.aiNote.date : null,
           comprehensiveReport: state.reportNote ? state.reportNote.text : null,
           comprehensiveReportDate: state.reportNote ? state.reportNote.date : null,
+          // 2026-09-19 추가(머니트레일 벤치마킹): pull 시점에 로컬·클라우드를 병합해 이미
+          // state.deletedIds에 반영해둔 tombstone 맵을 그대로 되돌려 보내, 다른 기기에서도
+          // 이 삭제가 반영되게 한다(서버는 Meta 시트에 JSON 문자열로만 보관, 별도 로직 없음).
+          deletedIds: state.deletedIds,
         })
       }, SYNC_TIMEOUT_MS);
       // 2026-08-12 수정: "행위 수행(요청 전송)"≠"결과 확인(실제 반영)" 원칙 위반 버그 수정.
@@ -4562,6 +4843,9 @@ async function cloudSync(silent){
           throw new Error(`인바디 ${missing_.join(', ')} 데이터가 서버(시트)에 반영되지 않았습니다. 다시 동기화하거나 Apps Script 배포 상태를 확인해주세요.`);
         }
       }
+      // 2026-09-19 추가: push가 검증까지 성공했을 때만 "직전 성공 push 서명"을 갱신 — 실패한
+      // push를 기준으로 다음 번 급감 경고를 판단하면 안 되므로 성공 경로에서만 저장한다.
+      try{ localStorage.setItem(LS_KEYS.pushSizeMeta, JSON.stringify({sig: pushSig_, at: new Date().toISOString()})); }catch(sigSaveErr){}
       markUpdated();
       stopSyncTimer();
       try{ localStorage.setItem(LS_KEYS.lastautosync, new Date().toISOString()); }catch(e){} // 2026-08-04 추가: 스로틀 판단용
@@ -4689,6 +4973,74 @@ function resetGoalSettings(){
 // SEED를 무조건 무시하는 구조라, 기기 데이터가 손상되거나 클라우드 동기화 URL이 없는 상태에서
 // 실수로 지워지면 복구 수단이 전혀 없었음. 클라우드 동기화와 별개로 언제든 스냅샷을 파일로
 // 내려받고, 필요할 때 그 파일로 이 기기 데이터를 되돌릴 수 있게 한다.
+// 2026-09-19 추가(머니트레일 벤치마킹): 로컬 백업 히스토리 — 클라우드 동기화와 별개로, 이 기기
+// localStorage 안에 최근 스냅샷을 최대 10개까지 롤링 보관해서 "복원" 버튼 하나로 되돌릴 수 있게 함.
+// exportAllData()와 동일한 필드 구성을 재사용해 내보내기/백업 히스토리가 항상 같은 형식을 쓰게 한다.
+const BACKUP_HISTORY_MAX = 10;
+function snapshotForBackup_(){
+  return {
+    exportedAt: new Date().toISOString(),
+    appBuildVersion: APP_BUILD_VERSION,
+    inbody: state.inbody, workouts: state.workouts, meals: state.meals, steps: state.steps, waist: state.waist,
+    mounjaroDoses: state.mounjaroDoses, sideEffects: state.sideEffects, favorites: state.favorites,
+    aiNote: state.aiNote, reportNote: state.reportNote,
+  };
+}
+// minGapMs를 주면(예: 동기화 직전 자동 저장) 직전 저장 이후 그 시간 이내엔 새로 쌓지 않음 —
+// 자동 동기화가 잦아서(수 분 간격) 매번 쌓으면 히스토리가 비슷한 시점으로 도배되는 걸 방지.
+// 수동 백업/가져오기 직전 저장은 minGapMs 없이 항상 저장한다.
+function pushBackupHistory_(snapshot, label, minGapMs){
+  try{
+    let list = loadArr(LS_KEYS.backupHistory, []);
+    if(!Array.isArray(list)) list = [];
+    if(minGapMs && list.length){
+      const lastMs = new Date(list[0].savedAt).getTime();
+      if(!isNaN(lastMs) && (Date.now() - lastMs) < minGapMs) return;
+    }
+    const entry = {id:'bk_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7), savedAt:new Date().toISOString(), label:label||'백업', snapshot};
+    list.unshift(entry);
+    while(list.length > BACKUP_HISTORY_MAX) list.pop();
+    saveArr(LS_KEYS.backupHistory, list);
+  }catch(e){ console.error('백업 히스토리 저장 실패', e); }
+}
+function getBackupHistory_(){
+  const list = loadArr(LS_KEYS.backupHistory, []);
+  return Array.isArray(list) ? list : [];
+}
+function applyBackupSnapshot_(data){
+  if(Array.isArray(data.inbody)) state.inbody = data.inbody;
+  if(Array.isArray(data.workouts)) state.workouts = data.workouts;
+  if(Array.isArray(data.meals)) state.meals = data.meals;
+  if(Array.isArray(data.steps)) state.steps = data.steps;
+  if(Array.isArray(data.waist)) state.waist = data.waist;
+  if(Array.isArray(data.mounjaroDoses)) state.mounjaroDoses = data.mounjaroDoses;
+  if(Array.isArray(data.sideEffects)) state.sideEffects = data.sideEffects;
+  if(Array.isArray(data.favorites)) state.favorites = data.favorites;
+  if(data.aiNote){ state.aiNote = data.aiNote; saveAiNote(state.aiNote); }
+  if(data.reportNote){ state.reportNote = data.reportNote; saveReportNote(state.reportNote); }
+  ensureWorkoutIds(state.workouts); ensureTreadmillSteps(state.workouts);
+  saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
+  saveArr(LS_KEYS.steps, state.steps); saveArr(LS_KEYS.waist, state.waist);
+  saveArr(LS_KEYS.mounjaroDoses, state.mounjaroDoses); saveArr(LS_KEYS.sideEffects, state.sideEffects); saveArr(LS_KEYS.favorites, state.favorites);
+}
+function manualBackupNow(){
+  pushBackupHistory_(snapshotForBackup_(), '수동 백업', null);
+  alert('현재 상태를 백업 이력에 저장했어요.');
+  render();
+}
+function restoreFromBackupHistory_(id){
+  const list = getBackupHistory_();
+  const entry = list.find(e=>e.id===id);
+  if(!entry){ alert('해당 백업을 찾을 수 없어요.'); return; }
+  const dt = fmtDateTime(entry.savedAt);
+  if(!confirm(`${dt} (${entry.label||''}) 시점으로 되돌립니다.\n\n되돌리기 전 현재 상태도 이력에 자동으로 남겨서, 잘못 눌러도 다시 복원할 수 있어요. 계속할까요?`)) return;
+  // 복원 직전 현재 상태를 먼저 저장(이중 안전장치) — minGapMs 없이 항상 저장.
+  pushBackupHistory_(snapshotForBackup_(), '복원 전 자동 저장', null);
+  applyBackupSnapshot_(entry.snapshot);
+  markUpdated();
+  alert('복원 완료했어요.');
+  render();
+}
 function exportAllData(){
   const payload = {
     exportedAt: new Date().toISOString(),
@@ -4712,20 +5064,10 @@ function handleBackupFile(file){
     try{ data = JSON.parse(reader.result); }
     catch(e){ alert('백업 파일을 읽지 못했습니다(JSON 형식 오류): ' + e.message); return; }
     if(!confirm('현재 기기의 데이터를 이 백업 파일 내용으로 전부 덮어씁니다. 되돌릴 수 없습니다 — 계속할까요?')) return;
-    if(Array.isArray(data.inbody)) state.inbody = data.inbody;
-    if(Array.isArray(data.workouts)) state.workouts = data.workouts;
-    if(Array.isArray(data.meals)) state.meals = data.meals;
-    if(Array.isArray(data.steps)) state.steps = data.steps;
-    if(Array.isArray(data.waist)) state.waist = data.waist;
-    if(Array.isArray(data.mounjaroDoses)) state.mounjaroDoses = data.mounjaroDoses;
-    if(Array.isArray(data.sideEffects)) state.sideEffects = data.sideEffects;
-    if(Array.isArray(data.favorites)) state.favorites = data.favorites;
-    if(data.aiNote){ state.aiNote = data.aiNote; saveAiNote(state.aiNote); }
-    if(data.reportNote){ state.reportNote = data.reportNote; saveReportNote(state.reportNote); }
-    ensureWorkoutIds(state.workouts); ensureTreadmillSteps(state.workouts);
-    saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
-    saveArr(LS_KEYS.steps, state.steps); saveArr(LS_KEYS.waist, state.waist);
-    saveArr(LS_KEYS.mounjaroDoses, state.mounjaroDoses); saveArr(LS_KEYS.sideEffects, state.sideEffects); saveArr(LS_KEYS.favorites, state.favorites);
+    // 2026-09-19 추가(머니트레일 벤치마킹): 덮어쓰기 직전 현재 상태를 로컬 백업 히스토리에 자동
+    // 저장 — 파일을 잘못 골라 복원해도 방금 전 상태로 다시 돌아갈 수 있게 함.
+    pushBackupHistory_(snapshotForBackup_(), '가져오기 전 자동 저장', null);
+    applyBackupSnapshot_(data);
     markUpdated();
     alert('백업 파일을 불러왔습니다.');
     render();
@@ -4874,16 +5216,18 @@ function saveRecord(){
   const f = modalState.form;
   if(!f.date){ alert('날짜를 입력해주세요.'); return; }
   if(modalState.kind==='inbody'){
-    const rec = {date:f.date, weight:num(f.weight), muscle:num(f.muscle), fat:num(f.fat), fatPct:num(f.fatPct), bmr:f.bmr?num(f.bmr):null};
+    const rec = {date:f.date, weight:num(f.weight), muscle:num(f.muscle), fat:num(f.fat), fatPct:num(f.fatPct), bmr:f.bmr?num(f.bmr):null, updatedAt: new Date().toISOString()};
     state.inbody = [...state.inbody.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.inbody, state.inbody);
+    unmarkDeleted_('inbody', rec.date); // 2026-09-19 추가: 삭제했던 날짜를 다시 저장하면 삭제 의도 철회로 간주
   } else if(modalState.kind==='meal'){
     // 2026-08-13 추가: 특이일 유형(과식/음주/컨디션난조/외식 등) — 기존엔 note 자유텍스트의
     // 키워드 매칭에만 의존해 음주 등은 아예 감지가 안 됐음(computeSmartAlerts의
     // SPECIAL_DAY_KEYWORDS 참고). 이제 구조화된 필드로 명시적으로 남긴다.
-    const rec = {date:f.date, calories:num(f.calories), protein:num(f.protein), carbs:f.carbs?num(f.carbs):null, note:f.description||f.note||'', specialDayType: f.specialDayType||null};
+    const rec = {date:f.date, calories:num(f.calories), protein:num(f.protein), carbs:f.carbs?num(f.carbs):null, note:f.description||f.note||'', specialDayType: f.specialDayType||null, updatedAt: new Date().toISOString()};
     state.meals = [...state.meals.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.meal, state.meals);
+    unmarkDeleted_('meals', rec.date); // 2026-09-19 추가: 삭제 의도 철회로 간주
   } else {
     const validRows = (modalState.exerciseRows||[]).filter(r => r.name && r.name.trim());
     let rec;
@@ -4907,11 +5251,12 @@ function saveRecord(){
         durationMin: f.durationMin?num(f.durationMin):null,
         distanceKm: f.distanceKm?num(f.distanceKm):null,
         specialCondition: f.specialCondition||null,
-        exercises
+        exercises,
+        updatedAt: new Date().toISOString(),
       };
     } else {
       rec = {id: existingId || makeId('w'), date:f.date, name:f.name||'', part:f.part||'', volume:f.volume||null, calories:f.calories?num(f.calories):null, note:f.note||'', treadmillSteps: f.treadmillSteps?num(f.treadmillSteps):null,
-        avgHR: f.avgHR?num(f.avgHR):null, durationMin: f.durationMin?num(f.durationMin):null, distanceKm: f.distanceKm?num(f.distanceKm):null, specialCondition: f.specialCondition||null};
+        avgHR: f.avgHR?num(f.avgHR):null, durationMin: f.durationMin?num(f.durationMin):null, distanceKm: f.distanceKm?num(f.distanceKm):null, specialCondition: f.specialCondition||null, updatedAt: new Date().toISOString()};
     }
     // 2026-08-13 근본 수정: 기존엔 같은 날짜의 기존 워크아웃 기록을 전부 지우고 새 항목
     // 하나로 바꿔버려서, 하루에 두 번째 운동(예: 오전 근력 + 저녁 유산소)을 모달로 추가하면
@@ -4924,6 +5269,7 @@ function saveRecord(){
       state.workouts = [...state.workouts, rec];
     }
     saveArr(LS_KEYS.workout, state.workouts);
+    unmarkDeleted_('workouts', rec.id); // 2026-09-19 추가: 삭제 의도 철회로 간주
   }
   markUpdated();
   closeModal();
@@ -4965,10 +5311,12 @@ function importWorkoutJSON(){
       durationMin: r.durationMin!=null ? num(r.durationMin) : null,
       distanceKm: r.distanceKm!=null ? num(r.distanceKm) : null,
       specialCondition: r.specialCondition || null,
+      updatedAt: new Date().toISOString(), // 2026-09-19 추가(머니트레일 벤치마킹): 필드(레코드) 단위 타임스탬프 우선 병합용
     };
     const idx = state.workouts.findIndex(w => w.id === rec.id);
     if(idx >= 0){ state.workouts[idx] = rec; updated++; }
     else { state.workouts = [...state.workouts, rec]; added++; }
+    unmarkDeleted_('workouts', rec.id); // 2026-09-19 추가: 삭제 의도 철회로 간주
   });
   saveArr(LS_KEYS.workout, state.workouts);
   markUpdated();
@@ -4989,10 +5337,12 @@ function quickAddFavorite(favId, targetDate){
     existing.protein = (existing.protein||0) + (fav.protein||0);
     existing.carbs = (existing.carbs||0) + (fav.carbs||0);
     existing.note = existing.note ? `${existing.note} · ${fav.name}` : fav.name;
+    existing.updatedAt = new Date().toISOString(); // 2026-09-19 추가(머니트레일 벤치마킹): 타임스탬프 우선 병합용
   } else {
-    state.meals.push({date, calories:fav.calories||0, protein:fav.protein||0, carbs:fav.carbs||0, note:fav.name, specialDayType:null});
+    state.meals.push({date, calories:fav.calories||0, protein:fav.protein||0, carbs:fav.carbs||0, note:fav.name, specialDayType:null, updatedAt: new Date().toISOString()});
   }
   saveArr(LS_KEYS.meal, state.meals);
+  unmarkDeleted_('meals', date); // 2026-09-19 추가: 삭제 의도 철회로 간주
   markUpdated();
   render();
 }
