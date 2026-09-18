@@ -485,12 +485,21 @@ const SEED_MEAL = [
   ["2026-07-15",1447,174,68,"아침스킵 / 점심 삼계탕(국물·껍질제외 고기만, 200g가정, 표준 삶은닭고기 100g=180kcal 기준 추정치)(360kcal/54g) / 간식 테이크핏몬스터1병(195kcal/45g) / 저녁 올리브튜나샌드위치1개(464kcal/17g,라벨실측)+삶은달걀1개(72kcal/6.3g) / 추가 삶은달걀1개+바나나1개+테이크핏몬스터1병(356kcal/52g)"],
 ].map(r => ({date:r[0], calories:r[1], protein:r[2], carbs:r[3], note:r[4]}));
 
-const FAT_GOALS = [{label:"1차 목표", pct:20}, {label:"2차 목표", pct:18}];
+// 2026-09-18 수정(5번, 목표·기준값 설정 UI): 기존엔 FAT_GOALS/CARDIO_HR_TARGET/PROTEIN_TARGET/
+// CARB_TARGET_RANGES가 전부 const라 값을 바꾸려면 매번 코드 수정+재배포가 필요했음(실제로
+// PROTEIN_TARGET은 2026-07-29에, CARDIO_HR_TARGET은 2026-09-13에 코드 레벨 수정 이력이 있음 —
+// 즉 "가끔 바뀌는 값"이라는 게 실사용으로 이미 증명됨). _DEFAULT 상수는 그대로 두고, 실제 쓰이는
+// 변수는 let으로 바꿔 앱 시작 시 applyGoalOverrides_()가 state.goals(설정탭에서 편집, 로컬저장)가
+// 있으면 그 값으로 덮어쓰도록 함 — 이 값들을 참조하는 기존 코드는 전부 변수명을 그대로 쓰므로
+// 다른 수정이 필요 없음. START_FAT_PCT/MUSCLE_BASELINE은 "목표"가 아니라 프로그램 시작 시점의
+// 고정된 실측 기록이라 편집 대상에서 제외함(바뀌면 안 되는 값).
+const FAT_GOALS_DEFAULT = [{label:"1차 목표", pct:20}, {label:"2차 목표", pct:18}];
+let FAT_GOALS = FAT_GOALS_DEFAULT;
 const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-14-b (인바디 데이터 없는 날(체중전용 기록, 여행 중 등)에서 골격근/체지방/체지방률이 null→0으로 취급돼 리포트·목표탭·대시보드·마운자로 차수비교·강점아쉬운점 등 다수 화면에서 수치가 왜곡되던 버그 일괄 수정(계기: 리포트탭 델타 -33.2/-21.1/-26.4, 목표탭 예상목표체중 89.9/87.7kg 오표시 리포트). 체성분 실측값이 있는 가장 최근 기록(lastBC) 기준으로 계산하도록 통일. 이전 빌드: 2026-09-14-a)';
+const APP_BUILD_VERSION = '2026-09-18-a (자동화 보완 5종: 종목별 1RM/PR 자동추적+종목명 자동완성, 목표·기준값 설정탭 UI화(체지방목표/유산소심박존/단백질목표/탄수화물등급)+단백질 체중기반 자동계산 옵션+목표도달 예상시점 배너, 분석 리포트 히스토리 조회(서버 자동아카이브 연동), 인바디 데이터 신뢰도 배지(체중전용 측정일 표시). 서버(Code.gs)에도 PR감지알림·데이터공백 백그라운드 리마인더·리포트 자동아카이브 추가 — 별도 안내 참고)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -598,9 +607,11 @@ function inferPartsForEntry(w){
 }
 
 // 인클라인 트레드밀 목표 심박존 (FatMax 57~66%HRmax 기준, 삼성워치 구간2 밴드와 정합)
-const CARDIO_HR_TARGET = {min:105, max:125};
+const CARDIO_HR_TARGET_DEFAULT = {min:105, max:125};
+let CARDIO_HR_TARGET = CARDIO_HR_TARGET_DEFAULT;
 // 단백질 목표 (기존 체중×1.6g/kg에서 상향 조정, 절대량 기준)
-const PROTEIN_TARGET = {min:140, max:170}; // 2026-07-29: 하한 150→140g 조정(ISSN Aragon 2017, FFM기준 재검토)
+const PROTEIN_TARGET_DEFAULT = {min:140, max:170}; // 2026-07-29: 하한 150→140g 조정(ISSN Aragon 2017, FFM기준 재검토)
+let PROTEIN_TARGET = PROTEIN_TARGET_DEFAULT;
 
 // 2026-08-13 추가: 특이일(과식/음주/컨디션난조 등) — 이 프로젝트의 임무 자체가 "음주, 과식 등
 // 특이이슈 발생시 대처방안 제공"인데, 기존엔 식단 메모의 자유텍스트 키워드 매칭에만 의존해서
@@ -787,7 +798,8 @@ function computeCalorieTarget(bmr, eatKcal){
 // 2026-07-25 신설: 탄수화물 목표 계산 — 근력운동 총볼륨(kg) 기준 A/B/C 3단계.
 // 근거: 정희님 확정(2026-07-25) — 근력 없는 날=A, 있는 날은 "오늘 볼륨 vs 역대 최고볼륨(PR)의 40%"로 B/C 분리.
 // PR 기준을 쓰는 이유: PR이 갱신될 때마다 기준선도 자동으로 같이 움직여서 별도 재계산이 필요 없음.
-const CARB_TARGET_RANGES = { A:[130,150], B:[150,180], C:[180,210] };
+const CARB_TARGET_RANGES_DEFAULT = { A:[130,150], B:[150,180], C:[180,210] };
+let CARB_TARGET_RANGES = CARB_TARGET_RANGES_DEFAULT;
 const CARB_VOLUME_PR_RATIO = 0.4;
 // 2026-08-20 주의: 부위 구분 없는 전체 세션 통합 PR. 하체는 기구 특성상 kg 총합이 구조적으로
 // 커서 이 값이 사실상 항상 하체 세션에서 나옴 — 부위별 비교나 탄수화물 목표 계산에는 쓰지 말 것
@@ -834,6 +846,88 @@ function computeGroupVolumePR(workouts){
     });
   });
   return maxByGroup;
+}
+
+// 2026-09-18 추가(1번·1-A): 종목별(예: "덤벨 로우") 추정 1RM/PR 자동 추적.
+// 근거: 2026-09-13 aiAnalysis 텍스트에서 종목별 1RM을 매번 수동으로, 그것도 "비교 시점이 오래돼
+// 직접비교 신뢰도 낮음" 수준으로 부정확하게 비교하고 있었음 — exercises 배열에 이미 종목별
+// name/sets/reps/weight가 구조화돼 저장되므로, 그 원시 데이터로 자동 계산 가능. 기존
+// computeMaxVolumePR/computeGroupVolumePR은 "세션/그룹 총 볼륨" 기준이라 종목 단위 비교는
+// 애초에 하지 않았음 — 이 함수는 그 공백을 메우는 별도 집계.
+// 1-A: 종목명이 "덤벨로우"/"덤벨 로우"처럼 표기가 갈려도 같은 종목으로 묶이도록, 공백 제거+소문자
+// 정규화한 키로 그룹화(Code.gs checkAndNotifyExercisePRs_와 동일한 정규화 방식).
+function estimate1RM(weight, reps){
+  const w = Number(weight), r = Number(reps);
+  if(!w || !r || w<=0 || r<=0) return null;
+  return w * (1 + r/30); // Epley 공식
+}
+function exerciseGroupKey_(name){
+  return String(name||'').replace(/\s+/g,'').toLowerCase();
+}
+function computeExercisePRs(){
+  const groups = {}; // key -> {displayName, part, best:{oneRM,weight,reps,date}, lastDate}
+  [...state.workouts].sort((a,b)=>a.date.localeCompare(b.date)).forEach(w=>{
+    if(!Array.isArray(w.exercises)) return;
+    w.exercises.forEach(ex=>{
+      if(!ex.name) return;
+      const oneRM = estimate1RM(ex.weight, ex.reps);
+      if(oneRM==null) return;
+      const key = exerciseGroupKey_(ex.name);
+      if(!groups[key]) groups[key] = {displayName: ex.name.trim(), part: ex.part||null, best:null, lastDate:null};
+      groups[key].displayName = ex.name.trim(); // 표시는 가장 최근에 쓴 표기 그대로
+      if(ex.part) groups[key].part = ex.part;
+      groups[key].lastDate = w.date;
+      if(!groups[key].best || oneRM > groups[key].best.oneRM){
+        groups[key].best = {oneRM, weight:Number(ex.weight), reps:Number(ex.reps), date:w.date};
+      }
+    });
+  });
+  return Object.values(groups).filter(g=>g.best).sort((a,b)=> b.best.oneRM - a.best.oneRM);
+}
+// 최근 기록에 실제로 등장한 종목명 목록(1-A 자동완성 datalist용). 최신순으로 중복 제거.
+function distinctExerciseNames(){
+  const seen = new Set(); const names = [];
+  [...state.workouts].sort((a,b)=>b.date.localeCompare(a.date)).forEach(w=>{
+    (w.exercises||[]).forEach(ex=>{
+      if(!ex.name) return;
+      const key = exerciseGroupKey_(ex.name);
+      if(seen.has(key)) return;
+      seen.add(key); names.push(ex.name.trim());
+    });
+  });
+  return names;
+}
+
+// 2026-09-18 추가(5-A): 최근 14회 MA7 체지방률 추세(단순선형회귀)로 다음 목표(FAT_GOALS 중
+// 아직 미달성인 첫 목표) 도달까지 남은 기간을 추정 — "목표를 언제 조정해야 하는지"를 사람이
+// 매번 그래프를 보고 판단하지 않아도 되게 함. movingAverage/sortedInbody는 이미 다른 화면에서
+// 쓰는 기존 헬퍼를 그대로 재사용(새 계산 방식을 추가하지 않아 다른 화면과 수치가 어긋나지 않음).
+function computeGoalDriftInsight(){
+  const maRows = movingAverage(sortedInbody(), 'fatPct', 7).filter(r=>r.fatPctMA!=null);
+  if(maRows.length < 14) return null;
+  const recent = maRows.slice(-14);
+  const n = recent.length;
+  const ys = recent.map(r=>r.fatPctMA);
+  const xs = ys.map((_,i)=>i);
+  const xMean = xs.reduce((a,b)=>a+b,0)/n;
+  const yMean = ys.reduce((a,b)=>a+b,0)/n;
+  let num=0, den=0;
+  for(let i=0;i<n;i++){ num += (xs[i]-xMean)*(ys[i]-yMean); den += (xs[i]-xMean)*(xs[i]-xMean); }
+  const slopePerPoint = den!==0 ? num/den : 0; // 측정 1회당 %p 변화(대략 1일 간격) — 음수면 감소(개선) 중
+
+  const currentFat = ys[ys.length-1];
+  const nextGoal = FAT_GOALS.find(g => currentFat > g.pct);
+  if(!nextGoal){
+    const lastGoal = FAT_GOALS[FAT_GOALS.length-1];
+    return {tone:'good', title:'등록된 목표 체지방률 모두 달성', detail:`현재 MA7 체지방률 ${fmt(currentFat,1)}%로 마지막 목표(${lastGoal.label} ${lastGoal.pct}%)를 달성했어요. 설정탭에서 새 목표를 추가해보세요.`};
+  }
+  if(slopePerPoint >= -0.005){
+    return {tone:'warn', title:'체지방률 추세 정체 — 목표·전략 재검토 권장', detail:`최근 14회 측정 기준 체지방률 추세가 거의 평평해요(주당 ${fmt(-slopePerPoint*7,2)}%p). 현재 페이스로는 ${nextGoal.label}(${nextGoal.pct}%) 도달 시점을 예측하기 어려워요 — 칼로리·운동 강도 재검토를 권장해요.`};
+  }
+  const remain = currentFat - nextGoal.pct;
+  const daysToGoal = Math.round(remain / (-slopePerPoint));
+  const weeksToGoal = Math.max(0, Math.round(daysToGoal/7));
+  return {tone:'neutral', title:`${nextGoal.label}(${nextGoal.pct}%) 도달까지 약 ${weeksToGoal}주 예상`, detail:`최근 14회 추세(주당 ${fmt(-slopePerPoint*7,2)}%p 감소) 기준 단순 추정치예요. 실제 페이스는 수분상태·특이일 등으로 흔들릴 수 있어요. 도달이 임박하면(2주 이내) 다음 목표를 미리 설정해두는 걸 권장해요.`};
 }
 
 // 2026-08-20 수정: 비교 기준(PR)을 전체 통합 PR → "그날 훈련한 부위 그룹의 PR"로 교체.
@@ -1077,7 +1171,7 @@ const SEED_SIDE_EFFECTS = [];
 const SEED_FAVORITES = [
   {id:'fav_seed_1', name:'단백질 쉐이크 2스쿱', calories:240, protein:48, carbs:6},
 ];
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1'};
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1'};
 // 2026-08-13 추가: 로컬 고유 id 생성기 — 운동/부작용/즐겨찾기처럼 "하루에 여러 건"이 가능한
 // 레코드를 날짜만으로 식별하면(기존 워크아웃 저장 로직처럼) 같은 날 두 번째 항목을 추가할 때
 // 첫 번째 항목이 통째로 사라지는 버그가 생긴다. 이를 막기 위해 항목마다 안정적인 id를 부여한다.
@@ -1169,6 +1263,12 @@ let state = {
   mounjaroDoses: loadArr(LS_KEYS.mounjaroDoses, MOUNJARO_DOSES),
   sideEffects: loadArr(LS_KEYS.sideEffects, SEED_SIDE_EFFECTS),
   favorites: loadArr(LS_KEYS.favorites, SEED_FAVORITES),
+  // 2026-09-18 추가(5번): 설정탭에서 편집하는 목표·기준값 오버라이드. 비어있으면(최초 사용)
+  // 위 _DEFAULT 상수 그대로 사용 — applyGoalOverrides_() 참고.
+  goals: loadArr(LS_KEYS.goals, {}),
+  // 2026-09-18 추가(6번): Code.gs가 자동 아카이브한 지난 분석/리포트 히스토리(서버가 진실
+  // 공급원 — cloudSync pull로만 갱신됨, 로컬에서 직접 추가하지 않음).
+  reportHistory: loadArr(LS_KEYS.reportHistory, []),
   aiNote: loadAiNote(),
   reportNote: loadReportNote(),
   lastUpdated: localStorage.getItem(LS_KEYS.lastupdate) || null,
@@ -1184,6 +1284,28 @@ let state = {
   const fixedSteps = ensureTreadmillSteps(state.workouts);
   if(fixed.changed || fixedSteps.changed) saveArr(LS_KEYS.workout, state.workouts);
 }
+// 2026-09-18 추가(5번·5-B): state.goals(설정탭에서 편집, 로컬저장 + 클라우드 동기화)가 있으면
+// FAT_GOALS/CARDIO_HR_TARGET/PROTEIN_TARGET/CARB_TARGET_RANGES를 그 값으로 덮어씀. 이 네 변수를
+// 참조하는 기존 코드는 전부 "변수명"만 쓰므로(함수 호출이 아님) 이 함수만 값을 바꿔주면 앱 전체에
+// 자동 반영됨 — 다른 곳은 손댈 필요 없음. render() 때마다도 호출해서, 단백질 자동계산 모드(5-B)가
+// 최신 체중(인바디 동기화로 바뀔 수 있음)을 항상 반영하도록 함(비용이 매우 낮은 순수 계산이라
+// 매 렌더 호출에도 문제 없음).
+function applyGoalOverrides_(){
+  const g = state.goals || {};
+  FAT_GOALS = (Array.isArray(g.fatGoals) && g.fatGoals.length) ? g.fatGoals : FAT_GOALS_DEFAULT;
+  CARDIO_HR_TARGET = (g.cardioHR && g.cardioHR.min!=null && g.cardioHR.max!=null) ? {min:g.cardioHR.min, max:g.cardioHR.max} : CARDIO_HR_TARGET_DEFAULT;
+  CARB_TARGET_RANGES = g.carbRanges ? Object.assign({}, CARB_TARGET_RANGES_DEFAULT, g.carbRanges) : CARB_TARGET_RANGES_DEFAULT;
+
+  if(g.protein && g.protein.mode==='auto' && g.protein.perKgMin && g.protein.perKgMax){
+    const last = sortedInbody().slice(-1)[0];
+    if(last && last.weight){
+      PROTEIN_TARGET = {min: Math.round(last.weight*g.protein.perKgMin), max: Math.round(last.weight*g.protein.perKgMax)};
+      return;
+    }
+  }
+  PROTEIN_TARGET = (g.protein && g.protein.min!=null && g.protein.max!=null) ? {min:g.protein.min, max:g.protein.max} : PROTEIN_TARGET_DEFAULT;
+}
+applyGoalOverrides_();
 function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); }
 function setTheme(t){
   state.theme = t;
@@ -1682,6 +1804,7 @@ function HEADER_TEMPLATE(){
   `;
 }
 function render(){
+  applyGoalOverrides_(); // 2026-09-18 추가(5-B): 자동계산 모드일 때 최신 체중 반영을 위해 매 렌더마다 재적용
   const app = document.getElementById('app');
   // 2026-08-04 추가(머니트레일 앱 벤치마킹 #3): renderTab() 안의 특정 탭 렌더링 함수 하나가
   // 예외를 던져도(예: 계산 로직 버그, 데이터 형식 이상) 앱 전체가 하얗게 빈 화면이 되지 않도록
@@ -3028,6 +3151,31 @@ function renderWorkoutTab(){
       })()}
     </section>
 
+    <section class="card">
+      <div class="section-label good">${secNum('W4d')}종목별 PR(추정 1RM) <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· Epley 공식(무게×(1+횟수/30)) 추정치</span></div>
+      ${(() => {
+        const prs = computeExercisePRs();
+        if(!prs.length) return `<div class="empty-state" style="padding:20px 10px;">상세입력(세트·횟수·무게)으로 기록된 종목이 아직 없어요. "+ 운동 기록 추가"에서 종목을 추가해보세요.</div>`;
+        const shown = state.expandedTables['exercisePRs'] ? prs : prs.slice(0,8);
+        return `<div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th style="text-align:left">종목</th><th style="text-align:left">부위</th><th>추정 1RM</th><th style="text-align:left">최고기록</th><th style="text-align:left">최근 기록일</th></tr></thead>
+            <tbody>
+              ${shown.map(p => `<tr>
+                <td style="text-align:left; font-family:var(--font-body); font-weight:600;">${esc(p.displayName)}</td>
+                <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body);">${esc(p.part||'—')}</td>
+                <td class="mono" style="font-weight:700; color:var(--c-accent-strong);">${Math.round(p.best.oneRM)}kg</td>
+                <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body);">${p.best.weight}kg×${p.best.reps}회 (${p.best.date.slice(5)})</td>
+                <td style="text-align:left; color:var(--text-faint); font-family:var(--font-body);">${p.lastDate}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${prs.length>8 ? expandToggleRow('exercisePRs', prs.length, '전체 종목 보기') : ''}
+        <div class="note-box" style="margin-top:10px;">Epley 공식 기반 추정치라 실측 1RM과 다를 수 있어요. 새 PR을 달성하면(클라우드 동기화 시) 텔레그램으로도 알려드려요. 종목명은 공백 유무와 무관하게 자동으로 같은 종목으로 묶여요(예: "덤벨로우"="덤벨 로우").</div>`;
+      })()}
+    </section>
+
     <section>
       <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
         <span>${secNum('W5')}운동 기록</span>
@@ -3133,6 +3281,18 @@ function renderDashboard(){
       </div>
       <div class="note-box" style="margin-top:10px;">배지의 점 2개는 각각 <b>MA7 확정</b> · <b>MA14 안정 확인</b>을 뜻해요(●●=둘 다 확인돼 되돌림 걱정 없는 상태). 필요 감량치는 <b>최근 실측 골격근량(${fmt(lastBC.muscle)}kg${bcAsOf})</b>이 그대로 유지된다는 가정으로 계산해요. 골격근이 늘면 이 값은 다음 측정 때 자동으로 갱신돼요.</div>
     </section>
+
+    ${(() => {
+      // 2026-09-18 추가(7번, 데이터 신뢰도 배지): 최신 기록이 체중전용(골격근/체지방 미측정)이면
+      // 대시보드 최상단에서부터 바로 알 수 있게 배너로 안내. bcAsOf가 이미 "N일 지난 실측 기준"임을
+      // 힌트로 보여주고는 있었지만, 별도 시각적 배너가 없으면 놓치기 쉬웠음(리포트탭 델타 왜곡
+      // 버그가 실제로 이 상태에서 발생했었음).
+      if(lastBC.date===last.date) return '';
+      const gapDays = Math.round((new Date(last.date+'T00:00:00')-new Date(lastBC.date+'T00:00:00'))/86400000);
+      return `<div class="note-box" style="border-color:var(--c-warn); margin-top:-6px;">
+        ⚖️ <b>체성분(골격근·체지방) 실측이 ${gapDays}일째 없어요</b> — 최신 기록(${last.date})은 체중만 있고, 마지막 체성분 실측은 ${lastBC.date}이에요. 위 게이지·목표 진행률 등은 전부 ${lastBC.date} 실측 기준으로 계산돼요.
+      </div>`;
+    })()}
 
     ${state.aiNote ? `
     <section class="card ai-note">
@@ -3367,10 +3527,16 @@ function renderInbodyTable(ma){
   const rows = ma.slice().reverse();
   return `<div class="card" style="margin-top:12px; overflow-x:auto;">
     <table class="data-table">
-      <thead><tr><th>날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th><th></th></tr></thead>
+      <thead><tr><th style="text-align:left">날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th><th></th></tr></thead>
       <tbody>
-        ${rows.map(r=>`<tr>
-          <td>${r.date}</td>
+        ${rows.map(r=>{
+          // 2026-09-18 추가(7번, 데이터 신뢰도 배지): 골격근/체지방이 없는 "체중전용" 기록을
+          // 표에서 바로 구분할 수 있도록 표시. 이 null→0 취급 버그가 과거 여러 화면에서 실제
+          // 버그를 냈던 이력(위 곳곳의 "2026-09-14 수정" 주석 참고)이 있어, 원인을 표에서부터
+          // 눈에 보이게 만들어두는 게 재발 방지에도 도움이 됨.
+          const isWeightOnly = r.muscle==null || r.fat==null;
+          return `<tr>
+          <td style="text-align:left;">${r.date}${isWeightOnly?`<span class="badge miss" title="체성분(골격근·체지방) 미측정 — 체중만 기록됨" style="margin-left:4px; font-size:10px;">체중만</span>`:''}</td>
           <td>${editableCell('inbody', r.date, 'weight', r.weight, 1)}</td>
           <td>${editableCell('inbody', r.date, 'muscle', r.muscle, 1)}</td>
           <td>${editableCell('inbody', r.date, 'fat', r.fat, 1)}</td>
@@ -3378,10 +3544,10 @@ function renderInbodyTable(ma){
           <td>${editableCell('inbody', r.date, 'bmr', r.bmr, 0)}</td>
           <td>${fmt(r.fatPctMA,2)}</td>
           <td><button class="mini-btn danger" onclick="deleteInbodyEntry('${r.date}')">삭제</button></td>
-        </tr>`).join('')}
+        </tr>`;}).join('')}
       </tbody>
     </table>
-    <div class="note-box" style="margin-top:10px;">셀을 탭하면 바로 수정할 수 있어요. 입력 후 엔터 또는 다른 곳을 누르면 저장돼요. 행을 통째로 잘못 넣었다면 맨 오른쪽 삭제 버튼을 쓰세요(확인창이 뜹니다).</div>
+    <div class="note-box" style="margin-top:10px;">셀을 탭하면 바로 수정할 수 있어요. 입력 후 엔터 또는 다른 곳을 누르면 저장돼요. 행을 통째로 잘못 넣었다면 맨 오른쪽 삭제 버튼을 쓰세요(확인창이 뜹니다). <b>체중만</b> 배지가 붙은 날은 골격근·체지방 실측이 없어(여행 중 등) 체성분 추세 계산에서는 자동으로 건너뛰어요.</div>
   </div>`;
 }
 
@@ -3822,6 +3988,19 @@ function renderReport(){
         ${state.reportNote ? `<button class="btn btn-ghost btn-sm" onclick="clearReportNote()">삭제</button>` : ''}
       </div>
     </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('07e')}분석 히스토리 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 6번, 서버 자동 아카이브</span></div>
+      <p class="p-dim">"Claude 분석"이나 "종합 리포트"를 새로 저장하면, 덮어써지기 직전의 이전 내용이 자동으로 여기 쌓여요(클라우드 동기화 시 반영). 예전엔 새로 저장하는 순간 이전 내용이 완전히 사라졌었어요.</p>
+      ${state.reportHistory.length ? `
+        <div style="margin-top:10px;">
+          ${state.reportHistory.map((h,i) => `
+            <details style="margin-bottom:8px; border:1px solid var(--border-soft); border-radius:8px; padding:8px 10px;">
+              <summary style="cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text);">${esc(h.date||'날짜 미상')} · ${h.type==='aiAnalysis'?'Claude 분석':'종합 리포트'}</summary>
+              <div class="ai-note-body" style="margin-top:8px; font-size:12.5px;">${formatNoteHtml(h.content||'')}</div>
+            </details>`).join('')}
+        </div>` : `<p class="p-dim" style="margin-top:6px;">아직 쌓인 히스토리가 없어요 — 분석을 갱신하면 다음 동기화부터 여기 쌓이기 시작해요.</p>`}
+    </section>
   `;
 }
 function saveReportNoteFromInput(){
@@ -3929,6 +4108,55 @@ function renderSettings(){
     </section>
 
     <section class="card">
+      <div class="section-label good">${secNum('05a2')}목표·기준값 설정 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 5번, 5-B</span></div>
+      <p class="p-dim">체지방률 목표·유산소 심박존·단백질 목표·탄수화물 등급 범위는 원래 코드에 고정된 값이라 바꿀 때마다 Claude에게 코드 수정을 요청해야 했어요. 이제 여기서 직접 바꿀 수 있고, 저장하면 앱 전체(대시보드·리포트·스마트 인사이트 등)에 바로 반영돼요.</p>
+      ${(() => {
+        const drift = computeGoalDriftInsight();
+        if(!drift) return '';
+        return `<div class="alert-item ${drift.tone==='warn'?'tone-warn-item':drift.tone==='good'?'tone-good-item':''}" style="margin:10px 0;">
+          <div class="alert-icon tone-${drift.tone}">${drift.tone==='warn'?ICONS.up:drift.tone==='good'?ICONS.down:ICONS.target}</div>
+          <div class="alert-body"><div class="alert-title tone-${drift.tone}">${drift.title}</div><div class="alert-detail">${drift.detail}</div></div>
+        </div>`;
+      })()}
+      <div class="field-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-top:10px;">
+        <div class="field"><label>체지방률 1차 목표(%)</label><input id="goal-fat1" type="number" step="0.1" value="${FAT_GOALS[0]?FAT_GOALS[0].pct:''}"></div>
+        <div class="field"><label>체지방률 2차 목표(%)</label><input id="goal-fat2" type="number" step="0.1" value="${FAT_GOALS[1]?FAT_GOALS[1].pct:''}"></div>
+        <div class="field"><label>유산소 심박존 하한(bpm)</label><input id="goal-hr-min" type="number" value="${CARDIO_HR_TARGET.min}"></div>
+        <div class="field"><label>유산소 심박존 상한(bpm)</label><input id="goal-hr-max" type="number" value="${CARDIO_HR_TARGET.max}"></div>
+      </div>
+      <div class="field-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:8px; margin-top:10px;">
+        <div class="field"><label>탄수 A등급 하한(g)</label><input id="goal-carbA-min" type="number" value="${CARB_TARGET_RANGES.A[0]}"></div>
+        <div class="field"><label>탄수 A등급 상한(g)</label><input id="goal-carbA-max" type="number" value="${CARB_TARGET_RANGES.A[1]}"></div>
+        <div class="field"><label>탄수 B등급 하한(g)</label><input id="goal-carbB-min" type="number" value="${CARB_TARGET_RANGES.B[0]}"></div>
+        <div class="field"><label>탄수 B등급 상한(g)</label><input id="goal-carbB-max" type="number" value="${CARB_TARGET_RANGES.B[1]}"></div>
+        <div class="field"><label>탄수 C등급 하한(g)</label><input id="goal-carbC-min" type="number" value="${CARB_TARGET_RANGES.C[0]}"></div>
+        <div class="field"><label>탄수 C등급 상한(g)</label><input id="goal-carbC-max" type="number" value="${CARB_TARGET_RANGES.C[1]}"></div>
+      </div>
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft);">
+        <div style="font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:6px;">단백질 목표 <span class="dim" style="font-weight:500;">· 5-B</span></div>
+        <div class="btn-row" style="margin-bottom:8px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-dim);">
+            <input type="checkbox" id="goal-protein-auto" ${state.goals.protein&&state.goals.protein.mode==='auto'?'checked':''} onchange="toggleProteinAutoUI_(this.checked)">
+            체중 기반 자동 계산(체중이 바뀌면 목표도 자동으로 갱신)
+          </label>
+        </div>
+        <div id="protein-fixed-fields" style="display:${state.goals.protein&&state.goals.protein.mode==='auto'?'none':'grid'}; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px;">
+          <div class="field"><label>단백질 목표 하한(g)</label><input id="goal-protein-min" type="number" value="${PROTEIN_TARGET.min}"></div>
+          <div class="field"><label>단백질 목표 상한(g)</label><input id="goal-protein-max" type="number" value="${PROTEIN_TARGET.max}"></div>
+        </div>
+        <div id="protein-auto-fields" style="display:${state.goals.protein&&state.goals.protein.mode==='auto'?'grid':'none'}; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px;">
+          <div class="field"><label>체중당 하한(g/kg)</label><input id="goal-protein-perkgmin" type="number" step="0.1" value="${(state.goals.protein&&state.goals.protein.perKgMin)||1.6}"></div>
+          <div class="field"><label>체중당 상한(g/kg)</label><input id="goal-protein-perkgmax" type="number" step="0.1" value="${(state.goals.protein&&state.goals.protein.perKgMax)||2.0}"></div>
+        </div>
+        <p class="p-dim" style="font-size:11.5px; margin-top:6px;">자동 계산은 최신 인바디 체중 × 위 배율로 매번 다시 계산돼요(기본값 1.6~2.0g/kg은 일반적인 근손실 최소화 권장범위 참고치이며, 정확한 개인 기준은 의료·영양 전문가와 상담을 권장해요).</p>
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-primary btn-sm" onclick="saveGoalSettings()">저장</button>
+        <button class="btn btn-sm" onclick="resetGoalSettings()">기본값으로 초기화</button>
+      </div>
+    </section>
+
+    <section class="card">
       <div class="section-label good">${secNum('05a3')}리마인더 알림</div>
       <p class="p-dim">인바디 기록 공백 2일 이상, 저항운동 공백 5일 이상일 때 앱을 열면 안내 배너가 뜹니다. 브라우저 알림 권한을 허용하면 앱을 여는 순간 시스템 알림으로도 받을 수 있어요(진짜 백그라운드 푸시는 아니고, 앱을 열 때 조건을 검사하는 방식이에요). 마운자로 투여 예정일 리마인더는 2026-09-14 요청으로 삭제했어요 — 투여는 직접 관리하시는 걸로 변경됨.</p>
       <div class="btn-row" style="margin-top:8px;">
@@ -3977,6 +4205,27 @@ function renderSettings(){
         <span id="sync-status">${lastSync ? `마지막 갱신: ${fmtDateTime(lastSync)}` : '아직 동기화한 적 없음'}</span><br>
         Apps Script 배포 코드는 함께 받으신 <b>body-recomp-sync-Code.gs</b> 파일 안내를 따라 한 번만 설정하면 됩니다. URL이 저장되어 있으면 이후엔 앱을 열 때마다 자동으로 동기화돼요.
         <br>⚠️ 동기화 중에는 <b>이 화면을 벗어나지 마세요</b> — 다른 앱으로 전환하거나 화면을 끄면 모바일 브라우저가 통신을 일시정지시켜 동기화가 실패할 수 있습니다(브라우저 공통 동작). 25초 넘게 응답이 없으면 자동으로 시간 초과 처리됩니다.
+      </div>
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border-soft);">
+        <div style="font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:4px;">서버 트리거(자동실행) 상태</div>
+        <p class="p-dim">Apps Script 편집기를 열 필요 없이, 여기 버튼으로 서버 쪽 자동실행(인박스 자동확인·저녁요약·리마인더)이 실제로 등록돼 있는지 확인하고, 안 돼 있으면 그 자리에서 등록할 수 있어요.</p>
+        <div class="btn-row" style="margin:8px 0;">
+          <button class="btn btn-sm" onclick="checkTriggerStatus()" ${triggerStatusUi.checking?'disabled':''}>${triggerStatusUi.checking?'확인 중...':'🩺 상태 확인'}</button>
+        </div>
+        ${triggerStatusUi.error ? `<div class="msg-error" style="margin-bottom:8px;">확인 실패: ${esc(triggerStatusUi.error)}</div>` : ''}
+        ${triggerStatusUi.triggers ? `
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th style="text-align:left">항목</th><th>상태</th><th></th></tr></thead>
+              <tbody>
+                ${Object.keys(TRIGGER_LABELS_).map(name => `<tr>
+                  <td style="text-align:left; font-family:var(--font-body);">${TRIGGER_LABELS_[name]}</td>
+                  <td class="${triggerStatusUi.triggers[name]?'good-text':'warn-text'}">${triggerStatusUi.triggers[name]?'✅ 등록됨':'⚠️ 미등록'}</td>
+                  <td>${triggerStatusUi.triggers[name]?'' : `<button class="mini-btn" onclick="installTriggerNow('${name}')" ${triggerStatusUi.checking?'disabled':''}>등록</button>`}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>` : `<p class="p-dim" style="font-size:11.5px;">아직 확인 전이에요 — "상태 확인"을 눌러보세요.</p>`}
       </div>
     </section>
 
@@ -4138,6 +4387,8 @@ function mergeMealsByDate_(existing, incoming){
 let syncing = false;
 let syncUiStatus = {phase:'idle', at:null, elapsedSec:0}; // 'idle'|'syncing'|'done'|'error' — 버튼 옆 동기화 상태 표시용
 let syncTimerHandle = null;
+// 2026-09-18 추가: 서버(Code.gs) 트리거 상태 확인/등록 버튼용 상태값 — null이면 "아직 확인 안 함".
+let triggerStatusUi = {checking:false, triggers:null, error:null};
 function startSyncTimer(){
   clearInterval(syncTimerHandle);
   syncTimerHandle = setInterval(() => {
@@ -4262,6 +4513,13 @@ async function cloudSync(silent){
           }
         }catch(mjErr){ console.error('mounjaroDoses 파싱 실패', mjErr); }
       }
+      // 2026-09-18 추가(6번): Code.gs가 aiAnalysis/comprehensiveReport 덮어쓰기 직전에 자동
+      // 아카이브해둔 히스토리(reportHistory)를 그대로 받아 저장 — 로컬에서 만들거나 병합하지
+      // 않고 항상 서버 값을 그대로 신뢰(서버가 유일한 진실 공급원이라는 이 앱의 원칙과 동일).
+      if(Array.isArray(data.reportHistory)){
+        state.reportHistory = data.reportHistory;
+        saveArr(LS_KEYS.reportHistory, state.reportHistory);
+      }
       // 2) 이제 서버 기준으로 정리된(중복 제거된) 로컬 데이터를 다시 시트로 전송 —
       //    이미 서버와 정합된 상태라 이 단계에서 새로운 중복이 생기지 않는다.
       const pushedInbodyDates_ = recentWindow_(state.inbody).map(r=>r.date);
@@ -4319,6 +4577,45 @@ async function cloudSync(silent){
     }
   }
 }
+// 2026-09-18 추가: 서버 트리거(인박스 1분마다/저녁요약/리마인더) 상태 확인 + 개별 등록 버튼.
+// Code.gs가 doGet 호출마다 자동으로 등록을 시도하긴 하지만(ensureTriggersInstalled_), 실제로
+// 등록됐는지 앱 화면에서 확인할 방법이 없었음 — 다른 프로젝트(자산관리 앱)에서 쓰던 "버튼 누르면
+// 그 자리에서 등록되고 결과가 바로 보이는" 패턴을 그대로 적용.
+const TRIGGER_LABELS_ = {
+  checkInboxTrigger: '인박스 자동확인 (1분마다)',
+  sendEveningDigest: '저녁 요약 알림 (매일 저녁 9시대)',
+  checkDailyReminders: '리마인더 알림 (매일 오전 9시대)',
+};
+async function checkTriggerStatus(){
+  const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
+  if(!url){ alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
+  triggerStatusUi = {checking:true, triggers:triggerStatusUi.triggers, error:null};
+  render();
+  try{
+    const res = await fetchWithTimeout(url + (url.includes('?')?'&':'?') + 'triggerStatus=1&ts=' + Date.now(), {}, SYNC_TIMEOUT_MS);
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || '알 수 없는 오류');
+    triggerStatusUi = {checking:false, triggers:data.triggers, error:null};
+  }catch(e){
+    triggerStatusUi = {checking:false, triggers:triggerStatusUi.triggers, error:(e && e.message ? e.message : String(e))};
+  }
+  render();
+}
+async function installTriggerNow(name){
+  const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
+  if(!url){ alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
+  triggerStatusUi = {...triggerStatusUi, checking:true};
+  render();
+  try{
+    const res = await fetchWithTimeout(url + (url.includes('?')?'&':'?') + 'installTrigger=' + encodeURIComponent(name) + '&ts=' + Date.now(), {}, SYNC_TIMEOUT_MS);
+    const data = await res.json();
+    if(!data.ok){ alert('등록 실패: ' + (data.error||'알 수 없는 오류')); triggerStatusUi = {...triggerStatusUi, checking:false}; render(); return; }
+    await checkTriggerStatus(); // 등록 직후 최신 상태 다시 조회해서 화면 갱신
+  }catch(e){
+    triggerStatusUi = {...triggerStatusUi, checking:false, error:(e && e.message ? e.message : String(e))};
+    render();
+  }
+}
 function setSyncStatus(msg){
   const el = document.getElementById('sync-status');
   if(el) el.textContent = msg;
@@ -4326,6 +4623,57 @@ function setSyncStatus(msg){
 function saveCloudUrl(){
   const v = document.getElementById('cloud-url-input').value.trim();
   if(v) localStorage.setItem(LS_KEYS.cloudurl, v);
+  render();
+}
+
+// 2026-09-18 추가(5번·5-B): 목표·기준값 설정탭 UI 저장/초기화.
+function toggleProteinAutoUI_(checked){
+  const fixedEl = document.getElementById('protein-fixed-fields');
+  const autoEl = document.getElementById('protein-auto-fields');
+  if(fixedEl) fixedEl.style.display = checked ? 'none' : 'grid';
+  if(autoEl) autoEl.style.display = checked ? 'grid' : 'none';
+}
+function saveGoalSettings(){
+  const num_ = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
+  const fat1 = num_('goal-fat1'), fat2 = num_('goal-fat2');
+  const hrMin = num_('goal-hr-min'), hrMax = num_('goal-hr-max');
+  const carbAMin = num_('goal-carbA-min'), carbAMax = num_('goal-carbA-max');
+  const carbBMin = num_('goal-carbB-min'), carbBMax = num_('goal-carbB-max');
+  const carbCMin = num_('goal-carbC-min'), carbCMax = num_('goal-carbC-max');
+  if([fat1,fat2,hrMin,hrMax,carbAMin,carbAMax,carbBMin,carbBMax,carbCMin,carbCMax].some(v=>v===null)){
+    alert('숫자 항목이 비어있거나 올바르지 않아요. 모든 칸을 채워주세요.'); return;
+  }
+  if(hrMin >= hrMax){ alert('유산소 심박존은 하한이 상한보다 작아야 해요.'); return; }
+
+  const isAuto = document.getElementById('goal-protein-auto').checked;
+  let protein;
+  if(isAuto){
+    const perKgMin = num_('goal-protein-perkgmin'), perKgMax = num_('goal-protein-perkgmax');
+    if(perKgMin===null || perKgMax===null || perKgMin<=0 || perKgMax<=0){ alert('체중당 배율을 올바르게 입력해주세요.'); return; }
+    protein = {mode:'auto', perKgMin, perKgMax};
+  } else {
+    const pMin = num_('goal-protein-min'), pMax = num_('goal-protein-max');
+    if(pMin===null || pMax===null){ alert('단백질 목표 값을 올바르게 입력해주세요.'); return; }
+    protein = {mode:'fixed', min:pMin, max:pMax};
+  }
+
+  state.goals = {
+    fatGoals: [{label:FAT_GOALS_DEFAULT[0]?FAT_GOALS_DEFAULT[0].label:'1차 목표', pct:fat1}, {label:FAT_GOALS_DEFAULT[1]?FAT_GOALS_DEFAULT[1].label:'2차 목표', pct:fat2}],
+    cardioHR: {min:hrMin, max:hrMax},
+    carbRanges: {A:[carbAMin,carbAMax], B:[carbBMin,carbBMax], C:[carbCMin,carbCMax]},
+    protein,
+  };
+  saveArr(LS_KEYS.goals, state.goals);
+  applyGoalOverrides_();
+  markUpdated();
+  render();
+}
+function resetGoalSettings(){
+  if(!confirm('목표·기준값을 전부 기본값으로 되돌릴까요?')) return;
+  state.goals = {};
+  saveArr(LS_KEYS.goals, state.goals);
+  applyGoalOverrides_();
+  markUpdated();
   render();
 }
 
@@ -4439,10 +4787,13 @@ function renderModal(){
           <button type="button" class="btn btn-sm" style="margin-top:6px;" onclick="importWorkoutJSON()">JSON으로 등록</button>
           <div class="note-box" style="margin-top:6px;">삼성헬스 스크린샷을 Claude 채팅에 올리고 "이 앱 형식 JSON으로 만들어줘"라고 하면, 그 결과를 여기 붙여넣기만 하면 돼요. 트레드밀 걸음수는 note 문장 대신 treadmillSteps 숫자 필드에 담겨서 들어오기 때문에, Claude가 표현을 어떻게 쓰든 걸음수 인식이 안 놓쳐요.</div>
         </div>
+        <datalist id="exercise-name-list">
+          ${distinctExerciseNames().map(n => `<option value="${esc(n)}">`).join('')}
+        </datalist>
         <div class="ex-rows">
           ${(modalState.exerciseRows||[]).map((row,i) => `
             <div class="ex-row">
-              <input style="flex:1 1 140px;" placeholder="종목명" value="${esc(row.name||'')}" oninput="updateExRow(${i},'name',this.value)">
+              <input style="flex:1 1 140px;" placeholder="종목명" value="${esc(row.name||'')}" list="exercise-name-list" oninput="updateExRow(${i},'name',this.value)">
               <select style="flex:1 1 90px;" onchange="updateExRow(${i},'part',this.value)">
                 <option value="">부위</option>
                 ${BODY_PARTS.map(p=>`<option value="${p}" ${row.part===p?'selected':''}>${p}</option>`).join('')}
