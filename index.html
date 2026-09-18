@@ -499,7 +499,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-18-a (자동화 보완 5종: 종목별 1RM/PR 자동추적+종목명 자동완성, 목표·기준값 설정탭 UI화(체지방목표/유산소심박존/단백질목표/탄수화물등급)+단백질 체중기반 자동계산 옵션+목표도달 예상시점 배너, 분석 리포트 히스토리 조회(서버 자동아카이브 연동), 인바디 데이터 신뢰도 배지(체중전용 측정일 표시). 서버(Code.gs)에도 PR감지알림·데이터공백 백그라운드 리마인더·리포트 자동아카이브 추가 — 별도 안내 참고)';
+const APP_BUILD_VERSION = '2026-09-19-a (설정탭 서버 트리거 등록 UI를 머니트레일 방식으로 변경: 개별 등록 버튼을 상태확인 성공 여부와 무관하게 항상 노출 — 기존엔 상태확인 자체가 권한오류로 실패하면 등록 버튼이 아예 안 보이던 구조적 문제 수정. 서버(Code.gs)도 handleTriggerStatus_ try/catch 누락 버그 수정(Failed to fetch 원인))';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -4207,25 +4207,33 @@ function renderSettings(){
         <br>⚠️ 동기화 중에는 <b>이 화면을 벗어나지 마세요</b> — 다른 앱으로 전환하거나 화면을 끄면 모바일 브라우저가 통신을 일시정지시켜 동기화가 실패할 수 있습니다(브라우저 공통 동작). 25초 넘게 응답이 없으면 자동으로 시간 초과 처리됩니다.
       </div>
       <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border-soft);">
-        <div style="font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:4px;">서버 트리거(자동실행) 상태</div>
-        <p class="p-dim">Apps Script 편집기를 열 필요 없이, 여기 버튼으로 서버 쪽 자동실행(인박스 자동확인·저녁요약·리마인더)이 실제로 등록돼 있는지 확인하고, 안 돼 있으면 그 자리에서 등록할 수 있어요.</p>
+        <div style="font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:4px;">🔧 서버 설정 함수 실행 (최초 1회용)</div>
+        <!-- 2026-09-19 수정: 머니트레일 앱의 "서버 설정 함수 실행" 화면(정희님이 참고로 보내주신 캡처)과
+             동일하게, 개별 등록 버튼을 상태 확인 결과와 무관하게 항상 눌러볼 수 있게 변경. 기존엔 이
+             등록 버튼들이 상태 확인 표 안에만 있어서, 상태 확인 자체가 실패하면(예: 권한 미승인 시
+             ScriptApp.getProjectTriggers 예외) 등록 버튼이 화면에 아예 나타나지 않는 구조적 문제가
+             있었음(정희님 실사용 중 실제로 막혔던 지점). 이미 등록된 트리거를 다시 등록해도
+             안전(멱등, Code.gs가 중복 생성 안 함)하므로 상시 노출해도 무방. -->
+        <p class="p-dim">Apps Script 편집기를 열 필요 없이, 아래 버튼으로 서버 쪽 자동실행을 등록할 수 있어요. 이미 등록돼 있어도 다시 눌러도 안전해요(중복 생성 안 됨).</p>
+        <div class="btn-row" style="flex-wrap:wrap; gap:8px; margin:10px 0;">
+          ${Object.keys(TRIGGER_LABELS_).map(name => `<button class="btn btn-sm" onclick="installTriggerNow('${name}')" ${triggerStatusUi.checking?'disabled':''}>${TRIGGER_LABELS_[name]} 등록</button>`).join('')}
+        </div>
         <div class="btn-row" style="margin:8px 0;">
-          <button class="btn btn-sm" onclick="checkTriggerStatus()" ${triggerStatusUi.checking?'disabled':''}>${triggerStatusUi.checking?'확인 중...':'🩺 상태 확인'}</button>
+          <button class="btn btn-sm" onclick="checkTriggerStatus()" ${triggerStatusUi.checking?'disabled':''}>${triggerStatusUi.checking?'확인 중...':'🩺 전체 상태 점검'}</button>
         </div>
         ${triggerStatusUi.error ? `<div class="msg-error" style="margin-bottom:8px;">확인 실패: ${esc(triggerStatusUi.error)}</div>` : ''}
         ${triggerStatusUi.triggers ? `
           <div style="overflow-x:auto;">
             <table class="data-table">
-              <thead><tr><th style="text-align:left">항목</th><th>상태</th><th></th></tr></thead>
+              <thead><tr><th style="text-align:left">항목</th><th>상태</th></tr></thead>
               <tbody>
                 ${Object.keys(TRIGGER_LABELS_).map(name => `<tr>
                   <td style="text-align:left; font-family:var(--font-body);">${TRIGGER_LABELS_[name]}</td>
                   <td class="${triggerStatusUi.triggers[name]?'good-text':'warn-text'}">${triggerStatusUi.triggers[name]?'✅ 등록됨':'⚠️ 미등록'}</td>
-                  <td>${triggerStatusUi.triggers[name]?'' : `<button class="mini-btn" onclick="installTriggerNow('${name}')" ${triggerStatusUi.checking?'disabled':''}>등록</button>`}</td>
                 </tr>`).join('')}
               </tbody>
             </table>
-          </div>` : `<p class="p-dim" style="font-size:11.5px;">아직 확인 전이에요 — "상태 확인"을 눌러보세요.</p>`}
+          </div>` : `<p class="p-dim" style="font-size:11.5px;">아직 확인 전이에요 — "전체 상태 점검"을 눌러보세요.</p>`}
       </div>
     </section>
 
