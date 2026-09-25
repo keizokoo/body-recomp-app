@@ -15,7 +15,9 @@
   --bg:#F5F6FC; --panel:#FFFFFF; --panel-alt:#F7F8FD; --border:#E7E9F6; --border-soft:#EFF0F9;
   --text:#17182B; --text-dim:#6E7191; --text-faint:#A6A9C4;
 
-  --font-display:'Space Grotesk',sans-serif; --font-body:'Pretendard',sans-serif; --font-mono:'JetBrains Mono',monospace;
+  --font-display:'Space Grotesk','Pretendard',sans-serif; --font-body:'Pretendard',sans-serif; --font-mono:'JetBrains Mono','Pretendard',monospace;
+  /* 2026-09-25 폰트 수정: JetBrains Mono·Space Grotesk에는 한글 글리프가 없어서, 한글이 OS 기본 monospace(윈도우 굴림체 등)로
+     떨어지며 자간이 넓고 가는 글꼴로 깨져 보였음(운동 가이드 '종목', 4주간격 비교 '지표' 열 등). 한글은 Pretendard로 폴백되도록 스택 보강 */
   --display-weight:700;
 
   --grad-1:linear-gradient(120deg,#7C5CFC 0%,#17D9B4 100%);
@@ -180,9 +182,16 @@ svg.chart{width:100%; height:120px; display:block;}
 .chart-axis text, text.chart-axis{fill:var(--text-faint); font-size:9px; font-family:var(--font-mono);}
 
 table.data-table{width:100%; border-collapse:collapse; font-size:13px;}
-table.data-table th{text-align:right; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); padding:9px 10px; border-bottom:1px solid var(--border);}
+table.data-table th{text-align:right; font-size:10.5px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--text-faint); padding:9px 10px; border-bottom:1px solid var(--border);}
 table.data-table th:first-child, table.data-table td:first-child{text-align:left;}
-table.data-table td{text-align:right; padding:7px 10px; font-family:var(--font-mono); border-bottom:1px solid var(--border-soft); color:var(--text-dim);}
+table.data-table td{text-align:right; padding:7px 10px; font-family:var(--font-mono); border-bottom:1px solid var(--border-soft); color:var(--text-dim); font-variant-numeric:tabular-nums;}
+/* 2026-09-25: 첫 열은 항목명(종목/지표 등 한글 텍스트)이라 본문 폰트로 표시 */
+table.data-table td:first-child{font-family:var(--font-body); color:var(--text);}
+/* 2026-09-25: 한글이 글자 단위로 줄바꿈되며 '골격/근', '세트×횟/수'처럼 끊기던 문제 — 한글은 어절 단위로만 줄바꿈, 숫자 셀은 줄바꿈 금지 */
+table.data-table th, table.data-table td{word-break:keep-all;}
+table.data-table td.mono, table.data-table th{white-space:nowrap;}
+/* 2026-09-25: 크레아틴 카드 SVG는 viewBox 600 기준이라 축 글자를 크게(모바일 축소 대비) */
+svg.creatine-svg text.chart-axis{font-size:17px;}
 table.data-table tr:hover td{color:var(--text); background:var(--panel-alt);}
 
 .editable-cell{cursor:pointer; border-bottom:1px dotted var(--border); padding-bottom:1px;}
@@ -499,7 +508,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-19-c (코드 전체 분석 기반 20개 개선사항 적용: 동기화 — 목표값(goals)/부작용·즐겨찾기/걸음수 클라우드 양방향 동기화 추가, 텔레그램이 goals 값 사용하도록 수정, 저항운동 공백판정 클라이언트·서버 로직 통일; 분석 — 허리둘레×체지방량 교차검증 카드, 걸음수 편차 칼로리목표 참고문구, 식사기록 공백 단독 경고, 칼로리 이탈 중복체크 "최근추세/오늘단기" 구분; 운동 — 종목별 1RM 추이·정체 감지, PT세션 구조화 필드(ptSession) 전환, 상세입력 없을 시 PR 미감지 안내; 텔레그램 — 식사공백/칼로리·단백질 미달/체지방률 추세정체 알림 추가; 기타 — 허리둘레 측정조건(공복여부) 필드, 낡은 안내문구·JSON 예시 갱신, 유지보수 원칙 주석 보강(SPECIAL_DAY_KEYWORDS 레거시 명시, DATA_PATCHES 우선사용). 이전 빌드의 머니트레일 벤치마킹 5종은 그대로 유지)';
+const APP_BUILD_VERSION = '2026-09-25-c (크레아틴 모니터링 최종: 미복용 확인기간 시작일을 6/5로 조정(정희님 확인 — 8/26 이전 복용 이력 없음) → 미복용 구간 비교 데이터 즉시 확보, 권장 복용량(매일 3g·로딩 없음) 안내 문구 추가. 2026-09-25-b 크레아틴 카드·식단 입력 필드, 2026-09-25-a 폰트 수정 포함)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -2010,7 +2019,7 @@ function openEditModal(kind, rec){
     }
   } else if(kind==='meal'){
     modalState.exerciseRows = [];
-    modalState.form = {date:rec.date, calories:rec.calories, protein:rec.protein, carbs:rec.carbs, description:rec.note, specialDayType:rec.specialDayType||''};
+    modalState.form = {date:rec.date, calories:rec.calories, protein:rec.protein, carbs:rec.carbs, description:rec.note, specialDayType:rec.specialDayType||'', creatine:rec.creatine};
   } else {
     modalState.exerciseRows = [];
     modalState.form = {date:rec.date, weight:rec.weight, muscle:rec.muscle, fat:rec.fat, fatPct:rec.fatPct, bmr:rec.bmr};
@@ -3655,6 +3664,8 @@ function renderDashboard(){
       })()}
     </section>
 
+    ${renderCreatineSection(ib)}
+
     <section>
       <div class="section-label">${secNum('01')}데이터 기반 인사이트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">${state.lastUpdated ? '· 최종 갱신 '+fmtDateTime(state.lastUpdated) : ''}</span></div>
       <div class="insight-grid">
@@ -3706,6 +3717,153 @@ function secNum(n){ return `<span class="sec-num">${n}</span>`; }
 /* 2026-07-21 추가: 대시보드 MA7 추세 섹션 전용 카드 — MA7(실선)+MA14(점선) 오버레이,
    최근 7일 회귀기울기 배지, MA7-MA14 교차 배지를 함께 표시. goodDirection: 'down'이면
    값이 줄어드는 게 좋음(체지방률), 'up'이면 늘거나 유지가 좋음(골격근량) */
+/* ============================================================================
+   2026-09-25 추가: 크레아틴 모니터링 (A안: 복용 기록 + 체중·골격근 추세 겹쳐보기,
+   C안: 복용 구간 vs 미복용 구간 인바디 평균 비교)
+   - 데이터: meals 레코드의 creatine(g) 필드(매크로와 별개로 복용 여부만 기록). 서버는 Code.gs
+     SHEETS.meals.cols에 'creatine' 컬럼이 있어야 왕복 동기화됨(2026-09-25 Code.gs 동시 수정).
+   - 근거: 3g/일 복용 시 근육 크레아틴이 가득 차는 데 약 28일(Hultman 1996), 크레아틴은 근육 세포
+     안으로 수분을 끌어들여 BIA/DEXA 제지방(골격근) 추정치를 실제 근육보다 크게 보이게 할 수 있음.
+   - 추측금지 원칙: CREATINE_TRACKING_START 이전 날짜는 "복용 여부 기록 없음"으로 보고 C안
+     비교(미복용 그룹)에서 제외한다 — 기록이 없는 것과 안 먹은 것은 다르다.
+   ============================================================================ */
+const CREATINE_DEFAULT_G = 3;
+const CREATINE_SATURATION_DAYS = 28;   // 3g/일 기준 포화까지 약 28일
+const CREATINE_FULL_THRESHOLD = 21;    // 최근 28일 중 21일(75%) 이상 복용 → "충분 복용" 구간
+const CREATINE_MIN_GROUP_N = 5;        // C안 비교 시 그룹별 최소 인바디 건수(미만이면 판단보류)
+// 2026-09-25 정희님 확인: 8/26 이전에는 크레아틴 복용한 적 없음 → 프로그램 시작일(6/5)부터를 "복용 여부 확인된 기간"으로 사용.
+// 이 날짜 이전은 여전히 C안 비교에서 제외(확인되지 않은 기간을 미복용으로 단정하지 않기 위함).
+const CREATINE_TRACKING_START = '2026-06-05';
+// 2026-09-25 권장량 검토 결과(ISSN 2017 입장문: 유지 3~5g/일, 또는 로딩 없이 3g/일×28일로 포화): 매일 3g(1스쿱),
+// 로딩(20g/일) 안 함 — 로딩은 0.5~1.0L 수분 저류로 인바디 추세를 흔들기 때문. 핵심은 '양'보다 '매일 빠짐없이'.
+const CREATINE_TARGET_NOTE = '권장: 매일 3g(1스쿱), 로딩 없이 — 양보다 매일 빠짐없이가 핵심';
+
+function isoAddDays_(iso, n){
+  const d = new Date(iso+'T00:00:00');
+  d.setDate(d.getDate()+n);
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+function creatineMap_(){
+  const map = {};
+  (state.meals||[]).forEach(m => {
+    const g = Number(m && m.creatine);
+    if(m && m.date && g>0) map[m.date] = (map[m.date]||0) + g;
+  });
+  return map;
+}
+// endIso 포함 최근 days일 중 복용일수
+function creatineCountInWindow_(map, endIso, days){
+  let c = 0;
+  for(let i=0;i<days;i++){ if(map[isoAddDays_(endIso,-i)]) c++; }
+  return c;
+}
+function creatineStage_(map, todayIso){
+  const dates = Object.keys(map).sort();
+  if(!dates.length) return {label:'기록 없음', tone:'neutral', count28:0, lastDate:null, daysSinceLast:null};
+  const lastDate = dates[dates.length-1];
+  const daysSinceLast = Math.round((new Date(todayIso+'T00:00:00') - new Date(lastDate+'T00:00:00'))/86400000);
+  const count28 = creatineCountInWindow_(map, todayIso, CREATINE_SATURATION_DAYS);
+  let label, tone;
+  if(count28 >= CREATINE_FULL_THRESHOLD){ label='충분 복용 중(근육 포화 추정)'; tone='good'; }
+  else if(daysSinceLast > 7){ label='중단 상태(근육 저장량 감소 중 추정)'; tone='warn'; }
+  else { label='복용 중 · 아직 포화 전'; tone='neutral'; }
+  return {label, tone, count28, lastDate, daysSinceLast};
+}
+// A안 차트: 최근 60일, 위 두 패널(체중 MA7 / 골격근 MA7) + 아래 복용일 막대 띠
+function creatineOverlayChartSVG_(ib, map, todayIso){
+  const DAYS = 60;
+  const startIso = isoAddDays_(todayIso, -(DAYS-1));
+  const dayIdx = iso => Math.round((new Date(iso+'T00:00:00') - new Date(startIso+'T00:00:00'))/86400000);
+  const W = 600, padL = 84, padR = 10, panelH = 90, gap = 22, stripH = 22;
+  const x = i => padL + (W-padL-padR) * (i/(DAYS-1));
+  const maW = movingAverage(ib, 'weight', 7).filter(r => r.date>=startIso && r.date<=todayIso && r.weight!=null);
+  const ibBC = ib.filter(r => r.muscle!=null);
+  const maM = movingAverage(ibBC, 'muscle', 7).filter(r => r.date>=startIso && r.date<=todayIso);
+  const panel = (rows, key, top, colorVar, label, unit) => {
+    const vals = rows.map(r=>r[key]).filter(v=>v!=null && !isNaN(v));
+    if(vals.length < 2) return `<text x="${padL}" y="${top+panelH/2}" class="chart-axis">${label}: 표시할 데이터 부족</text>`;
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if(hi-lo < 0.4){ const mid=(hi+lo)/2; lo=mid-0.2; hi=mid+0.2; }
+    const y = v => top + panelH - (panelH*(v-lo)/(hi-lo));
+    const pts = rows.filter(r=>r[key]!=null).map(r => `${x(dayIdx(r.date)).toFixed(1)},${y(r[key]).toFixed(1)}`).join(' ');
+    return `<text x="4" y="${top+16}" class="chart-axis" style="fill:var(${colorVar}); font-weight:700;">${label}</text>
+      <text x="4" y="${top+38}" class="chart-axis">${fmt(hi,1)}${unit}</text>
+      <text x="4" y="${top+panelH}" class="chart-axis">${fmt(lo,1)}${unit}</text>
+      <line x1="${padL}" x2="${W-padR}" y1="${top+panelH}" y2="${top+panelH}" stroke="var(--c-grid)"/>
+      <polyline points="${pts}" fill="none" stroke="var(${colorVar})" stroke-width="2" stroke-linejoin="round"/>`;
+  };
+  const top1 = 4, top2 = top1+panelH+gap, stripTop = top2+panelH+gap;
+  // 복용일 음영(두 패널을 가로지르는 연한 띠) + 아래 막대
+  const bw = Math.max(2, (W-padL-padR)/DAYS - 1);
+  let shade = '', bars = '';
+  for(let i=0;i<DAYS;i++){
+    const iso = isoAddDays_(startIso, i);
+    if(map[iso]){
+      shade += `<rect x="${(x(i)-bw/2).toFixed(1)}" y="${top1}" width="${bw.toFixed(1)}" height="${(stripTop-top1-4)}" fill="var(--c-waist)" opacity="0.13"/>`;
+      bars += `<rect x="${(x(i)-bw/2).toFixed(1)}" y="${stripTop}" width="${bw.toFixed(1)}" height="${stripH}" rx="1.5" fill="var(--c-waist)"><title>${iso} 크레아틴 ${map[iso]}g</title></rect>`;
+    }
+  }
+  const H = stripTop + stripH + 26;
+  return `<svg class="creatine-svg" viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; display:block;" role="img" aria-label="크레아틴 복용일과 체중·골격근 이동평균">
+    ${shade}
+    ${panel(maW, 'weightMA', top1, '--c-weight', '체중 MA7', 'kg')}
+    ${panel(maM, 'muscleMA', top2, '--c-muscle', '골격근 MA7', 'kg')}
+    <text x="4" y="${stripTop+17}" class="chart-axis" style="fill:var(--c-waist); font-weight:700;">크레아틴</text>
+    <line x1="${padL}" x2="${W-padR}" y1="${stripTop+stripH}" y2="${stripTop+stripH}" stroke="var(--c-grid)"/>
+    ${bars}
+    <text x="${padL}" y="${H-2}" class="chart-axis">${dLabel(startIso)}</text>
+    <text x="${W-padR}" y="${H-2}" class="chart-axis" text-anchor="end">${dLabel(todayIso)}</text>
+  </svg>`;
+}
+// C안: 인바디(체성분 실측) 날짜별로 "그날까지 최근 28일 복용일수"를 구해 두 그룹으로 나눠 평균 비교
+function computeCreatinePeriodCompare_(ib, map){
+  const rows = ib.filter(r => r.muscle!=null && r.weight!=null && r.fatPct!=null && r.date>=CREATINE_TRACKING_START);
+  const full = [], none = [];
+  rows.forEach(r => {
+    const c = creatineCountInWindow_(map, r.date, CREATINE_SATURATION_DAYS);
+    if(c >= CREATINE_FULL_THRESHOLD) full.push(r);
+    else if(c === 0 && isoAddDays_(r.date, -(CREATINE_SATURATION_DAYS-1)) >= CREATINE_TRACKING_START) none.push(r);
+  });
+  const avg = (arr,k) => arr.length ? arr.reduce((s,r)=>s+Number(r[k]),0)/arr.length : null;
+  const pack = arr => ({n:arr.length, weight:avg(arr,'weight'), muscle:avg(arr,'muscle'), fatPct:avg(arr,'fatPct')});
+  return {full: pack(full), none: pack(none)};
+}
+function renderCreatineSection(ib){
+  const map = creatineMap_();
+  const today = todayISO();
+  const st = creatineStage_(map, today);
+  const cmp = computeCreatinePeriodCompare_(ib, map);
+  const ready = cmp.full.n >= CREATINE_MIN_GROUP_N && cmp.none.n >= CREATINE_MIN_GROUP_N;
+  const toneColor = st.tone==='good' ? 'var(--c-good)' : st.tone==='warn' ? 'var(--c-warn)' : 'var(--text-dim)';
+  const cell = (v,u,d) => v==null ? '—' : `${fmt(v,d)}${u}`;
+  const diff = (a,b,u,d) => (a==null||b==null) ? '—' : `${a-b>=0?'+':''}${fmt(a-b,d)}${u}`;
+  return `<section class="card">
+    <div class="section-label good">${secNum('00d')}크레아틴 복용 × 체중·골격근 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 복용일(주황)과 이동평균 추세 겹쳐보기</span></div>
+    <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:10px; font-size:12.5px;">
+      <div>상태 <b style="color:${toneColor}">${st.label}</b></div>
+      <div>최근 ${CREATINE_SATURATION_DAYS}일 복용 <b class="mono">${st.count28}/${CREATINE_SATURATION_DAYS}일</b></div>
+      <div>마지막 복용 <b class="mono">${st.lastDate ? `${dLabel(st.lastDate)} (${st.daysSinceLast===0?'오늘':st.daysSinceLast+'일 전'})` : '—'}</b></div>
+    </div>
+    <div class="dim" style="font-size:11.5px; margin:-4px 0 10px;">💊 ${CREATINE_TARGET_NOTE}</div>
+    ${creatineOverlayChartSVG_(ib, map, today)}
+    <div style="margin-top:14px; font-size:13px; font-weight:700; color:var(--text);">복용 구간 vs 미복용 구간 비교</div>
+    <div class="dim" style="font-size:11.5px; margin:2px 0 8px;">인바디 날짜마다 그날까지 최근 ${CREATINE_SATURATION_DAYS}일 복용일수로 나눔 — 충분 복용 ${CREATINE_FULL_THRESHOLD}일 이상 / 미복용 0일(부분 복용일은 제외, ${CREATINE_TRACKING_START} 이전은 확인 안 된 기간이라 제외)</div>
+    <div style="overflow-x:auto;">
+      <table class="data-table">
+        <thead><tr><th style="text-align:left">구간</th><th>인바디 건수</th><th>체중 평균</th><th>골격근 평균</th><th>체지방률 평균</th></tr></thead>
+        <tbody>
+          <tr><td>충분 복용</td><td class="mono">${cmp.full.n}건</td><td class="mono">${cell(cmp.full.weight,'kg',2)}</td><td class="mono">${cell(cmp.full.muscle,'kg',2)}</td><td class="mono">${cell(cmp.full.fatPct,'%',2)}</td></tr>
+          <tr><td>미복용</td><td class="mono">${cmp.none.n}건</td><td class="mono">${cell(cmp.none.weight,'kg',2)}</td><td class="mono">${cell(cmp.none.muscle,'kg',2)}</td><td class="mono">${cell(cmp.none.fatPct,'%',2)}</td></tr>
+          ${ready ? `<tr><td>차이(복용−미복용)</td><td class="mono">—</td><td class="mono">${diff(cmp.full.weight,cmp.none.weight,'kg',2)}</td><td class="mono">${diff(cmp.full.muscle,cmp.none.muscle,'kg',2)}</td><td class="mono">${diff(cmp.full.fatPct,cmp.none.fatPct,'%p',2)}</td></tr>` : ''}
+        </tbody>
+      </table>
+    </div>
+    <div class="note-box" style="margin-top:10px;">${ready
+      ? '관찰 비교라 마운자로 용량·식단·운동 변화가 함께 섞여 있어요 — 차이를 크레아틴 효과로 단정하지 마세요. 크레아틴은 근육 속 수분을 늘려 인바디 골격근이 실제보다 높게 잡힐 수 있어요.'
+      : `판단보류 — 두 구간 모두 인바디 ${CREATINE_MIN_GROUP_N}건 이상 필요해요(현재 충분 복용 ${cmp.full.n}건 / 미복용 ${cmp.none.n}건). 3g을 매일 ${CREATINE_FULL_THRESHOLD}일 이상 기록하면 자동으로 비교가 시작돼요.`}</div>
+  </section>`;
+}
 function maTrendChartCard(title, ma7data, ma14data, key7, key14, unit, colorVar, goal, goodDirection, slopeDecimals){
   const vals7 = ma7data.map(d=>d[key7]).filter(v=>v!=null);
   const nowVal = vals7[vals7.length-1];
@@ -3884,6 +4042,7 @@ function dayRow(date, i, wArr, m, prev){
     mlCol = `${m.calories}kcal${target?`<span class="badge ${calHit?'hit':'miss'}">${calHit?'목표 충족':'목표 초과'}</span>`:''}
       <br>단백질 ${m.protein}g${proteinTarget?`<span class="badge ${proHit?'hit':'miss'}">${proHit?'충분':'부족'}</span>`:''}${m.carbs?` · 탄수 ${m.carbs}g`:''}
       ${m.specialDayType?`<br><span class="badge miss">${esc(SPECIAL_DAY_LABELS[m.specialDayType]||m.specialDayType)}</span>`:''}
+      ${Number(m.creatine)>0?`<br><span class="badge">💊 크레아틴 ${fmt(m.creatine,0)}g</span>`:''}
       ${m.note?`<br><span class="dim">${esc(m.note)}</span>`:''}
       <div class="row-actions"><button class="mini-btn" onclick="editMealByDate('${date}')">수정</button><button class="mini-btn danger" onclick="deleteMealEntry('${date}')">삭제</button></div>`;
   }
@@ -5385,6 +5544,9 @@ function renderModal(){
         ${field('calories','칼로리 (kcal)', f.calories)}
         ${field('protein','단백질 (g)', f.protein)}
         ${field('carbs','탄수화물 (g, 선택)', f.carbs)}
+        ${field('creatine','크레아틴 (g, 먹은 날만)', f.creatine)}
+        <div style="margin:-6px 0 12px;"><button type="button" class="special-chip ${Number(f.creatine)>0?'active':''}" onclick="modalState.form.creatine=(Number(modalState.form.creatine)>0?'':CREATINE_DEFAULT_G); refreshModal();">💊 크레아틴 ${CREATINE_DEFAULT_G}g 먹음</button>
+          <div class="note-box" style="margin-top:6px;">매크로(칼로리·단백질)에는 합산하지 않고 복용 여부만 따로 기록해요. 대시보드 "크레아틴 복용 × 체중·골격근" 카드에 표시돼요.</div></div>
         <div class="field"><label>특이일 (해당되면 선택)</label>
           <div class="special-chip-row">
             ${SPECIAL_DAY_TYPES.map(t => `<button type="button" class="special-chip ${f.specialDayType===t?'active':''}" onclick="modalState.form.specialDayType=(modalState.form.specialDayType==='${t}'?'':'${t}'); refreshModal();">${SPECIAL_DAY_LABELS[t]}</button>`).join('')}
@@ -5491,7 +5653,7 @@ function saveRecord(){
     // 2026-08-13 추가: 특이일 유형(과식/음주/컨디션난조/외식 등) — 기존엔 note 자유텍스트의
     // 키워드 매칭에만 의존해 음주 등은 아예 감지가 안 됐음(computeSmartAlerts의
     // SPECIAL_DAY_KEYWORDS 참고). 이제 구조화된 필드로 명시적으로 남긴다.
-    const rec = {date:f.date, calories:num(f.calories), protein:num(f.protein), carbs:f.carbs?num(f.carbs):null, note:f.description||f.note||'', specialDayType: f.specialDayType||null, updatedAt: new Date().toISOString()};
+    const rec = {date:f.date, calories:num(f.calories), protein:num(f.protein), carbs:f.carbs?num(f.carbs):null, note:f.description||f.note||'', specialDayType: f.specialDayType||null, creatine: (f.creatine!==''&&f.creatine!=null&&Number(f.creatine)>0) ? num(f.creatine) : null, updatedAt: new Date().toISOString()}; // 2026-09-25: creatine(g) 필드 추가(크레아틴 모니터링 A안)
     state.meals = [...state.meals.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.meal, state.meals);
     unmarkDeleted_('meals', rec.date); // 2026-09-19 추가: 삭제 의도 철회로 간주
