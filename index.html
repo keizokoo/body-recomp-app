@@ -508,7 +508,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-09-25-c (크레아틴 모니터링 최종: 미복용 확인기간 시작일을 6/5로 조정(정희님 확인 — 8/26 이전 복용 이력 없음) → 미복용 구간 비교 데이터 즉시 확보, 권장 복용량(매일 3g·로딩 없음) 안내 문구 추가. 2026-09-25-b 크레아틴 카드·식단 입력 필드, 2026-09-25-a 폰트 수정 포함)';
+const APP_BUILD_VERSION = '2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -590,13 +590,25 @@ const SAFE_EXERCISE_LIBRARY = {
 function inferPartsForEntry(w){
   const parts = new Set();
   if(w.exercises && w.exercises.length){
-    w.exercises.forEach(ex => { if(ex.part) parts.add(ex.part); });
+    w.exercises.forEach(ex => {
+      if(!ex.part) return;
+      // 2026-10-02 수정: '가슴/삼두'처럼 복합으로 적힌 종목 부위를 BODY_PARTS 단위로 분해한다.
+      // (기존엔 문자열 통째로 저장돼 BODY_PARTS.includes() 필터에서 전부 걸러져, 10/1 저녁 홈트가
+      // 근력으로 인식되지 않았음) 분해되는 게 없으면 기존처럼 원문을 그대로 유지한다.
+      const exPart = String(ex.part);
+      const found = BODY_PARTS.filter(p => p==='등' ? /(^|[^가-힣])등(?![가-힣])/.test(exPart) : exPart.includes(p));
+      if(found.length) found.forEach(p => parts.add(p)); else parts.add(exPart);
+    });
   }
   // 2026-07-21 추가: exercises 배열은 있지만 종목별 part 필드가 하나도 없는 경우
   // (업로드 데이터 누락 등) 그대로 두면 근력일이 통째로 미인식되는 버그가 있었음
   // → 상위 name/part/note 텍스트 기반 탐지로 자동 폴백
   if(parts.size===0){
-    const text = `${w.name||''} ${w.part||''} ${w.note||''}`;
+    // 2026-10-02 수정: part가 정확히 '유산소'인 순수 유산소 세션은 note를 훑지 않는다. note에 적힌
+    // "어깨 석회성건염 치료 중", "등/이두 근력 직후 연속 진행" 같은 설명 문구가 부위로 잘못 잡혀
+    // 걷기·러닝머신이 저항운동으로 인식됐음(9/25 걷기, 9/28 러닝머신 실제 확인).
+    const pureCardio = String(w.part||'').trim() === '유산소';
+    const text = pureCardio ? `${w.name||''} ${w.part||''}` : `${w.name||''} ${w.part||''} ${w.note||''}`;
     BODY_PARTS.forEach(p => {
       if(p === '등'){
         // 2026-07-17 버그 수정: 단순 substring 매칭이라 "유산소 실적으로 등록" 같은 문구의
@@ -4902,19 +4914,31 @@ function mergeByDate_(existing, incoming, deletedMap){
 // pull 한 번에 통째로 사라지는 잠재적 데이터 유실 버그가 있었다(실제 재현 확인은 아직 안 했지만
 // 코드 경로상 명백함). 이제 id 기준으로 매칭해서, 서버에 없는 id(로컬 전용 새 항목)는 그대로
 // 보존하고, 같은 id가 양쪽에 있을 때만 updatedAt으로 최신 쪽을 채택한다.
-function mergeWorkoutsByDate_(existing, incoming, deletedMap){
+function mergeWorkoutsByDate_(existing, incoming, deletedMap, matchField){
+  // 2026-10-02 수정: 서버(Sheet)에는 id 컬럼이 없어 pull로 들어온 레코드는 id가 전부 비어 있다.
+  // 기존 코드는 r.id로 매칭해서 서버 레코드가 하나도 매칭되지 않았고, 그 결과 동기화할 때마다
+  // 서버 운동 기록이 로컬에 통째로 다시 추가(중복 누적)됐다(실제 병합 함수로 재현 확인).
+  // 서버가 레코드를 매칭하는 기준(날짜+이름, 부작용은 날짜+증상)과 같은 키로 매칭하고,
+  // 로컬 id는 그대로 유지한다. 서버에 있는 키가 로컬에 여러 개면 첫 건만 남겨 기존 중복도 정리된다.
+  const field = matchField || 'name';
+  const keyOf = r => `${r.date}|${String(r[field]==null ? '' : r[field]).trim()}`;
   let merged;
   if(!incoming || !incoming.length) merged = existing;
   else {
-    const incomingById = new Map(incoming.map(r=>[r.id, r]));
-    const seenIds = new Set();
-    const kept = existing.map(localRec=>{
-      const serverRec = incomingById.get(localRec.id);
-      if(!serverRec) return localRec; // 서버에 아직 없는 로컬 전용 항목(신규 미동기화 포함) 보존
-      seenIds.add(localRec.id);
-      return pickNewerByUpdatedAt_(localRec, serverRec);
+    const incomingByKey = new Map();
+    incoming.forEach(r => { incomingByKey.set(keyOf(r), r); });
+    const seenKeys = new Set();
+    const kept = [];
+    existing.forEach(localRec=>{
+      const k = keyOf(localRec);
+      const serverRec = incomingByKey.get(k);
+      if(!serverRec){ kept.push(localRec); return; } // 서버에 아직 없는 로컬 전용 항목(신규 미동기화 포함) 보존
+      if(seenKeys.has(k)) return; // 서버에 있는 키의 로컬 중복본은 버림
+      seenKeys.add(k);
+      const picked = pickNewerByUpdatedAt_(localRec, serverRec);
+      kept.push(picked===localRec ? localRec : {...serverRec, id: localRec.id || serverRec.id});
     });
-    incoming.forEach(serverRec=>{ if(!seenIds.has(serverRec.id)) kept.push(serverRec); });
+    incoming.forEach(serverRec=>{ if(!seenKeys.has(keyOf(serverRec))) kept.push(serverRec); });
     merged = kept;
   }
   return applyTombstones_(merged, deletedMap, r=>r.id);
@@ -5074,7 +5098,7 @@ async function cloudSync(silent){
       };
       saveArr(LS_KEYS.deletedIds, state.deletedIds);
       state.inbody = mergeByDate_(state.inbody, data.inbody, state.deletedIds.inbody);
-      state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts, state.deletedIds.workouts);
+      state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts, state.deletedIds.workouts, 'name');
       // 2026-08-13 추가: 서버(Sheet)에는 워크아웃 id 컬럼이 없어서(Code.gs 변경 전까지는)
       // pull로 들어온 항목엔 id가 비어있다. 최초 로드 때만 id를 채워주던 ensureWorkoutIds를
       // 동기화 직후에도 다시 돌려야, 방금 pull된 항목도 수정/삭제 버튼이 정상 동작한다.
@@ -5086,7 +5110,7 @@ async function cloudSync(silent){
       // (symptom)로 같은 날짜에 여러 건이 있을 수 있는 구조라 mergeWorkoutsByDate_를 그대로
       // 재사용(해당 함수는 r.id/r.date만 참조하는 범용 로직). Sheet에는 id 컬럼이 없어 pull로
       // 들어온 항목은 id가 비어있으므로, workouts와 동일하게 ensureWorkoutIds로 id를 채운다.
-      state.sideEffects = mergeWorkoutsByDate_(state.sideEffects, data.sideEffects, state.deletedIds.sideEffects);
+      state.sideEffects = mergeWorkoutsByDate_(state.sideEffects, data.sideEffects, state.deletedIds.sideEffects, 'symptom');
       ensureWorkoutIds(state.sideEffects);
       saveArr(LS_KEYS.inbody, state.inbody); saveArr(LS_KEYS.workout, state.workouts); saveArr(LS_KEYS.meal, state.meals);
       saveArr(LS_KEYS.steps, state.steps);
