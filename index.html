@@ -508,7 +508,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
+const APP_BUILD_VERSION = '2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1568,6 +1568,17 @@ function toggleExpand(id){ state.expandedTables[id] = !state.expandedTables[id];
 function expandToggleRow(id, count, label){
   const expanded = !!state.expandedTables[id];
   return `<div class="toggle-row" onclick="toggleExpand('${id}')">${expanded?'▴':'▾'} ${label||'전체 기록 보기'} (${count}건)</div>`;
+}
+// 2026-10-02-c 추가: 목록형 섹션 접어두기 공통 기준 — 기본은 최근 LIST_PREVIEW_N건만, 목록 "아래"에
+// 펼치기/접기 버튼(문구 통일: "전체 N건 보기 ▾" / "간략히 보기 ▴"). 펼침 상태는 메모리에만 두어
+// 앱을 다시 열면 항상 접힌 상태로 시작한다(state.expandedTables, 저장 안 함).
+const LIST_PREVIEW_N = 5;
+function previewRows(id, arr, n){ return state.expandedTables[id] ? arr : arr.slice(0, n==null ? LIST_PREVIEW_N : n); }
+function listToggleRow(id, total, n, unit){
+  const limit = n==null ? LIST_PREVIEW_N : n;
+  if(total <= limit) return '';
+  const expanded = !!state.expandedTables[id];
+  return `<div class="toggle-row" onclick="toggleExpand('${id}')">${expanded ? '▴ 간략히 보기' : `▾ 전체 ${total}${unit||'건'} 보기`}</div>`;
 }
 
 function markUpdated(){
@@ -2827,7 +2838,7 @@ function renderMounjaro(){
       <p class="p-dim">${intervalText} · ${latestDoseText} · 현재 ${validCycles.length}차까지 진행됐고, 각 차수(투여일~다음 투여 전날)별 인바디 변화를 추적합니다.</p>
     </section>
 
-    ${renderSideEffectSection()}
+    ${''/* 2026-10-02-c: 이상반응(부작용) 기록 섹션 화면에서 숨김(정희님 요청). 데이터·클라우드 동기화·정체 분석 교차정보는 그대로 유지 — 복구하려면 renderSideEffectSection() 호출로 되돌리면 됨 */}
 
     ${insights.length ? `
     <section class="card">
@@ -2863,7 +2874,7 @@ function renderMounjaro(){
             <th>체중</th><th>골격근량</th><th>체지방량</th><th>체지방률</th><th>측정일수</th>
           </tr></thead>
           <tbody>
-            ${cycles.map(c => `<tr>
+            ${(state.expandedTables['cycleTable'] ? cycles : cycles.slice(-4)).map(c => `<tr>
               <td>${c.cycle}차</td>
               <td>${c.date} (${dowLabel(c.date)})</td>
               <td>${c.dose}</td>
@@ -2880,6 +2891,7 @@ function renderMounjaro(){
           </tbody>
         </table>
       </div>
+      ${listToggleRow('cycleTable', cycles.length, 4, '차')}
       <div class="note-box" style="margin-top:14px;">각 셀은 "차수 시작 시점 측정치 → 차수 종료 시점 측정치" 형태이며, 괄호 안은 변화량(Δ)입니다.${(() => {
         const last = cycles[cycles.length-1];
         if(!last) return '';
@@ -3418,9 +3430,8 @@ function renderWorkoutTab(){
       ${(() => {
         const hist = computeInclineHistory(workouts);
         if(hist.length===0) return `<div class="empty-state" style="padding:30px 10px;">인클라인 트레드밀 기록이 없습니다.</div>`;
-        const shown = state.expandedTables['inclineHistory'] ? hist : hist.slice(0,15);
-        return `${hist.length>15 ? expandToggleRow('inclineHistory', hist.length, '전체 이력 보기') : ''}
-        <div style="overflow-x:auto; margin-top:10px;">
+        const shown = previewRows('inclineHistory', hist); // 2026-10-02-c: 15건 → 최근 5건, 버튼은 표 아래
+        return `<div style="overflow-x:auto; margin-top:10px;">
           <table class="data-table">
             <thead><tr><th style="text-align:left">날짜</th><th>거리</th><th>시간</th><th>칼로리</th><th>평균심박</th><th>유산소 인정</th><th style="text-align:left">검토</th></tr></thead>
             <tbody>
@@ -3435,7 +3446,8 @@ function renderWorkoutTab(){
               </tr>`).join('')}
             </tbody>
           </table>
-        </div>`;
+        </div>
+        ${listToggleRow('inclineHistory', hist.length)}`;
       })()}
     </section>
 
@@ -3444,7 +3456,7 @@ function renderWorkoutTab(){
       ${(() => {
         const prs = computeExercisePRs();
         if(!prs.length) return `<div class="empty-state" style="padding:20px 10px;">상세입력(세트·횟수·무게)으로 기록된 종목이 아직 없어요. "+ 운동 기록 추가"에서 종목을 추가해보세요.</div>`;
-        const shown = state.expandedTables['exercisePRs'] ? prs : prs.slice(0,8);
+        const shown = previewRows('exercisePRs', prs); // 2026-10-02-c: 8 → 5
         return `<div style="overflow-x:auto;">
           <table class="data-table">
             <thead><tr><th style="text-align:left">종목</th><th style="text-align:left">부위</th><th>추정 1RM</th><th style="text-align:left">최고기록</th><th style="text-align:left">최근 기록일</th><th style="text-align:left">추이</th></tr></thead>
@@ -3460,7 +3472,7 @@ function renderWorkoutTab(){
             </tbody>
           </table>
         </div>
-        ${prs.length>8 ? expandToggleRow('exercisePRs', prs.length, '전체 종목 보기') : ''}
+        ${listToggleRow('exercisePRs', prs.length, null, '개 종목')}
         <div class="note-box" style="margin-top:10px;">Epley 공식 기반 추정치라 실측 1RM과 다를 수 있어요. 새 PR을 달성하면(클라우드 동기화 시) 텔레그램으로도 알려드려요. 종목명은 공백 유무와 무관하게 자동으로 같은 종목으로 묶여요(예: "덤벨로우"="덤벨 로우"). "추이" 열은 최근 5회 세션의 추정 1RM이 서로 3% 이내에서만 오가면 "정체"로 표시해요(5회 미만이면 판정 보류).</div>`;
       })()}
     </section>
@@ -3471,8 +3483,8 @@ function renderWorkoutTab(){
         <button class="btn btn-primary btn-sm" onclick="openModal('workout')">+ 운동 기록 추가</button>
       </div>
       <div class="card" style="padding:4px 16px;">
-        ${(state.expandedTables['workoutList'] ? sortedW : sortedW.slice(0,30)).map(w => workoutRow(w)).join('')}
-        ${sortedW.length>30 ? `<div class="toggle-row" onclick="toggleExpand('workoutList')">${state.expandedTables['workoutList']?'▴':'▾'} ${state.expandedTables['workoutList']?'간략히 보기':`전체 기록 보기 (${sortedW.length}건)`}</div>` : ''}
+        ${previewRows('workoutList', sortedW).map(w => workoutRow(w)).join('')}
+        ${listToggleRow('workoutList', sortedW.length)}
       </div>
     </section>
   `;
@@ -4004,7 +4016,8 @@ function renderLog(){
   dates.forEach(d => { const wkKey = isoWeekKey(d); (weeks[wkKey]=weeks[wkKey]||[]).push(d); });
   const weekKeys = Object.keys(weeks).sort((a,b)=>b.localeCompare(a));
 
-  return weekKeys.map(wkKey => {
+  // 2026-10-02-c: 전체 주(약 18주)를 모두 그리던 것을 최근 2주만 기본 표시 + "이전 주 보기".
+  return previewRows('logWeeks', weekKeys, 2).map(wkKey => {
     const wDates = weeks[wkKey].sort((a,b)=>b.localeCompare(a));
     const wInbody = wDates.map(d=>ib[d]).filter(Boolean);
     const wMeals = wDates.map(d=>ml[d]).filter(Boolean);
@@ -4038,7 +4051,7 @@ function renderLog(){
         ${wDates.map(date => dayRow(date, ib[date], wk[date], ml[date], prevOf(date))).join('')}
       </div>
     </div>`;
-  }).join('');
+  }).join('') + listToggleRow('logWeeks', weekKeys.length, 2, '주');
 }
 
 function dayRow(date, i, wArr, m, prev){
@@ -4444,11 +4457,12 @@ function renderReport(){
       <p class="p-dim">"Claude 분석"이나 "종합 리포트"를 새로 저장하면, 덮어써지기 직전의 이전 내용이 자동으로 여기 쌓여요(클라우드 동기화 시 반영). 예전엔 새로 저장하는 순간 이전 내용이 완전히 사라졌었어요.</p>
       ${state.reportHistory.length ? `
         <div style="margin-top:10px;">
-          ${state.reportHistory.map((h,i) => `
+          ${previewRows('reportHistory', [...state.reportHistory].map((h,i)=>({h,i,t:parseDateSafe_(h.date)})).sort((a,b)=> (b.t??-Infinity)-(a.t??-Infinity) || a.i-b.i).map(x=>x.h)).map((h,i) => `
             <details style="margin-bottom:8px; border:1px solid var(--border-soft); border-radius:8px; padding:8px 10px;">
               <summary style="cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text);">${esc(h.date||'날짜 미상')} · ${h.type==='aiAnalysis'?'Claude 분석':'종합 리포트'}</summary>
               <div class="ai-note-body" style="margin-top:8px; font-size:12.5px;">${formatNoteHtml(h.content||'')}</div>
             </details>`).join('')}
+          ${listToggleRow('reportHistory', state.reportHistory.length)}
         </div>
         ${state.reportHistory.length>=30 ? `<div class="note-box" style="margin-top:10px;">
           <!-- 2026-09-19 추가(20선 17번): 서버(ReportHistory 시트)는 계속 무제한으로 쌓이지만
