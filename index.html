@@ -508,7 +508,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
+const APP_BUILD_VERSION = '2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1302,6 +1302,61 @@ function makeId(prefix){ return `${prefix}_${Date.now().toString(36)}_${Math.ran
 const AUTO_SYNC_THROTTLE_MS = 5*60*1000; // 5분 — 이 안에 재방문하면 자동 동기화 스킵(수동 버튼은 예외)
 const AUTO_SYNC_START_DELAY_MS = 1500; // 2026-08-04 추가(벤치마킹 #2): 초기 렌더가 눈에 보인 뒤 시작 — 로딩 첫 화면이 네트워크에 묶이지 않도록
 
+// 2026-10-04-a 추가: 저장 직후 자동 동기화(정희님 요청 — "입력하면 자동으로 동기화되게").
+// 기존엔 앱을 열 때(5분 스로틀)와 "지금 동기화" 버튼에서만 시트로 전송돼서, 인바디·허리둘레 등을
+// 입력해도 시트·알림·Claude 분석에는 수동 동기화 전까지 반영되지 않았다.
+// 데이터를 바꾸는 저장/삭제 함수가 scheduleSaveSync_()를 부르면, 연속 입력은 한 번으로 묶어서
+// (SAVE_SYNC_DEBOUNCE_MS) 기존 cloudSync(true)를 그대로 실행한다(pull→병합→push 순서 불변).
+// 주의: markUpdated() 안에 넣지 말 것 — cloudSync 자체도 markUpdated()를 불러서 무한 반복된다.
+const SAVE_SYNC_DEBOUNCE_MS = 3000;       // 마지막 저장 후 이 시간이 지나면 동기화 시작
+const SAVE_SYNC_BUSY_RECHECK_MS = 3000;   // 동기화 중이거나 입력 중이면 이 간격으로 다시 확인
+const SAVE_SYNC_RETRY_MS = [20000, 60000, 180000]; // 실패 시 재시도 간격(최대 3회, 이후엔 배지의 실패 표시 + 수동 버튼)
+const SAVE_DIRTY_KEY_ = 'brc_syncdirty_v1'; // 아직 시트로 못 보낸 저장이 있음 — 앱을 닫았다 열어도 5분 스로틀 없이 바로 동기화
+let saveSyncTimer_ = null;
+let saveSyncPending_ = false;
+let saveSyncRetry_ = 0;
+function saveSyncUrl_(){ try{ return (localStorage.getItem(LS_KEYS.cloudurl)||'').trim(); }catch(e){ return ''; } }
+function scheduleSaveSync_(){
+  if(!saveSyncUrl_()) return; // URL 미설정 기기는 조용히 건너뜀(수동 버튼의 안내는 기존 그대로)
+  saveSyncPending_ = true;
+  saveSyncRetry_ = 0;
+  try{ localStorage.setItem(SAVE_DIRTY_KEY_, new Date().toISOString()); }catch(e){}
+  clearTimeout(saveSyncTimer_);
+  saveSyncTimer_ = setTimeout(runSaveSync_, SAVE_SYNC_DEBOUNCE_MS);
+}
+// cloudSync 끝에 render()가 전체를 다시 그리므로, 입력 중인 칸·열린 모달·편집 중인 셀이 있으면 끝날 때까지 기다린다.
+function userIsEditing_(){
+  try{
+    const a = document.activeElement;
+    const typing = !!(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== 'checkbox' && a.type !== 'button');
+    return typing || !!modalState.open || !!editingCell;
+  }catch(e){ return false; }
+}
+async function runSaveSync_(){
+  if(!saveSyncPending_) return;
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return; // 'online' 이벤트에서 재개
+  if(syncing || userIsEditing_()){
+    clearTimeout(saveSyncTimer_);
+    saveSyncTimer_ = setTimeout(runSaveSync_, SAVE_SYNC_BUSY_RECHECK_MS);
+    return;
+  }
+  saveSyncPending_ = false;
+  await cloudSync(true);
+  if(syncUiStatus && syncUiStatus.phase === 'error'){
+    if(saveSyncRetry_ < SAVE_SYNC_RETRY_MS.length){
+      saveSyncPending_ = true;
+      clearTimeout(saveSyncTimer_);
+      saveSyncTimer_ = setTimeout(runSaveSync_, SAVE_SYNC_RETRY_MS[saveSyncRetry_++]);
+    }
+  } else if(!saveSyncPending_){
+    try{ localStorage.removeItem(SAVE_DIRTY_KEY_); }catch(e){} // 성공했고 그 사이 새 저장도 없을 때만 해제
+  }
+}
+window.addEventListener('online', () => {
+  if(saveSyncPending_){ clearTimeout(saveSyncTimer_); saveSyncTimer_ = setTimeout(runSaveSync_, SAVE_SYNC_DEBOUNCE_MS); }
+});
+
+
 function loadArr(key, seed){
   try{
     const raw = localStorage.getItem(key);
@@ -1327,6 +1382,7 @@ function addWaistEntry(){
   saveArr(LS_KEYS.waist, state.waist);
   unmarkDeleted_('waist', date); // 2026-09-19 추가: 삭제 의도 철회로 간주
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   valEl.value = '';
   render();
 }
@@ -1362,6 +1418,7 @@ function addStepEntry(){
   saveArr(LS_KEYS.steps, state.steps);
   unmarkDeleted_('steps', date); // 삭제 의도 철회로 간주(waist와 동일 패턴)
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   valEl.value = '';
   render();
 }
@@ -2062,6 +2119,7 @@ function deleteInbodyEntry(date){
   saveArr(LS_KEYS.inbody, state.inbody);
   markDeleted_('inbody', date); // 2026-09-19 추가: 다음 동기화 때 서버에 남은 옛 값이 되살아나지 않도록 tombstone
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   render();
 }
 function deleteMealEntry(date){
@@ -2070,6 +2128,7 @@ function deleteMealEntry(date){
   saveArr(LS_KEYS.meal, state.meals);
   markDeleted_('meals', date); // 2026-09-19 추가: tombstone
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   render();
 }
 function deleteWorkoutEntry(id){
@@ -2082,6 +2141,7 @@ function deleteWorkoutEntry(id){
   // id tombstone만으로는 삭제한 운동이 다음 동기화 때 되살아났다. 서버 매칭 키(날짜|이름)로도 남긴다.
   if(delRec_) markDeleted_('workouts', contentTombKey_(delRec_, 'name'));
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   render();
 }
 function editWorkoutById(id){
@@ -2760,6 +2820,7 @@ function addSideEffect(){
   unmarkDeleted_('sideEffects', newSE.id); // 2026-09-19 추가(20선 3번): 신규 id라 사실상 no-op이지만, 다른 add* 함수들과의 일관성을 위해 호출
   sideEffectForm = {symptom:'', severity:'mild', note:''};
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   render();
 }
 function deleteSideEffect(id){
@@ -3952,9 +4013,11 @@ function saveEditCell(table, date, field, value){
   if(rec){
     const num = value==='' ? null : Number(value);
     rec[field] = (num===null || isNaN(num)) ? null : num;
+    rec.updatedAt = new Date().toISOString(); // 2026-10-04-a: 셀 직접 수정도 시각을 남겨, 자동 동기화의 pull 병합에서 서버 옛 값에 덮이지 않게 함
     const key = table==='inbody' ? LS_KEYS.inbody : table==='workout' ? LS_KEYS.workout : LS_KEYS.meal;
     saveArr(key, arr);
     markUpdated();
+    scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   }
   editingCell = null;
   render();
@@ -5471,6 +5534,7 @@ function saveGoalSettings(){
   saveArr(LS_KEYS.goals, state.goals);
   applyGoalOverrides_();
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   render();
 }
 function resetGoalSettings(){
@@ -5479,6 +5543,7 @@ function resetGoalSettings(){
   saveArr(LS_KEYS.goals, state.goals);
   applyGoalOverrides_();
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   render();
 }
 
@@ -5795,6 +5860,7 @@ function saveRecord(){
     unmarkDeleted_('workouts', contentTombKey_(rec, 'name')); // 2026-10-02-b: 같은 날짜|이름으로 다시 저장하면 내용 키 tombstone도 해제
   }
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   closeModal();
 }
 // 2026-08-16 추가: 삼성헬스 스크린샷을 Claude 채팅에 올리면 Claude가 이 앱의 워크아웃 레코드
@@ -5845,6 +5911,7 @@ function importWorkoutJSON(){
   });
   saveArr(LS_KEYS.workout, state.workouts);
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   modalState.workoutJsonText = '';
   alert(`등록 완료 — 신규 ${added}건${updated?`, 수정 ${updated}건`:''}.`);
   closeModal();
@@ -5869,6 +5936,7 @@ function quickAddFavorite(favId, targetDate){
   saveArr(LS_KEYS.meal, state.meals);
   unmarkDeleted_('meals', date); // 2026-09-19 추가: 삭제 의도 철회로 간주
   markUpdated();
+  scheduleSaveSync_(); // 2026-10-04-a: 저장 직후 자동 동기화
   render();
 }
 // 2026-09-19 추가(20선 3번): 즐겨찾기는 날짜 없는 짧은 목록이라 goals와 동일하게 Meta에
@@ -5926,8 +5994,10 @@ render();
 if((localStorage.getItem(LS_KEYS.cloudurl)||'').trim()){
   const lastAutoRaw = localStorage.getItem(LS_KEYS.lastautosync);
   const elapsed = lastAutoRaw ? (Date.now() - new Date(lastAutoRaw).getTime()) : Infinity;
-  if(elapsed >= AUTO_SYNC_THROTTLE_MS){
+  let unsyncedSave_ = false; try{ unsyncedSave_ = !!localStorage.getItem(SAVE_DIRTY_KEY_); }catch(e){}
+  if(elapsed >= AUTO_SYNC_THROTTLE_MS || unsyncedSave_){ // 2026-10-04-a: 아직 못 보낸 저장이 있으면 스로틀 무시
     setTimeout(() => cloudSync(true), AUTO_SYNC_START_DELAY_MS);
+    if(unsyncedSave_){ saveSyncPending_ = true; saveSyncRetry_ = 0; }
   }
 }
 
