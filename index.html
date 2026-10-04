@@ -508,7 +508,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
+const APP_BUILD_VERSION = '2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1233,7 +1233,7 @@ const SEED_FAVORITES = [
 // 않기 때문. 이미 적용된 과거 마이그레이션을 지금 되돌릴 이유는 없어 그대로 두지만, **앞으로
 // 스키마를 또 바꿀 일이 생기면 키 이름을 바꾸는 이 방식 대신 아래 DATA_PATCHES(선언형 마이그레이션
 // 시스템, 기존 데이터를 그대로 보정하고 적용 여부를 로그로 확인 가능)를 우선 사용할 것.**
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1', deletedIds:'brc_deletedids_v1', backupHistory:'brc_backuphistory_v1', pushSizeMeta:'brc_pushsizemeta_v2', favoritesUpdatedAt:'brc_favorites_updatedat_v1', lastPushHash:'brc_lastpushhash_v1'}; // 2026-10-02-b: pushSizeMeta v2(운동 키 형식 변경 — v1 서명은 형식이 달라 비교 불가라 버림), lastPushHash 신규
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1', deletedIds:'brc_deletedids_v1', backupHistory:'brc_backuphistory_v1', pushSizeMeta:'brc_pushsizemeta_v2', favoritesUpdatedAt:'brc_favorites_updatedat_v1', lastPushHash:'brc_lastpushhash_v1', dailyScores:'brc_dailyscores_v1'}; // 2026-10-02-b: pushSizeMeta v2(운동 키 형식 변경 — v1 서명은 형식이 달라 비교 불가라 버림), lastPushHash 신규
 /* ============================================================
    선언형 데이터 패치 시스템 (v1) — 2026-09-19 추가(머니트레일 벤치마킹)
    ============================================================
@@ -1491,6 +1491,9 @@ let state = {
   // 2026-09-18 추가(6번): Code.gs가 자동 아카이브한 지난 분석/리포트 히스토리(서버가 진실
   // 공급원 — cloudSync pull로만 갱신됨, 로컬에서 직접 추가하지 않음).
   reportHistory: loadArr(LS_KEYS.reportHistory, []),
+  // 2026-10-04 추가: 하루 점수(100점). Code.gs가 계산해 DailyScore 시트에 저장한 값을 cloudSync pull로만
+  // 받아 표시한다(앱은 점수를 직접 계산하지 않고 서버로 되돌려 보내지도 않음 — push payload에 없음).
+  dailyScores: loadArr(LS_KEYS.dailyScores, []),
   // 2026-09-19 추가(머니트레일 벤치마킹): 삭제 동기화(tombstone) — 카테고리별 {키: 삭제시각(ISO)}.
   // markDeleted_/unmarkDeleted_/applyTombstones_ 참고.
   deletedIds: loadArr(LS_KEYS.deletedIds, {inbody:{}, workouts:{}, meals:{}, steps:{}, waist:{}, sideEffects:{}}),
@@ -3656,6 +3659,8 @@ function renderDashboard(){
       </div>`;
     })()}
 
+    ${renderDailyScoreCard()}
+
     ${state.aiNote ? `
     <section class="card ai-note">
       <div class="section-label good">${secNum('00')}Claude 분석 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">${aiNoteFreshnessLabel(state.aiNote)}</span></div>
@@ -3811,6 +3816,59 @@ function renderDashboard(){
       ${state.showTable ? renderInbodyTable(ma) : ''}
     </section>
   `;
+}
+// 2026-10-04 추가: 대시보드 "하루 점수(100점)" 카드. 점수는 Code.gs가 계산해 DailyScore 시트에 저장한 값(state.dailyScores)을
+// 표시만 한다. 체성분 판정이 아니라 그날 행동 평가이므로 색으로 좋고 나쁨을 나누지 않고 한 가지 색으로만 보여준다.
+// 마지막 점수 날짜가 오늘이 아니면 그 날짜를 그대로 밝혀서 이전 날 점수가 오늘 것처럼 보이지 않게 한다.
+function renderDailyScoreCard(){
+  const rows = Array.isArray(state.dailyScores) ? state.dailyScores.filter(r => r && r.date && r.score !== null && r.score !== undefined && !isNaN(Number(r.score))) : [];
+  if(!rows.length) return '';
+  const e = s => (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => String(Math.round(Number(n)*10)/10);
+  const md = d => String(d).slice(5, 10).replace('-', '/');
+  const asc = [...rows].sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  const last = asc[asc.length-1];
+  const today = toLocalISO(new Date());
+  const detail = (last.detail && typeof last.detail === 'object') ? last.detail : {};
+  const estimated = last.estimated === true || String(last.estimated).toUpperCase() === 'TRUE';
+  const parts = [['calories','칼로리',30], ['protein','단백질',20], ['carbs','탄수',15], ['activity','운동·활동',25], ['record','기록·보조',10]];
+  const items = parts.map(([k,label,max]) => {
+    const pts = Number(last[k]); const v = isNaN(pts) ? 0 : pts;
+    const pct = Math.max(0, Math.min(100, v / max * 100));
+    return `<div style="margin-bottom:9px;">
+      <div style="display:flex; justify-content:space-between; font-size:12.5px; gap:8px;">
+        <span>${e(label)}</span><span style="font-family:var(--font-mono); font-variant-numeric:tabular-nums;">${fmt(v)} / ${max}</span>
+      </div>
+      <div style="height:6px; border-radius:var(--radius-pill); background:var(--c-track); overflow:hidden; margin:3px 0 2px;"><div style="height:100%; width:${pct}%; background:var(--c-accent);"></div></div>
+      <div class="dim" style="font-size:11.5px; line-height:1.5;">${e(detail[k] || '')}</div>
+    </div>`;
+  }).join('');
+  const recent = asc.slice(-7);
+  const bars = recent.map(r => {
+    const h = Math.max(3, Math.round(Number(r.score) / 100 * 64));
+    const isLast = r.date === last.date;
+    return `<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0;">
+      <div style="font-size:11px; font-family:var(--font-mono);">${fmt(r.score)}</div>
+      <div style="width:70%; max-width:26px; height:${h}px; border-radius:6px 6px 2px 2px; background:${isLast ? 'var(--grad-1)' : 'var(--c-accent)'}; opacity:${isLast ? 1 : 0.45};"></div>
+      <div class="dim" style="font-size:10.5px;">${e(md(r.date))}</div>
+    </div>`;
+  }).join('');
+  const statusBadge = last.status ? `<span class="dim" style="font-size:11.5px; border:1px solid var(--border); border-radius:var(--radius-pill); padding:1px 8px; margin-left:6px;">${e(last.status)}</span>` : '';
+  const estBadge = estimated ? `<span class="dim" style="font-size:11.5px; border:1px solid var(--border); border-radius:var(--radius-pill); padding:1px 8px; margin-left:4px;">추정 포함</span>` : '';
+  const notToday = last.date !== today ? `<div class="dim" style="font-size:11.5px; margin-top:4px;">오늘(${e(md(today))}) 점수는 아직 없어요 — 위 점수는 ${e(md(last.date))} 기준이에요.</div>` : '';
+  return `
+    <section class="card">
+      <div class="section-label good">${secNum('00a')}하루 점수 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 그날 행동 평가(체성분 판정 아님)</span></div>
+      <div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:4px; margin:4px 0 2px;">
+        <span style="font-family:var(--font-display); font-size:34px; font-weight:var(--display-weight); line-height:1;">${fmt(last.score)}</span>
+        <span class="dim" style="font-size:14px;">/ 100</span>
+        <span class="dim" style="font-size:12.5px; margin-left:8px;">${e(md(last.date))}</span>${statusBadge}${estBadge}
+      </div>
+      ${notToday}
+      <div style="margin-top:12px;">${items}</div>
+      ${recent.length >= 2 ? `<div class="dim" style="font-size:11.5px; margin:10px 0 4px;">최근 ${recent.length}일 추이</div><div style="display:flex; align-items:flex-end; gap:4px;">${bars}</div>` : ''}
+      ${estimated ? `<div class="note-box" style="margin-top:10px;">식단에 추정치(외식·뷔페 등)가 포함돼 있어 칼로리·탄수 점수가 ±20~30% 오차 범위에 따라 달라질 수 있어요.</div>` : ''}
+    </section>`;
 }
 function secNum(n){ return `<span class="sec-num">${n}</span>`; }
 /* 2026-07-21 추가: 대시보드 MA7 추세 섹션 전용 카드 — MA7(실선)+MA14(점선) 오버레이,
@@ -5290,6 +5348,11 @@ async function cloudSync(silent){
       if(Array.isArray(data.reportHistory)){
         state.reportHistory = data.reportHistory;
         saveArr(LS_KEYS.reportHistory, state.reportHistory);
+      }
+      // 2026-10-04 추가: 하루 점수(서버가 유일한 진실 공급원 — 그대로 받아 저장, 로컬 병합·재계산 없음)
+      if(Array.isArray(data.dailyScores)){
+        state.dailyScores = data.dailyScores;
+        saveArr(LS_KEYS.dailyScores, state.dailyScores);
       }
       // 2026-09-19 추가(20선 1번): 설정탭 목표값(goals)도 aiNote와 동일한 "타임스탬프 비교 후
       // 더 최신 쪽 채택" 방식으로 pull. goals는 통째로 교체되는 단일 객체라(개별 필드 병합 아님)
