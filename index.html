@@ -508,7 +508,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
+const APP_BUILD_VERSION = '2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1318,7 +1318,7 @@ function makeId(prefix){ return `${prefix}_${Date.now().toString(36)}_${Math.ran
 // 안에서는 자동 동기화를 재실행하지 않도록, "마지막 성공 시각"만 별도로 기록한다.
 // (state.lastUpdated/LS_KEYS.lastupdate는 로컬 데이터가 바뀔 때마다도 갱신되는 범용 타임스탬프라
 // "마지막 클라우드 동기화 성공 시각"으로 쓰기엔 부정확 — 그래서 전용 키를 새로 둠.)
-const AUTO_SYNC_THROTTLE_MS = 5*60*1000; // 5분 — 이 안에 재방문하면 자동 동기화 스킵(수동 버튼은 예외)
+const AUTO_SYNC_THROTTLE_MS = 60*1000; // 2026-10-05-c: 5분→1분 — 이 안에 재방문하면 자동 동기화 스킵(수동 버튼은 예외)
 const AUTO_SYNC_START_DELAY_MS = 1500; // 2026-08-04 추가(벤치마킹 #2): 초기 렌더가 눈에 보인 뒤 시작 — 로딩 첫 화면이 네트워크에 묶이지 않도록
 
 // 2026-10-04-a 추가: 저장 직후 자동 동기화(정희님 요청 — "입력하면 자동으로 동기화되게").
@@ -4036,6 +4036,8 @@ function renderCreatineSection(ib){
   const cmp = computeCreatinePeriodCompare_(ib, map);
   const ready = cmp.full.n >= CREATINE_MIN_GROUP_N && cmp.none.n >= CREATINE_MIN_GROUP_N;
   const toneColor = st.tone==='good' ? 'var(--c-good)' : st.tone==='warn' ? 'var(--c-warn)' : 'var(--text-dim)';
+  // 2026-10-05-c: 차트 선은 7회 이동평균이라 실측값이 안 보여서, 가장 최근 인바디 실측 날짜·수치를 글자로 함께 표시(데이터가 낡았는지 바로 확인용)
+  const latestIb = (ib||[]).filter(r => r && r.date && (r.weight!=null || r.muscle!=null)).reduce((a,r) => (!a || r.date > a.date) ? r : a, null);
   const cell = (v,u,d) => v==null ? '—' : `${fmt(v,d)}${u}`;
   const diff = (a,b,u,d) => (a==null||b==null) ? '—' : `${a-b>=0?'+':''}${fmt(a-b,d)}${u}`;
   return `<section class="card">
@@ -4046,6 +4048,7 @@ function renderCreatineSection(ib){
       <div>마지막 복용 <b class="mono">${st.lastDate ? `${dLabel(st.lastDate)} (${st.daysSinceLast===0?'오늘':st.daysSinceLast+'일 전'})` : '—'}</b></div>
     </div>
     <div class="dim" style="font-size:11.5px; margin:-4px 0 10px;">💊 ${CREATINE_TARGET_NOTE}</div>
+    <div class="dim" style="font-size:11.5px; margin:-4px 0 10px;">📏 최근 인바디 ${latestIb ? `<b class="mono">${latestIb.date}</b> · 체중 <b class="mono">${cell(latestIb.weight,'kg',1)}</b> · 골격근 <b class="mono">${cell(latestIb.muscle,'kg',1)}</b>` : '기록 없음'} <span>(아래 차트의 선은 7회 이동평균)</span></div>
     ${creatineOverlayChartSVG_(ib, map, today)}
     <div style="margin-top:14px; font-size:13px; font-weight:700; color:var(--text);">복용 구간 vs 미복용 구간 비교</div>
     <div class="dim" style="font-size:11.5px; margin:2px 0 8px;">인바디 날짜마다 그날까지 최근 ${CREATINE_SATURATION_DAYS}일 복용일수로 나눔 — 충분 복용 ${CREATINE_FULL_THRESHOLD}일 이상 / 미복용 0일(부분 복용일은 제외, ${CREATINE_TRACKING_START} 이전은 확인 안 된 기간이라 제외)</div>
@@ -5509,6 +5512,11 @@ async function cloudSync(silent){
         try{
           const postJson_ = await fetchJson_(url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: pushBody_});
           postConfirmed_ = !!(postJson_ && postJson_.ok === true);
+          // 2026-10-05-c: 서버가 방금 저장분으로 다시 계산한 하루 점수를 응답으로 받아 즉시 반영(앞선 pull은 저장 이전 값이라 새 점수가 빠져 있었음)
+          if(postJson_ && Array.isArray(postJson_.dailyScores)){
+            state.dailyScores = postJson_.dailyScores;
+            saveArr(LS_KEYS.dailyScores, state.dailyScores);
+          }
         }catch(postErr){
           // JSON이 아닌 단순 텍스트 응답(예: "OK")은 실패로 단정하지 않고 재조회 검증으로 넘긴다.
           if(!(postErr && postErr.nonJson && !/^\s*</.test(postErr.rawText||''))) throw postErr;
@@ -6106,6 +6114,21 @@ if((localStorage.getItem(LS_KEYS.cloudurl)||'').trim()){
     if(unsyncedSave_){ saveSyncPending_ = true; saveSyncRetry_ = 0; }
   }
 }
+
+// 2026-10-05-c 추가: 홈 화면 앱·탭 전환처럼 앱이 닫히지 않고 백그라운드에 있다가 돌아오는 경우엔 위 "앱 열 때 자동 동기화"가
+// 다시 실행되지 않아 채팅에서 올린 인바디·식단이 시트에 있어도 화면에 안 보였다. 화면이 다시 보일 때 최소 1분 간격으로
+// 같은 cloudSync(true)를 실행한다(입력 중·동기화 중이면 건너뜀 — 입력을 끊지 않기 위해).
+document.addEventListener('visibilitychange', () => {
+  try{
+    if(document.visibilityState !== 'visible') return;
+    if(!(localStorage.getItem(LS_KEYS.cloudurl)||'').trim()) return;
+    if(syncing || userIsEditing_()) return;
+    const lastRaw = localStorage.getItem(LS_KEYS.lastautosync);
+    const last = lastRaw ? new Date(lastRaw).getTime() : 0;
+    if(Date.now() - last < AUTO_SYNC_THROTTLE_MS) return;
+    cloudSync(true);
+  }catch(e){ console.warn('화면 복귀 자동 동기화 건너뜀', e); }
+});
 
 // 2026-07-25 복원: 이 서비스워커 등록 코드가 이전 index.html에서 누락돼 있었음(원인 불명 —
 // 세션 시작 시 받은 파일에 이미 빠져있었음). 그 결과 예전에 등록된 낡은 서비스워커가 계속
