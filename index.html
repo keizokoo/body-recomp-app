@@ -389,6 +389,24 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .mini-btn:hover{color:var(--text); border-color:var(--text-faint);}
 .mini-btn.danger{color:var(--c-warn); border-color:var(--c-warn-soft);}
 .mini-btn.danger:hover{background:var(--c-warn-soft);}
+/* 2026-10-13: 인바디 제외 확정 */
+.badge.ex-badge{background:var(--border); color:var(--text-dim);}
+.badge.ex-hold{background:var(--c-warn-soft); color:var(--c-warn); opacity:.85;}
+.badge.ex-kept{background:var(--c-good-soft); color:var(--c-good);}
+.badge.ex-hint{background:var(--border); color:var(--text-faint);}
+.data-table tr.inbx-row td{opacity:.55;}
+.data-table tr.inbx-row td:nth-last-child(-n+2){opacity:1;}
+.ex-reason{font-size:10.5px; color:var(--text-dim); margin-top:2px; white-space:normal; min-width:120px; max-width:220px; line-height:1.35;}
+.ex-panel .ex-window, .ex-statusline{font-size:12px; color:var(--text-dim); margin:4px 0 8px;}
+.ex-statusline{padding:0 4px;}
+.ex-card{border:1px solid var(--c-warn-soft); border-radius:12px; padding:10px 12px; margin-top:8px; background:var(--panel);}
+.ex-card-title{font-size:12px; font-weight:700; color:var(--c-warn);}
+.ex-card-body{font-size:12.5px; margin:4px 0 8px; line-height:1.45;}
+.ex-card-actions{display:flex; gap:6px;}
+.ex-item{display:flex; align-items:center; gap:8px; font-size:12px; padding:5px 0; border-top:1px solid var(--border);}
+.ex-item-date{font-weight:700; min-width:34px;}
+.ex-item-reason{flex:1; color:var(--text-dim); line-height:1.35;}
+.ex-more{font-size:11.5px; color:var(--text-dim); margin-top:6px;}
 .special-chip-row{display:flex; gap:6px; flex-wrap:wrap;}
 .special-chip{font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
 .special-chip.active{background:var(--eyebrow-bg); border-color:var(--c-gauge-from); color:var(--accent-strong-text);}
@@ -508,7 +526,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-05-e (수정·입력 팝업이 ✕/저장 후에도 닫히지 않던 문제 수정). 이전: 2026-10-05-d (크레아틴 메모 인식: 식단 메모에 "크레아틴"만 적어도 복용으로 인식·표시·차트 반영 / 설정탭에 "점수 다시 계산" 버튼 추가(편집기 실행 불필요)). 이전: 2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
+const APP_BUILD_VERSION = '2026-10-13-a (인바디 특이일 "제외 확정": 앱은 제외 후보만 표시 → 정희님이 제외/유지/보류를 탭으로 확정 → 확정한 날짜는 최근 7·14번 평균, 7vs7 비교, 골격근 손실비율, 4주 간격 비교, 20% 판정에서 건너뜀(유효 측정만 7건씩) / 제외 날짜·사유 표시, 그래프 회색 점 / 동기화·수정 시 제외 표시 유지 / "Claude 분석" 기준일 KST 표기 + 상태 한 줄). 이전: 2026-10-05-e (수정·입력 팝업이 ✕/저장 후에도 닫히지 않던 문제 수정). 이전: 2026-10-05-d (크레아틴 메모 인식: 식단 메모에 "크레아틴"만 적어도 복용으로 인식·표시·차트 반영 / 설정탭에 "점수 다시 계산" 버튼 추가(편집기 실행 불필요)). 이전: 2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1272,8 +1290,13 @@ const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_mea
    사용할 것 — 이유는 LS_KEYS 선언부 주석에 정리해둠. */
 const DATA_PATCH_LOG_KEY = 'brc_datapatch_log_v1';
 const DATA_PATCHES = [
-  // 예시: {type:'ensureField', target:'workouts', field:'treadmillSteps', default:null},
-  // 현재 적용할 패치 없음 — 필요할 때 이 배열에만 추가하면 됨.
+  // 2026-10-13: 정희님이 확정한 인바디 제외(소급). excludeAt이 아직 없는(=아무 결정이 없었던) 기록에만 적용되므로,
+  // 이후 앱에서 되돌리거나 바꿔도 이 시드가 다시 덮어쓰지 않는다. at은 확정 시각(2026-10-13 12:00 KST)의 UTC 표기.
+  {type:'seedExclude', target:'inbody', key:'2026-09-25', exclude:true, reason:'전일 대비 체중 −2.0·골격근 −1.3·체지방 +0.6의 수분 이동 패턴(질병 아님, 원인 확인안됨)', at:'2026-10-13T03:00:00.000Z'},
+  {type:'seedExclude', target:'inbody', key:'2026-10-12', exclude:true, reason:'장염 2일차, 설사·섭취 부족에 의한 탈수 추정', at:'2026-10-13T03:00:00.000Z'},
+  {type:'seedExclude', target:'inbody', key:'2026-10-13', exclude:true, reason:'장염 3일차, 동일(탈수 추정)', at:'2026-10-13T03:00:00.000Z'},
+  {type:'seedExclude', target:'inbody', key:'2026-08-01', exclude:'보류', reason:null, at:'2026-10-13T03:00:00.000Z'},
+  {type:'seedExclude', target:'inbody', key:'2026-09-24', exclude:'보류', reason:null, at:'2026-10-13T03:00:00.000Z'},
 ];
 function recordKeyField_(target){ return target==='workouts' ? 'id' : 'date'; }
 function applyDataPatches_(s){
@@ -1292,6 +1315,10 @@ function applyDataPatches_(s){
       if(!arr.some(r=>r && r[kf]===key)){ arr.push({...p.record}); changed++; }
     } else if(p.type==='ensureField'){
       arr.forEach(r=>{ if(r && r[p.field]===undefined){ r[p.field]=p.default; changed++; } });
+    } else if(p.type==='seedExclude'){
+      // 2026-10-13: 결정 기록(excludeAt)이 아직 없는 인바디에만 1회 적용(이후 사용자가 바꾼 결정은 덮어쓰지 않음)
+      const rec = arr.find(r=>r && r[kf]===p.key);
+      if(rec && !rec.excludeAt){ rec.exclude = p.exclude; rec.excludeReason = p.reason; rec.excludeAt = p.at; changed++; }
     } else if(p.type==='removeRecord'){
       const before = arr.length;
       s[p.target] = arr.filter(r=>!(r && r[kf]===p.key));
@@ -1588,7 +1615,7 @@ function checkReminders(){
   // 알아서 할 테니 마운자로 관련 알림은 모두 삭제해달라"는 명시적 요청(2026-09-14).
   // state.mounjaroDoses 자체(추적관리 탭의 투여 기록·4주간격 비교 등 분석 기능)는
   // 알림이 아니라 데이터이므로 그대로 유지 — 여기서 지운 건 사전 리마인더 배너/알림뿐.
-  const lastInbody = sortedInbody().slice(-1)[0];
+  const lastInbody = sortedInbodyAll().slice(-1)[0]; // 2026-10-13: 제외된 날도 "측정은 했음"이므로 공백 판정은 원본 전체 기준
   if(lastInbody){
     const gapDays = Math.round((new Date(todayD+'T00:00:00') - new Date(lastInbody.date+'T00:00:00'))/86400000);
     if(gapDays>=2){
@@ -1749,16 +1776,213 @@ function formatNoteHtml(text){
 // 시각은 부가정보로 분리. 기준일이 오늘보다 이전이면 경고 배지를 붙여 한눈에 알 수 있게 함.
 function aiNoteFreshnessLabel(note){
   if(!note) return '';
-  const noteDate = note.date || null;
+  const rawNoteDate_ = note.date || null;
+  let noteDate = rawNoteDate_, noteTime_ = '';
+  // 2026-10-13: 서버가 "2026-10-09T15:00:00.000Z"처럼 UTC 원문을 주면 한국 시각(KST)의 날짜·시각으로 바꿔 표시
+  if(rawNoteDate_ && String(rawNoteDate_).indexOf('T')>=0){
+    const kd_ = new Date(rawNoteDate_);
+    if(!isNaN(kd_.getTime())){
+      const ks_ = kd_.toLocaleString('sv-SE', {timeZone:'Asia/Seoul'}); // "YYYY-MM-DD HH:mm:ss"
+      noteDate = ks_.slice(0,10); noteTime_ = ks_.slice(11,16);
+    }
+  }
   const todayD = todayISO();
   const isStale = !!(noteDate && noteDate < todayD);
-  const dateLabel = noteDate ? `${noteDate} 기준 분석` : (note.syncedAt ? `${fmtDateTime(note.syncedAt)} 갱신` : '');
+  const dateLabel = noteDate ? `${noteDate}${noteTime_?' '+noteTime_:''} 기준 분석` : (note.syncedAt ? `${fmtDateTime(note.syncedAt)} 갱신` : '');
   const syncPart = note.syncedAt ? ` · 동기화 ${fmtDateTime(note.syncedAt)}` : '';
   const staleBadge = isStale ? ` <span style="color:var(--c-warn); font-weight:700;">⚠️ ${esc(noteDate)} 이후 새 분석 없음</span>` : '';
   return dateLabel ? `· ${esc(dateLabel)}${syncPart}${staleBadge}` : '';
 }
 
-function sortedInbody(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
+// 2026-10-13 추가: 인바디 "제외 확정"(정희님 확정 설계). 앱은 후보만 보여주고, 제외 여부는 정희님이 탭으로 확정한다(자동 제외 금지).
+// 제외는 삭제가 아니라 "표시": exclude(true=제외 / false=유지 확정 / '보류' / 빈 값=미결정) + excludeReason(사유) + excludeAt(결정 시각, 동기화 병합용).
+// 평균·비교·손실비율·4주 간격·20% 판정이 쓰는 sortedInbody()는 이제 "제외분을 뺀 유효 측정"만 돌려준다. 표·그래프처럼 원본 전체가 필요한 곳은
+// sortedInbodyAll()을 쓴다. "최근 7번/14번"은 달력 7일이 아니라 제외분을 건너뛴 유효 측정 7건/14건이다.
+const EXCLUDE_DROP_KG_ = 0.7;      // 의심 규칙 ①: 직전 측정 대비 체중 −0.7kg 이하
+const EXCLUDE_RISE_FAT_KG_ = 0.3;  // 의심 규칙 ①: AND 체지방량 +0.3kg 이상
+function isExcluded_(r){ return !!r && (r.exclude===true || r.exclude==='TRUE' || r.exclude==='true'); }
+function validInbody(arr){ return (arr||[]).filter(r => !isExcluded_(r)); }
+function sortedInbodyAll(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
+function sortedInbody(){ return validInbody(sortedInbodyAll()); }
+function exLastLabel_(r){ return r && r.date===todayISO() ? '오늘' : (r ? exShort_(r.date) : '최근'); }
+function exR1_(n){ return Math.round(n*10)/10; }
+function exSigned_(n){ return (n>0?'+':n<0?'−':'') + Math.abs(n).toFixed(1); }
+function exShort_(iso){ const p = String(iso).split('-'); return `${Number(p[1])}/${Number(p[2])}`; }
+function exclusionDecision_(r){
+  if(isExcluded_(r)) return 'excluded';
+  if(r.exclude===false || r.exclude==='FALSE' || r.exclude==='false') return 'kept';
+  if(r.exclude==='보류') return 'hold';
+  return 'undecided';
+}
+// 직전 "체중+체지방 실측이 모두 있는" 측정(제외된 날 포함)과의 차이. 체중만 기록된 날(여행 중 등)은 비교 대상에서 건너뛴다.
+function exDeltaVsPrev_(all, idx){
+  const r = all[idx];
+  if(!r || r.weight==null || r.fat==null || isNaN(r.weight) || isNaN(r.fat)) return null;
+  for(let j=idx-1;j>=0;j--){
+    const p = all[j];
+    if(p.weight==null || p.fat==null || isNaN(p.weight) || isNaN(p.fat)) continue;
+    const gap = Math.round((new Date(r.date+'T00:00:00')-new Date(p.date+'T00:00:00'))/86400000);
+    return {prev:p, gapDays:gap, dw:exR1_(r.weight-p.weight), df:exR1_(r.fat-p.fat),
+            dm:(r.muscle!=null&&p.muscle!=null&&!isNaN(r.muscle)&&!isNaN(p.muscle)) ? exR1_(r.muscle-p.muscle) : null};
+  }
+  return null;
+}
+function exIsSuspect_(d){ return !!d && d.dw<=-EXCLUDE_DROP_KG_ && d.df>=EXCLUDE_RISE_FAT_KG_; }
+function exDeltaText_(d){
+  const base = d.gapDays===1 ? '전일 대비' : `직전 측정(${exShort_(d.prev.date)}) 대비`;
+  return `${base} 체중 ${exSigned_(d.dw)}kg · 체지방 ${exSigned_(d.df)}kg` + (d.dm!=null ? ` · 골격근 ${exSigned_(d.dm)}kg` : '');
+}
+function computeExcludeCandidates_(){
+  const all = sortedInbodyAll(); const out = [];
+  all.forEach((r,i)=>{
+    const d = exDeltaVsPrev_(all, i);
+    if(exIsSuspect_(d)) out.push({rec:r, date:r.date, delta:d, decision:exclusionDecision_(r)});
+  });
+  return out;
+}
+// 의심 규칙 ②(기록 맥락): 당일·전일 식단 메모/특이일에 질병·금식·검진 키워드 → "참고" 배지만(후보 카드 아님). 음주·과식도 참고 표시만.
+const EX_ILLNESS_RE_ = /설사|구토|발열|장염|금식|검진|장정결/;
+const EX_DRINK_RE_ = /음주|소주|맥주|와인|막걸리|과식/;
+function buildExclusionContextMap_(){
+  const byDate = {};
+  (state.meals||[]).forEach(m=>{
+    const txt = `${m.note||''} ${m.specialDayType||''}`;
+    let kind=null, word=null, mm;
+    if((mm = EX_ILLNESS_RE_.exec(txt))){ kind='illness'; word=mm[0]; }
+    else if((mm = EX_DRINK_RE_.exec(txt))){ kind='drink'; word=mm[0]; }
+    else if(m.specialDayType==='alcohol' || m.specialDayType==='overeat'){ kind='drink'; word = m.specialDayType==='alcohol' ? '음주' : '과식'; }
+    if(kind) (byDate[m.date] = byDate[m.date] || []).push({kind, word});
+  });
+  return byDate;
+}
+function exContextFor_(map, date){
+  const prevD = toLocalISO(new Date(new Date(date+'T00:00:00').getTime()-86400000));
+  const pick = (d, label) => { const arr = map[d]; if(!arr) return null; const hit = arr.find(a=>a.kind==='illness') || arr[0]; return {kind:hit.kind, word:hit.word, when:label}; };
+  const a = pick(date, '당일'), b = pick(prevD, '전일');
+  if(a && a.kind==='illness') return a;
+  if(b && b.kind==='illness') return b;
+  return a || b;
+}
+function exContextText_(c){ return c ? `식단 메모에 '${c.word}' 기록(${c.when})` : ''; }
+function exDefaultReason_(date){
+  const c = computeExcludeCandidates_().find(x=>x.date===date);
+  if(!c) return '';
+  const ctx = exContextFor_(buildExclusionContextMap_(), date);
+  return `${exDeltaText_(c.delta)} — 수분 이동 패턴 의심(체중↓·체지방↑)` + (ctx ? `. ${exContextText_(ctx)}` : '');
+}
+// 정희님이 탭으로 확정: exclude(제외, 사유 필수) / keep(유지) / hold(보류, 평균엔 포함) / clear(되돌리기=미결정)
+function decideExclusion(date, action){
+  const rec = state.inbody.find(r=>r.date===date);
+  if(!rec) return;
+  if(action==='exclude'){
+    let reason = exDefaultReason_(date);
+    if(!reason){
+      const input = prompt(`${exShort_(date)} 인바디를 평균에서 제외합니다. 사유를 짧게 적어주세요 (예: 장염, 금식, 검진 전후)`, '');
+      if(input===null) return;
+      reason = input.trim();
+      if(!reason){ alert('사유를 적어야 제외할 수 있어요.'); return; }
+    }
+    rec.exclude = true; rec.excludeReason = reason;
+  } else if(action==='keep'){ rec.exclude = false; rec.excludeReason = null; }
+  else if(action==='hold'){ rec.exclude = '보류'; rec.excludeReason = null; }
+  else if(action==='clear'){ rec.exclude = null; rec.excludeReason = null; }
+  else return;
+  const now = new Date().toISOString();
+  rec.excludeAt = now; rec.updatedAt = now;
+  saveArr(LS_KEYS.inbody, state.inbody);
+  markUpdated();
+  scheduleSaveSync_();
+  render();
+}
+function editExclusionReason(date){
+  const rec = state.inbody.find(r=>r.date===date);
+  if(!rec || !isExcluded_(rec)) return;
+  const input = prompt('제외 사유를 수정하세요', rec.excludeReason || '');
+  if(input===null) return;
+  const reason = input.trim();
+  if(!reason){ alert('사유는 비울 수 없어요. 제외를 풀려면 "되돌리기"를 누르세요.'); return; }
+  rec.excludeReason = reason;
+  const now = new Date().toISOString(); rec.excludeAt = now; rec.updatedAt = now;
+  saveArr(LS_KEYS.inbody, state.inbody); markUpdated(); scheduleSaveSync_(); render();
+}
+// 동기화 병합: 측정값은 기존처럼 updatedAt으로 판단하고, 제외 결정(exclude/excludeReason)은 결정 시각(excludeAt)이 더 늦은 쪽을 채택한다.
+// (한쪽에만 결정이 있으면 그쪽, 양쪽 다 없으면 서버 값 그대로) — 방금 탭한 제외가 서버의 옛 행에 덮여 사라지는 것을 막는다.
+function mergeInbodyByDate_(existing, incoming, deletedMap){
+  const merged = mergeByDate_(existing, incoming, deletedMap);
+  const localByDate = new Map((existing||[]).map(r=>[r.date, r]));
+  merged.forEach(m=>{
+    const l = localByDate.get(m.date);
+    if(!l || l===m) return;
+    if(String(l.excludeAt||'') > String(m.excludeAt||'')){ m.exclude = l.exclude; m.excludeReason = l.excludeReason; m.excludeAt = l.excludeAt; }
+  });
+  return merged;
+}
+function exclusionWindowText_(){
+  const w7 = sortedInbody().slice(-7);
+  if(!w7.length) return '';
+  const ex = sortedInbodyAll().filter(isExcluded_);
+  return `7번 평균 = ${exShort_(w7[0].date)}~${exShort_(w7[w7.length-1].date)}(유효 ${w7.length}건)` + (ex.length ? ` · 제외 ${ex.length}건(${ex.map(r=>exShort_(r.date)).join('·')})` : ' · 제외 없음');
+}
+function inbodyStatusLineHtml_(){
+  const all = sortedInbodyAll();
+  if(!all.length) return '';
+  const lastAll = all[all.length-1];
+  const lastTxt = `마지막 측정 ${exShort_(lastAll.date)}${isExcluded_(lastAll)?'(제외)':''}`;
+  const hasToday = all.some(r=>r.date===todayISO());
+  return `<div class="ex-statusline">${esc(lastTxt)} · ${esc(exclusionWindowText_())}${hasToday?'':` · 오늘(${exShort_(todayISO())}) 인바디 미기록`}</div>`;
+}
+function renderExclusionPanel(){
+  const all = sortedInbodyAll();
+  const excluded = all.filter(isExcluded_).reverse();
+  const holds = all.filter(r=>r.exclude==='보류').reverse();
+  const cands = computeExcludeCandidates_().filter(c=>c.decision==='undecided').reverse();
+  if(!excluded.length && !holds.length && !cands.length) return '';
+  const ctxMap = buildExclusionContextMap_();
+  const shown = cands.slice(0,3);
+  const candHtml = shown.map(c=>{
+    const ctx = exContextFor_(ctxMap, c.date);
+    return `<div class="ex-card">
+      <div class="ex-card-title">⚠️ 제외 후보 · ${exShort_(c.date)}</div>
+      <div class="ex-card-body">${esc(exShort_(c.date))}: ${esc(exDeltaText_(c.delta))} — 수분 이동 패턴 의심(체중↓·체지방↑)${ctx?` · ${esc(exContextText_(ctx))}`:''}. 평균에서 뺄까요?</div>
+      <div class="ex-card-actions">
+        <button class="mini-btn danger" onclick="decideExclusion('${c.date}','exclude')">제외</button>
+        <button class="mini-btn" onclick="decideExclusion('${c.date}','keep')">유지</button>
+        <button class="mini-btn" onclick="decideExclusion('${c.date}','hold')">보류</button>
+      </div></div>`;
+  }).join('');
+  const moreHtml = cands.length>shown.length ? `<div class="ex-more">외 후보 ${cands.length-shown.length}건은 아래 인바디 표에서 확인할 수 있어요.</div>` : '';
+  const exHtml = excluded.length ? `<div class="ex-list">${excluded.slice(0,6).map(r=>`<div class="ex-item"><span class="ex-item-date">${exShort_(r.date)}</span><span class="ex-item-reason">${esc(r.excludeReason||'사유 미입력')}</span><button class="mini-btn" onclick="decideExclusion('${r.date}','clear')">되돌리기</button></div>`).join('')}${excluded.length>6?`<div class="ex-more">외 ${excluded.length-6}건은 인바디 표에서 확인</div>`:''}</div>` : '';
+  const holdHtml = holds.length ? `<div class="ex-more">보류 ${holds.length}건(평균에는 포함): ${holds.map(r=>exShort_(r.date)).join('·')}</div>` : '';
+  return `<section class="card ex-panel">
+    <div class="section-label">📌 인바디 제외 확정</div>
+    <div class="ex-window">${esc(exclusionWindowText_())}<br><span class="dim">제외한 날은 평균·비교·20% 판정에서 빠지고, 삭제가 아니라 표시라 되돌릴 수 있어요.</span></div>
+    ${candHtml}${moreHtml}${exHtml}${holdHtml}
+  </section>`;
+}
+// 인바디 표 한 행의 제외 관련 표시(배지·사유·버튼)
+function exRowParts_(r, candMap, ctxMap){
+  const dec = exclusionDecision_(r), cand = candMap.get(r.date);
+  const ctx = exContextFor_(ctxMap, r.date);
+  let badges = '', reason = '', actions = '';
+  const btn = (act, label, danger) => `<button class="mini-btn${danger?' danger':''}" onclick="decideExclusion('${r.date}','${act}')">${label}</button>`;
+  if(dec==='excluded'){
+    badges = `<span class="badge ex-badge" title="${esc(r.excludeReason||'')}">제외</span>`;
+    reason = `<div class="ex-reason">${esc(r.excludeReason||'사유 미입력')}</div>`;
+    actions = btn('clear','되돌리기') + `<button class="mini-btn" onclick="editExclusionReason('${r.date}')">사유</button>`;
+  } else if(dec==='hold'){
+    badges = `<span class="badge ex-hold" title="평균에는 포함돼요">보류</span>`;
+    actions = btn('exclude','제외',true) + btn('keep','유지');
+  } else if(cand && dec==='undecided'){
+    badges = `<span class="badge miss" title="${esc(exDeltaText_(cand.delta))}">의심</span>`;
+    reason = `<div class="ex-reason">${esc(exDeltaText_(cand.delta))} — 수분 이동 패턴 의심</div>`;
+    actions = btn('exclude','제외',true) + btn('keep','유지') + btn('hold','보류');
+  } else {
+    if(dec==='kept' && cand) badges = `<span class="badge ex-kept" title="의심 규칙에 걸렸지만 유지로 확정했어요">유지 확정</span>`;
+    else if(ctx) badges = `<span class="badge ex-hint" title="${esc(exContextText_(ctx))}">참고</span>`;
+    actions = btn('exclude','제외',true);
+  }
+  return {cls: dec==='excluded' ? 'inbx-row' : '', badges, reason, actions};
+}
 // [2026-09-13 신규] 골격근(muscle) 필드가 실제로 채워진 마지막 기록을 찾는 헬퍼.
 // 여행 중처럼 체중만 기록되고 muscle/fat/fatPct/bmr이 비어있는 행이 배열 마지막에 오면
 // 단순히 ib[ib.length-1]을 쓰는 기존 방식이 골격근 비교를 완전히 틀리게 만들기 때문에,
@@ -1889,15 +2113,16 @@ function lineChartSVG(data, key, colorVar, opts={}){
   const x = i => padL + (i/(data.length-1||1)) * (w-padL-padR);
   const y = v => padT + (1-(v-min)/(max-min||1)) * (h-padT-padB);
 
-  const pts = data.map((d,i) => d[key]!=null ? [x(i), y(d[key])] : null);
+  const pts = data.map((d,i) => d[key]!=null ? [x(i), y(d[key]), !!d._ex] : null); // 2026-10-13: [2]=제외점 여부
   let pathD = '', areaD = '';
   let started = false;
   pts.forEach((p) => {
     if(!p) { started=false; return; }
+    if(p[2]) return; // 제외점은 선에 넣지 않고 아래에서 회색 속 빈 점으로만 표시
     if(!started){ pathD += `M${p[0].toFixed(1)},${p[1].toFixed(1)} `; areaD += `M${p[0].toFixed(1)},${h-padB} L${p[0].toFixed(1)},${p[1].toFixed(1)} `; started=true; }
     else { pathD += `L${p[0].toFixed(1)},${p[1].toFixed(1)} `; areaD += `L${p[0].toFixed(1)},${p[1].toFixed(1)} `; }
   });
-  const lastPt = [...pts].reverse().find(p=>p);
+  const lastPt = [...pts].reverse().find(p=>p && !p[2]);
   if(lastPt) areaD += `L${lastPt[0].toFixed(1)},${h-padB} Z`;
 
   const gridY = [0,0.5,1].map(t => ({ y: padT + t*(h-padT-padB), val: max - t*(max-min) }));
@@ -1936,6 +2161,7 @@ function lineChartSVG(data, key, colorVar, opts={}){
     ${vlines}
     <path d="${areaD}" fill="url(#${gid})" stroke="none"/>
     <path d="${pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.filter(p=>p && p[2]).map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="none" stroke="#9aa0a6" stroke-width="1.6"/>`).join('')}
     ${xTicks}
   </svg>`;
 }
@@ -2377,8 +2603,8 @@ function computeInsights(){
   const isNewFatPctRecord = minFatPctEntry && minFatPctEntry.date === last.date;
 
   const insights = [
-    {icon:'target', label:'1차(20%) 목표 달성률', value:`${fmt(g20.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g20.ma7Last,2)}% (목표 20%, 오늘 실측 ${fmt(last.fatPct)}%)`, tone: g20.tier!=='pending'?'good':'neutral'},
-    {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(g18.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g18.ma7Last,2)}% (목표 18%, 오늘 실측 ${fmt(last.fatPct)}%)`, tone: g18.tier!=='pending'?'good':'neutral'},
+    {icon:'target', label:'1차(20%) 목표 달성률', value:`${fmt(g20.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g20.ma7Last,2)}% (목표 20%, ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}%)`, tone: g20.tier!=='pending'?'good':'neutral'},
+    {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(g18.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g18.ma7Last,2)}% (목표 18%, ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}%)`, tone: g18.tier!=='pending'?'good':'neutral'},
     {icon:'down', label:'누적 체중 변화', value:`${fmt(weightLoss)}kg`, sub:`${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg`, tone:'good'},
     {icon:'down', label:'누적 체지방량 변화', value:`${fmt(fatMassLoss)}kg`, sub:`${fmt(first.fat)}kg → ${fmt(lastBC.fat)}kg${lastBC.date!==last.date?` (${lastBC.date} 기준, 최신 체성분 실측일)`:''}`, tone:'good'},
     {icon:'dumbbell', label:'체중감량 대비 골격근 보존', value: muscleAssess.muscleLoss<=0 ? '유지/증가' : `비율 ${fmt(muscleAssess.ratio,2)}`, sub: muscleAssess.muscleLoss<=0 ? `골격근 ${fmt(lastBC.muscle)}kg — 감소 없음` : `골격근 -${fmt(muscleAssess.muscleLossPct,1)}% / 체중 -${fmt(muscleAssess.weightLossPct,1)}% · ${muscleAssess.label}(SURMOUNT-1 DEXA 실측 비율 0.51 기준)`, tone: muscleAssess.tone},
@@ -2902,7 +3128,7 @@ function renderMounjaro(){
   if(validCycles.length===0) return `<div class="empty-state">아직 이 기간의 인바디 기록이 없습니다.</div>`;
 
   const firstDoseDate = state.mounjaroDoses[0].date;
-  const fullData = sortedInbody().filter(r => r.date >= firstDoseDate);
+  const fullData = sortedInbodyAll().map(r=>({...r, _ex:isExcluded_(r)})).filter(r => r.date >= firstDoseDate); // 2026-10-13: 그래프는 제외점 포함(회색 표시)
   const vlines = state.mounjaroDoses.map(d => ({date:d.date, label:`${d.cycle}차`}));
   const insights = computeMounjaroInsights(cycles);
   const intervals = computeDoseIntervalComparison();
@@ -3595,6 +3821,7 @@ function renderDashboard(){
   // 여기서 배너를 그릴 필요가 없어짐(HEADER_TEMPLATE의 top-sync-badge가 그 역할을 대신함).
   if(!last) return `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
   const ib = sortedInbody();
+  const ibAll_ = sortedInbodyAll().map(r=>({...r, _ex:isExcluded_(r)})); // 2026-10-13: 그래프는 제외점도 회색으로 보여주기 위해 원본 전체 사용
   const recentMA = ma.slice(-7);
   const maTrend7 = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : null;
   // 2026-09-14 추가: 오늘이 체중전용 기록(여행 중 등, muscle/fat=null)이면 아래 목표 계산에서
@@ -3604,6 +3831,7 @@ function renderDashboard(){
   const bcAsOf = lastBC.date!==last.date ? ` (${lastBC.date} 실측 기준)` : '';
 
   return `
+    ${renderExclusionPanel()}
     <section class="hero card">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
         <div class="hero-eyebrow"><span class="dot"></span>Live Tracking</div>
@@ -3616,7 +3844,7 @@ function renderDashboard(){
         <div class="hero-figure">
           ${gaugeSVG(goalStatus.ma7Last, START_FAT_PCT, FAT_GOALS)}
           <div class="gauge-value mono">${fmt(goalStatus.ma7Last,2)}<span class="gauge-unit">%</span></div>
-          <div class="gauge-sub">MA7(최근 7일 평균) 기준 · 시작 대비 ${fmt(START_FAT_PCT-goalStatus.ma7Last)}%p 감소 · 오늘 실측 ${fmt(last.fatPct)}%</div>
+          <div class="gauge-sub">MA7(최근 7일 평균) 기준 · 시작 대비 ${fmt(START_FAT_PCT-goalStatus.ma7Last)}%p 감소 · ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}%</div>
           ${maTrend7!==null ? `<div class="gauge-sub" style="margin-top:2px; font-size:11px; color:${maTrend7<=-0.05?'var(--c-good)':maTrend7>=0.05?'var(--c-warn)':'var(--text-faint)'};">7일 이동평균 대비 ${maTrend7>0?'+':''}${fmt(maTrend7,2)}%p ${maTrend7<=-0.05?'↓ 개선 중':maTrend7>=0.05?'↑ 정체/반등':'· 거의 변화 없음'}</div>` : ''}
           <div class="gauge-legend">
             <span><span class="legend-dot legend-dot-progress"></span>진행</span>
@@ -3684,6 +3912,8 @@ function renderDashboard(){
 
     ${renderDailyScoreCard()}
 
+    ${inbodyStatusLineHtml_()}
+
     ${state.aiNote ? `
     <section class="card ai-note">
       <div class="section-label good">${secNum('00')}Claude 분석 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">${aiNoteFreshnessLabel(state.aiNote)}</span></div>
@@ -3706,6 +3936,7 @@ function renderDashboard(){
 
     <section class="card">
       <div class="section-label good">${secNum('00c')}체지방률·골격근량 이동평균 추세 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 단일 측정 노이즈를 걸러낸 MA7/MA14 추세선</span></div>
+      <p class="p-dim ex-statusline" style="margin-bottom:6px;">${esc(exclusionWindowText_())}</p>
       <p class="p-dim" style="margin-bottom:14px;">인바디는 하루 컨디션(염분·수분·화장실 여부)에 따라 출렁여요. 실선(MA7)은 단기추세, 점선(MA14)은 더 완만한 장기추세를 보여줘요. 절대값보다 기울기(회귀선) 방향이 더 중요한 지표예요.</p>
       ${(() => {
         const maFat = movingAverage(ib, 'fatPct', 7);
@@ -3808,10 +4039,10 @@ function renderDashboard(){
     <section>
       <div class="section-label">${secNum('02')}체성분 변화 (${ib[0].date.slice(5)} ~ 현재)</div>
       <div class="chart-grid">
-        ${chartCard('체중', ib, 'weight', 'kg', '--c-weight')}
-        ${chartCard('골격근량', ib, 'muscle', 'kg', '--c-muscle', MUSCLE_BASELINE)}
-        ${chartCard('체지방량', ib, 'fat', 'kg', '--c-fat')}
-        ${chartCard('체지방률', ib, 'fatPct', '%', '--c-fatpct', 18)}
+        ${chartCard('체중', ibAll_, 'weight', 'kg', '--c-weight')}
+        ${chartCard('골격근량', ibAll_, 'muscle', 'kg', '--c-muscle', MUSCLE_BASELINE)}
+        ${chartCard('체지방량', ibAll_, 'fat', 'kg', '--c-fat')}
+        ${chartCard('체지방률', ibAll_, 'fatPct', '%', '--c-fatpct', 18)}
       </div>
     </section>
 
@@ -4124,7 +4355,7 @@ function maTrendChartCard(title, ma7data, ma14data, key7, key14, unit, colorVar,
   </div>`;
 }
 function chartCard(title, data, key, unit, colorVar, goal, vlines){
-  const vals = data.map(d=>d[key]).filter(v=>v!=null);
+  const vals = data.filter(d=>!d._ex).map(d=>d[key]).filter(v=>v!=null); // 2026-10-13: 현재값은 제외점 말고 유효 측정 기준
   const nowVal = vals[vals.length-1];
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">${title}</span><span class="ch-now mono" style="color:var(${colorVar})">${fmt(nowVal)}${unit}</span></div>
@@ -4165,10 +4396,14 @@ function renderInbodyTable(ma){
   // 보려면 계속 스크롤해야 한다는 피드백 반영 — ma는 sortedInbody() 기반 오름차순(과거→현재)
   // 배열이라 다른 계산(이동평균 등)에는 그대로 써야 하므로, 여기 표시 직전에만 복사본을
   // 뒤집어서 최신 날짜가 맨 위로 오게 함.
-  const rows = ma.slice().reverse();
+  // 2026-10-13: 표는 제외된 날도 포함한 원본 전체를 보여주고, 7일 이평은 유효 측정으로 계산된 값(ma)을 날짜로 붙인다.
+  const maByDate_ = new Map(ma.map(r=>[r.date, r.fatPctMA]));
+  const candMap_ = new Map(computeExcludeCandidates_().map(c=>[c.date, c]));
+  const ctxMap_ = buildExclusionContextMap_();
+  const rows = sortedInbodyAll().map(r=>({...r, fatPctMA: maByDate_.get(r.date)})).reverse();
   return `<div class="card" style="margin-top:12px; overflow-x:auto;">
     <table class="data-table">
-      <thead><tr><th style="text-align:left">날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th><th></th></tr></thead>
+      <thead><tr><th style="text-align:left">날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th><th>제외</th><th></th></tr></thead>
       <tbody>
         ${rows.map(r=>{
           // 2026-09-18 추가(7번, 데이터 신뢰도 배지): 골격근/체지방이 없는 "체중전용" 기록을
@@ -4176,19 +4411,21 @@ function renderInbodyTable(ma){
           // 버그를 냈던 이력(위 곳곳의 "2026-09-14 수정" 주석 참고)이 있어, 원인을 표에서부터
           // 눈에 보이게 만들어두는 게 재발 방지에도 도움이 됨.
           const isWeightOnly = r.muscle==null || r.fat==null;
-          return `<tr>
-          <td style="text-align:left;">${r.date}${isWeightOnly?`<span class="badge miss" title="체성분(골격근·체지방) 미측정 — 체중만 기록됨" style="margin-left:4px; font-size:10px;">체중만</span>`:''}</td>
+          const exp_ = exRowParts_(r, candMap_, ctxMap_);
+          return `<tr class="${exp_.cls}">
+          <td style="text-align:left;">${r.date}${exp_.badges}${exp_.reason}${isWeightOnly?`<span class="badge miss" title="체성분(골격근·체지방) 미측정 — 체중만 기록됨" style="margin-left:4px; font-size:10px;">체중만</span>`:''}</td>
           <td>${editableCell('inbody', r.date, 'weight', r.weight, 1)}</td>
           <td>${editableCell('inbody', r.date, 'muscle', r.muscle, 1)}</td>
           <td>${editableCell('inbody', r.date, 'fat', r.fat, 1)}</td>
           <td style="color:var(--c-accent-strong); font-weight:700;">${editableCell('inbody', r.date, 'fatPct', r.fatPct, 1)}</td>
           <td>${editableCell('inbody', r.date, 'bmr', r.bmr, 0)}</td>
-          <td>${fmt(r.fatPctMA,2)}</td>
+          <td>${isExcluded_(r) ? '—' : fmt(r.fatPctMA,2)}</td>
+          <td style="white-space:nowrap;">${exp_.actions}</td>
           <td><button class="mini-btn danger" onclick="deleteInbodyEntry('${r.date}')">삭제</button></td>
         </tr>`;}).join('')}
       </tbody>
     </table>
-    <div class="note-box" style="margin-top:10px;">셀을 탭하면 바로 수정할 수 있어요. 입력 후 엔터 또는 다른 곳을 누르면 저장돼요. 행을 통째로 잘못 넣었다면 맨 오른쪽 삭제 버튼을 쓰세요(확인창이 뜹니다). <b>체중만</b> 배지가 붙은 날은 골격근·체지방 실측이 없어(여행 중 등) 체성분 추세 계산에서는 자동으로 건너뛰어요.</div>
+    <div class="note-box" style="margin-top:10px;">${esc(exclusionWindowText_())}<br><b>제외</b>한 날은 회색으로 표시되고 평균·비교·20% 판정에서 빠져요(삭제가 아니라 표시라 "되돌리기"로 언제든 풀 수 있어요).<br>셀을 탭하면 바로 수정할 수 있어요. 입력 후 엔터 또는 다른 곳을 누르면 저장돼요. 행을 통째로 잘못 넣었다면 맨 오른쪽 삭제 버튼을 쓰세요(확인창이 뜹니다). <b>체중만</b> 배지가 붙은 날은 골격근·체지방 실측이 없어(여행 중 등) 체성분 추세 계산에서는 자동으로 건너뛰어요.</div>
   </div>`;
 }
 
@@ -4200,7 +4437,7 @@ function renderLog(){
   const dates = [...new Set([...state.inbody.map(r=>r.date), ...state.workouts.map(r=>r.date), ...state.meals.map(r=>r.date)])].sort((a,b)=>b.localeCompare(a));
   if(dates.length===0) return `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
 
-  const ibSorted = sortedInbody();
+  const ibSorted = sortedInbodyAll(); // 2026-10-13: 일별 기록은 제외된 날도 보여야 하므로 원본 전체
   const prevOf = (date) => { const idx = ibSorted.findIndex(r=>r.date===date); return idx>0 ? ibSorted[idx-1] : null; };
 
   const weeks = {};
@@ -4256,7 +4493,7 @@ function dayRow(date, i, wArr, m, prev){
     // 취급되어 실제로는 비교 불가능한 값이 큰 델타로 잘못 표시되던 버그 수정
     const fPctValid = i.fatPct!==null&&i.fatPct!==undefined&&!isNaN(i.fatPct)&&prev&&prev.fatPct!==null&&prev.fatPct!==undefined&&!isNaN(prev.fatPct);
     const fDelta = fPctValid ? i.fatPct - prev.fatPct : null;
-    ibCol = `체중 <b class="mono">${fmt(i.weight)}kg</b>${deltaSpan(wDelta,'kg')}
+    ibCol = `${isExcluded_(i)?`<span class="badge ex-badge" style="margin:0 0 4px 0;" title="${esc(i.excludeReason||'')}">제외 · ${esc(i.excludeReason||'사유 미입력')}</span><br>`:''}체중 <b class="mono">${fmt(i.weight)}kg</b>${deltaSpan(wDelta,'kg')}
       <br>골격근 <b class="mono">${fmt(i.muscle)}kg</b> · 체지방 <b class="mono">${fmt(i.fat)}kg</b>
       <br>체지방률 <b class="mono" style="color:var(--c-fatpct)">${fmt(i.fatPct)}%</b>${deltaSpan(fDelta,'%p')}
       <div class="row-actions"><button class="mini-btn" onclick="editInbodyByDate('${date}')">수정</button><button class="mini-btn danger" onclick="deleteInbodyEntry('${date}')">삭제</button></div>`;
@@ -5362,7 +5599,7 @@ async function cloudSync(silent){
       state.deletedIds = {};
       SYNC_DELETED_CATS_.forEach(c => { state.deletedIds[c] = mergeDeletedMap_(localDeleted_[c], cloudDeletedIds[c]); });
       saveArr(LS_KEYS.deletedIds, state.deletedIds);
-      state.inbody = mergeByDate_(state.inbody, data.inbody, state.deletedIds.inbody);
+      state.inbody = mergeInbodyByDate_(state.inbody, data.inbody, state.deletedIds.inbody); // 2026-10-13: 제외 결정은 excludeAt이 늦은 쪽 채택
       state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts, state.deletedIds.workouts, 'name');
       // 2026-08-13 추가: 서버(Sheet)에는 워크아웃 id 컬럼이 없어서(Code.gs 변경 전까지는)
       // pull로 들어온 항목엔 id가 비어있다. 최초 로드 때만 id를 채워주던 ensureWorkoutIds를
@@ -5484,7 +5721,7 @@ async function cloudSync(silent){
       }
       // 2) 이제 서버 기준으로 정리된(중복 제거된) 로컬 데이터를 다시 시트로 전송 —
       //    이미 서버와 정합된 상태라 이 단계에서 새로운 중복이 생기지 않는다.
-      const windowedInbody_ = recentWindow_(state.inbody);
+      const windowedInbody_ = (state.inbody||[]).filter(r => r.date >= pushWindowCutoff_() || r.excludeAt); // 2026-10-13: 최근 14일 + 제외/유지/보류를 결정한 날(오래된 날짜도 서버에 닿게)
       const windowedWorkouts_ = recentWindow_(state.workouts);
       const windowedMeals_ = recentWindow_(state.meals);
       const windowedWaist_ = recentWindow_(state.waist);
@@ -5973,6 +6210,7 @@ function saveRecord(){
   if(!f.date){ alert('날짜를 입력해주세요.'); return; }
   if(modalState.kind==='inbody'){
     const rec = {date:f.date, weight:num(f.weight), muscle:num(f.muscle), fat:num(f.fat), fatPct:num(f.fatPct), bmr:f.bmr?num(f.bmr):null, updatedAt: new Date().toISOString()};
+    { const prevRec_ = state.inbody.find(r=>r.date===rec.date); if(prevRec_){ ['exclude','excludeReason','excludeAt'].forEach(k=>{ if(prevRec_[k]!==undefined) rec[k]=prevRec_[k]; }); } } // 2026-10-13: 수치를 고쳐도 제외 표시는 유지
     state.inbody = [...state.inbody.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.inbody, state.inbody);
     unmarkDeleted_('inbody', rec.date); // 2026-09-19 추가: 삭제했던 날짜를 다시 저장하면 삭제 의도 철회로 간주
