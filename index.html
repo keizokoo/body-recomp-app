@@ -407,6 +407,18 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .ex-item-date{font-weight:700; min-width:34px;}
 .ex-item-reason{flex:1; color:var(--text-dim); line-height:1.35;}
 .ex-more{font-size:11.5px; color:var(--text-dim); margin-top:6px;}
+/* 2026-10-18: Claude 분석 카드 접기(3줄 요약 + 펼쳐보기), 오늘 남은 목표 카드 */
+.ai-clamp{max-height:5.4em; overflow:hidden; -webkit-mask-image:linear-gradient(#000 55%, transparent); mask-image:linear-gradient(#000 55%, transparent);}
+.ai-clamp.open{max-height:none; -webkit-mask-image:none; mask-image:none;}
+.rm-row{padding:8px 0; border-top:1px solid var(--border);}
+.rm-row:first-of-type{border-top:none;}
+.rm-top{display:flex; align-items:baseline; justify-content:space-between; gap:8px; flex-wrap:wrap;}
+.rm-label{font-size:13px; font-weight:700;}
+.rm-nums{font-family:var(--font-mono); font-size:12px; color:var(--text-dim);}
+.rm-bar{height:6px; border-radius:4px; background:var(--c-track); margin:6px 0 4px; overflow:hidden;}
+.rm-fill{height:100%; background:var(--c-accent); border-radius:4px;}
+.rm-fill.over{background:var(--c-warn);}
+.rm-status{font-size:12px; line-height:1.45;}
 .special-chip-row{display:flex; gap:6px; flex-wrap:wrap;}
 .special-chip{font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
 .special-chip.active{background:var(--eyebrow-bg); border-color:var(--c-gauge-from); color:var(--accent-strong-text);}
@@ -526,7 +538,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-16-b (식단 입력에 "추정치 포함" 체크·오차% 구조화 필드 추가 — 서버 Code.gs 2026-10-16과 짝) 이전: 2026-10-16-a (운동 수정 모달 데이터 손실 수정: 배열형 세트 기록·볼륨·추가 필드가 수정 저장 때 지워지던 문제 해결 / 질병·회복 특이일 유형 추가 / 운동 탭 복귀 모드(마지막 근력 10일↑ 시 방치 부위 강제 포함 중지 + 첫 세션 60~70% 안내) / 대시보드 최근 7일 기록 현황(미기록≠0) / 추적관리 투여 후 경과일별 섭취 칼로리 표). 이전: 2026-10-13-a (인바디 특이일 "제외 확정": 앱은 제외 후보만 표시 → 정희님이 제외/유지/보류를 탭으로 확정 → 확정한 날짜는 최근 7·14번 평균, 7vs7 비교, 골격근 손실비율, 4주 간격 비교, 20% 판정에서 건너뜀(유효 측정만 7건씩) / 제외 날짜·사유 표시, 그래프 회색 점 / 동기화·수정 시 제외 표시 유지 / "Claude 분석" 기준일 KST 표기 + 상태 한 줄). 이전: 2026-10-05-e (수정·입력 팝업이 ✕/저장 후에도 닫히지 않던 문제 수정). 이전: 2026-10-05-d (크레아틴 메모 인식: 식단 메모에 "크레아틴"만 적어도 복용으로 인식·표시·차트 반영 / 설정탭에 "점수 다시 계산" 버튼 추가(편집기 실행 불필요)). 이전: 2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
+const APP_BUILD_VERSION = '2026-10-18-b (서버 Code.gs 2026-10-18과 짝: 분석 카드에 "분석 이후 새 데이터 N건·수신 시각" 표시(서버 inboxStatus) / 식단 구성 항목(items) 보존·일별 기록에 구성 펼치기·데이터 점검에 구성 합계 불일치 검사) 이전: 2026-10-18-a (제외 확정 안내를 새로 제외가 확정됐을 때 한 번만 표시하고 확인하면 숨김·보류 나열 제거 / 대시보드 \"오늘 남은 목표\" 카드(칼로리·단백질·탄수 남은 양 + 운동·활동 점수 힌트) / Claude 분석 카드 3줄 접기·펼치기 + 분석 후 경과시간 표시 / 최근 7일 기록 현황에 걸음수 행 추가 / 설정탭 데이터 점검 버튼 / 크레아틴 메모의 미확인·모름 표현을 복용으로 읽지 않도록 수정) 이전: 2026-10-16-b (식단 입력에 "추정치 포함" 체크·오차% 구조화 필드 추가 — 서버 Code.gs 2026-10-16과 짝) 이전: 2026-10-16-a (운동 수정 모달 데이터 손실 수정: 배열형 세트 기록·볼륨·추가 필드가 수정 저장 때 지워지던 문제 해결 / 질병·회복 특이일 유형 추가 / 운동 탭 복귀 모드(마지막 근력 10일↑ 시 방치 부위 강제 포함 중지 + 첫 세션 60~70% 안내) / 대시보드 최근 7일 기록 현황(미기록≠0) / 추적관리 투여 후 경과일별 섭취 칼로리 표). 이전: 2026-10-13-a (인바디 특이일 "제외 확정": 앱은 제외 후보만 표시 → 정희님이 제외/유지/보류를 탭으로 확정 → 확정한 날짜는 최근 7·14번 평균, 7vs7 비교, 골격근 손실비율, 4주 간격 비교, 20% 판정에서 건너뜀(유효 측정만 7건씩) / 제외 날짜·사유 표시, 그래프 회색 점 / 동기화·수정 시 제외 표시 유지 / "Claude 분석" 기준일 KST 표기 + 상태 한 줄). 이전: 2026-10-05-e (수정·입력 팝업이 ✕/저장 후에도 닫히지 않던 문제 수정). 이전: 2026-10-05-d (크레아틴 메모 인식: 식단 메모에 "크레아틴"만 적어도 복용으로 인식·표시·차트 반영 / 설정탭에 "점수 다시 계산" 버튼 추가(편집기 실행 불필요)). 이전: 2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1793,7 +1805,26 @@ function aiNoteFreshnessLabel(note){
   const dateLabel = noteDate ? `${noteDate}${noteTime_?' '+noteTime_:''} 기준 분석` : (note.syncedAt ? `${fmtDateTime(note.syncedAt)} 갱신` : '');
   const syncPart = note.syncedAt ? ` · 동기화 ${fmtDateTime(note.syncedAt)}` : '';
   const staleBadge = isStale ? ` <span style="color:var(--c-warn); font-weight:700;">⚠️ ${esc(noteDate)} 이후 새 분석 없음</span>` : '';
-  return dateLabel ? `· ${esc(dateLabel)}${syncPart}${staleBadge}` : '';
+  // 2026-10-18(B1 앱쪽): 분석 시각(시·분 포함)이 있으면 경과 시간과, 분석 이후 앱에서 직접 수정·입력한 기록 수를 함께 표시.
+  // (inbox 업로드 행은 updatedAt이 비어 있어 감지 못 함 — 서버가 분석 이후 들어온 데이터를 알려주는 기능은 Code.gs 쪽 후속 작업)
+  const noteMs_ = (rawNoteDate_ && String(rawNoteDate_).indexOf('T')>=0) ? new Date(rawNoteDate_).getTime() : NaN;
+  let elapsedBadge = '';
+  const parts_ = [];
+  if(!isNaN(noteMs_)){
+    const hrs = (Date.now()-noteMs_)/3600000;
+    const after = [].concat(state.meals||[], state.inbody||[], state.workouts||[]).filter(r => r && r.updatedAt && new Date(r.updatedAt).getTime() > noteMs_ + 180000).length;
+    if(hrs >= 3 && hrs < 48) parts_.push(`분석 후 ${Math.floor(hrs)}시간 경과`);
+    if(after > 0) parts_.push(`분석 이후 기록 ${after}건 갱신됨`);
+  }
+  // 2026-10-18(B1 서버 연동): 채팅(Drive 인박스)으로 분석 없이 들어온 새 데이터 — 서버가 건수와 수신 시각을 알려준다.
+  const ibs_ = state.inboxStatus;
+  if(ibs_ && Number(ibs_.pendingCount) > 0 && ibs_.dataAt){
+    const kd2_ = new Date(ibs_.dataAt);
+    const hm_ = isNaN(kd2_.getTime()) ? '' : ` · ${kd2_.toLocaleString('sv-SE', {timeZone:'Asia/Seoul'}).slice(11,16)} 수신`;
+    parts_.push(`분석 이후 새 데이터 ${Number(ibs_.pendingCount)}건${hm_}`);
+  }
+  if(parts_.length) elapsedBadge = ` <span style="color:var(--c-warn); font-weight:700;">⏱ ${esc(parts_.join(' · '))}</span>`;
+  return dateLabel ? `· ${esc(dateLabel)}${syncPart}${staleBadge}${elapsedBadge}` : '';
 }
 
 // 2026-10-13 추가: 인바디 "제외 확정"(정희님 확정 설계). 앱은 후보만 보여주고, 제외 여부는 정희님이 탭으로 확정한다(자동 제외 금지).
@@ -1933,12 +1964,29 @@ function inbodyStatusLineHtml_(){
   const hasToday = all.some(r=>r.date===todayISO());
   return `<div class="ex-statusline">${esc(lastTxt)} · ${esc(exclusionWindowText_())}${hasToday?'':` · 오늘(${exShort_(todayISO())}) 인바디 미기록`}</div>`;
 }
+// 2026-10-18 변경(A1): 제외 확정 안내는 "새로 제외가 확정됐을 때 한 번만" 보여준다. 정희님이 "확인"을 누르면 숨기고, 이후 새 제외가 확정되기 전까지 다시 뜨지 않는다.
+// 제외한 날 표시 자체는 인바디 표의 "제외" 배지·사유·되돌리기, 그래프의 회색 점, 평균 옆 한 줄(exclusionWindowText_)에 그대로 남는다.
+// 보류 상태(평균에 포함)는 이 패널에 더 이상 나열하지 않는다(표의 "보류" 배지로만 확인). 아직 결정 안 한 새 후보 카드(제외/유지/보류 질문)는 답이 필요한 항목이라 그대로 표시한다.
+// "확인" 기록은 이 기기에만 저장한다(기기마다 한 번씩 확인하면 됨, 서버 변경 없음).
+const EX_ACK_KEY_ = 'brc_exack_v1';
+function exAckGet_(){ try{ return localStorage.getItem(EX_ACK_KEY_); }catch(e){ return null; } }
+function exLatestDecisionAt_(excluded){ return (excluded||[]).reduce((m,r)=> String(r.excludeAt||'') > m ? String(r.excludeAt||'') : m, ''); }
+function exHasUnseenExclusion_(excluded){
+  if(!excluded || !excluded.length) return false;
+  const ack = exAckGet_();
+  if(ack === null || ack === undefined) return true;          // 한 번도 확인 안 함
+  return exLatestDecisionAt_(excluded) > ack;                 // 확인 이후 새로 제외가 확정됨
+}
+function exAckConfirm(){
+  try{ localStorage.setItem(EX_ACK_KEY_, new Date().toISOString()); }catch(e){}
+  render();
+}
 function renderExclusionPanel(){
   const all = sortedInbodyAll();
   const excluded = all.filter(isExcluded_).reverse();
-  const holds = all.filter(r=>r.exclude==='보류').reverse();
   const cands = computeExcludeCandidates_().filter(c=>c.decision==='undecided').reverse();
-  if(!excluded.length && !holds.length && !cands.length) return '';
+  const showNotice = exHasUnseenExclusion_(excluded);
+  if(!cands.length && !showNotice) return '';
   const ctxMap = buildExclusionContextMap_();
   const shown = cands.slice(0,3);
   const candHtml = shown.map(c=>{
@@ -1953,12 +2001,12 @@ function renderExclusionPanel(){
       </div></div>`;
   }).join('');
   const moreHtml = cands.length>shown.length ? `<div class="ex-more">외 후보 ${cands.length-shown.length}건은 아래 인바디 표에서 확인할 수 있어요.</div>` : '';
-  const exHtml = excluded.length ? `<div class="ex-list">${excluded.slice(0,6).map(r=>`<div class="ex-item"><span class="ex-item-date">${exShort_(r.date)}</span><span class="ex-item-reason">${esc(r.excludeReason||'사유 미입력')}</span><button class="mini-btn" onclick="decideExclusion('${r.date}','clear')">되돌리기</button></div>`).join('')}${excluded.length>6?`<div class="ex-more">외 ${excluded.length-6}건은 인바디 표에서 확인</div>`:''}</div>` : '';
-  const holdHtml = holds.length ? `<div class="ex-more">보류 ${holds.length}건(평균에는 포함): ${holds.map(r=>exShort_(r.date)).join('·')}</div>` : '';
+  const noticeHtml = showNotice ? `<div class="ex-list">${excluded.slice(0,6).map(r=>`<div class="ex-item"><span class="ex-item-date">${exShort_(r.date)}</span><span class="ex-item-reason">${esc(r.excludeReason||'사유 미입력')}</span><button class="mini-btn" onclick="decideExclusion('${r.date}','clear')">되돌리기</button></div>`).join('')}${excluded.length>6?`<div class="ex-more">외 ${excluded.length-6}건은 인바디 표에서 확인</div>`:''}
+      <div class="ex-more">제외한 날은 평균·비교·20% 판정에서 빠져요(삭제 아님). 이 안내는 확인하면 사라지고, 제외일은 인바디 표·그래프에 계속 표시돼요.</div>
+      <div class="ex-card-actions" style="margin-top:8px;"><button class="mini-btn" onclick="exAckConfirm()">확인</button></div></div>` : '';
   return `<section class="card ex-panel">
-    <div class="section-label">📌 인바디 제외 확정</div>
-    <div class="ex-window">${esc(exclusionWindowText_())}<br><span class="dim">제외한 날은 평균·비교·20% 판정에서 빠지고, 삭제가 아니라 표시라 되돌릴 수 있어요.</span></div>
-    ${candHtml}${moreHtml}${exHtml}${holdHtml}
+    <div class="section-label">📌 ${showNotice ? `인바디 제외 ${excluded.length}건 반영` : '인바디 제외 후보'}</div>
+    ${candHtml}${moreHtml}${noticeHtml}
   </section>`;
 }
 // 인바디 표 한 행의 제외 관련 표시(배지·사유·버튼)
@@ -3961,6 +4009,7 @@ function renderDashboard(){
       </div>`;
     })()}
 
+    ${renderTodayRemainingCard_()}
     ${renderDailyScoreCard()}
     ${renderRecordGapCard_()}
 
@@ -3969,7 +4018,13 @@ function renderDashboard(){
     ${state.aiNote ? `
     <section class="card ai-note">
       <div class="section-label good">${secNum('00')}Claude 분석 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">${aiNoteFreshnessLabel(state.aiNote)}</span></div>
-      <div class="ai-note-body">${formatNoteHtml(state.aiNote.text)}</div>
+      ${(() => {
+        const txt_ = String(state.aiNote.text||'');
+        const long_ = txt_.length > 220;
+        const open_ = !!(state.expandedTables && state.expandedTables['aiNote']);
+        return `<div id="ai-note-body" class="ai-note-body${long_ && !open_ ? ' ai-clamp' : ''}${long_ && open_ ? ' ai-clamp open' : ''}">${formatNoteHtml(state.aiNote.text)}</div>`
+          + (long_ ? `<button class="toggle-row" onclick="toggleAiNote(this)">${open_ ? '▴ 접기' : '▾ 전체 분석 펼치기'}</button>` : '');
+      })()}
     </section>` : ''}
 
     <section class="card">
@@ -4123,17 +4178,86 @@ function renderDashboard(){
     </section>
   `;
 }
+// 2026-10-18 추가(B4): Claude 분석 카드 접기/펼치기 — DOM 클래스만 바꾸고 다시 그리지 않는다.
+function toggleAiNote(btn){
+  const el = document.getElementById('ai-note-body');
+  if(!el) return;
+  const open = el.classList.toggle('open');
+  if(!el.classList.contains('ai-clamp')) el.classList.add('ai-clamp');
+  if(!state.expandedTables) state.expandedTables = {};
+  state.expandedTables['aiNote'] = open;
+  if(btn) btn.textContent = open ? '▴ 접기' : '▾ 전체 분석 펼치기';
+}
+// 2026-10-18 추가(B3): 하루 점수의 "운동·활동" 항목에서 오늘 근력/인정 유산소를 하면 얼마나 오르는지 추정한다.
+// 서버 점수 공식(Code.gs, 2026-10-16 동기화)과 같은 구조: 오늘 기록 12.5(근력 7.5 + 인정 유산소 5) + 최근 7일 균형 12.5(근력일 min(n,3)/3×7.5 + 인정 유산소일 min(n,3)/3×5).
+// 앱은 점수를 직접 매기지 않으므로 "예상"으로만 표시한다. 인정 유산소 = part가 정확히 '유산소' AND 평균심박 105 이상 AND 20분 이상.
+function computeActivityHint_(){
+  const ws = state.workouts || [];
+  const days = daysAgoList(7);            // [오늘, 어제, ...]
+  const todayD = days[0];
+  const isStrengthDay = d => { const t = classifyDayType(ws, d); return !!t && (t.type==='근력' || t.type==='둘다'); };
+  const isCardioDay = d => ws.some(w => w && w.date===d && String(w.part||'').trim()==='유산소' && Number(w.avgHR)>=105 && Number(w.durationMin)>=20);
+  const nS = days.filter(isStrengthDay).length, nC = days.filter(isCardioDay).length;
+  const sToday = isStrengthDay(todayD), cToday = isCardioDay(todayD);
+  const gainS = sToday ? 0 : 7.5 + ((Math.min(nS+1,3)-Math.min(nS,3))/3)*7.5;
+  const gainC = cToday ? 0 : 5 + ((Math.min(nC+1,3)-Math.min(nC,3))/3)*5;
+  return {nS, nC, sToday, cToday, gainS, gainC};
+}
+// 2026-10-18 추가(B2): 대시보드 "오늘 남은 목표" — 오늘 목표(칼로리·단백질·탄수)까지 남은 양과, 운동 활동 점수 힌트(B3).
+// 목표값은 스마트 인사이트의 "오늘 목표"와 같은 함수(computeCalorieTarget·computeCarbTarget·PROTEIN_TARGET)를 쓴다.
+function renderTodayRemainingCard_(){
+  const todayD = todayISO();
+  const bmrRec = [...sortedInbody()].reverse().find(r => r && Number(r.bmr) > 0);
+  if(!bmrRec) return '';
+  const ws = state.workouts || [];
+  const eat = ws.filter(w => w && w.date===todayD).reduce((s,w)=>s+(Number(w.calories)||0),0);
+  const cal = computeCalorieTarget(Number(bmrRec.bmr), eat);
+  const carb = computeCarbTarget(ws, todayD);
+  if(!cal || !carb) return '';
+  const prot = PROTEIN_TARGET;
+  const meal = (state.meals||[]).find(m => m && m.date===todayD);
+  const has = !!meal && Number(meal.calories) > 0;
+  const cur = {kcal: has ? (Number(meal.calories)||0) : 0, p: has ? (Number(meal.protein)||0) : 0, c: has ? (Number(meal.carbs)||0) : 0};
+  const row = (label, unit, now, lo, hi, opts) => {
+    const o = opts || {};
+    const pct = hi > 0 ? Math.max(0, Math.min(100, now/hi*100)) : 0;
+    let status;
+    if(!has) status = `오늘 식단 미기록 — 목표 ${lo}~${hi}${unit}`;
+    else if(now < lo) status = `남은 양 <b>${Math.round(lo-now)}~${Math.round(hi-now)}${unit}</b> (하한까지 ${Math.round(lo-now)}${unit})`;
+    else if(now <= hi) status = `범위 안 ✓ · 상한까지 여유 ${Math.round(hi-now)}${unit}`;
+    else status = o.overOk ? `상한 초과 ${Math.round(now-hi)}${unit} (점수 감점 없음)` : `상한 초과 <b>+${Math.round(now-hi)}${unit}</b>`;
+    const over = has && now > hi && !o.overOk;
+    return `<div class="rm-row"><div class="rm-top"><span class="rm-label">${label}</span><span class="rm-nums">${has ? Math.round(now) : '–'} / ${lo}~${hi}${unit}</span></div>
+      <div class="rm-bar"><div class="rm-fill${over?' over':''}" style="width:${has?pct:0}%;"></div></div>
+      <div class="rm-status">${status}</div></div>`;
+  };
+  const hint = computeActivityHint_();
+  const hintParts = [];
+  if(!hint.sToday) hintParts.push(`오늘 근력 1회 → 운동·활동 약 <b>+${fmt(hint.gainS,1)}점</b>`);
+  else hintParts.push('오늘 근력 완료 ✓');
+  if(!hint.cToday) hintParts.push(`인정 유산소(심박 105↑·20분↑) → 약 <b>+${fmt(hint.gainC,1)}점</b>`);
+  else hintParts.push('오늘 인정 유산소 완료 ✓');
+  return `<section class="card">
+    <div class="section-label good">${secNum('00f')}오늘 남은 목표 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${esc(todayD.slice(5).replace('-','/'))} · BMR ${esc(String(bmrRec.bmr))}${eat>0?` · 운동소모 ${Math.round(eat)}kcal`:''}</span></div>
+    ${row('칼로리','kcal',cur.kcal,cal.targetLow,cal.targetHigh)}
+    ${row('단백질','g',cur.p,prot.min,prot.max,{overOk:true})}
+    ${row('탄수화물('+carb.tier+'등급)','g',cur.c,carb.range[0],carb.range[1])}
+    <div class="dim" style="font-size:11.5px; margin-top:6px; line-height:1.55;">점수는 칼로리 하한 −50kcal · 단백질 하한 −5g · 탄수 ±5g까지 만점이에요. 오늘 식단은 아직 하루가 끝나기 전 기록 기준이에요.</div>
+    <div class="note-box" style="margin-top:8px;">💡 점수 힌트(예상): ${hintParts.join(' · ')}. 최근 7일 근력 ${hint.nS}일 · 인정 유산소 ${hint.nC}일(각 3일이 만점).</div>
+  </section>`;
+}
 // 2026-10-16 추가(미기록 구분): 최근 7일(오늘 포함) 식단·운동 기록 유무를 한 줄로 보여준다. 기록이 없는 날은 "0kcal·운동 안 함"이 아니라
 // "미기록(–)"이므로, 평균·점수를 볼 때 구분해서 읽도록 표시만 한다(점수·평균 계산 자체는 바꾸지 않음). 질병·여행 공백이 눈에 바로 보이게 하는 용도.
 function renderRecordGapCard_(){
   const days = daysAgoList(7).reverse(); // 오래된 날 → 오늘
   const mealOn = new Set((state.meals||[]).filter(m => m && Number(m.calories) > 0).map(m => String(m.date).slice(0,10)));
   const woOn = new Set((state.workouts||[]).filter(w => w && w.date).map(w => String(w.date).slice(0,10)));
-  const mealN = days.filter(d => mealOn.has(d)).length, woN = days.filter(d => woOn.has(d)).length;
+  const stepsOn = new Set((state.steps||[]).filter(s => s && s.date && Number(s.steps) > 0).map(s => String(s.date).slice(0,10)));
+  const mealN = days.filter(d => mealOn.has(d)).length, woN = days.filter(d => woOn.has(d)).length, stN = days.filter(d => stepsOn.has(d)).length;
   const cell = (on, label) => `<div class="mono" style="font-size:11px; text-align:center; color:${on ? 'var(--c-good)' : 'var(--text-dim)'}; opacity:${on ? 1 : 0.7};">${label}${on ? '✓' : '–'}</div>`;
-  const cols = days.map(d => `<div style="display:flex; flex-direction:column; gap:2px; align-items:stretch;"><div class="dim mono" style="font-size:10.5px; text-align:center;">${d.slice(5).replace('-','/')}</div>${cell(mealOn.has(d),'식')}${cell(woOn.has(d),'운')}</div>`).join('');
+  const cols = days.map(d => `<div style="display:flex; flex-direction:column; gap:2px; align-items:stretch;"><div class="dim mono" style="font-size:10.5px; text-align:center;">${d.slice(5).replace('-','/')}</div>${cell(mealOn.has(d),'식')}${cell(woOn.has(d),'운')}${cell(stepsOn.has(d),'걸')}</div>`).join('');
   return `<section class="card">
-    <div class="section-label">${secNum('00e')}최근 7일 기록 현황 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 식단 ${mealN}/7일 · 운동 ${woN}/7일</span></div>
+    <div class="section-label">${secNum('00e')}최근 7일 기록 현황 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 식단 ${mealN}/7일 · 운동 ${woN}/7일 · 걸음수 ${stN}/7일</span></div>
     <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px;">${cols}</div>
     <div class="dim" style="font-size:11.5px; margin-top:8px;">– 는 "0kcal·운동 안 함"이 아니라 <b>기록 없음</b>이에요. 기록 없는 날이 섞인 평균·점수는 실제보다 낮거나 높아 보일 수 있어요.</div>
   </section>`;
@@ -4238,7 +4362,9 @@ function creatineGramsFromNote_(note){
   let m;
   while((m = re.exec(s)) !== null){
     const after = s.slice(m.index + m[0].length, m.index + m[0].length + 14);
-    if(/^\s*[:=]?\s*(미복용|미섭취|미기록|안\s*먹|못\s*먹|안\s*함|없음|스킵|패스|X\b|x\b)/.test(after)) continue;
+    // 2026-10-18 수정: "크레아틴 미확인"처럼 복용 여부를 모르는 표현도 복용으로 읽혀 하루 점수 기록·보조 5점이 잘못 붙던 문제(2026-10-08·09 사고) — 불확실 표현을 제외 목록에 추가.
+    // (Code.gs의 같은 이름 함수에도 동일 규칙이 필요함 — 서버 코드 확인 후 맞출 것)
+    if(/^\s*[:=]?\s*(미복용|미섭취|미기록|미확인|모름|불명|불확실|확인\s*(?:안|전|필요|불가)|안\s*먹|못\s*먹|안\s*함|없음|스킵|패스|\?|X\b|x\b)/.test(after)) continue;
     const g = /^\s*[:=]?\s*(\d+(?:\.\d+)?)\s*g/i.exec(after);
     return g ? Number(g[1]) : CREATINE_DEFAULT_G;
   }
@@ -4578,6 +4704,7 @@ function dayRow(date, i, wArr, m, prev){
       ${m.specialDayType?`<br><span class="badge miss">${esc(SPECIAL_DAY_LABELS[m.specialDayType]||m.specialDayType)}</span>`:''}
       ${mealCreatineG_(m)>0?`<br><span class="badge">💊 크레아틴 ${fmt(mealCreatineG_(m),0)}g</span>`:''}
       ${m.note?`<br><span class="dim">${esc(m.note)}</span>`:''}
+      ${Array.isArray(m.items)&&m.items.length?`<details style="margin-top:4px;"><summary class="dim" style="font-size:11.5px; cursor:pointer;">구성 ${m.items.length}개</summary>${m.items.map(it=>{ const k = it && (it.kcal!=null ? it.kcal : it.calories); return `<div class="dim" style="font-size:11.5px; line-height:1.5;">· ${esc((it&&it.name)||'')}${k!=null?` ${esc(String(k))}kcal`:''}${it&&it.protein!=null?` · 단백 ${esc(String(it.protein))}g`:''}${it&&it.carbs!=null?` · 탄수 ${esc(String(it.carbs))}g`:''}${it&&it.src?` <span style="opacity:.7;">(${esc(it.src)})</span>`:''}</div>`; }).join('')}</details>`:''}
       <div class="row-actions"><button class="mini-btn" onclick="editMealByDate('${date}')">수정</button><button class="mini-btn danger" onclick="deleteMealEntry('${date}')">삭제</button></div>`;
   }
 
@@ -5210,6 +5337,16 @@ function renderSettings(){
         ${scoreRecalcUi.error ? `<div class="msg-error" style="margin-bottom:8px;">실패: ${esc(scoreRecalcUi.error)}</div>` : ''}
         ${scoreRecalcUi.msg ? `<div class="note-box" style="margin-bottom:8px;">${esc(scoreRecalcUi.msg)}</div>` : ''}
       </div>
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border-soft);">
+        <div style="font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:4px;">🩺 데이터 점검</div>
+        <p class="p-dim">중복 행, 이상한 날짜, 운동 볼륨 누락, 크레아틴 기록 불일치, 체중 급변, 점수 없는 날을 한 번에 찾아줘요. 읽기만 하고 데이터는 바꾸지 않아요.</p>
+        <div class="btn-row" style="margin:8px 0;">
+          <button class="btn btn-sm" onclick="runDataCheck()">🩺 데이터 점검 실행</button>
+        </div>
+        ${dataCheckUi.ran ? (dataCheckUi.items.length
+          ? dataCheckUi.items.map(it => `<div class="note-box" style="margin-bottom:6px;${it.level==='warn'?' border-color:var(--c-warn);':''}"><b>${it.level==='warn'?'⚠️':'ℹ️'} ${esc(it.title)}</b><br>${esc(it.detail)}</div>`).join('')
+          : `<div class="note-box" style="margin-bottom:6px;">✅ 점검한 항목에서 이상이 발견되지 않았어요. (${esc(fmtDateTime(dataCheckUi.at))})</div>`) : ''}
+      </div>
     </section>
 
     <section class="card">
@@ -5501,6 +5638,68 @@ let syncTimerHandle = null;
 let triggerStatusUi = {checking:false, triggers:null, error:null};
 // 2026-10-05-d: 설정탭 "점수 다시 계산" 버튼 상태
 let scoreRecalcUi = {running:false, msg:null, error:null};
+// 2026-10-18 추가(C2): 설정탭 "데이터 점검" 결과. 읽기 전용(데이터를 바꾸지 않음).
+let dataCheckUi = {ran:false, at:null, items:[]};
+function runDataCheck(){
+  const items = [];
+  const todayD = todayISO();
+  const dstr = r => String((r && r.date) || '').slice(0,10);
+  const list = (arr, max) => { const u = [...new Set(arr)].sort(); return u.slice(0, max||6).map(d => d.slice(5).replace('-','/')).join('·') + (u.length > (max||6) ? ` 외 ${u.length-(max||6)}건` : ''); };
+  const push = (level, title, detail) => items.push({level, title, detail});
+  const sets = {인바디: state.inbody||[], 운동: state.workouts||[], 식단: state.meals||[], 걸음수: state.steps||[], 허리둘레: state.waist||[]};
+  // 1) 날짜 형식·미래 날짜
+  Object.keys(sets).forEach(k => {
+    const bad = sets[k].filter(r => !/^\d{4}-\d{2}-\d{2}$/.test(String((r && r.date) || '')));
+    if(bad.length) push('warn', `${k} 날짜 형식 이상 ${bad.length}건`, `YYYY-MM-DD 형식이 아닌 날짜가 있어요: ${bad.slice(0,3).map(r=>String(r.date)).join(', ')}`);
+    const fut = sets[k].filter(r => /^\d{4}-\d{2}-\d{2}$/.test(String((r && r.date) || '')) && dstr(r) > todayD);
+    if(fut.length) push('warn', `${k} 미래 날짜 ${fut.length}건`, `오늘(${todayD.slice(5).replace('-','/')}) 이후 날짜: ${list(fut.map(dstr))}`);
+  });
+  // 2) 운동 중복(서버 매칭 기준: 날짜+이름)
+  const wk = {};
+  (state.workouts||[]).forEach(w => { if(!w) return; const key = dstr(w) + '|' + String(w.name||'').trim(); (wk[key] = wk[key] || []).push(w); });
+  const wdup = Object.keys(wk).filter(k => wk[k].length > 1);
+  if(wdup.length) push('warn', `운동 중복 의심 ${wdup.length}건`, `같은 날 같은 이름이 여러 행이에요: ${list(wdup.map(k=>k.split('|')[0]))}`);
+  // 3) 식단 같은 날 여러 행(서버는 날짜 기준 1행)
+  const mk = {};
+  (state.meals||[]).forEach(m => { if(!m) return; (mk[dstr(m)] = mk[dstr(m)] || []).push(m); });
+  const mdup = Object.keys(mk).filter(d => mk[d].length > 1);
+  if(mdup.length) push('warn', `식단 같은 날 여러 행 ${mdup.length}건`, `서버는 날짜당 1행 기준이라 합계가 어긋날 수 있어요: ${list(mdup)}`);
+  // 4) 운동 세트·볼륨 누락 의심(10/16 수정 모달 데이터 손실 유형)
+  const vmiss = (state.workouts||[]).filter(w => w && Array.isArray(w.exercises) && w.exercises.length
+    && w.exercises.some(e => e && Array.isArray(e.sets) && e.sets.some(s => s && Number(s.weight) > 0 && Number(s.reps) > 0))
+    && !(Number(w.volume) > 0));
+  if(vmiss.length) push('warn', `운동 볼륨 누락 의심 ${vmiss.length}건`, `세트 기록은 있는데 볼륨이 비어 있어요: ${list(vmiss.map(dstr))}`);
+  // 5) 인바디 급변(제외 결정 전)
+  const ibAll = sortedInbodyAll().filter(r => r && r.weight != null && !isNaN(r.weight));
+  const jumps = [];
+  for(let i=1;i<ibAll.length;i++){
+    const a = ibAll[i-1], b = ibAll[i];
+    const gap = Math.round((new Date(b.date+'T00:00:00')-new Date(a.date+'T00:00:00'))/86400000);
+    if(gap <= 3 && Math.abs(b.weight-a.weight) >= 2.5 && exclusionDecision_(b)==='undecided') jumps.push(b.date);
+  }
+  if(jumps.length) push('info', `체중 급변 ${jumps.length}건(제외 미결정)`, `3일 안에 체중이 2.5kg 이상 변했어요: ${list(jumps)} — 수분·탈수일 수 있어 인바디 표에서 제외 여부를 확인해보세요.`);
+  // 6) 크레아틴: 메모가 "미확인" 계열인데 복용으로 기록된 날
+  const cr = (state.meals||[]).filter(m => m && Number(m.creatine) > 0 && /크레아틴\s*[:=]?\s*(미확인|모름|불명|불확실|확인)/.test(String(m.note||'')));
+  if(cr.length) push('warn', `크레아틴 기록 불일치 의심 ${cr.length}건`, `메모는 "미확인"인데 복용(g)으로 기록됐어요: ${list(cr.map(dstr))} — 식단 수정에서 크레아틴 칸을 확인하세요.`);
+  // 6b) 식단 구성 항목(items) 합계와 하루 합계 불일치(합계를 모달로만 고쳤을 때 등)
+  const itemMis = (state.meals||[]).filter(m => {
+    if(!m || !Array.isArray(m.items) || !m.items.length) return false;
+    const s = m.items.reduce((a,it) => a + (Number(it && (it.kcal!=null ? it.kcal : it.calories)) || 0), 0);
+    const t = Number(m.calories) || 0;
+    return Math.abs(s - t) > Math.max(30, t*0.03);
+  });
+  if(itemMis.length) push('warn', `식단 구성 합계 불일치 ${itemMis.length}건`, `구성 항목 칼로리 합과 하루 합계가 달라요: ${list(itemMis.map(dstr))} — 채팅에서 구성 항목을 다시 맞추거나 합계를 확인하세요.`);
+  // 7) 점수 누락: 식단이 있는 지난 14일 중 하루 점수 행이 없는 날(질병·회복일 제외)
+  const scoreDates = new Set((Array.isArray(state.dailyScores) ? state.dailyScores : []).filter(r => r && r.date && r.score !== null && r.score !== undefined && r.score !== '' && !isNaN(Number(r.score))).map(r => String(r.date).slice(0,10)));
+  const recent14 = daysAgoList(15).slice(1);
+  const noScore = recent14.filter(d => {
+    const m = (state.meals||[]).find(x => x && dstr(x)===d);
+    return m && Number(m.calories) > 0 && m.specialDayType !== 'illness' && d >= '2026-10-03' && !scoreDates.has(d);
+  });
+  if(noScore.length) push('info', `하루 점수 없는 날 ${noScore.length}건`, `식단은 있는데 점수가 없어요: ${list(noScore)} — 아래 "점수 다시 계산"을 눌러보세요.`);
+  dataCheckUi = {ran:true, at:new Date().toISOString(), items};
+  render();
+}
 function startSyncTimer(){
   clearInterval(syncTimerHandle);
   syncTimerHandle = setInterval(() => {
@@ -5705,6 +5904,8 @@ async function cloudSync(silent){
           saveAiNote(state.aiNote);
         }
       }
+      // 2026-10-18 추가(B1): 서버(Code.gs 2026-10-18)가 "분석 이후 새 데이터가 들어왔는지"를 알려준다. 구버전 서버는 이 키가 없어 null → 표시 생략.
+      state.inboxStatus = (data.inboxStatus && typeof data.inboxStatus === 'object') ? data.inboxStatus : null;
       // 2026-08-04 추가: "리포트" 탭의 Claude 종합 리포트(comprehensiveReport)도 aiAnalysis와
       // 동일한 방식으로 Meta 시트 경유 pull. 단, Code.gs의 doGet()이 이 새 Meta 키를 실제로
       // 응답 JSON에 포함해주는지는 아직 미검증 상태(기존 lastDeployStatus 등 다른 Meta 키가
@@ -6304,6 +6505,7 @@ function saveRecord(){
       const hadE_ = prevM_.estimated!==undefined && prevM_.estimated!==null;
       rec.estimated = f.estimated ? true : (hadE_ ? false : null);
       rec.errorPct = (f.errorPct!==''&&f.errorPct!=null&&Number(f.errorPct)>0) ? num(f.errorPct) : (prevM_.errorPct!=null ? prevM_.errorPct : null);
+      if(prevM_.items!==undefined) rec.items = prevM_.items; // 2026-10-18(C4): 식단 구성 항목(items)은 모달로 합계를 고쳐도 지우지 않고 보존
     }
     state.meals = [...state.meals.filter(r=>r.date!==rec.date), rec];
     saveArr(LS_KEYS.meal, state.meals);
