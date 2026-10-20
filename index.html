@@ -538,7 +538,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-18-b (서버 Code.gs 2026-10-18과 짝: 분석 카드에 "분석 이후 새 데이터 N건·수신 시각" 표시(서버 inboxStatus) / 식단 구성 항목(items) 보존·일별 기록에 구성 펼치기·데이터 점검에 구성 합계 불일치 검사) 이전: 2026-10-18-a (제외 확정 안내를 새로 제외가 확정됐을 때 한 번만 표시하고 확인하면 숨김·보류 나열 제거 / 대시보드 \"오늘 남은 목표\" 카드(칼로리·단백질·탄수 남은 양 + 운동·활동 점수 힌트) / Claude 분석 카드 3줄 접기·펼치기 + 분석 후 경과시간 표시 / 최근 7일 기록 현황에 걸음수 행 추가 / 설정탭 데이터 점검 버튼 / 크레아틴 메모의 미확인·모름 표현을 복용으로 읽지 않도록 수정) 이전: 2026-10-16-b (식단 입력에 "추정치 포함" 체크·오차% 구조화 필드 추가 — 서버 Code.gs 2026-10-16과 짝) 이전: 2026-10-16-a (운동 수정 모달 데이터 손실 수정: 배열형 세트 기록·볼륨·추가 필드가 수정 저장 때 지워지던 문제 해결 / 질병·회복 특이일 유형 추가 / 운동 탭 복귀 모드(마지막 근력 10일↑ 시 방치 부위 강제 포함 중지 + 첫 세션 60~70% 안내) / 대시보드 최근 7일 기록 현황(미기록≠0) / 추적관리 투여 후 경과일별 섭취 칼로리 표). 이전: 2026-10-13-a (인바디 특이일 "제외 확정": 앱은 제외 후보만 표시 → 정희님이 제외/유지/보류를 탭으로 확정 → 확정한 날짜는 최근 7·14번 평균, 7vs7 비교, 골격근 손실비율, 4주 간격 비교, 20% 판정에서 건너뜀(유효 측정만 7건씩) / 제외 날짜·사유 표시, 그래프 회색 점 / 동기화·수정 시 제외 표시 유지 / "Claude 분석" 기준일 KST 표기 + 상태 한 줄). 이전: 2026-10-05-e (수정·입력 팝업이 ✕/저장 후에도 닫히지 않던 문제 수정). 이전: 2026-10-05-d (크레아틴 메모 인식: 식단 메모에 "크레아틴"만 적어도 복용으로 인식·표시·차트 반영 / 설정탭에 "점수 다시 계산" 버튼 추가(편집기 실행 불필요)). 이전: 2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
+const APP_BUILD_VERSION = '2026-10-21-a (새 목표 반영: 목표 현황을 골격근 33kg 복구+체지방률 16~17% 기준 트래커로 교체, 월 점검 카드(계획선 대비·다음 점검일, 신호등은 점검일 20~22일에만), 이전 목표 20%/18%는 목표 탭에 접어 둠, 일·주 단위 체성분 경고 숨김(SHOW_DAILY_ALERTS) / Code.gs 변경 없음 — 서버 2026-10-18과 그대로 짝) 이전: 2026-10-18-b (서버 Code.gs 2026-10-18과 짝: 분석 카드에 "분석 이후 새 데이터 N건·수신 시각" 표시(서버 inboxStatus) / 식단 구성 항목(items) 보존·일별 기록에 구성 펼치기·데이터 점검에 구성 합계 불일치 검사) 이전: 2026-10-18-a (제외 확정 안내를 새로 제외가 확정됐을 때 한 번만 표시하고 확인하면 숨김·보류 나열 제거 / 대시보드 \"오늘 남은 목표\" 카드(칼로리·단백질·탄수 남은 양 + 운동·활동 점수 힌트) / Claude 분석 카드 3줄 접기·펼치기 + 분석 후 경과시간 표시 / 최근 7일 기록 현황에 걸음수 행 추가 / 설정탭 데이터 점검 버튼 / 크레아틴 메모의 미확인·모름 표현을 복용으로 읽지 않도록 수정) 이전: 2026-10-16-b (식단 입력에 "추정치 포함" 체크·오차% 구조화 필드 추가 — 서버 Code.gs 2026-10-16과 짝) 이전: 2026-10-16-a (운동 수정 모달 데이터 손실 수정: 배열형 세트 기록·볼륨·추가 필드가 수정 저장 때 지워지던 문제 해결 / 질병·회복 특이일 유형 추가 / 운동 탭 복귀 모드(마지막 근력 10일↑ 시 방치 부위 강제 포함 중지 + 첫 세션 60~70% 안내) / 대시보드 최근 7일 기록 현황(미기록≠0) / 추적관리 투여 후 경과일별 섭취 칼로리 표). 이전: 2026-10-13-a (인바디 특이일 "제외 확정": 앱은 제외 후보만 표시 → 정희님이 제외/유지/보류를 탭으로 확정 → 확정한 날짜는 최근 7·14번 평균, 7vs7 비교, 골격근 손실비율, 4주 간격 비교, 20% 판정에서 건너뜀(유효 측정만 7건씩) / 제외 날짜·사유 표시, 그래프 회색 점 / 동기화·수정 시 제외 표시 유지 / "Claude 분석" 기준일 KST 표기 + 상태 한 줄). 이전: 2026-10-05-e (수정·입력 팝업이 ✕/저장 후에도 닫히지 않던 문제 수정). 이전: 2026-10-05-d (크레아틴 메모 인식: 식단 메모에 "크레아틴"만 적어도 복용으로 인식·표시·차트 반영 / 설정탭에 "점수 다시 계산" 버튼 추가(편집기 실행 불필요)). 이전: 2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -2274,6 +2274,125 @@ function lineChartSVGMulti(data, key1, data2, key2, colorVar, opts={}){
   </svg>`;
 }
 
+/* =========================================================
+   2026-10-21 새 목표 트래커 (정희님 컨펌 "이대로 진행")
+   - 1순위: 골격근 33kg 복구(최근 7번 평균), 2순위: 체지방률 16~17%(인바디 기준), 체중 69~70kg 유지
+   - 점검은 월 1회(매월 20일). 평소엔 숫자·계획선·다음 점검일만 보여주고, 신호등은 점검일(20~22일)에만 표시.
+   - 기존 1차 20%/2차 18% 목표 표시는 숨김(데이터·계산은 그대로 두고, 목표 탭에 "이전 목표 기록"으로 접어 둠).
+   - 일·주 단위 경고는 SHOW_DAILY_ALERTS=false로 숨김(true로 바꾸면 예전처럼 다시 보임).
+   ========================================================= */
+const SHOW_DAILY_ALERTS = false;
+const HIDDEN_ALERT_TITLES_ = ['체지방 감량 정체', '체지방 정체', '체중 변화 없이 골격근만 감소', '체중감량 대비 근손실', '골격근 보존 우수', '골격근 손실 —', '체중 정체 또는 반등', '2차 목표(18%)', '최근 페이스 기준 목표 도달'];
+const NEW_GOAL = {muscle:33.0, fatPctLo:16, fatPctHi:17, weightLo:69.0, weightHi:70.3, startMuscle:33.1};
+const NEW_FAT_GOALS_GAUGE = [{label:'2순위', pct:17}, {label:'2순위', pct:16}];
+// 계획선(최근 7번 평균 기준 가정값): [날짜, 골격근kg, 체지방량kg, 체중kg] — 사이는 직선으로 이어 계산
+const PLAN_POINTS_ = [['2026-10-20',31.47,13.54,69.79],['2026-11-17',32.0,13.0,69.8],['2026-12-15',32.5,12.5,69.8],['2027-01-12',32.8,12.0,69.6],['2027-02-09',33.0,11.6,69.4],['2027-03-09',33.2,11.0,69.0]];
+const CHECK_DATES_ = ['2026-11-20','2026-12-20','2027-01-20','2027-02-20','2027-03-20'];
+
+function isoToMs_(iso){ return new Date(iso+'T00:00:00').getTime(); }
+function goalBodyMA7_(){
+  const rows = sortedInbody().filter(r => [r.weight, r.muscle, r.fat].every(v => v!==null && v!==undefined && v!=='' && !isNaN(v)));
+  if(rows.length < 3) return null;
+  const w = rows.slice(-7);
+  const avg = k => w.reduce((s,r)=>s+Number(r[k]),0)/w.length;
+  const weight = avg('weight'), muscle = avg('muscle'), fat = avg('fat');
+  const fp = w.filter(r=>r.fatPct!==null&&r.fatPct!==undefined&&r.fatPct!==''&&!isNaN(r.fatPct));
+  const fatPct = fp.length===w.length ? fp.reduce((s,r)=>s+Number(r.fatPct),0)/fp.length : fat/weight*100; // 앱의 MA7 체지방률(측정값 평균)과 동일
+  return {n:w.length, from:w[0].date, to:w[w.length-1].date, weight, muscle, fat, fatPct};
+}
+function planAt_(iso){
+  const t = isoToMs_(iso), P = PLAN_POINTS_;
+  if(t <= isoToMs_(P[0][0])) return {muscle:P[0][1], fat:P[0][2], weight:P[0][3]};
+  const lastP = P[P.length-1];
+  if(t >= isoToMs_(lastP[0])) return {muscle:lastP[1], fat:lastP[2], weight:lastP[3]};
+  for(let i=1;i<P.length;i++){
+    const t0 = isoToMs_(P[i-1][0]), t1 = isoToMs_(P[i][0]);
+    if(t <= t1){ const f = (t-t0)/(t1-t0); return {muscle:P[i-1][1]+(P[i][1]-P[i-1][1])*f, fat:P[i-1][2]+(P[i][2]-P[i-1][2])*f, weight:P[i-1][3]+(P[i][3]-P[i-1][3])*f}; }
+  }
+  return {muscle:lastP[1], fat:lastP[2], weight:lastP[3]};
+}
+function nextCheckInfo_(today){
+  const next = CHECK_DATES_.find(d => d >= today);
+  if(!next) return null;
+  const days = Math.round((isoToMs_(next)-isoToMs_(today))/86400000);
+  return {date:next, days};
+}
+// 점검 기간 = 점검일 당일부터 3일(20~22일) — 이 기간에만 신호등을 보여준다
+function inCheckWindow_(today){
+  return CHECK_DATES_.some(d => { const diff = Math.round((isoToMs_(today)-isoToMs_(d))/86400000); return diff>=0 && diff<=2; });
+}
+function signalOf_(kind, v){
+  // 월간 신호등 기준(핸드오프 5-2): 골격근·체지방량은 계획선 대비, 체중은 허용 구간
+  if(kind==='muscle'){ return v >= -0.2 ? 'g' : v >= -0.5 ? 'y' : 'r'; }
+  if(kind==='fat'){ return v <= 0.3 ? 'g' : v <= 0.7 ? 'y' : 'r'; }
+  if(kind==='weight'){ return (v>=69.0 && v<=70.3) ? 'g' : ((v>=68.5 && v<69.0) || (v>70.3 && v<=71.0)) ? 'y' : 'r'; }
+  return 'g';
+}
+function sigDot_(s){
+  const c = s==='g' ? 'var(--c-good)' : s==='y' ? '#F5A623' : 'var(--c-warn)';
+  const t = s==='g' ? '초록' : s==='y' ? '노랑' : '빨강';
+  return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:${c};"><span style="width:9px; height:9px; border-radius:50%; background:${c}; display:inline-block;"></span>${t}</span>`;
+}
+function goalTrackerHtml_(){
+  const m = goalBodyMA7_();
+  if(!m) return `<div class="note-box">새 목표 트래커는 인바디 기록이 3건 이상 쌓이면 표시돼요.</div>`;
+  const today = todayISO();
+  const nc = nextCheckInfo_(today);
+  const plan = planAt_(today);
+  const muscleLeft = Math.max(0, NEW_GOAL.muscle - m.muscle);
+  const musclePct = Math.min(100, Math.max(0, (m.muscle - 30.0) / (NEW_GOAL.muscle - 30.0) * 100));
+  const fatLeftPct = Math.max(0, m.fatPct - NEW_GOAL.fatPctHi);
+  const fatFill = Math.min(100, Math.max(0, (START_FAT_PCT - m.fatPct) / (START_FAT_PCT - NEW_GOAL.fatPctHi) * 100));
+  // 골격근 33kg 달성 시 체중 69~70kg에서의 체지방률(제지방-골격근 일정 가정)
+  const other = m.weight - m.muscle - m.fat;
+  const fatMassAtGoal = (pct) => pct/100*(other+NEW_GOAL.muscle)/(1-pct/100);
+  const fatToLose = Math.max(0, m.fat - fatMassAtGoal(NEW_GOAL.fatPctHi));
+  const showSig = inCheckWindow_(today);
+  const dMuscle = m.muscle - plan.muscle, dFat = m.fat - plan.fat;
+  const rows = [
+    {l:'골격근', a:fmt(m.muscle,2)+'kg', p:fmt(plan.muscle,2)+'kg', d:dMuscle, s:signalOf_('muscle', dMuscle)},
+    {l:'체지방량', a:fmt(m.fat,2)+'kg', p:fmt(plan.fat,2)+'kg', d:dFat, s:signalOf_('fat', dFat)},
+    {l:'체중', a:fmt(m.weight,2)+'kg', p:'유지 69.0~70.3kg', d:null, s:signalOf_('weight', m.weight)}
+  ];
+  const sg = n => n===null ? '' : (n>=0?'+':'−')+Math.abs(n).toFixed(2);
+  return `
+  <div class="hero-goals" style="display:flex; flex-direction:column; gap:12px;">
+    <div class="hero-goal-item">
+      <div class="hg-top"><span class="hg-label">1순위 · 골격근 복구 <span class="dim">· 목표 ${fmt(NEW_GOAL.muscle,1)}kg</span></span>
+        <span class="hg-status ${muscleLeft<=0?'done':''}">${muscleLeft<=0 ? '● 달성' : '+'+fmt(muscleLeft,2)+'kg 남음'}</span></div>
+      <div class="hg-bar"><div class="hg-fill" style="width:${fmt(musclePct,1)}%"></div></div>
+      <div class="hg-foot"><span>최근 7번 평균 ${fmt(m.muscle,2)}kg</span><span>저점 30.0 → 목표 ${fmt(NEW_GOAL.muscle,1)}</span></div>
+      <div class="hg-detail">월 단위로 오르는지만 봅니다. 하루 변동은 수분 영향이라 판정하지 않아요.</div>
+    </div>
+    <div class="hero-goal-item">
+      <div class="hg-top"><span class="hg-label">2순위 · 체지방률 <span class="dim">· 목표 ${NEW_GOAL.fatPctLo}~${NEW_GOAL.fatPctHi}%</span></span>
+        <span class="hg-status ${fatLeftPct<=0?'done':''}">${fatLeftPct<=0 ? '● 목표 구간' : fmt(fatLeftPct,1)+'%p 남음'}</span></div>
+      <div class="hg-bar"><div class="hg-fill" style="width:${fmt(fatFill,1)}%"></div></div>
+      <div class="hg-foot"><span>최근 7번 평균 ${fmt(m.fatPct,2)}%</span><span>${fmt(START_FAT_PCT)}% → ${NEW_GOAL.fatPctHi}%</span></div>
+      <div class="hg-detail">체중 69~70kg을 유지하면서 골격근이 33kg까지 오르면 체지방률이 자연히 16~17%대로 내려와요. 체지방은 약 <b>${fmt(fatToLose,1)}kg</b> 더 줄이면 17%예요(체중은 더 빼지 않아도 됩니다).</div>
+    </div>
+    <div class="hero-goal-item">
+      <div class="hg-top"><span class="hg-label">월 점검 · 계획선 대비 <span class="dim">· 최근 7번 평균(${m.from.slice(5)}~${m.to.slice(5)})</span></span>
+        <span class="hg-status">${nc ? '다음 '+nc.date.slice(5).replace('-','/')+' (D-'+nc.days+')' : '점검 일정 종료'}</span></div>
+      <div style="margin-top:8px;">
+        ${rows.map(r => `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--border-soft); font-size:13px;">
+          <span style="min-width:62px; font-weight:600;">${r.l}</span>
+          <span class="mono" style="flex:1; text-align:right;">${r.a}</span>
+          <span class="dim mono" style="flex:1.3; text-align:right; font-size:12px;">계획 ${r.p}${r.d===null?'':' ('+sg(r.d)+')'}</span>
+          ${showSig ? `<span style="min-width:52px; text-align:right;">${sigDot_(r.s)}</span>` : ''}
+        </div>`).join('')}
+      </div>
+      <div class="hg-detail">${showSig ? '점검 기간이라 신호등을 함께 보여드려요. 활동 지표(근력·유산소·단백질 등)는 채팅의 "월 점검해줘" 레포트에서 봅니다.' : '신호등은 점검일(매월 20일~22일)에만 표시돼요. 평소엔 숫자와 다음 점검일만 보여드립니다.'}</div>
+    </div>
+  </div>`;
+}
+function renderGoalTrackerCard_(){
+  return `<section class="card">
+    <div class="section-label good">${secNum('03')}목표 현황 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 골격근 33kg 복구 + 체지방률 16~17%</span></div>
+    ${goalTrackerHtml_()}
+  </section>`;
+}
+
 function gaugeSVG(current, start, goals){
   const rangeMax = Math.max(start, 27), rangeMin = Math.min(...goals.map(g=>g.pct))-2.5;
   const cx=150, cy=140, r=98, sw=16;
@@ -2661,8 +2780,8 @@ function computeInsights(){
   const isNewFatPctRecord = minFatPctEntry && minFatPctEntry.date === last.date;
 
   const insights = [
-    {icon:'target', label:'1차(20%) 목표 달성률', value:`${fmt(g20.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g20.ma7Last,2)}% (목표 20%, ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}%)`, tone: g20.tier!=='pending'?'good':'neutral'},
-    {icon:'target', label:'2차(18%) 목표 달성률', value:`${fmt(g18.progressed,0)}%`, sub:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g18.ma7Last,2)}% (목표 18%, ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}%)`, tone: g18.tier!=='pending'?'good':'neutral'},
+    {icon:'target', label:'골격근 복구 (목표 33kg)', value: (goalBodyMA7_() ? fmt(goalBodyMA7_().muscle,2)+'kg' : '—'), sub: (goalBodyMA7_() ? `최근 7번 평균 기준 · 목표까지 ${fmt(Math.max(0,NEW_GOAL.muscle-goalBodyMA7_().muscle),2)}kg` : '인바디 기록 부족'), tone:'neutral'},
+    {icon:'target', label:'체지방률 (목표 16~17%)', value: (goalBodyMA7_() ? fmt(goalBodyMA7_().fatPct,2)+'%' : '—'), sub: '최근 7번 평균 기준 · 체중 69~70kg 유지하며 골격근이 오르면 함께 내려가요', tone:'neutral'},
     {icon:'down', label:'누적 체중 변화', value:`${fmt(weightLoss)}kg`, sub:`${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg`, tone:'good'},
     {icon:'down', label:'누적 체지방량 변화', value:`${fmt(fatMassLoss)}kg`, sub:`${fmt(first.fat)}kg → ${fmt(lastBC.fat)}kg${lastBC.date!==last.date?` (${lastBC.date} 기준, 최신 체성분 실측일)`:''}`, tone:'good'},
     {icon:'dumbbell', label:'체중감량 대비 골격근 보존', value: muscleAssess.muscleLoss<=0 ? '유지/증가' : `비율 ${fmt(muscleAssess.ratio,2)}`, sub: muscleAssess.muscleLoss<=0 ? `골격근 ${fmt(lastBC.muscle)}kg — 감소 없음` : `골격근 -${fmt(muscleAssess.muscleLossPct,1)}% / 체중 -${fmt(muscleAssess.weightLossPct,1)}% · ${muscleAssess.label}(SURMOUNT-1 DEXA 실측 비율 0.51 기준)`, tone: muscleAssess.tone},
@@ -2940,6 +3059,13 @@ function computeSmartAlerts(ib, meals, workouts){
   // (computeDoseIntervalComparison, 추적관리 탭)는 그대로 남아있어 원할 때 직접 볼 수 있음 —
   // 여기서 지운 건 홈 탭에 자동으로 떠서 증량을 권하던 스마트 인사이트 카드뿐.
 
+  // 2026-10-21: 일·주 단위 체성분 경고는 화면에서 숨김(월 1회 점검만) — SHOW_DAILY_ALERTS=true면 다시 표시
+  if(!SHOW_DAILY_ALERTS){
+    for(let i=candidates.length-1;i>=0;i--){
+      const ti = String(candidates[i].title||'');
+      if(HIDDEN_ALERT_TITLES_.some(h => ti.startsWith(h))) candidates.splice(i,1);
+    }
+  }
   if(candidates.length === 0){
     return [{tone:'good', icon:'target', title:'특이사항 없음', detail:'체중·체지방·골격근량·섭취 칼로리 모두 계획 범위 안에서 안정적으로 진행되고 있어요.'}];
   }
@@ -3418,12 +3544,6 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   // 잘하고 있는 점 후보
   if(weightLoss > 0) strengths.push({title:'체중 꾸준히 감소', detail:`시작 대비 ${fmt(weightLoss)}kg 감량 (${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg)`});
   if(fatMassLoss > 0) strengths.push({title:'체지방량 감소', detail:`시작 대비 ${fmt(fatMassLoss)}kg 감량`});
-  if(g20.tier==='stable') strengths.push({title:'1차 목표(20%) 확정 ✓ · 안정 확인', detail:`MA7·MA14 모두 20% 아래로 내려와 되돌림 걱정 없이 1차 목표를 확정했어요 (MA7 ${fmt(g20.ma7Last,2)}%).`});
-  else if(g20.tier==='done') strengths.push({title:'1차 목표(20%) 확정 ✓ (MA7 기준)', detail:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g20.ma7Last,2)}%로 1차 목표를 확정했어요.`});
-  else if(g20.progressed >= 50) strengths.push({title:'1차 목표(20%) 절반 이상 달성', detail:`MA7 기준 진행률 ${fmt(g20.progressed,0)}%`});
-  if(g18.tier==='stable') strengths.push({title:'2차 목표(18%) 확정 ✓ · 안정 확인', detail:`MA7·MA14 모두 18% 아래로 내려와 되돌림 걱정 없이 최종 목표를 확정했어요 (MA7 ${fmt(g18.ma7Last,2)}%).`});
-  else if(g18.tier==='done') strengths.push({title:'2차 목표(18%) 확정 ✓ (MA7 기준)', detail:`MA7 체지방률 ${fmt(START_FAT_PCT)}% → ${fmt(g18.ma7Last,2)}%로 최종 목표를 확정했어요!`});
-  else if(g18.progressed >= 50) strengths.push({title:'2차 목표(18%) 절반 이상 달성', detail:`MA7 기준 진행률 ${fmt(g18.progressed,0)}%`});
   if(muscleAssess.tone === 'good') strengths.push({title:'골격근 보존 우수', detail: muscleAssess.muscleLoss<=0 ? `골격근량 감소 없이 유지 중 (현재 ${fmt(lastBC.muscle)}kg${lastBC.date!==last.date?`, ${lastBC.date} 기준`:''})` : `체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}% — 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 낮아요`});
   if(workoutDaysLast7 >= 4) strengths.push({title:'꾸준한 운동 습관', detail:`최근 7일 중 ${workoutDaysLast7}일 운동`});
   if(proteinRate !== null && proteinRate >= 70) strengths.push({title:'단백질 섭취 잘 지킴', detail:`최근 10끼 중 ${fmt(proteinRate,0)}%에서 목표(${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g) 충족${mealStaleNote}`});
@@ -3941,13 +4061,13 @@ function renderDashboard(){
       </div>
       <div class="hero-grid">
         <div class="hero-figure">
-          ${gaugeSVG(goalStatus.ma7Last, START_FAT_PCT, FAT_GOALS)}
+          ${gaugeSVG(goalStatus.ma7Last, START_FAT_PCT, NEW_FAT_GOALS_GAUGE)}
           <div class="gauge-value mono">${fmt(goalStatus.ma7Last,2)}<span class="gauge-unit">%</span></div>
           <div class="gauge-sub">MA7(최근 7일 평균) 기준 · 시작 대비 ${fmt(START_FAT_PCT-goalStatus.ma7Last)}%p 감소 · ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}%</div>
           ${maTrend7!==null ? `<div class="gauge-sub" style="margin-top:2px; font-size:11px; color:${maTrend7<=-0.05?'var(--c-good)':maTrend7>=0.05?'var(--c-warn)':'var(--text-faint)'};">7일 이동평균 대비 ${maTrend7>0?'+':''}${fmt(maTrend7,2)}%p ${maTrend7<=-0.05?'↓ 개선 중':maTrend7>=0.05?'↑ 정체/반등':'· 거의 변화 없음'}</div>` : ''}
           <div class="gauge-legend">
             <span><span class="legend-dot legend-dot-progress"></span>진행</span>
-            <span><span class="legend-dot legend-dot-goal"></span>목표(20%·18%)</span>
+            <span><span class="legend-dot legend-dot-goal"></span>목표(16~17%)</span>
           </div>
         </div>
         <div class="hero-side">
@@ -3958,43 +4078,7 @@ function renderDashboard(){
           <div class="hero-stat"><span class="l">최근 측정일</span><span class="v mono">${last.date}</span></div>
         </div>
       </div>
-      <div class="hero-goals">
-        ${goalStatus.goals.map(gs=>{
-          const other = last.weight - lastBC.muscle - lastBC.fat;
-          // [2026-07-29 변경] Live Tracking 1차/2차 목표 계산: 회복기준(33.2kg 고정) 대신
-          // 오늘 실측 골격근량을 그대로 사용(목표탭 "오늘 실측 골격근 기준" 행과 동일 방식으로 통일)
-          // 2026-09-14 수정: "오늘"이 체중전용 기록이면 lastBC(체성분 실측값이 있는 최근 기록) 사용
-          const targetMuscle = lastBC.muscle;
-          const t = gs.pct/100;
-          const targetFat = t*(other+targetMuscle) / (1-t);
-          const fatLossNeeded = Math.max(0, lastBC.fat - targetFat);
-          // [2026-08-23 변경] 배지를 원시값(last.fatPct) 대신 MA7 기준으로 판정하도록 전면 교체.
-          // 점 2개(○○/●○/●●)로 MA7 확정·MA14 안정확인 2단계를 배지 1개에 압축 표시(B안 확정).
-          const dots = gs.tier==='pending' ? '○○' : gs.tier==='done' ? '●○' : '●●';
-          const badgeClass = gs.tier==='pending' ? '' : gs.tier==='done' ? 'done' : 'stable';
-          const badgeText = gs.tier==='pending' ? `${dots} ${fmt(gs.remain,2)}%p 남음` : `${dots} 확정`;
-          let detail;
-          if(gs.tier==='stable'){
-            detail = `체지방량 목표 달성 — MA7·MA14 모두 확인돼 되돌림 걱정 없이 유지 단계로 전환해도 좋아요.`;
-          } else if(gs.tier==='done'){
-            detail = `MA7(최근 7일 평균) 기준으로 목표를 확정했어요. MA14(최근 14일 평균 ${fmt(gs.ma14Last,2)}%)까지 목표 아래로 내려오면 안정 확정(●●)으로 바뀌어요.`;
-          } else if(gs.rawDone){
-            detail = `오늘 실측 체지방량은 이미 목표권(${fmt(last.fat)}kg)에 들어왔지만, 최근 1주 평균(MA7)은 아직 ${fmt(gs.ma7Last,2)}%로 목표 ${gs.pct}% 위에 있어 확정 전이에요.`;
-          } else {
-            detail = `현재 체지방량 ${fmt(lastBC.fat)}kg${bcAsOf} → 약 <b>-${fmt(fatLossNeeded)}kg</b> 추가 감량 필요 (목표 체지방량 ${fmt(targetFat)}kg)`;
-          }
-          return `<div class="hero-goal-item">
-            <div class="hg-top">
-              <span class="hg-label">${gs.label} <span class="dim">· 목표 ${gs.pct}%</span></span>
-              <span class="hg-status ${badgeClass}">${badgeText}</span>
-            </div>
-            <div class="hg-bar"><div class="hg-fill" style="width:${gs.progressed}%"></div></div>
-            <div class="hg-foot"><span>진행률 ${fmt(gs.progressed,0)}% (MA7 기준)</span><span>${fmt(START_FAT_PCT)}% → ${fmt(gs.ma7Last,2)}% → ${gs.pct}%</span></div>
-            <div class="hg-detail">${detail}</div>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="note-box" style="margin-top:10px;">배지의 점 2개는 각각 <b>MA7 확정</b> · <b>MA14 안정 확인</b>을 뜻해요(●●=둘 다 확인돼 되돌림 걱정 없는 상태). 필요 감량치는 <b>최근 실측 골격근량(${fmt(lastBC.muscle)}kg${bcAsOf})</b>이 그대로 유지된다는 가정으로 계산해요. 골격근이 늘면 이 값은 다음 측정 때 자동으로 갱신돼요.</div>
+      ${goalTrackerHtml_()}
     </section>
 
     ${(() => {
@@ -4766,8 +4850,10 @@ function renderGoal(){
   const rulerMa14Pct = Math.min(100, Math.max(0, ((START_FAT_PCT-goalStatus.ma14Last)/rulerTotal)*100));
 
   return `
+    ${renderGoalTrackerCard_()}
+    <details class="card" style="padding:14px 16px;"><summary style="cursor:pointer; font-weight:600; font-size:13.5px; color:var(--text-dim);">이전 목표(1차 20% · 2차 18%) 진행 기록 보기</summary>
     <section class="card">
-      <div class="section-label good">${secNum('03')}목표 현황</div>
+      <div class="section-label good">${secNum('03-old')}이전 목표 현황</div>
       <h3 class="hero-heading">체지방률 ${fmt(START_FAT_PCT)}% → 현재 ${fmt(last.fatPct)}% <span class="dim" style="font-size:13px; font-weight:500;">(MA7 ${fmt(goalStatus.ma7Last,2)}%)</span></h3>
       <div class="ruler-wrap">
         <div class="ruler-track">
@@ -4835,6 +4921,8 @@ function renderGoal(){
         추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정합니다. 가장 최근 체성분 실측치(골격근 ${fmt(lastBC.muscle)}kg, 체지방 ${fmt(lastBC.fat)}kg${bcAsOf})가 그대로 유지된다는 보수적 가정으로 필요 체지방 감량을 역산했습니다 — 골격근이 실제로 늘면 필요 감량치는 인바디 측정마다 갱신되어 줄어듭니다. "✓ 여유" 표시는 위 목표 현황과 동일하게 <b>MA7 확정 기준</b>일 때만 뜨고, 여유분(kg)은 목표 체지방량보다 실측치가 얼마나 더 낮은지를 보여줘요. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
       </div>
     </section>
+
+    </details>
 
     <section class="card">
       <div class="section-label good">${secNum('04b')}허리둘레 추적</div>
