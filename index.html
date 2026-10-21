@@ -191,7 +191,7 @@ table.data-table td:first-child{font-family:var(--font-body); color:var(--text);
 table.data-table th, table.data-table td{word-break:keep-all;}
 table.data-table td.mono, table.data-table th{white-space:nowrap;}
 /* 2026-09-25: 크레아틴 카드 SVG는 viewBox 600 기준이라 축 글자를 크게(모바일 축소 대비) */
-svg.creatine-svg text.chart-axis{font-size:17px;}
+svg.creatine-svg text.chart-axis{font-size:9px;}
 table.data-table tr:hover td{color:var(--text); background:var(--panel-alt);}
 
 .editable-cell{cursor:pointer; border-bottom:1px dotted var(--border); padding-bottom:1px;}
@@ -538,7 +538,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-21-a (새 목표 반영: 목표 현황을 골격근 33kg 복구+체지방률 16~17% 기준 트래커로 교체, 월 점검 카드(계획선 대비·다음 점검일, 신호등은 점검일 20~22일에만), 이전 목표 20%/18%는 목표 탭에 접어 둠, 일·주 단위 체성분 경고 숨김(SHOW_DAILY_ALERTS) / Code.gs 변경 없음 — 서버 2026-10-18과 그대로 짝) 이전: 2026-10-18-b (서버 Code.gs 2026-10-18과 짝: 분석 카드에 "분석 이후 새 데이터 N건·수신 시각" 표시(서버 inboxStatus) / 식단 구성 항목(items) 보존·일별 기록에 구성 펼치기·데이터 점검에 구성 합계 불일치 검사) 이전: 2026-10-18-a (제외 확정 안내를 새로 제외가 확정됐을 때 한 번만 표시하고 확인하면 숨김·보류 나열 제거 / 대시보드 \"오늘 남은 목표\" 카드(칼로리·단백질·탄수 남은 양 + 운동·활동 점수 힌트) / Claude 분석 카드 3줄 접기·펼치기 + 분석 후 경과시간 표시 / 최근 7일 기록 현황에 걸음수 행 추가 / 설정탭 데이터 점검 버튼 / 크레아틴 메모의 미확인·모름 표현을 복용으로 읽지 않도록 수정) 이전: 2026-10-16-b (식단 입력에 "추정치 포함" 체크·오차% 구조화 필드 추가 — 서버 Code.gs 2026-10-16과 짝) 이전: 2026-10-16-a (운동 수정 모달 데이터 손실 수정: 배열형 세트 기록·볼륨·추가 필드가 수정 저장 때 지워지던 문제 해결 / 질병·회복 특이일 유형 추가 / 운동 탭 복귀 모드(마지막 근력 10일↑ 시 방치 부위 강제 포함 중지 + 첫 세션 60~70% 안내) / 대시보드 최근 7일 기록 현황(미기록≠0) / 추적관리 투여 후 경과일별 섭취 칼로리 표). 이전: 2026-10-13-a (인바디 특이일 "제외 확정": 앱은 제외 후보만 표시 → 정희님이 제외/유지/보류를 탭으로 확정 → 확정한 날짜는 최근 7·14번 평균, 7vs7 비교, 골격근 손실비율, 4주 간격 비교, 20% 판정에서 건너뜀(유효 측정만 7건씩) / 제외 날짜·사유 표시, 그래프 회색 점 / 동기화·수정 시 제외 표시 유지 / "Claude 분석" 기준일 KST 표기 + 상태 한 줄). 이전: 2026-10-05-e (수정·입력 팝업이 ✕/저장 후에도 닫히지 않던 문제 수정). 이전: 2026-10-05-d (크레아틴 메모 인식: 식단 메모에 "크레아틴"만 적어도 복용으로 인식·표시·차트 반영 / 설정탭에 "점수 다시 계산" 버튼 추가(편집기 실행 불필요)). 이전: 2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
+const APP_BUILD_VERSION = '2026-10-21-d (전수 점검 보완: 체지방률 그래프 목표선 18→17%, 오늘 중간 식사를 "목표 충족/부족"으로 판정하던 것을 "기록 중"으로 표시하고 주간 평균·잘하는 점 계산에서 제외, 칼로리 미달도 표시, 리포트 체지방률 변화 단위 %p, 운동 볼륨 0 표시 제거, 체중 감량 칭찬 문구를 유지 구간 문구로, "최근 10끼"→"10일", 설정의 옛 2차 목표(18%) 도달 예상 숨김, MA 돌파 배지 숨김, KPI 이름 "이번주"→"최근 7일" / Code.gs 변경 없음) 이전: 2026-10-21-c (스마트 인사이트 V2: 대시보드 3개 이내(골격근 복구 방향·최근 7일 영양·특이 상황만), Work Out 4개 이내(근력 횟수+다음 세션·인정 유산소·종목별 진행도·걸음 통합·48시간은 최근 14일만), 오늘 중간 식사값 제외, 반복 알람 제거, 주간 볼륨 비교 문구 오류 수정 / Code.gs 변경 없음) 이전: 2026-10-21-b (대시보드에서 오늘 남은 목표·하루 점수·최근 7일 기록 현황 카드 삭제(함수는 보존, 서버 점수 계산·텔레그램은 그대로), 크레아틴 카드를 다른 차트 카드와 같은 크기·글자로 축소하고 비교표는 접어 둠 / Code.gs 변경 없음) 이전: 2026-10-21-a (새 목표 반영: 목표 현황을 골격근 33kg 복구+체지방률 16~17% 기준 트래커로 교체, 월 점검 카드(계획선 대비·다음 점검일, 신호등은 점검일 20~22일에만), 이전 목표 20%/18%는 목표 탭에 접어 둠, 일·주 단위 체성분 경고 숨김(SHOW_DAILY_ALERTS) / Code.gs 변경 없음 — 서버 2026-10-18과 그대로 짝) 이전: 2026-10-18-b (서버 Code.gs 2026-10-18과 짝: 분석 카드에 "분석 이후 새 데이터 N건·수신 시각" 표시(서버 inboxStatus) / 식단 구성 항목(items) 보존·일별 기록에 구성 펼치기·데이터 점검에 구성 합계 불일치 검사) 이전: 2026-10-18-a (제외 확정 안내를 새로 제외가 확정됐을 때 한 번만 표시하고 확인하면 숨김·보류 나열 제거 / 대시보드 \"오늘 남은 목표\" 카드(칼로리·단백질·탄수 남은 양 + 운동·활동 점수 힌트) / Claude 분석 카드 3줄 접기·펼치기 + 분석 후 경과시간 표시 / 최근 7일 기록 현황에 걸음수 행 추가 / 설정탭 데이터 점검 버튼 / 크레아틴 메모의 미확인·모름 표현을 복용으로 읽지 않도록 수정) 이전: 2026-10-16-b (식단 입력에 "추정치 포함" 체크·오차% 구조화 필드 추가 — 서버 Code.gs 2026-10-16과 짝) 이전: 2026-10-16-a (운동 수정 모달 데이터 손실 수정: 배열형 세트 기록·볼륨·추가 필드가 수정 저장 때 지워지던 문제 해결 / 질병·회복 특이일 유형 추가 / 운동 탭 복귀 모드(마지막 근력 10일↑ 시 방치 부위 강제 포함 중지 + 첫 세션 60~70% 안내) / 대시보드 최근 7일 기록 현황(미기록≠0) / 추적관리 투여 후 경과일별 섭취 칼로리 표). 이전: 2026-10-13-a (인바디 특이일 "제외 확정": 앱은 제외 후보만 표시 → 정희님이 제외/유지/보류를 탭으로 확정 → 확정한 날짜는 최근 7·14번 평균, 7vs7 비교, 골격근 손실비율, 4주 간격 비교, 20% 판정에서 건너뜀(유효 측정만 7건씩) / 제외 날짜·사유 표시, 그래프 회색 점 / 동기화·수정 시 제외 표시 유지 / "Claude 분석" 기준일 KST 표기 + 상태 한 줄). 이전: 2026-10-05-e (수정·입력 팝업이 ✕/저장 후에도 닫히지 않던 문제 수정). 이전: 2026-10-05-d (크레아틴 메모 인식: 식단 메모에 "크레아틴"만 적어도 복용으로 인식·표시·차트 반영 / 설정탭에 "점수 다시 계산" 버튼 추가(편집기 실행 불필요)). 이전: 2026-10-05-c (점수·인바디 즉시 반영: 저장 직후 동기화 응답으로 하루 점수 바로 갱신 · 앱을 다시 열거나 화면으로 돌아오면 최신 시트 데이터 자동 새로고침(최소 1분 간격) · 크레아틴 카드에 최근 인바디 날짜·수치 표시). 이전: 2026-10-05-b (하루 점수 카드 세로 길이 추가 축소: 5개 항목 행을 한 줄 세로막대 5칸으로 변경, 평가 전 안내 1줄로 축소, 막대·추이 높이 소폭 축소). 이전: 2026-10-05-a (하루 점수 카드 개편: 오늘 점수가 없으면 "평가 전"으로 표시하고 막대는 비워둠(어제 점수가 오늘 것처럼 보이던 문제 해결) · 항목을 1줄 막대로 압축 · 근거는 접기 · 최근 7일 추이 고정 7칸+평균 / 종목별 PR 표 수정: 업로드 형식 sets 배열에서 세트별 추정 1RM 계산, 어시스티드·옛 평평한 형식 제외). 이전: 2026-10-04-b (대시보드 하루 점수 카드 + 최근 7일 추이: Code.gs가 계산한 DailyScore를 표시만 함, 앱은 점수를 계산하지 않음). 이전: 2026-10-04-a (저장 직후 자동 동기화: 인바디·허리둘레·식단·운동·걸음수 저장/삭제 3초 뒤 자동 전송 · 동기화 중/입력 중이면 대기 · 실패 시 20초/1분/3분 재시도 · 못 보낸 저장은 앱 재실행 시 바로 전송 · 셀 직접 수정에도 수정시각 기록). 이전: 2026-10-02-c (접어두기 기준 통일: 목록형은 최근 5건+아래 펼치기(인클라인·PR·운동기록·분석히스토리), 차수별 상세 최근 4차, 일별기록 최근 2주 / 추적관리 부작용 섹션 숨김). 이전: 2026-10-02-b (동기화 실패 수정: 운동 중복 정리 후 데이터감소 오탐으로 자동동기화가 매번 보류되던 문제 해결 · 변경 없으면 업로드 생략 · 업로드 응답으로 검증해 재조회 생략 · 서버 오류 메시지 표시). 이전: 2026-10-02-a (저항운동 인식 수정: 순수 유산소 note 오인식 제거·복합 부위(가슴/삼두) 분해 / 동기화 시 운동 기록 중복 누적 수정). 이전: 2026-09-25-c 크레아틴 모니터링 최종';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1123,8 +1123,8 @@ function computeWorkoutKPICards(workouts){
   });
 
   return [
-    {icon:'award', label:'이번주 운동일수', value:`${sessionDays7}일`, sub:'최근 7일 기준', tone: sessionDays7>=3?'good':'warn'},
-    {icon:'dumbbell', label:'이번주 총 볼륨', value:`${vol7.toLocaleString()}kg`, sub: wPrev7.length ? `지난 7일 대비 ${vol7 >= volPrev7Sum ? '증가' : '감소'}` : '비교 데이터 부족', tone:'neutral'},
+    {icon:'award', label:'최근 7일 운동일수', value:`${sessionDays7}일`, sub:'최근 7일 기준', tone: sessionDays7>=3?'good':'warn'},
+    {icon:'dumbbell', label:'최근 7일 총 볼륨', value:`${vol7.toLocaleString()}kg`, sub: volPrev7Sum>0 ? `지난 7일 대비 ${vol7 >= volPrev7Sum ? '증가' : '감소'}` : '비교 데이터 부족', tone:'neutral'},
     {icon:'target', label:'부위 커버리지', value:`${coverage7}/6`, sub:'최근 7일 동안 자극된 부위 수', tone: coverage7>=4?'good':(coverage7>=2?'neutral':'warn')},
     {icon: inclineCardTone==='warn'?'up':'down', label:'인클라인 트레드밀 심박존 준수', value: inclineCardValue, sub: inclineCardSub, tone: inclineCardTone},
     {icon: volChangePct===null?'target':(volChangePct>=0?'up':'down'), label:'주간 볼륨 변화율', value: volChangePct===null?'—':`${volChangePct>0?'+':''}${volChangePct}%`, sub: volChangePct===null?'비교 데이터 부족':`지난주 ${volPrev7Sum.toLocaleString()}kg → 이번주 ${vol7.toLocaleString()}kg`, tone: volChangePct===null?'neutral':(volChangePct>=0?'good':(volChangePct>=-15?'neutral':'warn'))},
@@ -1829,7 +1829,7 @@ function aiNoteFreshnessLabel(note){
 
 // 2026-10-13 추가: 인바디 "제외 확정"(정희님 확정 설계). 앱은 후보만 보여주고, 제외 여부는 정희님이 탭으로 확정한다(자동 제외 금지).
 // 제외는 삭제가 아니라 "표시": exclude(true=제외 / false=유지 확정 / '보류' / 빈 값=미결정) + excludeReason(사유) + excludeAt(결정 시각, 동기화 병합용).
-// 평균·비교·손실비율·4주 간격·20% 판정이 쓰는 sortedInbody()는 이제 "제외분을 뺀 유효 측정"만 돌려준다. 표·그래프처럼 원본 전체가 필요한 곳은
+// 평균·비교·손실비율·4주 간격·체지방률 판정이 쓰는 sortedInbody()는 이제 "제외분을 뺀 유효 측정"만 돌려준다. 표·그래프처럼 원본 전체가 필요한 곳은
 // sortedInbodyAll()을 쓴다. "최근 7번/14번"은 달력 7일이 아니라 제외분을 건너뛴 유효 측정 7건/14건이다.
 const EXCLUDE_DROP_KG_ = 0.7;      // 의심 규칙 ①: 직전 측정 대비 체중 −0.7kg 이하
 const EXCLUDE_RISE_FAT_KG_ = 0.3;  // 의심 규칙 ①: AND 체지방량 +0.3kg 이상
@@ -2002,7 +2002,7 @@ function renderExclusionPanel(){
   }).join('');
   const moreHtml = cands.length>shown.length ? `<div class="ex-more">외 후보 ${cands.length-shown.length}건은 아래 인바디 표에서 확인할 수 있어요.</div>` : '';
   const noticeHtml = showNotice ? `<div class="ex-list">${excluded.slice(0,6).map(r=>`<div class="ex-item"><span class="ex-item-date">${exShort_(r.date)}</span><span class="ex-item-reason">${esc(r.excludeReason||'사유 미입력')}</span><button class="mini-btn" onclick="decideExclusion('${r.date}','clear')">되돌리기</button></div>`).join('')}${excluded.length>6?`<div class="ex-more">외 ${excluded.length-6}건은 인바디 표에서 확인</div>`:''}
-      <div class="ex-more">제외한 날은 평균·비교·20% 판정에서 빠져요(삭제 아님). 이 안내는 확인하면 사라지고, 제외일은 인바디 표·그래프에 계속 표시돼요.</div>
+      <div class="ex-more">제외한 날은 평균·비교·체지방률 판정에서 빠져요(삭제 아님). 이 안내는 확인하면 사라지고, 제외일은 인바디 표·그래프에 계속 표시돼요.</div>
       <div class="ex-card-actions" style="margin-top:8px;"><button class="mini-btn" onclick="exAckConfirm()">확인</button></div></div>` : '';
   return `<section class="card ex-panel">
     <div class="section-label">📌 ${showNotice ? `인바디 제외 ${excluded.length}건 반영` : '인바디 제외 후보'}</div>
@@ -2282,7 +2282,7 @@ function lineChartSVGMulti(data, key1, data2, key2, colorVar, opts={}){
    - 일·주 단위 경고는 SHOW_DAILY_ALERTS=false로 숨김(true로 바꾸면 예전처럼 다시 보임).
    ========================================================= */
 const SHOW_DAILY_ALERTS = false;
-const HIDDEN_ALERT_TITLES_ = ['체지방 감량 정체', '체지방 정체', '체중 변화 없이 골격근만 감소', '체중감량 대비 근손실', '골격근 보존 우수', '골격근 손실 —', '체중 정체 또는 반등', '2차 목표(18%)', '최근 페이스 기준 목표 도달'];
+const HIDDEN_ALERT_TITLES_ = ['체지방 감량 정체', '체지방 정체', '체중 변화 없이 골격근만 감소', '체중감량 대비 근손실', '골격근 보존 우수', '골격근 손실 —', '체중 정체 또는 반등', '2차 목표(18%)', '최근 페이스 기준 목표 도달', '체지방은 감소, 골격근도', '체지방 정체 + 골격근량 감소', '체지방 정체, NEAT는 정상', '체지방 정체 + NEAT 감소'];
 const NEW_GOAL = {muscle:33.0, fatPctLo:16, fatPctHi:17, weightLo:69.0, weightHi:70.3, startMuscle:33.1};
 const NEW_FAT_GOALS_GAUGE = [{label:'2순위', pct:17}, {label:'2순위', pct:16}];
 // 계획선(최근 7번 평균 기준 가정값): [날짜, 골격근kg, 체지방량kg, 체중kg] — 사이는 직선으로 이어 계산
@@ -2801,7 +2801,175 @@ const ICONS = {
 };
 
 /* ---------- 스마트 인사이트 (규칙 기반 자동 분석, Claude 개입 없이 매번 새로 계산) ---------- */
-function computeSmartAlerts(ib, meals, workouts){
+/* =========================================================
+   2026-10-21-c 스마트 인사이트 V2 (대시보드 + Work Out 공통 기준)
+   - 확정된 데이터만 사용(오늘 식사 기록은 중간값이라 제외), 특이일·제외일 제외
+   - 카드마다 "숫자 → 의미 → 다음 행동 1개", 대시보드 최대 3개 / 운동 탭 최대 4개
+   - INSIGHT_ENGINE_V2=false 로 바꾸면 예전 방식으로 돌아감(예전 함수는 그대로 보존)
+========================================================= */
+const INSIGHT_ENGINE_V2 = true;
+const INSIGHT_CFG_ = {
+  muscleWarnGap: -0.5,      // 골격근 MA7이 계획선보다 이만큼 낮으면 주의
+  muscleOkGap: -0.2,
+  calMargin: 150,           // 목표 칼로리 범위 ± 여유
+  calOverLimit: 2200,       // 하루 과다 섭취 기준
+  mealMinDays: 3,           // 영양 평가에 필요한 최소 확정 일수
+  strengthPerWeek: 3,       // 앱 기준 주간 근력 횟수(변경 없음)
+  cardioMinPerWeek: 2,
+  stepsGoal: 10000,
+  violationLookbackDays: 14
+};
+function insightIsSpecialMeal_(m){
+  if(m.specialDayType) return m.specialDayType !== 'none';
+  return /설사|컨디션난조|몸살|장염|병원|속탈|메스꺼움|구토|식중독|감기|검진|금식|장정결|시술/.test(m.note||'');
+}
+function insightDaysBetween_(a, b){ return Math.round((new Date(b+'T00:00:00') - new Date(a+'T00:00:00'))/86400000); }
+
+function computeNutritionInsightV2_(ib, meals){
+  const last = ib[ib.length-1];
+  if(!last || !last.bmr || !meals || !meals.length) return null;
+  const today = todayISO();
+  const days = daysAgoList(8).filter(d => d !== today);          // 어제부터 7일(오늘 제외)
+  const rows = meals.filter(m => days.includes(m.date) && Number(m.calories) > 0);
+  const normal = rows.filter(m => !insightIsSpecialMeal_(m));
+  if(normal.length < INSIGHT_CFG_.mealMinDays) return null;
+  const targetLow = Math.round(last.bmr*1.5-550), targetHigh = targetLow+100;
+  const avg = normal.reduce((s,m)=>s+Number(m.calories),0)/normal.length;
+  const pMin = PROTEIN_TARGET.min;
+  const pOk = normal.filter(m => Number(m.protein) >= pMin).length;
+  const over = normal.filter(m => Number(m.calories) > INSIGHT_CFG_.calOverLimit).length;
+  const margin = INSIGHT_CFG_.calMargin;
+  let tone = 'good', action;
+  if(avg > targetHigh + margin){ tone='warn'; action = `평균을 ${fmt(avg-targetHigh,0)}kcal 줄이면 목표 범위예요. 저녁 탄수화물·간식부터 줄여보세요.`; }
+  else if(avg < targetLow - margin){ tone='warn'; action = `너무 적게 먹으면 근육이 빠져요. 하루 ${fmt(targetLow-avg,0)}kcal만 더 채우세요(단백질 식품 위주).`; }
+  else if(pOk < Math.ceil(normal.length*0.6)){ tone='neutral'; action = `칼로리는 적당해요. 단백질을 ${pMin}g 이상 채우는 날을 늘리면 근육 복구에 도움돼요.`; }
+  else { action = '지금 식단을 그대로 유지하세요.'; }
+  const skipped = rows.length - normal.length;
+  return {tone, icon:'target', score: tone==='warn'?80:50,
+    title: tone==='warn' ? (avg>targetHigh+margin ? '최근 7일 섭취가 목표보다 높아요' : '최근 7일 섭취가 목표보다 낮아요') : '최근 7일 영양 흐름 양호',
+    detail: `확정된 ${normal.length}일 평균 ${fmt(avg,0)}kcal(목표 ${targetLow}~${targetHigh}), 단백질 ${pMin}g 이상 ${pOk}/${normal.length}일${over?`, ${INSIGHT_CFG_.calOverLimit}kcal 초과 ${over}일`:''}${skipped?` (특이일 ${skipped}일 제외)`:''}. ${action}`};
+}
+
+function computeMuscleInsightV2_(ib){
+  const gb = goalBodyMA7_();
+  if(!gb) return null;
+  const today = todayISO();
+  const plan = planAt_(today);
+  const gap = gb.muscle - plan.muscle;
+  const delta = blockMA7Delta(ib, 'muscle');
+  const toGoal = NEW_GOAL && NEW_GOAL.muscle ? NEW_GOAL.muscle - gb.muscle : 33 - gb.muscle;
+  let tone, action;
+  if(gap <= INSIGHT_CFG_.muscleWarnGap){ tone='warn'; action = '단백질 140g↑과 주 3회 근력을 지키고, 월 점검일에 같이 확인해요.'; }
+  else if(gap >= INSIGHT_CFG_.muscleOkGap){ tone='good'; action = '지금 루틴을 그대로 이어가세요.'; }
+  else { tone='neutral'; action = '큰 문제는 아니에요. 근력 횟수와 단백질만 챙기면 돼요.'; }
+  const deltaTxt = delta===null ? '' : `, 직전 7번 평균 대비 ${delta>0?'+':''}${fmt(delta,2)}kg`;
+  return {tone, icon:'dumbbell', score: tone==='warn'?90:60,
+    title: '골격근 복구 방향',
+    detail: `최근 7번 평균 ${fmt(gb.muscle,2)}kg — 오늘 계획선(${fmt(plan.muscle,2)}kg)과 ${gap>=0?'+':''}${fmt(gap,2)}kg${deltaTxt}. 33kg까지 ${fmt(Math.max(toGoal,0),2)}kg 남았어요. ${action}`};
+}
+
+function computeAnomalyInsightsV2_(ib, meals, workouts){
+  const keep = ['최근 인바디 측정 공백','최근 식사 기록 공백','식사 기록이 아직 없어요','체중 불변, 체성분만 급변','어제('];
+  return computeSmartAlerts(ib, meals, workouts, {all:true}).filter(a => keep.some(k => String(a.title).startsWith(k)));
+}
+
+function computeDashboardInsightsV2_(ib, meals, workouts){
+  const out = [];
+  if(!ib || ib.length < 2) return out;
+  const m = computeMuscleInsightV2_(ib); if(m) out.push(m);
+  const n = computeNutritionInsightV2_(ib, meals); if(n) out.push(n);
+  computeAnomalyInsightsV2_(ib, meals, workouts).forEach(a => out.push(a));
+  out.sort((a,b)=>(b.score||0)-(a.score||0));
+  const res = out.slice(0,3);
+  if(!res.length) return [{tone:'good', icon:'target', title:'특이사항 없음', detail:'확정된 데이터 기준으로 알릴 변화가 없어요.'}];
+  return res;
+}
+
+function computeWorkoutInsightsV2_(workouts){
+  const out = [];
+  if(!workouts || !workouts.length) return out;
+  const today = todayISO();
+  const last7 = daysAgoList(7);
+  const isStrength = w => inferPartsForEntry(w).some(p => BODY_PARTS.includes(p));
+  const strengthDates = [...new Set(workouts.filter(isStrength).map(w=>w.date))].sort();
+  const n7 = strengthDates.filter(d => last7.includes(d)).length;
+  const lastS = strengthDates[strengthDates.length-1] || null;
+  const since = lastS ? insightDaysBetween_(lastS, today) : null;
+  const goal = INSIGHT_CFG_.strengthPerWeek;
+
+  // 1) 근력 횟수 + 다음 세션
+  const lastWs = workouts.filter(w => w.date===lastS && isStrength(w));
+  const lastParts = new Set(lastWs.flatMap(w => inferPartsForEntry(w)));
+  const lastWasLower = lastParts.has('하체');
+  const nextSess = lastWasLower ? 'B 상체(가슴·어깨·삼두)' : 'A 하체+등·이두';
+  let tone1 = n7 >= goal ? 'good' : (since!==null && since >= 4 ? 'warn' : 'neutral');
+  let act1 = since===null ? '' : (since < 2 ? `오늘은 회복일이에요. 다음은 ${nextSess} — 48시간 뒤부터 좋아요.` : `다음 추천: ${nextSess}.`);
+  if(since!==null && since >= 10) act1 = `쉬는 기간이 길었어요. ${nextSess}를 평소 볼륨의 60~70%로 가볍게 시작하세요.`;
+  out.push({tone:tone1, icon:'dumbbell', title:`근력 최근 7일 ${n7}회 (주 ${goal}회 기준)`,
+    detail:`마지막 근력은 ${lastS ? (since===0?'오늘':since+'일 전')+'('+lastS.slice(5)+')' : '기록 없음'}이에요. ${act1}`});
+
+  // 2) 인정 유산소(평균심박 105↑ & 20분↑)
+  const credit = new Set();
+  computeInclineHistory(workouts).forEach(r => { if(r.creditValid===true && last7.includes(r.date)) credit.add(r.date); });
+  workouts.forEach(w => {
+    if(!last7.includes(w.date)) return;
+    if(String(w.part||'').trim()!=='유산소') return;
+    const hr = w.avgHR!=null ? Number(w.avgHR) : null, mn = w.durationMin!=null ? Number(w.durationMin) : null;
+    if(hr!==null && mn!==null && hr>=CARDIO_VALID_RULE.minHR && mn>=CARDIO_VALID_RULE.minDurationMin) credit.add(w.date);
+  });
+  const c7 = credit.size, cMin = INSIGHT_CFG_.cardioMinPerWeek;
+  out.push({tone: c7>=cMin?'good':'neutral', icon:'target', title:`인정 유산소 최근 7일 ${c7}회`,
+    detail:`평균 심박 ${CARDIO_VALID_RULE.minHR}bpm↑·${CARDIO_VALID_RULE.minDurationMin}분↑을 채운 날만 셌어요. ${c7>=cMin?'지금 횟수를 유지하세요.':'심박·시간이 기록된 유산소를 주 '+cMin+'회까지 늘려보세요.'}`});
+
+  // 3) 종목별 진행도(추정 1RM) — 최근 2주 내 기록된 종목만
+  try{
+    const prs = computeExercisePRs();
+    const near = [], stuck = [];
+    prs.forEach(g => {
+      if(!g.lastDate || insightDaysBetween_(g.lastDate, today) > 14) return;
+      const lastSes = g.sessions[g.sessions.length-1];
+      if(lastSes && g.best && lastSes.date===g.best.date && g.sessions.length>=2) near.push(g.displayName);
+      else if(g.plateau && g.plateau.isPlateau) stuck.push(g.displayName);
+    });
+    if(near.length || stuck.length){
+      const parts = [];
+      if(near.length) parts.push(`최근 기록이 개인 최고예요: ${near.slice(0,3).join(', ')}`);
+      if(stuck.length) parts.push(`최근 5번 거의 같아요: ${stuck.slice(0,3).join(', ')} — 중량 또는 횟수를 한 단계만 올려보세요`);
+      out.push({tone: near.length?'good':'neutral', icon:'up', title:'종목별 진행도', detail:parts.join('. ')+'.'});
+    }
+  }catch(e){}
+
+  // 4) 걸음수(NEAT) 한 장으로 통합
+  if(state.steps && state.steps.length){
+    const bd = state.steps.map(s => ({date:s.date, neat: computeStepBreakdown(s, workouts).neat}));
+    const l14 = daysAgoList(14);
+    const cur = bd.filter(b => last7.includes(b.date)), prv = bd.filter(b => l14.includes(b.date) && !last7.includes(b.date));
+    if(cur.length >= 3){
+      const a = cur.reduce((s,b)=>s+b.neat,0)/cur.length;
+      const p = prv.length>=3 ? prv.reduce((s,b)=>s+b.neat,0)/prv.length : null;
+      const pct = p ? (a-p)/p*100 : null;
+      const goalTxt = a >= INSIGHT_CFG_.stepsGoal ? `1만 보를 넘었어요` : `1만 보까지 ${fmt(INSIGHT_CFG_.stepsGoal-a,0)}보`;
+      out.push({tone: pct!==null && pct<=-15 ? 'warn' : 'neutral', icon:'target', title:'일상 걸음(NEAT) 최근 7일',
+        detail:`하루 평균 ${fmt(a,0)}보${pct===null?'':`(직전 7일 ${fmt(p,0)}보 대비 ${pct>0?'+':''}${fmt(pct,0)}%)`}, ${goalTxt}. ${pct!==null&&pct<=-15?'식후 15분 걷기부터 다시 늘려보세요.':'지금 흐름을 유지하세요.'}`});
+    }
+  }
+
+  // 5) 48시간 회복 — 최근 14일 안에서만 판정
+  const lb = daysAgoList(INSIGHT_CFG_.violationLookbackDays);
+  const byPart = {}; let vio = 0; const vparts = new Set();
+  [...workouts].sort((a,b)=>a.date.localeCompare(b.date)).forEach(w => {
+    inferPartsForEntry(w).forEach(p => {
+      if(!BODY_PARTS.includes(p)) return;
+      if(byPart[p] && byPart[p] !== w.date && lb.includes(w.date) && insightDaysBetween_(byPart[p], w.date) < 2){ vio++; vparts.add(p); }
+      byPart[p] = w.date;
+    });
+  });
+  if(vio>0) out.push({tone:'warn', icon:'up', title:'같은 부위 48시간 안에 다시 운동', detail:`최근 14일 중 ${[...vparts].join('·')} ${vio}건이에요. A/B 사이에 하루 이상 비우면 회복이 충분해요.`});
+
+  return out.slice(0,4);
+}
+
+function computeSmartAlerts(ib, meals, workouts, opts){
   workouts = workouts || [];
   // 후보군(candidate pool) 방식: 가능한 모든 인사이트 후보를 만들고, 각각에 중요도 점수(score)를 매긴 뒤
   // 상위 N개만 매번 동적으로 선정합니다. 데이터 상황에 따라 더 중요한 인사이트가 자동으로 앞에 옵니다.
@@ -3067,11 +3235,12 @@ function computeSmartAlerts(ib, meals, workouts){
     }
   }
   if(candidates.length === 0){
+    if(opts && opts.all) return [];
     return [{tone:'good', icon:'target', title:'특이사항 없음', detail:'체중·체지방·골격근량·섭취 칼로리 모두 계획 범위 안에서 안정적으로 진행되고 있어요.'}];
   }
 
   candidates.sort((a,b)=>b.score-a.score);
-  return candidates.slice(0,6);
+  return (opts && opts.all) ? candidates : candidates.slice(0,6);
 }
 
 /* ---------- 마운자로 투여 차수별 트렌드 ---------- */
@@ -3391,7 +3560,7 @@ function renderMounjaro(){
         ${chartCard('체중', fullData, 'weight', 'kg', '--c-weight', null, vlines)}
         ${chartCard('골격근량', fullData, 'muscle', 'kg', '--c-muscle', MUSCLE_BASELINE, vlines)}
         ${chartCard('체지방량', fullData, 'fat', 'kg', '--c-fat', null, vlines)}
-        ${chartCard('체지방률', fullData, 'fatPct', '%', '--c-fatpct', 18, vlines)}
+        ${chartCard('체지방률', fullData, 'fatPct', '%', '--c-fatpct', 17, vlines)}
       </div>
     </section>
 
@@ -3516,7 +3685,7 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   const last7Dates = Array.from({length:7}, (_,i) => { const d=new Date(today+'T00:00:00'); d.setDate(d.getDate()-i); return toLocalISO(d); });
   const workoutDaysLast7 = last7Dates.filter(d => { const t=classifyDayType(workouts,d); return t && t.type!=='휴식'; }).length;
 
-  const recentMeals = [...meals].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+  const recentMeals = [...meals].filter(m=>m.date<today).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10); // 오늘 중간 기록 제외
   const proteinRate = recentMeals.length ? (recentMeals.filter(m => (m.protein||0) >= PROTEIN_TARGET.min).length / recentMeals.length * 100) : null;
 
   const calorieRate = (last.bmr && recentMeals.length) ? (recentMeals.filter(m => {
@@ -3542,19 +3711,19 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   const lastLogGapDays = Math.round((new Date(today) - new Date(last.date)) / 86400000);
 
   // 잘하고 있는 점 후보
-  if(weightLoss > 0) strengths.push({title:'체중 꾸준히 감소', detail:`시작 대비 ${fmt(weightLoss)}kg 감량 (${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg)`});
+  if(weightLoss > 0) strengths.push({title:'체중 감량 달성 · 유지 구간', detail:`시작 대비 ${fmt(weightLoss)}kg 감량 (${first.date.slice(5)} ${fmt(first.weight)}kg → ${last.date.slice(5)} ${fmt(last.weight)}kg). 이제는 더 빼기보다 69~70kg 유지가 목표예요`});
   if(fatMassLoss > 0) strengths.push({title:'체지방량 감소', detail:`시작 대비 ${fmt(fatMassLoss)}kg 감량`});
   if(muscleAssess.tone === 'good') strengths.push({title:'골격근 보존 우수', detail: muscleAssess.muscleLoss<=0 ? `골격근량 감소 없이 유지 중 (현재 ${fmt(lastBC.muscle)}kg${lastBC.date!==last.date?`, ${lastBC.date} 기준`:''})` : `체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}% — 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 낮아요`});
   if(workoutDaysLast7 >= 4) strengths.push({title:'꾸준한 운동 습관', detail:`최근 7일 중 ${workoutDaysLast7}일 운동`});
-  if(proteinRate !== null && proteinRate >= 70) strengths.push({title:'단백질 섭취 잘 지킴', detail:`최근 10끼 중 ${fmt(proteinRate,0)}%에서 목표(${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g) 충족${mealStaleNote}`});
-  if(calorieRate !== null && calorieRate >= 70) strengths.push({title:'칼로리 목표 준수 양호', detail:`최근 10끼 중 ${fmt(calorieRate,0)}%가 목표 범위 안${mealStaleNote}`});
+  if(proteinRate !== null && proteinRate >= 70) strengths.push({title:'단백질 섭취 잘 지킴', detail:`최근 10일 중 ${fmt(proteinRate,0)}%에서 목표(${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g) 충족${mealStaleNote}`});
+  if(calorieRate !== null && calorieRate >= 70) strengths.push({title:'칼로리 목표 준수 양호', detail:`최근 10일 중 ${fmt(calorieRate,0)}%가 목표 범위 안${mealStaleNote}`});
   if(maTrend <= -0.2) strengths.push({title:'체지방률 추세 개선 중', detail:`7일 이동평균 기준 ${fmt(Math.abs(maTrend),2)}%p 하락`});
 
   // 아쉬운 점 후보
   if(fatSpread !== null && fatSpread <= 0.15) improvements.push({title:'체지방 감량 정체', detail:`최근 3회 측정에서 체지방량이 ${fmt(Math.min(...last3fat))}~${fmt(Math.max(...last3fat))}kg 사이 정체`});
   if(muscleAssess.tone === 'warn') improvements.push({title:'골격근 손실 비중 높음', detail: muscleAssess.weightLossPct<=0.3 ? `체중 변화 없이 골격근만 ${fmt(muscleAssess.muscleLoss)}kg 감소 — 단백질·저항운동 점검 필요` : `체중 -${fmt(muscleAssess.weightLossPct,1)}% 대비 골격근 -${fmt(muscleAssess.muscleLossPct,1)}%, 비율 ${fmt(muscleAssess.ratio,2)}로 SURMOUNT-1 DEXA 실측 기준(0.51)보다 높아요`});
-  if(proteinRate !== null && proteinRate < 50) improvements.push({title:'단백질 섭취 부족 빈도 높음', detail:`최근 10끼 중 목표 충족 ${fmt(proteinRate,0)}%뿐${mealStaleNote}`});
-  if(calorieRate !== null && calorieRate < 50) improvements.push({title:'칼로리 목표 이탈 빈도 높음', detail:`최근 10끼 중 목표 범위 준수 ${fmt(calorieRate,0)}%뿐 — 목표 재설정이나 식단 조정이 필요할 수 있어요${mealStaleNote}`});
+  if(proteinRate !== null && proteinRate < 50) improvements.push({title:'단백질 섭취 부족 빈도 높음', detail:`최근 10일 중 목표 충족 ${fmt(proteinRate,0)}%뿐${mealStaleNote}`});
+  if(calorieRate !== null && calorieRate < 50) improvements.push({title:'칼로리 목표 이탈 빈도 높음', detail:`최근 10일 중 목표 범위 준수 ${fmt(calorieRate,0)}%뿐 — 목표 재설정이나 식단 조정이 필요할 수 있어요${mealStaleNote}`});
   if(workoutDaysLast7 <= 2) improvements.push({title:'최근 운동 빈도 낮음', detail:`최근 7일 중 ${workoutDaysLast7}일만 운동`});
   if(ib.length >= 3){
     const last3w = ib.slice(-3).map(r=>r.weight);
@@ -3706,7 +3875,7 @@ function renderWeeklyPlanSection(workouts){
     <section class="card">
       <div class="section-label good">${secNum('W3b')}주간 근력/유산소 계획 &amp; 실적</div>
       ${(() => {
-        const advisories = computeSmartAlerts(sortedInbody(), state.meals, state.workouts).filter(a=>a.tone==='warn').slice(0,2);
+        const advisories = (INSIGHT_ENGINE_V2 ? computeDashboardInsightsV2_(sortedInbody(), state.meals, state.workouts) : computeSmartAlerts(sortedInbody(), state.meals, state.workouts)).filter(a=>a.tone==='warn').slice(0,2);
         if(!advisories.length) return '';
         return `<div class="plan-advisory">
           <div class="plan-advisory-head">⚖️ 이번주 참고사항 (체성분·식단 기반)</div>
@@ -3766,7 +3935,7 @@ function renderPlanDetailPanel(date, workouts){
     ${entries.length===0 ? `<div class="plan-detail-empty">기록된 운동이 없습니다.</div>` : entries.map(w => `
       <div class="plan-detail-item">
         <div class="plan-detail-name">${esc(w.name||'(이름없음)')}</div>
-        <div class="plan-detail-meta">${w.part?esc(w.part):''}${w.volume?` · ${esc(String(w.volume))}`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
+        <div class="plan-detail-meta">${w.part?esc(w.part):''}${parseVolume(w.volume)>0?` · ${parseVolume(w.volume).toLocaleString()}kg`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
         ${w.note?`<div class="plan-detail-note">${esc(w.note)}</div>`:''}
       </div>`).join('')}
   </div>`;
@@ -3777,7 +3946,7 @@ function renderWorkoutTab(){
   if(workouts.length===0) return `<div class="empty-state">아직 운동 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
 
   const kpis = computeWorkoutKPICards(workouts);
-  const insights = computeWorkoutInsights(workouts);
+  const insights = INSIGHT_ENGINE_V2 ? computeWorkoutInsightsV2_(workouts) : computeWorkoutInsights(workouts);
   const recovery = computeBodyPartRecovery(workouts);
   // 2026-10-16 추가(복귀 모드): 마지막 근력 기록이 10일 이상 전이면(질병·여행·휴식 뒤) 방치 부위가 한꺼번에 "우선 추천"되지 않도록
   // 방치 부위 강제 포함을 잠시 끄고, 첫 세션은 평소의 60~70% 볼륨으로 안내한다(근력 기록이 다시 생기면 자동 해제).
@@ -3929,7 +4098,7 @@ function renderWorkoutTab(){
               <div class="ic-sub">트레드밀 걸음 제외한 순수 일상활동</div>
             </div>
           </div>
-          ${neatInsight ? `<div class="alert-item ${neatInsight.tone==='warn'?'tone-warn-item':neatInsight.tone==='good'?'tone-good-item':''}" style="margin-bottom:16px;">
+          ${(neatInsight && !INSIGHT_ENGINE_V2) ? `<div class="alert-item ${neatInsight.tone==='warn'?'tone-warn-item':neatInsight.tone==='good'?'tone-good-item':''}" style="margin-bottom:16px;">
             <div class="alert-icon tone-${neatInsight.tone}">${neatInsight.tone==='warn'?ICONS.up:neatInsight.tone==='good'?ICONS.down:ICONS.target}</div>
             <div class="alert-body"><div class="alert-title tone-${neatInsight.tone}">NEAT 추세</div><div class="alert-detail">${neatInsight.text}</div></div>
           </div>` : ''}
@@ -4028,7 +4197,7 @@ function workoutRow(w){
     <div class="day-date">${w.date.slice(5)}<span class="dow">${dowLabel(w.date)}</span></div>
     <div>
       <div style="font-size:13px; font-weight:600; color:var(--text);">${esc(w.name||'')} ${risky?'<span class="badge miss">목디스크 확인</span>':''}${w.specialCondition?`<span class="badge miss">${esc(WORKOUT_CONDITION_LABELS[w.specialCondition]||w.specialCondition)}</span>`:''}</div>
-      <div style="font-size:12px; color:var(--text-dim); margin-top:3px;">${parts.join(', ')||esc(w.part||'')}${w.volume?` · ${esc(String(w.volume))}`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
+      <div style="font-size:12px; color:var(--text-dim); margin-top:3px;">${parts.join(', ')||esc(w.part||'')}${parseVolume(w.volume)>0?` · ${parseVolume(w.volume).toLocaleString()}kg`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
       ${w.note?`<div style="font-size:11.5px; color:var(--text-faint); margin-top:3px;">${esc(w.note)}</div>`:''}
       ${w.id ? `<div class="row-actions"><button class="mini-btn" onclick="editWorkoutById('${w.id}')">수정</button><button class="mini-btn danger" onclick="deleteWorkoutEntry('${w.id}')">삭제</button></div>` : ''}
     </div>
@@ -4093,10 +4262,6 @@ function renderDashboard(){
       </div>`;
     })()}
 
-    ${renderTodayRemainingCard_()}
-    ${renderDailyScoreCard()}
-    ${renderRecordGapCard_()}
-
     ${inbodyStatusLineHtml_()}
 
     ${state.aiNote ? `
@@ -4114,7 +4279,7 @@ function renderDashboard(){
     <section class="card">
       <div class="section-label good">${secNum('00b')}스마트 인사이트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.lastUpdated ? '최종 갱신 '+fmtDateTime(state.lastUpdated) : '데이터 기반 자동 감지'}</span></div>
       <div class="alert-list">
-        ${computeSmartAlerts(ib, state.meals, state.workouts).map(a => `
+        ${(INSIGHT_ENGINE_V2 ? computeDashboardInsightsV2_(ib, state.meals, state.workouts) : computeSmartAlerts(ib, state.meals, state.workouts)).map(a => `
           <div class="alert-item ${a.tone==='warn'?'tone-warn-item':a.tone==='good'?'tone-good-item':''}">
             <div class="alert-icon tone-${a.tone}">${ICONS[a.icon] || ICONS.target}</div>
             <div class="alert-body">
@@ -4181,10 +4346,11 @@ function renderDashboard(){
           </div>`;
         }
 
+        if(INSIGHT_ENGINE_V2 && !SHOW_DAILY_ALERTS) insightBlock = '';
         return `
           ${insightBlock}
           <div class="chart-grid">
-            ${maTrendChartCard('체지방률 이동평균 (MA7/MA14)', maFat, maFat14, 'fatPctMA', 'fatPctMA', '%', '--c-fatpct', 18, 'down', 3)}
+            ${maTrendChartCard('체지방률 이동평균 (MA7/MA14)', maFat, maFat14, 'fatPctMA', 'fatPctMA', '%', '--c-fatpct', 17, 'down', 3)}
             ${maTrendChartCard('골격근량 이동평균 (MA7/MA14)', maMuscle, maMuscle14, 'muscleMA', 'muscleMA', 'kg', '--c-muscle', MUSCLE_BASELINE, 'up', 3)}
           </div>
           ${expandToggleRow('maTable', maFat.length, '일별 상세 기록 보기')}
@@ -4233,7 +4399,7 @@ function renderDashboard(){
         ${chartCard('체중', ibAll_, 'weight', 'kg', '--c-weight')}
         ${chartCard('골격근량', ibAll_, 'muscle', 'kg', '--c-muscle', MUSCLE_BASELINE)}
         ${chartCard('체지방량', ibAll_, 'fat', 'kg', '--c-fat')}
-        ${chartCard('체지방률', ibAll_, 'fatPct', '%', '--c-fatpct', 18)}
+        ${chartCard('체지방률', ibAll_, 'fatPct', '%', '--c-fatpct', 17)}
       </div>
     </section>
 
@@ -4507,7 +4673,7 @@ function creatineOverlayChartSVG_(ib, map, todayIso){
   const DAYS = 60;
   const startIso = isoAddDays_(todayIso, -(DAYS-1));
   const dayIdx = iso => Math.round((new Date(iso+'T00:00:00') - new Date(startIso+'T00:00:00'))/86400000);
-  const W = 600, padL = 84, padR = 10, panelH = 90, gap = 22, stripH = 22;
+  const W = 300, padL = 40, padR = 6, panelH = 38, gap = 12, stripH = 10;
   const x = i => padL + (W-padL-padR) * (i/(DAYS-1));
   const maW = movingAverage(ib, 'weight', 7).filter(r => r.date>=startIso && r.date<=todayIso && r.weight!=null);
   const ibBC = ib.filter(r => r.muscle!=null);
@@ -4519,11 +4685,11 @@ function creatineOverlayChartSVG_(ib, map, todayIso){
     if(hi-lo < 0.4){ const mid=(hi+lo)/2; lo=mid-0.2; hi=mid+0.2; }
     const y = v => top + panelH - (panelH*(v-lo)/(hi-lo));
     const pts = rows.filter(r=>r[key]!=null).map(r => `${x(dayIdx(r.date)).toFixed(1)},${y(r[key]).toFixed(1)}`).join(' ');
-    return `<text x="4" y="${top+16}" class="chart-axis" style="fill:var(${colorVar}); font-weight:700;">${label}</text>
-      <text x="4" y="${top+38}" class="chart-axis">${fmt(hi,1)}${unit}</text>
-      <text x="4" y="${top+panelH}" class="chart-axis">${fmt(lo,1)}${unit}</text>
+    return `<text x="2" y="${top+9}" class="chart-axis" style="fill:var(${colorVar}); font-weight:700;">${label}</text>
+      <text x="2" y="${top+21}" class="chart-axis">${fmt(hi,1)}${unit}</text>
+      <text x="2" y="${top+panelH}" class="chart-axis">${fmt(lo,1)}${unit}</text>
       <line x1="${padL}" x2="${W-padR}" y1="${top+panelH}" y2="${top+panelH}" stroke="var(--c-grid)"/>
-      <polyline points="${pts}" fill="none" stroke="var(${colorVar})" stroke-width="2" stroke-linejoin="round"/>`;
+      <polyline points="${pts}" fill="none" stroke="var(${colorVar})" stroke-width="1.6" stroke-linejoin="round"/>`;
   };
   const top1 = 4, top2 = top1+panelH+gap, stripTop = top2+panelH+gap;
   // 복용일 음영(두 패널을 가로지르는 연한 띠) + 아래 막대
@@ -4536,16 +4702,16 @@ function creatineOverlayChartSVG_(ib, map, todayIso){
       bars += `<rect x="${(x(i)-bw/2).toFixed(1)}" y="${stripTop}" width="${bw.toFixed(1)}" height="${stripH}" rx="1.5" fill="var(--c-waist)"><title>${iso} 크레아틴 ${map[iso]}g</title></rect>`;
     }
   }
-  const H = stripTop + stripH + 26;
+  const H = stripTop + stripH + 14;
   return `<svg class="creatine-svg" viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; display:block;" role="img" aria-label="크레아틴 복용일과 체중·골격근 이동평균">
     ${shade}
     ${panel(maW, 'weightMA', top1, '--c-weight', '체중 MA7', 'kg')}
     ${panel(maM, 'muscleMA', top2, '--c-muscle', '골격근 MA7', 'kg')}
-    <text x="4" y="${stripTop+17}" class="chart-axis" style="fill:var(--c-waist); font-weight:700;">크레아틴</text>
+    <text x="2" y="${stripTop+9}" class="chart-axis" style="fill:var(--c-waist); font-weight:700;">크레아틴</text>
     <line x1="${padL}" x2="${W-padR}" y1="${stripTop+stripH}" y2="${stripTop+stripH}" stroke="var(--c-grid)"/>
     ${bars}
-    <text x="${padL}" y="${H-2}" class="chart-axis">${dLabel(startIso)}</text>
-    <text x="${W-padR}" y="${H-2}" class="chart-axis" text-anchor="end">${dLabel(todayIso)}</text>
+    <text x="${padL}" y="${H-1}" class="chart-axis">${dLabel(startIso)}</text>
+    <text x="${W-padR}" y="${H-1}" class="chart-axis" text-anchor="end">${dLabel(todayIso)}</text>
   </svg>`;
 }
 // C안: 인바디(체성분 실측) 날짜별로 "그날까지 최근 28일 복용일수"를 구해 두 그룹으로 나눠 평균 비교
@@ -4572,18 +4738,12 @@ function renderCreatineSection(ib){
   const latestIb = (ib||[]).filter(r => r && r.date && (r.weight!=null || r.muscle!=null)).reduce((a,r) => (!a || r.date > a.date) ? r : a, null);
   const cell = (v,u,d) => v==null ? '—' : `${fmt(v,d)}${u}`;
   const diff = (a,b,u,d) => (a==null||b==null) ? '—' : `${a-b>=0?'+':''}${fmt(a-b,d)}${u}`;
-  return `<section class="card">
-    <div class="section-label good">${secNum('00d')}크레아틴 복용 × 체중·골격근 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 복용일(주황)과 이동평균 추세 겹쳐보기</span></div>
-    <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:10px; font-size:12.5px;">
-      <div>상태 <b style="color:${toneColor}">${st.label}</b></div>
-      <div>최근 ${CREATINE_SATURATION_DAYS}일 복용 <b class="mono">${st.count28}/${CREATINE_SATURATION_DAYS}일</b></div>
-      <div>마지막 복용 <b class="mono">${st.lastDate ? `${dLabel(st.lastDate)} (${st.daysSinceLast===0?'오늘':st.daysSinceLast+'일 전'})` : '—'}</b></div>
-    </div>
-    <div class="dim" style="font-size:11.5px; margin:-4px 0 10px;">💊 ${CREATINE_TARGET_NOTE}</div>
-    <div class="dim" style="font-size:11.5px; margin:-4px 0 10px;">📏 최근 인바디 ${latestIb ? `<b class="mono">${latestIb.date}</b> · 체중 <b class="mono">${cell(latestIb.weight,'kg',1)}</b> · 골격근 <b class="mono">${cell(latestIb.muscle,'kg',1)}</b>` : '기록 없음'} <span>(아래 차트의 선은 7회 이동평균)</span></div>
+  return `<div class="card chart-card">
+    <div class="ch-head"><span class="ch-title">크레아틴 × 체중·골격근</span><span class="dim" style="font-size:11px;">주황 = 복용일</span></div>
+    <div class="dim" style="font-size:11px; margin-bottom:6px;"><b style="color:${toneColor}">${st.label}</b> · 최근 ${CREATINE_SATURATION_DAYS}일 복용 <b class="mono">${st.count28}/${CREATINE_SATURATION_DAYS}일</b> · 마지막 <b class="mono">${st.lastDate ? `${dLabel(st.lastDate)}(${st.daysSinceLast===0?'오늘':st.daysSinceLast+'일 전'})` : '—'}</b>${latestIb ? ` · 최근 인바디 <b class="mono">${dLabel(latestIb.date)}</b> ${cell(latestIb.weight,'kg',1)}/${cell(latestIb.muscle,'kg',1)}` : ''}</div>
     ${creatineOverlayChartSVG_(ib, map, today)}
-    <div style="margin-top:14px; font-size:13px; font-weight:700; color:var(--text);">복용 구간 vs 미복용 구간 비교</div>
-    <div class="dim" style="font-size:11.5px; margin:2px 0 8px;">인바디 날짜마다 그날까지 최근 ${CREATINE_SATURATION_DAYS}일 복용일수로 나눔 — 충분 복용 ${CREATINE_FULL_THRESHOLD}일 이상 / 미복용 0일(부분 복용일은 제외, ${CREATINE_TRACKING_START} 이전은 확인 안 된 기간이라 제외)</div>
+    <details style="margin-top:8px;"><summary style="cursor:pointer; font-size:11.5px; color:var(--text-dim); font-weight:600;">복용 구간 vs 미복용 구간 비교 ${ready ? '' : '(판단보류)'}</summary>
+    <div class="dim" style="font-size:11px; margin:6px 0;">${CREATINE_TARGET_NOTE} · 최근 ${CREATINE_SATURATION_DAYS}일 중 ${CREATINE_FULL_THRESHOLD}일 이상 복용 vs 0일 비교(부분 복용·${CREATINE_TRACKING_START} 이전 제외)</div>
     <div style="overflow-x:auto;">
       <table class="data-table">
         <thead><tr><th style="text-align:left">구간</th><th>인바디 건수</th><th>체중 평균</th><th>골격근 평균</th><th>체지방률 평균</th></tr></thead>
@@ -4594,17 +4754,18 @@ function renderCreatineSection(ib){
         </tbody>
       </table>
     </div>
-    <div class="note-box" style="margin-top:10px;">${ready
+    <div class="note-box" style="margin-top:8px; font-size:11.5px;">${ready
       ? '관찰 비교라 마운자로 용량·식단·운동 변화가 함께 섞여 있어요 — 차이를 크레아틴 효과로 단정하지 마세요. 크레아틴은 근육 속 수분을 늘려 인바디 골격근이 실제보다 높게 잡힐 수 있어요.'
       : `판단보류 — 두 구간 모두 인바디 ${CREATINE_MIN_GROUP_N}건 이상 필요해요(현재 충분 복용 ${cmp.full.n}건 / 미복용 ${cmp.none.n}건). 3g을 매일 ${CREATINE_FULL_THRESHOLD}일 이상 기록하면 자동으로 비교가 시작돼요.`}</div>
-  </section>`;
+    </details>
+  </div>`;
 }
 function maTrendChartCard(title, ma7data, ma14data, key7, key14, unit, colorVar, goal, goodDirection, slopeDecimals){
   const vals7 = ma7data.map(d=>d[key7]).filter(v=>v!=null);
   const nowVal = vals7[vals7.length-1];
   const recent7 = ma7data.slice(-7).map(d=>d[key7]).filter(v=>v!=null);
   const slope = linRegSlope(recent7);
-  const cross = detectCrossover(ma7data, ma14data, key7, key14);
+  const cross = SHOW_DAILY_ALERTS ? detectCrossover(ma7data, ma14data, key7, key14) : null;
 
   let slopeBadge = '';
   if(slope!=null){
@@ -4702,7 +4863,7 @@ function renderInbodyTable(ma){
         </tr>`;}).join('')}
       </tbody>
     </table>
-    <div class="note-box" style="margin-top:10px;">${esc(exclusionWindowText_())}<br><b>제외</b>한 날은 회색으로 표시되고 평균·비교·20% 판정에서 빠져요(삭제가 아니라 표시라 "되돌리기"로 언제든 풀 수 있어요).<br>셀을 탭하면 바로 수정할 수 있어요. 입력 후 엔터 또는 다른 곳을 누르면 저장돼요. 행을 통째로 잘못 넣었다면 맨 오른쪽 삭제 버튼을 쓰세요(확인창이 뜹니다). <b>체중만</b> 배지가 붙은 날은 골격근·체지방 실측이 없어(여행 중 등) 체성분 추세 계산에서는 자동으로 건너뛰어요.</div>
+    <div class="note-box" style="margin-top:10px;">${esc(exclusionWindowText_())}<br><b>제외</b>한 날은 회색으로 표시되고 평균·비교·체지방률 판정에서 빠져요(삭제가 아니라 표시라 "되돌리기"로 언제든 풀 수 있어요).<br>셀을 탭하면 바로 수정할 수 있어요. 입력 후 엔터 또는 다른 곳을 누르면 저장돼요. 행을 통째로 잘못 넣었다면 맨 오른쪽 삭제 버튼을 쓰세요(확인창이 뜹니다). <b>체중만</b> 배지가 붙은 날은 골격근·체지방 실측이 없어(여행 중 등) 체성분 추세 계산에서는 자동으로 건너뛰어요.</div>
   </div>`;
 }
 
@@ -4725,7 +4886,7 @@ function renderLog(){
   return previewRows('logWeeks', weekKeys, 2).map(wkKey => {
     const wDates = weeks[wkKey].sort((a,b)=>b.localeCompare(a));
     const wInbody = wDates.map(d=>ib[d]).filter(Boolean);
-    const wMeals = wDates.map(d=>ml[d]).filter(Boolean);
+    const wMeals = wDates.filter(d=>d!==todayISO()).map(d=>ml[d]).filter(Boolean); // 오늘 중간 기록은 평균에서 제외
     const wWorkouts = wDates.map(d=>wk[d]).filter(Boolean);
     const weightChange = wInbody.length>=2 ? wInbody[0].weight - wInbody[wInbody.length-1].weight : null;
     const avgCal = wMeals.length ? wMeals.reduce((s,m)=>s+(m.calories||0),0)/wMeals.length : null;
@@ -4777,14 +4938,16 @@ function dayRow(date, i, wArr, m, prev){
   }
   let wkCol = `<span class="empty">기록 없음</span>`;
   if(wArr && wArr.length){
-    wkCol = wArr.map(w => `${esc(w.name)}<br><span class="dim">${esc(w.part)}</span>${w.volume?` · ${esc(w.volume)}`:''}${w.calories?` · ${w.calories}kcal`:''}${w.id?`<div class="row-actions"><button class="mini-btn" onclick="editWorkoutById('${w.id}')">수정</button><button class="mini-btn danger" onclick="deleteWorkoutEntry('${w.id}')">삭제</button></div>`:''}`).join('<hr style="border:none;border-top:1px dashed var(--border);margin:6px 0;">');
+    wkCol = wArr.map(w => `${esc(w.name)}<br><span class="dim">${esc(w.part)}</span>${parseVolume(w.volume)>0?` · ${parseVolume(w.volume).toLocaleString()}kg`:''}${w.calories?` · ${w.calories}kcal`:''}${w.id?`<div class="row-actions"><button class="mini-btn" onclick="editWorkoutById('${w.id}')">수정</button><button class="mini-btn danger" onclick="deleteWorkoutEntry('${w.id}')">삭제</button></div>`:''}`).join('<hr style="border:none;border-top:1px dashed var(--border);margin:6px 0;">');
   }
   let mlCol = `<span class="empty">기록 없음</span>`;
   if(m){
-    const calHit = target ? m.calories<=target+80 : null;
+    const isTodayRow_ = date === todayISO();   // 오늘 기록은 하루가 끝나기 전의 중간값이라 충족/부족을 판정하지 않음
+    const calHit = target ? (m.calories<=target+80 && m.calories>=target-150) : null;
+    const calLabel_ = target ? (m.calories>target+80 ? '목표 초과' : (m.calories<target-150 ? '목표 미달' : '목표 충족')) : '';
     const proHit = proteinTarget ? m.protein>=proteinTarget : null;
-    mlCol = `${m.calories}kcal${target?`<span class="badge ${calHit?'hit':'miss'}">${calHit?'목표 충족':'목표 초과'}</span>`:''}
-      <br>단백질 ${m.protein}g${proteinTarget?`<span class="badge ${proHit?'hit':'miss'}">${proHit?'충분':'부족'}</span>`:''}${m.carbs?` · 탄수 ${m.carbs}g`:''}
+    mlCol = `${m.calories}kcal${target?(isTodayRow_?`<span class="badge">기록 중</span>`:`<span class="badge ${calHit?'hit':'miss'}">${calLabel_}</span>`):''}
+      <br>단백질 ${m.protein}g${proteinTarget?(isTodayRow_?`<span class="badge">기록 중</span>`:`<span class="badge ${proHit?'hit':'miss'}">${proHit?'충분':'부족'}</span>`):''}${m.carbs?` · 탄수 ${m.carbs}g`:''}
       ${m.specialDayType?`<br><span class="badge miss">${esc(SPECIAL_DAY_LABELS[m.specialDayType]||m.specialDayType)}</span>`:''}
       ${mealCreatineG_(m)>0?`<br><span class="badge">💊 크레아틴 ${fmt(mealCreatineG_(m),0)}g</span>`:''}
       ${m.note?`<br><span class="dim">${esc(m.note)}</span>`:''}
@@ -5082,12 +5245,12 @@ function renderReport(){
   // 2026-09-14 수정: sVal/eVal 중 하나라도 null이면 delta = eVal - sVal 연산에서 null이 0으로
   // 취급되어 완전히 잘못된 변화량이 표시되던 버그 수정 — 값이 둘 다 있을 때만 delta 계산,
   // 아니면 '—'로 표시(판단 보류). asOfNote가 있으면 라벨 아래 실측 기준일을 덧붙여 보여줌.
-  const deltaRow = (label, sVal, eVal, unit, goodDir, asOfNote) => {
+  const deltaRow = (label, sVal, eVal, unit, goodDir, asOfNote, deltaUnit) => {
     const validS = sVal!==null&&sVal!==undefined&&!isNaN(sVal);
     const validE = eVal!==null&&eVal!==undefined&&!isNaN(eVal);
     const delta = (validS&&validE) ? eVal - sVal : null;
     const good = delta===null ? null : (goodDir==='down' ? delta<=0 : delta>=0);
-    const deltaText = delta===null ? '—' : `${delta>0?'+':''}${fmt(delta,1)}${unit}`;
+    const deltaText = delta===null ? '—' : `${delta>0?'+':''}${fmt(delta,1)}${deltaUnit||unit}`;
     return `<tr><td style="text-align:left; font-family:var(--font-body);">${label}${asOfNote?`<div style="font-size:10.5px; color:var(--text-faint); font-weight:400;">${asOfNote}</div>`:''}</td><td>${fmt(sVal,1)}${unit}</td><td>${fmt(eVal,1)}${unit}</td>
       <td style="color:${good===null?'var(--text-faint)':good?'var(--c-good, #3ecf8e)':'var(--c-warn, #ffb648)'}">${deltaText}</td></tr>`;
   };
@@ -5109,7 +5272,7 @@ function renderReport(){
           ${deltaRow('체중','weight' in first?first.weight:null, last.weight,'kg','down')}
           ${deltaRow('골격근량', first.muscle, lastBC.muscle, 'kg', 'up', lastBC.date!==last.date?`${lastBC.date} 실측 기준(최신일은 체중전용 기록)`:null)}
           ${deltaRow('체지방량', first.fat, lastBC.fat, 'kg', 'down', lastBC.date!==last.date?`${lastBC.date} 실측 기준(최신일은 체중전용 기록)`:null)}
-          ${deltaRow('체지방률', first.fatPct, lastBC.fatPct, '%', 'down', lastBC.date!==last.date?`${lastBC.date} 실측 기준(최신일은 체중전용 기록)`:null)}
+          ${deltaRow('체지방률', first.fatPct, lastBC.fatPct, '%', 'down', lastBC.date!==last.date?`${lastBC.date} 실측 기준(최신일은 체중전용 기록)`:null, '%p')}
         </tbody>
       </table>
     </section>
@@ -5292,7 +5455,7 @@ function renderSettings(){
       <div class="section-label good">${secNum('05a2')}목표·기준값 설정 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 5번, 5-B</span></div>
       <p class="p-dim">체지방률 목표·유산소 심박존·단백질 목표·탄수화물 등급 범위는 원래 코드에 고정된 값이라 바꿀 때마다 Claude에게 코드 수정을 요청해야 했어요. 이제 여기서 직접 바꿀 수 있고, 저장하면 앱 전체(대시보드·리포트·스마트 인사이트 등)에 바로 반영돼요.</p>
       ${(() => {
-        const drift = computeGoalDriftInsight();
+        const drift = INSIGHT_ENGINE_V2 ? null : computeGoalDriftInsight();
         if(!drift) return '';
         return `<div class="alert-item ${drift.tone==='warn'?'tone-warn-item':drift.tone==='good'?'tone-good-item':''}" style="margin:10px 0;">
           <div class="alert-icon tone-${drift.tone}">${drift.tone==='warn'?ICONS.up:drift.tone==='good'?ICONS.down:ICONS.target}</div>
