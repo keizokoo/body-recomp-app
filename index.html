@@ -538,7 +538,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영 / Code.gs 변경 없음)';
+const APP_BUILD_VERSION = '2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -555,6 +555,10 @@ const MOUNJARO_DOSES = [
    Work Out 탭: 부위 분류 체계 & 목디스크 안전 종목 라이브러리
 ========================================================= */
 const BODY_PARTS = ['등','이두','하체','어깨','가슴','삼두'];
+// 2026-10-23 추가: part가 정확히 '보조운동'인 기록(밴드 보조 턱걸이 등)은 근력·유산소 판정, 최근 운동, 운동일 집계 등 모든 운동 통계에서 제외한다.
+// 원본 기록은 state.workouts·시트에 그대로 보존되고(동기화·데이터 탭 원본 표시는 그대로), 통계·화면 계산에서만 statWorkouts_()로 걸러낸다.
+function isAuxEntry_(w){ return !!w && String(w.part||'').trim()==='보조운동'; }
+function statWorkouts_(arr){ return (arr||state.workouts||[]).filter(w => !isAuxEntry_(w)); }
 const BODY_PART_COLOR = {'하체':'#7C5CFC','등':'#17D9B4','가슴':'#FF6B7A','어깨':'#FFB648','이두':'#4C8DFF','삼두':'#2F6E51'};
 const BODY_PART_ICON = {'하체':'🦵','등':'🔥','가슴':'🔥','어깨':'💪','이두':'💪','삼두':'💪'};
 function partDot(part){ return `<span>${BODY_PART_ICON[part]||''}</span>`; }
@@ -618,6 +622,7 @@ const SAFE_EXERCISE_LIBRARY = {
 };
 
 function inferPartsForEntry(w){
+  if(isAuxEntry_(w)) return []; // 2026-10-23: 보조운동은 note의 '어깨'·'풀업' 같은 단어와 상관없이 부위 자극으로 세지 않는다
   const parts = new Set();
   if(w.exercises && w.exercises.length){
     w.exercises.forEach(ex => {
@@ -1362,6 +1367,40 @@ function makeId(prefix){ return `${prefix}_${Date.now().toString(36)}_${Math.ran
 const AUTO_SYNC_THROTTLE_MS = 60*1000; // 2026-10-05-c: 5분→1분 — 이 안에 재방문하면 자동 동기화 스킵(수동 버튼은 예외)
 const AUTO_SYNC_START_DELAY_MS = 1500; // 2026-08-04 추가(벤치마킹 #2): 초기 렌더가 눈에 보인 뒤 시작 — 로딩 첫 화면이 네트워크에 묶이지 않도록
 
+// 2026-10-22 동기화 상태 정확화: 예전 "Claude 분석" 라벨의 "동기화 HH:MM"은 분석 글이 바뀐 시각이었지 실제 마지막 동기화 시각이 아니었다.
+// 그래서 동기화가 몇 시간째 안 돼도 라벨만 봐서는 알 수 없었다. 이제 "마지막으로 성공한 동기화"와 "마지막 실패"를 기기에 따로 저장해
+// 라벨·대시보드 배너에서 보여준다. (서버·시트 데이터와 무관한 표시용 값 — 지워도 데이터에는 영향 없음)
+const SYNC_OK_KEY_ = 'brc_lastsyncok_v1';
+const SYNC_ERR_KEY_ = 'brc_lastsyncerr_v1';
+const AI_SERVER_SEEN_KEY_ = 'brc_aiserverseen_v1';
+const SYNC_STALE_HOURS_ = 3; // 마지막 성공 동기화가 이 시간보다 오래되면 "동기화 필요" 안내
+function lsJson_(k){ try{ const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; }catch(e){ return null; } }
+function recordSyncOk_(){ try{ localStorage.setItem(SYNC_OK_KEY_, new Date().toISOString()); localStorage.removeItem(SYNC_ERR_KEY_); }catch(e){} }
+function recordSyncErr_(msg){ try{ localStorage.setItem(SYNC_ERR_KEY_, JSON.stringify({at:new Date().toISOString(), message:String(msg||'').slice(0,120)})); }catch(e){} }
+function syncStaleInfo_(){
+  let okIso = ''; try{ okIso = localStorage.getItem(SYNC_OK_KEY_) || ''; }catch(e){}
+  const okMs = okIso ? new Date(okIso).getTime() : NaN;
+  const err = lsJson_(SYNC_ERR_KEY_);
+  const errMs = err && err.at ? new Date(err.at).getTime() : NaN;
+  if(!isNaN(errMs) && (isNaN(okMs) || errMs > okMs)){
+    return {kind:'error', okIso, text:`마지막 동기화 시도가 실패했어요(${fmtDateTime(err.at)}) — ${err.message||'원인 확인안됨'}`};
+  }
+  if(!isNaN(okMs)){
+    const h = (Date.now()-okMs)/3600000;
+    if(h >= SYNC_STALE_HOURS_) return {kind:'old', okIso, hours:h, text:`마지막 동기화가 ${Math.floor(h)}시간 전이에요`};
+  }
+  return {kind:null, okIso};
+}
+function syncNeededBannerHtml_(){
+  try{
+    if(!(localStorage.getItem(LS_KEYS.cloudurl)||'').trim()) return '';
+    if(syncing) return '';
+    const st = syncStaleInfo_();
+    if(!st.kind) return '';
+    return `<div class="note-box no-print" style="border-color:var(--c-warn); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;"><span>🔄 <b>동기화가 필요해요</b> — ${esc(st.text)}. 지금 보이는 분석·식단이 최신이 아닐 수 있어요.</span><button class="btn btn-sm" onclick="cloudSync(false)">지금 동기화</button></div>`;
+  }catch(e){ return ''; }
+}
+
 // 2026-10-04-a 추가: 저장 직후 자동 동기화(정희님 요청 — "입력하면 자동으로 동기화되게").
 // 기존엔 앱을 열 때(5분 스로틀)와 "지금 동기화" 버튼에서만 시트로 전송돼서, 인바디·허리둘레 등을
 // 입력해도 시트·알림·Claude 분석에는 수동 동기화 전까지 반영되지 않았다.
@@ -1803,7 +1842,10 @@ function aiNoteFreshnessLabel(note){
   const todayD = todayISO();
   const isStale = !!(noteDate && noteDate < todayD);
   const dateLabel = noteDate ? `${noteDate}${noteTime_?' '+noteTime_:''} 기준 분석` : (note.syncedAt ? `${fmtDateTime(note.syncedAt)} 갱신` : '');
-  const syncPart = note.syncedAt ? ` · 동기화 ${fmtDateTime(note.syncedAt)}` : '';
+  // 2026-10-22: "동기화" 시각은 분석 글이 바뀐 시각(note.syncedAt)이 아니라 실제 마지막 성공 동기화 시각을 쓴다(저장 전 구버전 기기는 기존 값으로 대체).
+  const st_ = syncStaleInfo_();
+  const syncShown_ = st_.okIso || note.syncedAt || '';
+  const syncPart = syncShown_ ? ` · 마지막 동기화 ${fmtDateTime(syncShown_)}` : '';
   const staleBadge = isStale ? ` <span style="color:var(--c-warn); font-weight:700;">⚠️ ${esc(noteDate)} 이후 새 분석 없음</span>` : '';
   // 2026-10-18(B1 앱쪽): 분석 시각(시·분 포함)이 있으면 경과 시간과, 분석 이후 앱에서 직접 수정·입력한 기록 수를 함께 표시.
   // (inbox 업로드 행은 updatedAt이 비어 있어 감지 못 함 — 서버가 분석 이후 들어온 데이터를 알려주는 기능은 Code.gs 쪽 후속 작업)
@@ -1824,7 +1866,19 @@ function aiNoteFreshnessLabel(note){
     parts_.push(`분석 이후 새 데이터 ${Number(ibs_.pendingCount)}건${hm_}`);
   }
   if(parts_.length) elapsedBadge = ` <span style="color:var(--c-warn); font-weight:700;">⏱ ${esc(parts_.join(' · '))}</span>`;
-  return dateLabel ? `· ${esc(dateLabel)}${syncPart}${staleBadge}${elapsedBadge}` : '';
+  // 2026-10-22: 분석 카드 전용 동기화 경고(종합 리포트 라벨에는 붙이지 않음) — 실패·오래됨·시트에 더 새 분석이 있는데 미반영인 경우
+  let syncWarn_ = '';
+  if(note === state.aiNote){
+    const warnStyle_ = 'color:var(--c-warn); font-weight:700;';
+    const nowLink_ = ' <a href="#" onclick="cloudSync(false);return false;" style="color:var(--c-accent); font-weight:700; text-decoration:underline;">지금 동기화</a>';
+    const seen_ = lsJson_(AI_SERVER_SEEN_KEY_);
+    const seenMs_ = seen_ && seen_.date ? parseDateSafe_(seen_.date) : null;
+    const noteMs2_ = parseDateSafe_(rawNoteDate_);
+    if(st_.kind==='error') syncWarn_ = ` <span style="${warnStyle_}">⚠️ ${esc(st_.text)}</span>${nowLink_}`;
+    else if(st_.kind==='old') syncWarn_ = ` <span style="${warnStyle_}">⚠️ ${esc(st_.text)} — 최신 분석이 아닐 수 있어요</span>${nowLink_}`;
+    else if(seenMs_ && noteMs2_ && seenMs_ > noteMs2_ + 1000) syncWarn_ = ` <span style="${warnStyle_}">⚠️ 시트에 더 새 분석이 있는데 이 기기에 반영되지 않았어요</span>${nowLink_}`;
+  }
+  return dateLabel ? `· ${esc(dateLabel)}${syncPart}${staleBadge}${elapsedBadge}${syncWarn_}` : '';
 }
 
 // 2026-10-13 추가: 인바디 "제외 확정"(정희님 확정 설계). 앱은 후보만 보여주고, 제외 여부는 정희님이 탭으로 확정한다(자동 제외 금지).
@@ -2765,7 +2819,7 @@ function computeInsights(){
   const muscleAssess = computeMuscleAssessment(first, lastWithMuscle(ib));
   const recentMA = ma.slice(-7);
   const maTrendDelta = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : 0;
-  const sortedW = [...state.workouts].sort((a,b)=>b.date.localeCompare(a.date));
+  const sortedW = [...statWorkouts_()].sort((a,b)=>b.date.localeCompare(a.date));
   const recentWorkout = sortedW[0];
   const recentMeals = [...state.meals].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
   const avgCal = recentMeals.length ? recentMeals.reduce((s,m)=>s+(m.calories||0),0)/recentMeals.length : null;
@@ -2814,7 +2868,7 @@ const INSIGHT_CFG_ = {
   calMargin: 150,           // 목표 칼로리 범위 ± 여유
   calOverLimit: 2200,       // 하루 과다 섭취 기준
   mealMinDays: 3,           // 영양 평가에 필요한 최소 확정 일수
-  strengthPerWeek: 3,       // 앱 기준 주간 근력 횟수(변경 없음)
+  strengthPerWeek: 2,       // 2026-10-22: 앱 기준 주간 근력 횟수 3→2(정희님 확정 계획: 주 2회·요일 자유). 서버 하루 점수 공식(최근 7일 근력 3일 만점)은 그대로
   cardioMinPerWeek: 2,
   stepsGoal: 10000,
   violationLookbackDays: 14
@@ -2859,7 +2913,7 @@ function computeMuscleInsightV2_(ib){
   const delta = blockMA7Delta(ib, 'muscle');
   const toGoal = NEW_GOAL && NEW_GOAL.muscle ? NEW_GOAL.muscle - gb.muscle : 33 - gb.muscle;
   let tone, action;
-  if(gap <= INSIGHT_CFG_.muscleWarnGap){ tone='warn'; action = '단백질 140g↑과 주 3회 근력을 지키고, 월 점검일에 같이 확인해요.'; }
+  if(gap <= INSIGHT_CFG_.muscleWarnGap){ tone='warn'; action = '단백질 140g↑과 주 2회 근력을 지키고, 월 점검일에 같이 확인해요.'; }
   else if(gap >= INSIGHT_CFG_.muscleOkGap){ tone='good'; action = '지금 루틴을 그대로 이어가세요.'; }
   else { tone='neutral'; action = '큰 문제는 아니에요. 근력 횟수와 단백질만 챙기면 돼요.'; }
   const deltaTxt = delta===null ? '' : `, 직전 7번 평균 대비 ${delta>0?'+':''}${fmt(delta,2)}kg`;
@@ -3742,7 +3796,59 @@ const STRENGTH_GROUPS = [
   {label:'등·이두', parts:['등','이두']},
   {label:'가슴·어깨·삼두', parts:['가슴','어깨','삼두']},
 ];
+
+/* 2026-10-22 운동 계획 변경(정희님 확정 2026-10-20): 근력은 주 2회·요일 자유(같은 부위는 48시간 이상 간격), 세션 A(하체+등·이두)와 B(상체)를 번갈아.
+   유산소는 "인정 유산소"(part가 정확히 '유산소' AND 평균심박 105bpm 이상 AND 20분 이상, 서버 하루 점수와 같은 기준)만 주 3회(최소 2회)로 센다.
+   요일 슬롯·계획 미이행 ❌는 폐지. FLEX_WEEK_V2_=false로 바꾸면 예전 월·목·토 계획 방식으로 돌아간다(예전 코드는 그대로 보존). */
+const FLEX_WEEK_V2_ = true;
+const FLEX_STRENGTH_TARGET_ = 2;
+const FLEX_CARDIO_TARGET_ = 3;
+const FLEX_CARDIO_MIN_ = 2;
+const FLEX_SESSIONS_ = {
+  A: {label:'A 하체+등·이두', parts:['하체','등','이두']},
+  B: {label:'B 상체(가슴·어깨·삼두)', parts:['가슴','어깨','삼두']},
+};
+function isQualifiedCardioEntry_(w){
+  if(!w || w.part!=='유산소') return false; // 서버와 같게: part가 정확히 '유산소'인 구조화 기록만 인정
+  const hr = w.avgHR!=null && w.avgHR!=='' ? Number(w.avgHR) : null;
+  const dur = w.durationMin!=null && w.durationMin!=='' ? Number(w.durationMin) : null;
+  return hr!==null && dur!==null && !isNaN(hr) && !isNaN(dur) && hr>=CARDIO_VALID_RULE.minHR && dur>=CARDIO_VALID_RULE.minDurationMin;
+}
+function qualifiedCardioOnDate_(workouts, date){ return workouts.some(w => w.date===date && isQualifiedCardioEntry_(w)); }
+function flexWeekStats_(workouts, dates){
+  let strength=0, cardioQ=0, cardioU=0;
+  dates.forEach(d => {
+    const a = classifyDayType(workouts, d);
+    if(!a) return;
+    if(a.type==='근력' || a.type==='둘다') strength++;
+    if(a.type==='유산소' || a.type==='둘다'){ if(qualifiedCardioOnDate_(workouts, d)) cardioQ++; else cardioU++; }
+  });
+  return {strength, cardioQ, cardioU};
+}
+function nextFlexSession_(workouts){
+  const isStrength = w => inferPartsForEntry(w).some(p => BODY_PARTS.includes(p));
+  const dates = [...new Set(workouts.filter(isStrength).map(w => w.date))].sort();
+  const lastS = dates.length ? dates[dates.length-1] : null;
+  const today = todayISO();
+  const since = lastS ? Math.round((new Date(today+'T00:00:00') - new Date(lastS+'T00:00:00')) / 86400000) : null;
+  const lastParts = new Set(workouts.filter(w => w.date===lastS && isStrength(w)).flatMap(w => inferPartsForEntry(w)));
+  const key = lastS && lastParts.has('하체') ? 'B' : 'A'; // 직전이 하체 포함(A)이면 다음은 B, 그 외·기록 없음이면 A
+  const sess = FLEX_SESSIONS_[key];
+  let text = `다음 추천 세션은 ${sess.label}이에요.`;
+  if(since!==null && since < 2) text += ' 같은 부위는 48시간 뒤부터 좋아요 — 오늘은 회복일이에요.';
+  return {key, label:sess.label, parts:sess.parts, since, lastS, text};
+}
+function flexStripHtml_(workouts){
+  const thisMonday = isoWeekKey(todayISO());
+  const st = flexWeekStats_(workouts, getWeekDates(thisMonday));
+  const nx = nextFlexSession_(workouts);
+  return `<div class="plan-advisory">
+    <div class="plan-advisory-head">🗓️ 이번 주는 요일 자유예요</div>
+    <div class="plan-advisory-item"><b>${esc(nx.label)}</b> 차례 · 이번 주 근력 ${st.strength}/${FLEX_STRENGTH_TARGET_}회 · 인정 유산소 ${st.cardioQ}/${FLEX_CARDIO_TARGET_}회(최소 ${FLEX_CARDIO_MIN_}회)${st.cardioU>0?` · 미인정 ${st.cardioU}회`:''}${nx.since!==null && nx.since<2?' · 오늘은 회복일':''}</div>
+  </div>`;
+}
 function getWeeklyPlan(workouts, mondayDate){
+  if(FLEX_WEEK_V2_) return {}; // 2026-10-22: 요일별 계획 폐지(근력 주 2회 요일 자유) — 계획이 없으니 ❌ 미이행 표시도 생기지 않는다
   const dates = getWeekDates(mondayDate);
   const plan = {};
   // 2026-07-16 변경: 월/수/금 → 이번 주(~7/19)는 월/수/토, 7/20(월)부터는 월/목/토로 슬롯 변경
@@ -3786,7 +3892,7 @@ function planLabelToParts(label){
 }
 
 function classifyDayType(workouts, date){
-  const entries = workouts.filter(w=>w.date===date);
+  const entries = workouts.filter(w=>w.date===date && !isAuxEntry_(w)); // 2026-10-23: 보조운동은 근력·유산소·휴식 어디에도 분류하지 않는다(그날 보조운동만 있으면 기록 없음 취급)
   if(entries.length===0) return null;
   const restOnly = entries.every(w => w.part==='회복');
   if(restOnly) return {type:'휴식', label:entries[0].name||'휴식'};
@@ -3822,24 +3928,31 @@ function renderWeeklyPlanSection(workouts){
   const dow = ['월','화','수','목','금','토','일'];
   const typeClass = t => t==='근력'?'plan-strength':t==='유산소'?'plan-cardio':t==='둘다'?'plan-both':t==='휴식'?'plan-rest':'plan-none';
 
-  const subtypeCellHTML = (subType, plan, showPlan) => {
+  const subtypeCellHTML = (subType, plan, showPlan, unq) => {
     const isPlanned = !!(plan && plan.type === subType);
-    const cls = isPlanned ? typeClass(subType) : 'plan-bonus';
-    const mark = isPlanned ? ' ✓' : ' 🔥';
-    return `<div class="plan-cell ${cls} ${showPlan?'':'solo'}">${subType}${mark}</div>`;
+    const flex_ = FLEX_WEEK_V2_ && !showPlan; // 요일 계획이 없는 자유 주간: ✓/🔥 없이 실적만 보여준다
+    const cls = flex_ ? typeClass(subType) : (isPlanned ? typeClass(subType) : 'plan-bonus');
+    const mark = flex_ ? (unq ? ' (미인정)' : '') : (isPlanned ? ' ✓' : ' 🔥');
+    return `<div class="plan-cell ${cls} ${showPlan?'':'solo'}"${unq?' style="opacity:.6;"':''}>${subType}${mark}</div>`;
   };
 
   const weekBlock = (mondayDate, weekLabel, showPlan) => {
     const dates = getWeekDates(mondayDate);
     const strengthCount = dates.filter(d => { const a=classifyDayType(workouts,d); return a && (a.type==='근력'||a.type==='둘다'); }).length;
     const cardioCount = dates.filter(d => { const a=classifyDayType(workouts,d); return a && (a.type==='유산소'||a.type==='둘다'); }).length;
+    const fx_ = FLEX_WEEK_V2_ ? flexWeekStats_(workouts, dates) : null; // 2026-10-22: 근력 목표 2회, 유산소는 인정 기준으로만 집계
+    const sT_ = FLEX_WEEK_V2_ ? FLEX_STRENGTH_TARGET_ : 3;
+    const chipsHtml_ = FLEX_WEEK_V2_
+      ? `<span class="chip ${strengthCount>=sT_?'good':''}">근력 ${strengthCount}회 / 목표 ${sT_}회${strengthCount>sT_?` 🔥 초과달성 (${Math.round(strengthCount/sT_*100)}%)`:strengthCount===sT_?' ✓ 달성 (100%)':''}</span>
+            <span class="chip ${fx_.cardioQ>=FLEX_CARDIO_TARGET_?'good':''}">인정 유산소 ${fx_.cardioQ}회 / 목표 ${FLEX_CARDIO_TARGET_}회(최소 ${FLEX_CARDIO_MIN_}회)${fx_.cardioQ>FLEX_CARDIO_TARGET_?` 🔥 초과달성 (${Math.round(fx_.cardioQ/FLEX_CARDIO_TARGET_*100)}%)`:fx_.cardioQ===FLEX_CARDIO_TARGET_?' ✓ 달성 (100%)':''}${fx_.cardioU>0?` · 미인정 ${fx_.cardioU}회`:''}</span>`
+      : `<span class="chip ${strengthCount>=3?'good':''}">근력 ${strengthCount}회 / 목표 3회${strengthCount>3?` 🔥 초과달성 (${Math.round(strengthCount/3*100)}%)`:strengthCount===3?' ✓ 달성 (100%)':''}</span>
+            <span class="chip ${cardioCount>=3?'good':''}">유산소 ${cardioCount}회 / 목표 3회${cardioCount>3?` 🔥 초과달성 (${Math.round(cardioCount/3*100)}%)`:cardioCount===3?' ✓ 달성 (100%)':''}</span>`;
     return `
       <div style="margin-bottom:18px;">
         <div class="week-head">
           <div class="week-title">${weekLabel} (${mondayDate.slice(5)} ~ ${dates[6].slice(5)})</div>
           <div class="week-chips">
-            <span class="chip ${strengthCount>=3?'good':''}">근력 ${strengthCount}회 / 목표 3회${strengthCount>3?` 🔥 초과달성 (${Math.round(strengthCount/3*100)}%)`:strengthCount===3?' ✓ 달성 (100%)':''}</span>
-            <span class="chip ${cardioCount>=3?'good':''}">유산소 ${cardioCount}회 / 목표 3회${cardioCount>3?` 🔥 초과달성 (${Math.round(cardioCount/3*100)}%)`:cardioCount===3?' ✓ 달성 (100%)':''}</span>
+            ${chipsHtml_}
           </div>
         </div>
         <div class="plan-grid">
@@ -3847,6 +3960,7 @@ function renderWeeklyPlanSection(workouts){
             const plan = showPlan ? planForDate(d, workouts) : null;
             const actual = classifyDayType(workouts, d);
             const isToday = d===todayISO();
+            const cardioUnq_ = FLEX_WEEK_V2_ && actual && (actual.type==='유산소'||actual.type==='둘다') ? !qualifiedCardioOnDate_(workouts, d) : false; // 2026-10-22: 인정 기준 미달 유산소 표시
             // 2026-07-16 추가: 계획일(근력/유산소)이 실제로 이행되지 않았으면 계획 타입 + ❌ 를 경고색(plan-missed)으로 별도 표시
             const isFreeSlot = !!(plan && plan.label && plan.label.includes('자율'));
             const isPastDate = d < todayISO(); // 오늘·미래 날짜는 아직 결과가 안 나온 것이므로 미이행으로 판정하지 않음
@@ -3855,10 +3969,10 @@ function renderWeeklyPlanSection(workouts){
             const actualCell = !actual
               ? (planNotFulfilled([]) ? missedCellHTML(plan.type) : `<div class="plan-cell plan-none ${showPlan?'':'solo'}">—</div>`)
               : actual.type==='둘다'
-                ? subtypeCellHTML('근력', plan, showPlan) + subtypeCellHTML('유산소', plan, showPlan)
+                ? subtypeCellHTML('근력', plan, showPlan) + subtypeCellHTML('유산소', plan, showPlan, cardioUnq_)
                 : actual.type==='휴식'
                   ? `<div class="plan-cell plan-rest ${showPlan?'':'solo'}">휴식${plan && plan.type==='휴식' ? ' ✓' : ''}</div>` + (planNotFulfilled(['휴식']) ? missedCellHTML(plan.type) : '')
-                  : subtypeCellHTML(actual.type, plan, showPlan) + (planNotFulfilled([actual.type]) ? missedCellHTML(plan.type) : '');
+                  : subtypeCellHTML(actual.type, plan, showPlan, actual.type==='유산소' && cardioUnq_) + (planNotFulfilled([actual.type]) ? missedCellHTML(plan.type) : '');
             return `<div class="plan-col ${isToday?'is-today':''} ${planDetailDate===d?'is-selected':''}" onclick="selectPlanDay('${d}')">
               <div class="plan-dow">${dow[i]}${isToday?' ·오늘':''}</div>
               ${showPlan ? `<div class="plan-cell plan-row ${plan?typeClass(plan.type):'plan-none'}">${plan?plan.type:'—'}</div>` : ''}
@@ -3873,26 +3987,33 @@ function renderWeeklyPlanSection(workouts){
 
   return `
     <section class="card">
-      <div class="section-label good">${secNum('W3b')}주간 근력/유산소 계획 &amp; 실적</div>
+      <div class="section-label good">${secNum('W3b')}${FLEX_WEEK_V2_ ? '주간 근력/유산소 실적' : '주간 근력/유산소 계획 &amp; 실적'}</div>
+      ${FLEX_WEEK_V2_ ? flexStripHtml_(workouts) : ''}
       ${(() => {
-        const advisories = (INSIGHT_ENGINE_V2 ? computeDashboardInsightsV2_(sortedInbody(), state.meals, state.workouts) : computeSmartAlerts(sortedInbody(), state.meals, state.workouts)).filter(a=>a.tone==='warn').slice(0,2);
+        const advisories = (INSIGHT_ENGINE_V2 ? computeDashboardInsightsV2_(sortedInbody(), state.meals, statWorkouts_()) : computeSmartAlerts(sortedInbody(), state.meals, statWorkouts_())).filter(a=>a.tone==='warn').slice(0,2);
         if(!advisories.length) return '';
         return `<div class="plan-advisory">
           <div class="plan-advisory-head">⚖️ 이번주 참고사항 (체성분·식단 기반)</div>
           ${advisories.map(a => `<div class="plan-advisory-item"><b>${a.title}</b> — ${a.detail}</div>`).join('')}
         </div>`;
       })()}
-      <div class="plan-legend">
+      ${FLEX_WEEK_V2_ ? `<div class="plan-legend">
+        <span><span class="legend-dot" style="background:var(--c-good)"></span>근력</span>
+        <span><span class="legend-dot" style="background:var(--c-neutral)"></span>인정 유산소(심박 105↑·20분↑)</span>
+        <span><span class="legend-dot" style="background:var(--c-accent)"></span>둘다</span>
+        <span><span class="legend-dot" style="background:var(--text-faint)"></span>휴식</span>
+        <span>유산소 (미인정) = 심박·시간 기준 미달 또는 기록 없음</span>
+      </div>` : `<div class="plan-legend">
         <span><span class="legend-dot" style="background:var(--c-good)"></span>근력(계획칸) / 계획대로 실행 ✓</span>
         <span><span class="legend-dot" style="background:var(--c-neutral)"></span>유산소(계획칸) / 계획대로 실행 ✓</span>
         <span><span class="legend-dot" style="background:var(--c-accent)"></span>둘다(계획칸)</span>
         <span><span class="legend-dot" style="background:var(--text-faint)"></span>휴식</span>
         <span><span class="legend-dot" style="background:var(--c-bonus)"></span>계획에 없던 자발적 실행 🔥</span>
         <span><span class="legend-dot" style="background:#FF5C72"></span>계획일 미이행 ❌ (지난 날짜만 판정)</span>
-      </div>
-      ${weekBlock(lastMonday, '지난주', true)}
-      ${weekBlock(thisMonday, '이번주', true)}
-      <div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>
+      </div>`}
+      ${weekBlock(lastMonday, '지난주', !FLEX_WEEK_V2_)}
+      ${weekBlock(thisMonday, '이번주', !FLEX_WEEK_V2_)}
+      ${FLEX_WEEK_V2_ ? `<div class="note-box">근력은 <b>주 2회·요일 자유</b>예요(같은 부위는 48시간 이상 간격, A 하체+등·이두 / B 상체를 번갈아). 유산소는 <b>평균심박 105bpm 이상·20분 이상</b>인 기록만 주 3회(최소 2회)로 세고, 기준에 못 미친 유산소는 <b>(미인정)</b>으로 따로 표시돼요. 요일별 계획과 ❌ 미이행 표시는 없애고 실제 실적만 보여드려요. 요일 칸을 누르면 그날 상세 내역이 펼쳐집니다.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
     </section>
   `;
 }
@@ -3925,7 +4046,7 @@ function selectPlanDay(date){
 }
 function renderPlanDetailPanel(date, workouts){
   const entries = workouts.filter(w=>w.date===date);
-  const plan = planForDate(date, state.workouts);
+  const plan = planForDate(date, statWorkouts_());
   return `<div class="plan-detail">
     <div class="plan-detail-head">
       <span>${date} 상세</span>
@@ -3942,7 +4063,7 @@ function renderPlanDetailPanel(date, workouts){
 }
 
 function renderWorkoutTab(){
-  const workouts = state.workouts;
+  const workouts = statWorkouts_(); // 2026-10-23: 보조운동 제외
   if(workouts.length===0) return `<div class="empty-state">아직 운동 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
 
   const kpis = computeWorkoutKPICards(workouts);
@@ -3957,7 +4078,13 @@ function renderWorkoutTab(){
   const overdueParts = returnMode ? [] : recovery.filter(r => r.status==='overdue').map(r => r.part); // 10일 넘게 방치된 부위(복귀 모드에서는 강제 포함 안 함)
   const todayPlan = planForDate(todayISO(), workouts);
   let recommended, planNotice, guideDateLabel;
-  if(todayPlan && todayPlan.type==='근력'){
+  if(FLEX_WEEK_V2_){
+    // 2026-10-22: 요일 계획 대신 A/B 교대 추천(직전 세션 기준). 복귀 모드(10일 이상 공백)면 안내문을 덧붙인다.
+    const nx_ = nextFlexSession_(workouts);
+    recommended = nx_.parts;
+    guideDateLabel = `오늘(${todayISO()})`;
+    planNotice = nx_.text + (returnNote ? ' ' + returnNote : '');
+  } else if(todayPlan && todayPlan.type==='근력'){
     const planParts = planLabelToParts(todayPlan.label);
     const missedOverdue = overdueParts.filter(p => !planParts.includes(p));
     recommended = [...planParts, ...missedOverdue];
@@ -4262,6 +4389,8 @@ function renderDashboard(){
       </div>`;
     })()}
 
+    ${syncNeededBannerHtml_()}
+
     ${inbodyStatusLineHtml_()}
 
     ${state.aiNote ? `
@@ -4279,7 +4408,7 @@ function renderDashboard(){
     <section class="card">
       <div class="section-label good">${secNum('00b')}스마트 인사이트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.lastUpdated ? '최종 갱신 '+fmtDateTime(state.lastUpdated) : '데이터 기반 자동 감지'}</span></div>
       <div class="alert-list">
-        ${(INSIGHT_ENGINE_V2 ? computeDashboardInsightsV2_(ib, state.meals, state.workouts) : computeSmartAlerts(ib, state.meals, state.workouts)).map(a => `
+        ${(INSIGHT_ENGINE_V2 ? computeDashboardInsightsV2_(ib, state.meals, statWorkouts_()) : computeSmartAlerts(ib, state.meals, statWorkouts_())).map(a => `
           <div class="alert-item ${a.tone==='warn'?'tone-warn-item':a.tone==='good'?'tone-good-item':''}">
             <div class="alert-icon tone-${a.tone}">${ICONS[a.icon] || ICONS.target}</div>
             <div class="alert-body">
@@ -4406,7 +4535,7 @@ function renderDashboard(){
     <section>
       <div class="section-label">${secNum('02b')}잘하고 있는 점 &amp; 아쉬운 점 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.lastUpdated ? '최종 갱신 '+fmtDateTime(state.lastUpdated) : '매일 데이터로 자동 갱신'}</span></div>
       ${(() => {
-        const {strengths, improvements} = computeStrengthsAndImprovements(ib, state.workouts, state.meals);
+        const {strengths, improvements} = computeStrengthsAndImprovements(ib, statWorkouts_(), state.meals);
         return `<div class="sw-grid">
           <div class="sw-col">
             <div class="sw-head good">👍 잘하고 있는 점</div>
@@ -4442,7 +4571,7 @@ function toggleAiNote(btn){
 // 서버 점수 공식(Code.gs, 2026-10-16 동기화)과 같은 구조: 오늘 기록 12.5(근력 7.5 + 인정 유산소 5) + 최근 7일 균형 12.5(근력일 min(n,3)/3×7.5 + 인정 유산소일 min(n,3)/3×5).
 // 앱은 점수를 직접 매기지 않으므로 "예상"으로만 표시한다. 인정 유산소 = part가 정확히 '유산소' AND 평균심박 105 이상 AND 20분 이상.
 function computeActivityHint_(){
-  const ws = state.workouts || [];
+  const ws = statWorkouts_();
   const days = daysAgoList(7);            // [오늘, 어제, ...]
   const todayD = days[0];
   const isStrengthDay = d => { const t = classifyDayType(ws, d); return !!t && (t.type==='근력' || t.type==='둘다'); };
@@ -4459,7 +4588,7 @@ function renderTodayRemainingCard_(){
   const todayD = todayISO();
   const bmrRec = [...sortedInbody()].reverse().find(r => r && Number(r.bmr) > 0);
   if(!bmrRec) return '';
-  const ws = state.workouts || [];
+  const ws = statWorkouts_();
   const eat = ws.filter(w => w && w.date===todayD).reduce((s,w)=>s+(Number(w.calories)||0),0);
   const cal = computeCalorieTarget(Number(bmrRec.bmr), eat);
   const carb = computeCarbTarget(ws, todayD);
@@ -4501,7 +4630,7 @@ function renderTodayRemainingCard_(){
 function renderRecordGapCard_(){
   const days = daysAgoList(7).reverse(); // 오래된 날 → 오늘
   const mealOn = new Set((state.meals||[]).filter(m => m && Number(m.calories) > 0).map(m => String(m.date).slice(0,10)));
-  const woOn = new Set((state.workouts||[]).filter(w => w && w.date).map(w => String(w.date).slice(0,10)));
+  const woOn = new Set(statWorkouts_().filter(w => w && w.date).map(w => String(w.date).slice(0,10)));
   const stepsOn = new Set((state.steps||[]).filter(s => s && s.date && Number(s.steps) > 0).map(s => String(s.date).slice(0,10)));
   const mealN = days.filter(d => mealOn.has(d)).length, woN = days.filter(d => woOn.has(d)).length, stN = days.filter(d => stepsOn.has(d)).length;
   const cell = (on, label) => `<div class="mono" style="font-size:11px; text-align:center; color:${on ? 'var(--c-good)' : 'var(--text-dim)'}; opacity:${on ? 1 : 0.7};">${label}${on ? '✓' : '–'}</div>`;
@@ -4871,8 +5000,8 @@ function renderInbodyTable(ma){
 function renderLog(){
   const byDate = arr => Object.fromEntries(arr.map(r=>[r.date,r]));
   const groupByDate = arr => arr.reduce((acc,r)=>{ (acc[r.date]=acc[r.date]||[]).push(r); return acc; }, {});
-  const ib = byDate(state.inbody), wk = groupByDate(state.workouts), ml = byDate(state.meals);
-  const dates = [...new Set([...state.inbody.map(r=>r.date), ...state.workouts.map(r=>r.date), ...state.meals.map(r=>r.date)])].sort((a,b)=>b.localeCompare(a));
+  const ib = byDate(state.inbody), wk = groupByDate(statWorkouts_()), ml = byDate(state.meals);
+  const dates = [...new Set([...state.inbody.map(r=>r.date), ...statWorkouts_().map(r=>r.date), ...state.meals.map(r=>r.date)])].sort((a,b)=>b.localeCompare(a));
   if(dates.length===0) return `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
 
   const ibSorted = sortedInbodyAll(); // 2026-10-13: 일별 기록은 제외된 날도 보여야 하므로 원본 전체
@@ -4910,7 +5039,7 @@ function renderLog(){
           ${weightChange!=null ? `<span class="chip ${weightChange<=0?'good':'warn'}">체중 ${weightChange>0?'+':''}${fmt(weightChange)}kg</span>` : ''}
           ${avgCal!=null ? `<span class="chip">평균 칼로리 섭취 ${fmt(avgCal,0)}kcal${calAchievePct!=null?` (달성률 ${calAchievePct}%)`:''}</span>` : ''}
           ${avgProtein!=null ? `<span class="chip">평균 단백질 ${fmt(avgProtein,0)}g${proteinAchievePct!=null?` (달성률 ${proteinAchievePct}%)`:''}</span>` : ''}
-          <span class="chip">운동횟수 ${workoutDays}일 (근력 ${Math.round(wkStrength/3*100)}% 달성 ${wkStrength}/3회, 유산소 ${Math.round(wkCardio/3*100)}% 달성 ${wkCardio}/3회)</span>
+          <span class="chip">운동횟수 ${workoutDays}일 (근력 ${Math.round(wkStrength/FLEX_STRENGTH_TARGET_*100)}% 달성 ${wkStrength}/${FLEX_STRENGTH_TARGET_}회, 유산소 ${Math.round(wkCardio/3*100)}% 달성 ${wkCardio}/3회)</span>
         </div>
       </div>
       <div class="card" style="padding:4px 16px;">
@@ -5403,7 +5532,7 @@ function buildTodayCopyText(){
   const d = todayISO();
   const ib = state.inbody.find(r=>r.date===d);
   const meal = state.meals.find(m=>m.date===d);
-  const workouts = state.workouts.filter(w=>w.date===d);
+  const workouts = statWorkouts_().filter(w=>w.date===d);
   const lines = [`[오늘(${d}) 데이터 요약]`];
   lines.push(ib ? `인바디: 체중 ${fmt(ib.weight)}kg · 골격근 ${fmt(ib.muscle)}kg · 체지방 ${fmt(ib.fat)}kg(${fmt(ib.fatPct)}%) · BMR ${ib.bmr??'—'}kcal` : '인바디: 오늘 기록 없음');
   lines.push(meal ? `식단: ${meal.calories}kcal · 단백질 ${meal.protein}g${meal.carbs?` · 탄수 ${meal.carbs}g`:''}${meal.specialDayType&&meal.specialDayType!=='none'?` · 특이일:${SPECIAL_DAY_LABELS[meal.specialDayType]}`:''}${meal.note?` · ${meal.note}`:''}` : '식단: 오늘 기록 없음');
@@ -6106,6 +6235,8 @@ async function cloudSync(silent){
       // 완전 교체)한 다음에 푸시해야 이런 재생성이 발생하지 않는다.
       // 1) 시트의 최신 데이터를 먼저 가져와 로컬과 병합/정리(서버가 있는 날짜는 로컬 완전교체)
       const data = await fetchJson_(syncUrl_(url));
+      // 2026-10-22: 시트가 이번 pull에서 내려준 분석 시각을 기록 — 시트에 더 새 분석이 있는데 반영이 안 된 경우를 라벨이 감지한다.
+      try{ localStorage.setItem(AI_SERVER_SEEN_KEY_, JSON.stringify({date: data.aiAnalysisDate || null, hasText: !!data.aiAnalysis, at: new Date().toISOString()})); }catch(seenErr){}
       // 2026-09-19 추가(머니트레일 벤치마킹): 삭제 동기화(tombstone) — pull 시점에 로컬·클라우드
       // deletedIds를 카테고리별로 병합(키마다 더 최신 삭제시각 채택)해서, 아래 merge 함수들이
       // "이미 삭제된 항목이 서버에 남아있어도 되살리지 않게" 걸러낼 수 있게 한다.
@@ -6287,11 +6418,13 @@ async function cloudSync(silent){
         if(shrinkWarnings_.length){
           if(silent){
             console.warn('자동 동기화 보류 — 직전 저장 대비 데이터가 줄어들어 안전하게 건너뜁니다:', shrinkWarnings_);
+            recordSyncErr_('데이터 감소 감지로 자동 저장 보류');
             syncUiStatus = {phase:'error', at: new Date().toISOString(), message: `자동 저장 보류(데이터 감소 감지) — 설정 탭에서 "지금 동기화"로 확인해주세요: ${shrinkWarnings_.join(' / ')}`};
             paintSyncBadge();
             return;
           }
           if(!confirm(`직전 저장 때보다 아래 항목이 줄어들어 있어요:\n${shrinkWarnings_.join('\n')}\n\n의도적으로 삭제하신 게 맞다면 "확인"을 눌러 계속 저장하세요. 아니라면 "취소"를 누르고 먼저 데이터를 확인해주세요.`)){
+            recordSyncErr_('데이터 감소 감지로 저장 취소');
             syncUiStatus = {phase:'error', at: new Date().toISOString(), message: '데이터 감소가 감지되어 저장을 취소했습니다.'};
             paintSyncBadge();
             return;
@@ -6331,6 +6464,7 @@ async function cloudSync(silent){
       markUpdated();
       stopSyncTimer();
       try{ localStorage.setItem(LS_KEYS.lastautosync, new Date().toISOString()); }catch(e){} // 2026-08-04 추가: 스로틀 판단용
+      recordSyncOk_(); // 2026-10-22: 실제 마지막 성공 동기화 시각 기록(render() 전에 해야 라벨이 바로 반영됨)
       syncUiStatus = {phase:'done', at: new Date().toISOString()}; // 2026-08-04: 자동 동기화도 배너로 보여야 하므로 항상 설정
       render(); // 데이터가 실제로 바뀌었으니 여기서는 전체 재구성이 맞음(마지막 갱신 시각 등도 갱신)
     } finally { syncing = false; stopSyncTimer(); }
@@ -6340,6 +6474,7 @@ async function cloudSync(silent){
     syncing = false;
     stopSyncTimer();
     console.error('cloudSync error', e);
+    recordSyncErr_((e && e.message) ? e.message : '알 수 없는 오류'); // 2026-10-22: 새로고침해도 남도록 기기에 기록
     // 2026-08-04: 자동 동기화 실패도(예: 오프라인) 배너로 알려야 하므로 상태 갱신은 항상 시도.
     // 다만 paintSyncBadge 자체가 실패하는 예외적 상황의 raw alert() 폴백만 silent일 때 억제
     // (자동 백그라운드 동기화 중에 갑자기 alert 팝업이 뜨는 건 사용자 경험상 피해야 함).
