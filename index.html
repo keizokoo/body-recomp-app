@@ -538,7 +538,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -862,6 +862,26 @@ function computeCalorieTarget(bmr, eatKcal){
   const corrected = eat > threshold ? Math.round(base + (eat-threshold)*0.6) : base;
   return {base, threshold: Math.round(threshold), targetLow: corrected, targetHigh: corrected+100};
 }
+
+// 2026-10-26 신설(칼로리 목표 개정 B·C안, Code.gs 2026-10-26과 같은 규칙): 칼로리 목표에 쓰는 기초대사.
+// 하루 인바디 BMR은 수분 때문에 흔들려(중앙값 9kcal, 최대 57kcal) 목표가 ×1.5로 증폭되므로, 2026-10-27부터는
+// "최근 유효 측정 7번 평균 제지방(체중−체지방량)"으로 구한 값(370+21.6×평균 제지방, 인바디 BMR 식)을 쓴다.
+// 제외 확정일·체중만 잰 날(체지방 없음)은 건너뛰고, 10/27 이전 날짜는 예전 방식(전달받은 fallbackBmr)을 그대로 쓴다.
+const BMR_SMOOTH_START_DATE = '2026-10-27';
+function smoothedBmrOn_(dateISO){
+  const num = v => (v===null || v===undefined || v==='' || isNaN(Number(v))) ? null : Number(v);
+  const rows = sortedInbody().filter(r => r && String(r.date) <= String(dateISO) && num(r.weight)!==null && num(r.fat)!==null);
+  if(!rows.length) return null;
+  const lastN = rows.slice(-7);
+  const ffm = lastN.reduce((s,r) => s + (num(r.weight) - num(r.fat)), 0) / lastN.length;
+  return Math.round(370 + 21.6*ffm);
+}
+function targetBmrOn(dateISO, fallbackBmr){
+  if(String(dateISO) < BMR_SMOOTH_START_DATE) return fallbackBmr || null;
+  return smoothedBmrOn_(dateISO) || fallbackBmr || null;
+}
+// 목표 오차(추정): 기초대사 예측식은 개인에게 약 ±10% 오차 → 목표는 ×1.5로 움직이므로 ±(BMR×0.1×1.5) kcal
+function calorieErrorKcal_(bmr){ return bmr ? Math.round(bmr*0.1*1.5) : null; }
 
 // 2026-07-25 신설: 탄수화물 목표 계산 — 근력운동 총볼륨(kg) 기준 A/B/C 3단계.
 // 근거: 정희님 확정(2026-07-25) — 근력 없는 날=A, 있는 날은 "오늘 볼륨 vs 역대 최고볼륨(PR)의 40%"로 B/C 분리.
@@ -2887,12 +2907,16 @@ function computeNutritionInsightV2_(ib, meals){
   const rows = meals.filter(m => days.includes(m.date) && Number(m.calories) > 0);
   const normal = rows.filter(m => !insightIsSpecialMeal_(m));
   if(normal.length < INSIGHT_CFG_.mealMinDays) return null;
-  const targetLow = Math.round(last.bmr*1.5-550), targetHigh = targetLow+100;
+  const bmrT = targetBmrOn(today, last.bmr);
+  const targetLow = Math.round(bmrT*1.5-550), targetHigh = targetLow+100;
+  const calErr = calorieErrorKcal_(bmrT);
   const avg = normal.reduce((s,m)=>s+Number(m.calories),0)/normal.length;
   const pMin = PROTEIN_TARGET.min;
   const pOk = normal.filter(m => Number(m.protein) >= pMin).length;
   const over = normal.filter(m => Number(m.calories) > INSIGHT_CFG_.calOverLimit).length;
-  const margin = INSIGHT_CFG_.calMargin;
+  // 2026-10-26(C안): 7일 평균 판정 — 목표와의 차이가 추정 오차 안이면 이탈로 보지 않는다(기존 여유 150kcal보다 오차가 크면 오차를 쓴다).
+  const margin = Math.max(INSIGHT_CFG_.calMargin, calErr || 0);
+  const gapOut = avg > targetHigh ? avg - targetHigh : (avg < targetLow ? targetLow - avg : 0);
   let tone = 'good', action;
   if(avg > targetHigh + margin){ tone='warn'; action = `평균을 ${fmt(avg-targetHigh,0)}kcal 줄이면 목표 범위예요. 저녁 탄수화물·간식부터 줄여보세요.`; }
   else if(avg < targetLow - margin){ tone='warn'; action = `너무 적게 먹으면 근육이 빠져요. 하루 ${fmt(targetLow-avg,0)}kcal만 더 채우세요(단백질 식품 위주).`; }
@@ -2901,7 +2925,7 @@ function computeNutritionInsightV2_(ib, meals){
   const skipped = rows.length - normal.length;
   return {tone, icon:'target', score: tone==='warn'?80:50,
     title: tone==='warn' ? (avg>targetHigh+margin ? '최근 7일 섭취가 목표보다 높아요' : '최근 7일 섭취가 목표보다 낮아요') : '최근 7일 영양 흐름 양호',
-    detail: `확정된 ${normal.length}일 평균 ${fmt(avg,0)}kcal(목표 ${targetLow}~${targetHigh}), 단백질 ${pMin}g 이상 ${pOk}/${normal.length}일${over?`, ${INSIGHT_CFG_.calOverLimit}kcal 초과 ${over}일`:''}${skipped?` (특이일 ${skipped}일 제외)`:''}. ${action}`};
+    detail: `확정된 ${normal.length}일 평균 ${fmt(avg,0)}kcal(목표 ${targetLow}~${targetHigh}, 추정 오차 ±${calErr}), 단백질 ${pMin}g 이상 ${pOk}/${normal.length}일${over?`, ${INSIGHT_CFG_.calOverLimit}kcal 초과 ${over}일`:''}${skipped?` (특이일 ${skipped}일 제외)`:''}.${(gapOut>0 && gapOut<=calErr)?' 7일 평균 차이가 오차 범위 안이라 목표 수준으로 봐요.':''} ${action}`};
 }
 
 function computeMuscleInsightV2_(ib){
@@ -3098,7 +3122,7 @@ function computeSmartAlerts(ib, meals, workouts, opts){
   // 조용한데 다른 쪽은 경고)이 날 수 있음 — 두 카드가 동시에 떠도 모순처럼 안 보이도록 제목에
   // "최근 추세"/"오늘 단기"를 명시하고 여유폭을 문구에 직접 노출.
   if(last.bmr && meals.length >= 5){
-    const targetLow = Math.round(last.bmr*1.5-550);
+    const targetLow = Math.round(targetBmrOn(todayISO(), last.bmr)*1.5-550);
     const targetHigh = targetLow+100;
     const sortedMealsDesc = [...meals].sort((a,b)=>b.date.localeCompare(a.date));
     const normalMeals = sortedMealsDesc.filter(m=>!isSpecialDay(m));
@@ -3132,19 +3156,21 @@ function computeSmartAlerts(ib, meals, workouts, opts){
   {
     const todayD = todayISO();
     const todayEAT = workouts.filter(w=>w.date===todayD).reduce((s,w)=>s+(Number(w.calories)||0),0);
-    const calTarget = last.bmr ? computeCalorieTarget(last.bmr, todayEAT) : null;
+    const calBmr = targetBmrOn(todayD, last.bmr);
+    const calTarget = calBmr ? computeCalorieTarget(calBmr, todayEAT) : null;
+    const calErr = calorieErrorKcal_(calBmr);
     const carbTarget = computeCarbTarget(workouts, todayD);
     const todayMeal = meals.find(m=>m.date===todayD);
     if(calTarget && carbTarget){
       const calIntake = todayMeal ? (todayMeal.calories||0) : null;
       const carbIntake = todayMeal ? (todayMeal.carbs||0) : null;
-      let detail = `칼로리 목표 ${calTarget.targetLow}~${calTarget.targetHigh}kcal(오늘 EAT ${todayEAT}kcal${todayEAT>calTarget.threshold?`, BMR×0.3=${calTarget.threshold}kcal 초과분 보정 적용`:''}) · 탄수화물 목표 ${carbTarget.tier}등급 ${carbTarget.range[0]}~${carbTarget.range[1]}g(${carbTarget.reason}).`;
+      let detail = `칼로리 목표 ${calTarget.targetLow}~${calTarget.targetHigh}kcal(추정 오차 ±${calErr}kcal, 오늘 EAT ${todayEAT}kcal${todayEAT>calTarget.threshold?`, BMR×0.3=${calTarget.threshold}kcal 초과분 보정 적용`:''}) · 탄수화물 목표 ${carbTarget.tier}등급 ${carbTarget.range[0]}~${carbTarget.range[1]}g(${carbTarget.reason}).`;
       let tone = 'neutral';
       if(calIntake!==null && carbIntake!==null){
         const calDelta = calIntake < calTarget.targetLow ? calIntake-calTarget.targetLow : (calIntake > calTarget.targetHigh ? calIntake-calTarget.targetHigh : 0);
         const carbDelta = carbIntake < carbTarget.range[0] ? carbIntake-carbTarget.range[0] : (carbIntake > carbTarget.range[1] ? carbIntake-carbTarget.range[1] : 0);
-        detail += ` 현재 섭취 ${fmt(calIntake,0)}kcal(델타 ${calDelta===0?'범위내':(calDelta>0?'+':'')+fmt(calDelta,0)}, 여유 없이 정확히 비교) / 탄수 ${fmt(carbIntake,0)}g(델타 ${carbDelta===0?'범위내':(carbDelta>0?'+':'')+fmt(carbDelta,0)}).`;
-        if(calDelta!==0 || carbDelta!==0) tone = 'warn'; else tone = 'good';
+        detail += ` 현재 섭취 ${fmt(calIntake,0)}kcal(델타 ${calDelta===0?'범위내':(calDelta>0?'+':'')+fmt(calDelta,0)}, 목표 추정 오차 ±${calErr}kcal ${Math.abs(calDelta)<=calErr?'안':'밖'}) / 탄수 ${fmt(carbIntake,0)}g(델타 ${carbDelta===0?'범위내':(carbDelta>0?'+':'')+fmt(carbDelta,0)}).`;
+        if(Math.abs(calDelta)>calErr || carbDelta!==0) tone = 'warn'; else tone = 'good';
       }
       push({tone, icon:'target', score: 58, title:`오늘 목표 (오늘 단기 · 칼로리 EAT보정 + 탄수 ${carbTarget.tier}등급)`, detail});
     }
@@ -3743,7 +3769,7 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   const proteinRate = recentMeals.length ? (recentMeals.filter(m => (m.protein||0) >= PROTEIN_TARGET.min).length / recentMeals.length * 100) : null;
 
   const calorieRate = (last.bmr && recentMeals.length) ? (recentMeals.filter(m => {
-    const lo = last.bmr*1.5-550, hi = lo+100;
+    const lo = targetBmrOn(m.date, last.bmr)*1.5-550, hi = lo+100;
     return (m.calories||0) <= hi+50;
   }).length / recentMeals.length * 100) : null;
 
@@ -5020,7 +5046,8 @@ function renderLog(){
     const weightChange = wInbody.length>=2 ? wInbody[0].weight - wInbody[wInbody.length-1].weight : null;
     const avgCal = wMeals.length ? wMeals.reduce((s,m)=>s+(m.calories||0),0)/wMeals.length : null;
     const avgProtein = wMeals.length ? wMeals.reduce((s,m)=>s+(m.protein||0),0)/wMeals.length : null;
-    const wkBmr = (wInbody[0] && wInbody[0].bmr) || (sortedInbody().slice(-1)[0] && sortedInbody().slice(-1)[0].bmr);
+    const wkBmrRaw = (wInbody[0] && wInbody[0].bmr) || (sortedInbody().slice(-1)[0] && sortedInbody().slice(-1)[0].bmr);
+    const wkBmr = wkBmrRaw ? targetBmrOn(wDates[0], wkBmrRaw) : null;
     const calLow = wkBmr ? Math.round(wkBmr*1.5-550) : null;
     const calHigh = calLow!=null ? calLow+100 : null;
     const calMid = calLow!=null ? (calLow+calHigh)/2 : null;
@@ -5050,7 +5077,7 @@ function renderLog(){
 }
 
 function dayRow(date, i, wArr, m, prev){
-  const target = i && i.bmr ? Math.round(i.bmr*1.5-550) : null;
+  const target = i && i.bmr ? Math.round(targetBmrOn(date, i.bmr)*1.5-550) : null;
   const proteinTarget = PROTEIN_TARGET.min;
 
   let ibCol = `<span class="empty">기록 없음</span>`;
@@ -5264,7 +5291,8 @@ function renderGoal(){
         ${(() => {
           // 2026-09-14 수정: "오늘"이 체중전용 기록이면 last.bmr이 null이라 NaN*1.5-550으로
           // "NaNkcal"이 표시되던 버그 — bmr 실측값이 있는 가장 최근 기록(lastBC) 사용
-          const bmrRef = (lastBC.bmr!==null && lastBC.bmr!==undefined && !isNaN(lastBC.bmr)) ? lastBC.bmr : null;
+          const bmrRefRaw = (lastBC.bmr!==null && lastBC.bmr!==undefined && !isNaN(lastBC.bmr)) ? lastBC.bmr : null;
+          const bmrRef = bmrRefRaw===null ? null : targetBmrOn(todayISO(), bmrRefRaw);
           if(bmrRef===null) return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 최신 BMR × 1.5 − 550kcal 공식을 유지하세요. 최근 BMR 실측값이 없어 권장 칼로리를 계산할 수 없어요 — 다음 InBody 측정 후 갱신됩니다.</div>`;
           const targetLow = Math.round(bmrRef*1.5-550), targetHigh = targetLow+100;
           const midCal = Math.round((targetLow+targetHigh)/2);
@@ -5273,7 +5301,7 @@ function renderGoal(){
           const remainKcal = midCal - proteinKcal;
           const carbG = Math.round(remainKcal*0.55/4);
           const fatG = Math.round(remainKcal*0.45/9);
-          return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 최신 BMR × 1.5 − 550kcal 공식을 유지하세요. 최근 BMR ${bmrRef}kcal${bcAsOf} 기준 <b>${targetLow}~${targetHigh}kcal</b>가 권장 범위예요. 매크로는 단백질 ${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g 기준으로 잡으면 대략 <b>단백질 ${proteinMid}g · 탄수화물 ${carbG}g · 지방 ${fatG}g</b>(약 ${midCal}kcal)이 기준값이에요.${stepsCalorieCaveatNote_()}</div>`;
+          return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 기초대사 × 1.5 − 550kcal 공식을 유지하세요(2026-10-27부터 기초대사는 최근 7번 평균 제지방 기준). 기초대사 ${bmrRef}kcal${bcAsOf} 기준 <b>${targetLow}~${targetHigh}kcal</b>가 권장 범위예요(추정 오차 약 ±${calorieErrorKcal_(bmrRef)}kcal). 매크로는 단백질 ${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g 기준으로 잡으면 대략 <b>단백질 ${proteinMid}g · 탄수화물 ${carbG}g · 지방 ${fatG}g</b>(약 ${midCal}kcal)이 기준값이에요.${stepsCalorieCaveatNote_()}</div>`;
         })()}
         <div class="guide-item"><span class="guide-num">02</span>tirzepatide DEXA 임상연구(SURMOUNT-1, Look et al. 2025, Diabetes Obes Metab)의 실측치로 계산하면 체중 -21.3% 대비 제지방량 -10.9%, 비율 0.51이에요. 지금 정희님의 골격근 비율은 ${muscleAssess.muscleLoss<=0 ? '0 (감소 없음)' : fmt(muscleAssess.ratio,2)}로 ${muscleAssess.tone==='good' ? '0.51보다 뚜렷이 낮아 근육을 잘 보존하고 있어요' : muscleAssess.tone==='neutral' ? '0.51 이내로 임상 기준 범위 안이에요' : '0.51을 넘어 저항운동 볼륨과 단백질 섭취를 점검할 필요가 있어요'}. 이 비율을 0.51 아래로 유지하는 게 목표예요.</div>
         <div class="guide-item"><span class="guide-num">03</span>체지방률의 일일 변화는 BIA 특성상 수분·글리코겐 상태에 따라 흔들릴 수 있습니다. 하루 단위 반등에 일희일비하지 말고 7일 이동평균으로 추세를 판단하세요. 현재 추세는 ${maTrendDelta<=0?'하락(개선) 중':'상승(정체) 중'}입니다.</div>
