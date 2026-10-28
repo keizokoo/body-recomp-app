@@ -419,6 +419,14 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .rm-fill{height:100%; background:var(--c-accent); border-radius:4px;}
 .rm-fill.over{background:var(--c-warn);}
 .rm-status{font-size:12px; line-height:1.45;}
+.tg-head{display:flex; justify-content:space-between; align-items:baseline; font-size:12px;}
+.tg-big{font-size:20px; font-weight:700; font-variant-numeric:tabular-nums; margin-top:2px;}
+.tg-eq{font-size:12px; color:var(--text-dim); margin:2px 0 8px;}
+.tg-eq b{color:var(--text);}
+.tg-row{display:grid; grid-template-columns:62px 1fr auto; gap:8px; align-items:center; font-size:12.5px; margin-top:7px;}
+.tg-row .rm-bar{margin:0;}
+.tg-n{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); white-space:nowrap;}
+.tg-n b{color:var(--text);}
 .special-chip-row{display:flex; gap:6px; flex-wrap:wrap;}
 .special-chip{font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
 .special-chip.active{background:var(--eyebrow-bg); border-color:var(--c-gauge-from); color:var(--accent-strong-text);}
@@ -538,7 +546,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -4431,6 +4439,8 @@ function renderDashboard(){
       })()}
     </section>` : ''}
 
+    ${renderTodayRemainingCard_()}
+
     <section class="card">
       <div class="section-label good">${secNum('00b')}스마트 인사이트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.lastUpdated ? '최종 갱신 '+fmtDateTime(state.lastUpdated) : '데이터 기반 자동 감지'}</span></div>
       <div class="alert-list">
@@ -4608,47 +4618,43 @@ function computeActivityHint_(){
   const gainC = cToday ? 0 : 5 + ((Math.min(nC+1,3)-Math.min(nC,3))/3)*5;
   return {nS, nC, sToday, cToday, gainS, gainC};
 }
-// 2026-10-18 추가(B2): 대시보드 "오늘 남은 목표" — 오늘 목표(칼로리·단백질·탄수)까지 남은 양과, 운동 활동 점수 힌트(B3).
-// 목표값은 스마트 인사이트의 "오늘 목표"와 같은 함수(computeCalorieTarget·computeCarbTarget·PROTEIN_TARGET)를 쓴다.
+// 2026-10-29 복원·슬림화: 대시보드 "오늘 목표(운동 보정 포함)" 카드. 칼로리 목표 = 기본(기초대사×1.5−550) + 운동 보정을 한 줄로 풀어 보여준다.
+// 기초대사는 2026-10-27부터 최근 7번 평균 제지방 기준(targetBmrOn)으로 서버·목표 탭과 같은 값을 쓴다. 운동 보정 규칙은 computeCalorieTarget 그대로(운동소모 > 기초대사×0.3이면 초과분의 60%).
 function renderTodayRemainingCard_(){
   const todayD = todayISO();
   const bmrRec = [...sortedInbody()].reverse().find(r => r && Number(r.bmr) > 0);
   if(!bmrRec) return '';
+  const bmr = targetBmrOn(todayD, Number(bmrRec.bmr)) || Number(bmrRec.bmr);
   const ws = statWorkouts_();
   const eat = ws.filter(w => w && w.date===todayD).reduce((s,w)=>s+(Number(w.calories)||0),0);
-  const cal = computeCalorieTarget(Number(bmrRec.bmr), eat);
+  const cal = computeCalorieTarget(bmr, eat);
   const carb = computeCarbTarget(ws, todayD);
   if(!cal || !carb) return '';
   const prot = PROTEIN_TARGET;
+  const corr = cal.targetLow - cal.base;
   const meal = (state.meals||[]).find(m => m && m.date===todayD);
   const has = !!meal && Number(meal.calories) > 0;
   const cur = {kcal: has ? (Number(meal.calories)||0) : 0, p: has ? (Number(meal.protein)||0) : 0, c: has ? (Number(meal.carbs)||0) : 0};
-  const row = (label, unit, now, lo, hi, opts) => {
-    const o = opts || {};
-    const pct = hi > 0 ? Math.max(0, Math.min(100, now/hi*100)) : 0;
-    let status;
-    if(!has) status = `오늘 식단 미기록 — 목표 ${lo}~${hi}${unit}`;
-    else if(now < lo) status = `남은 양 <b>${Math.round(lo-now)}~${Math.round(hi-now)}${unit}</b> (하한까지 ${Math.round(lo-now)}${unit})`;
-    else if(now <= hi) status = `범위 안 ✓ · 상한까지 여유 ${Math.round(hi-now)}${unit}`;
-    else status = o.overOk ? `상한 초과 ${Math.round(now-hi)}${unit} (점수 감점 없음)` : `상한 초과 <b>+${Math.round(now-hi)}${unit}</b>`;
-    const over = has && now > hi && !o.overOk;
-    return `<div class="rm-row"><div class="rm-top"><span class="rm-label">${label}</span><span class="rm-nums">${has ? Math.round(now) : '–'} / ${lo}~${hi}${unit}</span></div>
-      <div class="rm-bar"><div class="rm-fill${over?' over':''}" style="width:${has?pct:0}%;"></div></div>
-      <div class="rm-status">${status}</div></div>`;
+  const row = (label, unit, now, lo, hi, overOk) => {
+    const pct = has && hi > 0 ? Math.max(0, Math.min(100, now/hi*100)) : 0;
+    const over = has && now > hi && !overOk;
+    let n;
+    if(!has) n = `${lo}~${hi}${unit}`;
+    else if(now < lo) n = `<b>${Math.round(lo-now)}~${Math.round(hi-now)}</b>${unit} 남음`;
+    else if(now <= hi) n = '범위 안 ✓';
+    else n = overOk ? `상한 +${Math.round(now-hi)}${unit}` : `<b>+${Math.round(now-hi)}</b>${unit} 초과`;
+    return `<div class="tg-row"><span class="tg-label">${label}</span><div class="rm-bar"><div class="rm-fill${over?' over':''}" style="width:${pct}%;"></div></div><span class="tg-n">${n}</span></div>`;
   };
-  const hint = computeActivityHint_();
-  const hintParts = [];
-  if(!hint.sToday) hintParts.push(`오늘 근력 1회 → 운동·활동 약 <b>+${fmt(hint.gainS,1)}점</b>`);
-  else hintParts.push('오늘 근력 완료 ✓');
-  if(!hint.cToday) hintParts.push(`인정 유산소(심박 105↑·20분↑) → 약 <b>+${fmt(hint.gainC,1)}점</b>`);
-  else hintParts.push('오늘 인정 유산소 완료 ✓');
+  const eq = corr > 0
+    ? `기본 ${cal.base} + 운동 보정 <b>+${corr}</b> (운동 ${Math.round(eat)}kcal)`
+    : `기본 ${cal.base} · 운동 보정 <b>0</b>${eat>0 ? ` (운동 ${Math.round(eat)}kcal, 기준 ${cal.threshold} 미만)` : ''}`;
   return `<section class="card">
-    <div class="section-label good">${secNum('00f')}오늘 남은 목표 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${esc(todayD.slice(5).replace('-','/'))} · BMR ${esc(String(bmrRec.bmr))}${eat>0?` · 운동소모 ${Math.round(eat)}kcal`:''}</span></div>
-    ${row('칼로리','kcal',cur.kcal,cal.targetLow,cal.targetHigh)}
-    ${row('단백질','g',cur.p,prot.min,prot.max,{overOk:true})}
-    ${row('탄수화물('+carb.tier+'등급)','g',cur.c,carb.range[0],carb.range[1])}
-    <div class="dim" style="font-size:11.5px; margin-top:6px; line-height:1.55;">점수는 칼로리 하한 −50kcal · 단백질 하한 −5g · 탄수 ±5g까지 만점이에요. 오늘 식단은 아직 하루가 끝나기 전 기록 기준이에요.</div>
-    <div class="note-box" style="margin-top:8px;">💡 점수 힌트(예상): ${hintParts.join(' · ')}. 최근 7일 근력 ${hint.nS}일 · 인정 유산소 ${hint.nC}일(각 3일이 만점).</div>
+    <div class="tg-head"><span class="dim">${secNum('00f')}오늘 목표 · ${esc(todayD.slice(5).replace('-','/'))}</span><span class="dim">기초대사 ${esc(String(bmr))}</span></div>
+    <div class="tg-big">${cal.targetLow}~${cal.targetHigh} kcal</div>
+    <div class="tg-eq">${eq}</div>
+    ${row('칼로리','kcal',cur.kcal,cal.targetLow,cal.targetHigh,false)}
+    ${row('단백질','g',cur.p,prot.min,prot.max,true)}
+    ${row('탄수 '+carb.tier,'g',cur.c,carb.range[0],carb.range[1],false)}
   </section>`;
 }
 // 2026-10-16 추가(미기록 구분): 최근 7일(오늘 포함) 식단·운동 기록 유무를 한 줄로 보여준다. 기록이 없는 날은 "0kcal·운동 안 함"이 아니라
