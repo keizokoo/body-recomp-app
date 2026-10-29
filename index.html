@@ -546,7 +546,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -2235,6 +2235,155 @@ function isoWeekKey(dateStr){
 /* =========================================================
    SVG 차트 (색상은 CSS 변수 참조 → 테마별로 자동 변경)
 ========================================================= */
+/* 2026-10-29-b 추가: ③음주 다음날 판정 · ⑤⑥차트 마커·노이즈 밴드용 헬퍼 · ⑦턱걸이 카드 · ⑧종목별 직전 대비 */
+function isAlcoholNextDay_(dateISO){
+  const d = new Date(String(dateISO).slice(0,10)+'T00:00:00');
+  if(isNaN(d)) return false;
+  d.setDate(d.getDate()-1);
+  const prev = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const m = (state.meals||[]).find(x => x && String(x.date).slice(0,10)===prev);
+  return !!m && m.specialDayType==='alcohol';
+}
+// ⑤ 골격근 추세 차트에 겹칠 근력일(s)·인정 유산소일(c). 보조운동(밴드 턱걸이)은 statWorkouts_가 이미 제외한다.
+function workoutMarks_(data){
+  if(!data || !data.length) return [];
+  const from = data[0].date, ws = statWorkouts_();
+  const days = new Set(ws.filter(w => w && w.date && String(w.date).slice(0,10) >= from).map(w => String(w.date).slice(0,10)));
+  const out = [];
+  days.forEach(d => {
+    const t = classifyDayType(ws, d);
+    const s = !!t && (t.type==='근력' || t.type==='둘다');
+    const c = ws.some(w => w && w.date===d && String(w.part||'').trim()==='유산소' && Number(w.avgHR)>=105 && Number(w.durationMin)>=20);
+    if(s || c) out.push({date:d, s, c});
+  });
+  return out.sort((a,b)=>a.date.localeCompare(b.date));
+}
+// ⑦ 밴드 턱걸이(part=보조운동) 기록 읽기: 구조화된 exercises 세트가 있으면 그것을, 없으면 note의 "10·10·10회" 같은 표기를 읽는다. 못 읽으면 —로 둔다.
+function pullupParse_(w){
+  const txt = `${w.name||''} ${w.note||''}`;
+  const grip = /친업|언더/.test(txt) ? '친업(언더)' : /풀업|오버/.test(txt) ? '풀업(오버)' : '턱걸이';
+  const bm = txt.match(/(녹색|초록|보라|파랑|파란|검정|검은|빨강|빨간|노랑|노란|주황|회색)\s*밴드/);
+  const band = bm ? bm[1]+' 밴드' : (/밴드 없이|맨몸|노밴드/.test(txt) ? '밴드 없음' : '—');
+  let sets = [];
+  if(Array.isArray(w.exercises)){
+    w.exercises.forEach(ex => {
+      if(!/턱걸이|친업|풀업|pull|chin/i.test(String((ex&&ex.name)||''))) return;
+      (Array.isArray(ex.sets) ? ex.sets : []).forEach(st => { const r = Number(st && st.reps); if(r>0) sets.push(r); });
+    });
+  }
+  if(!sets.length){
+    const m = txt.match(/(\d+(?:\s*[·,\/x×]\s*\d+)+)\s*회/) || txt.match(/(\d+)\s*회/);
+    if(m) sets = m[1].split(/[·,\/x×]/).map(v => Number(v.trim())).filter(n => n>0);
+  }
+  return {date:String(w.date).slice(0,10), grip, band, sets, total:sets.reduce((a,b)=>a+b,0), max:sets.length ? Math.max(...sets) : null};
+}
+// 2026-10-30: 보조운동 일별 관리(H 요약 카드 + A 일별 표 + F 주간 합계). 턱걸이(그립·밴드·밴드 거는 방식·세트별 횟수)와 매달리기(초)를 날짜별로 분리해 읽는다.
+// 읽는 순서: exercises 구조화 데이터(ex.grip/band/bandMethod, sets[].reps, sets[].sec) → 없으면 note/name 문구(레거시).
+function auxDaily_(){
+  const days = {};
+  (state.workouts||[]).filter(w => isAuxEntry_(w) && w.date && /턱걸이|친업|풀업|매달리기/.test(`${w.name||''} ${w.note||''}`)).forEach(w => {
+    const date = String(w.date).slice(0,10);
+    const d = days[date] || (days[date] = {date, pull:null, hangs:[]});
+    const txt = `${w.name||''} ${w.note||''}`;
+    const exs = Array.isArray(w.exercises) ? w.exercises : [];
+    const pe = exs.filter(e => e && /턱걸이|친업|풀업|pull|chin/i.test(String(e.name||'')));
+    const he = exs.filter(e => e && /매달리기|hang/i.test(String(e.name||'')));
+    if(pe.length){
+      pe.forEach(e => {
+        const sets = (Array.isArray(e.sets) ? e.sets : []).map(st => Number(st && st.reps)).filter(n => n>0);
+        if(!sets.length) return;
+        const g = String(e.grip||e.name||'');
+        const grip = /친업|언더/.test(g) ? '친업' : /풀업|오버/.test(g) ? '풀업' : '턱걸이';
+        const band = e.band ? String(e.band).replace(/\s*밴드$/,'') : '';
+        const method = e.bandMethod ? String(e.bandMethod) : '';
+        if(!d.pull) d.pull = {grip, band, method, sets:[]};
+        d.pull.sets.push(...sets);
+      });
+    } else if(/턱걸이|친업|풀업/.test(String(w.name||''))){
+      const lg = pullupParse_(w);
+      if(lg.sets.length){
+        const g = lg.grip.startsWith('친업') ? '친업' : lg.grip.startsWith('풀업') ? '풀업' : '턱걸이';
+        const mm = txt.match(/무릎\s*걸이/);
+        d.pull = d.pull || {grip:g, band:lg.band==='—'||lg.band==='밴드 없음' ? '' : lg.band.replace(/\s*밴드$/,''), method:mm?'무릎걸이':'', sets:[]};
+        d.pull.sets.push(...lg.sets);
+      }
+    }
+    if(he.length){
+      he.forEach(e => (Array.isArray(e.sets) ? e.sets : []).forEach(st => { const v = Number(st && (st.sec!=null ? st.sec : st.seconds)); if(v>0) d.hangs.push(v); }));
+    } else {
+      const hm = txt.match(/매달리기\s*(\d+)\s*초/);
+      if(hm) d.hangs.push(Number(hm[1]));
+    }
+  });
+  return Object.values(days).filter(d => d.pull || d.hangs.length).sort((a,b) => a.date.localeCompare(b.date));
+}
+function auxWeekKey_(dateISO){
+  const dt = new Date(dateISO+'T00:00:00'); const wd = (dt.getDay()+6)%7; dt.setDate(dt.getDate()-wd);
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function auxSpark_(vals, color){
+  const v = vals.filter(x => x>0); if(v.length<2) return '';
+  const mx = Math.max(...vals,1), n = vals.length, w=120, h=30;
+  const pts = vals.map((x,i) => `${(i/(n-1)*(w-6)+3).toFixed(1)},${(h-3-(x/mx)*(h-8)).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:30px;margin-top:4px;"><polyline points="${pts}" fill="none" stroke="var(${color})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function renderPullupCard_(){
+  const days = auxDaily_();
+  if(!days.length) return '';
+  const pmax = d => d.pull ? Math.max(...d.pull.sets) : 0;
+  const pullDays = days.filter(d => d.pull), hangDays = days.filter(d => d.hangs.length);
+  const bestP = pullDays.length ? pullDays.reduce((m,d) => pmax(d) > pmax(m) ? d : m, pullDays[0]) : null;
+  const bestH = hangDays.length ? hangDays.reduce((m,d) => Math.max(...d.hangs) > Math.max(...m.hangs) ? d : m, hangDays[0]) : null;
+  const lab = p => p ? [p.grip, p.band ? p.band+' 밴드' : '', p.method].filter(Boolean).join(' · ') : '';
+  const last10 = days.slice(-10);
+  const prevH = hangDays.length>1 ? Math.max(...hangDays[hangDays.length-2].hangs) : null;
+  const lastH = hangDays.length ? Math.max(...hangDays[hangDays.length-1].hangs) : null;
+  const hDelta = (prevH!=null && lastH!=null) ? lastH-prevH : null;
+  const mini = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+    <div style="border:1px solid var(--border); border-radius:10px; padding:10px 12px;">
+      <div class="dim" style="font-size:11.5px;">턱걸이 한 세트 최고</div>
+      <div style="font-size:22px; font-weight:700; color:var(--c-good);">${bestP ? pmax(bestP)+'회' : '—'}</div>
+      ${auxSpark_(last10.map(pmax),'--c-accent')}
+      <div class="dim" style="font-size:11px;">${bestP ? esc(lab(bestP.pull))+' · '+bestP.date.slice(5) : ''}</div></div>
+    <div style="border:1px solid var(--border); border-radius:10px; padding:10px 12px;">
+      <div class="dim" style="font-size:11.5px;">매달리기 최고</div>
+      <div style="font-size:22px; font-weight:700; color:var(--c-good);">${bestH ? Math.max(...bestH.hangs)+'초' : '—'}</div>
+      ${auxSpark_(last10.map(d => d.hangs.length ? Math.max(...d.hangs) : 0),'--c-good')}
+      <div class="dim" style="font-size:11px;">${bestH ? bestH.date.slice(5) : ''}${hDelta!=null && hDelta!==0 ? ` · 직전 대비 ${hDelta>0?'+':''}${hDelta}초` : ''}</div></div></div>`;
+  const rows = days.slice(-7).reverse().map(d => `<tr>
+    <td style="text-align:left;">${d.date.slice(5)}</td>
+    <td style="text-align:left; font-family:var(--font-body);">${d.pull ? esc(lab(d.pull)) : '<span class="dim">—</span>'}</td>
+    <td class="mono">${d.pull ? d.pull.sets.join('·')+' <span class="dim">('+d.pull.sets.reduce((a,b)=>a+b,0)+')</span>' : '—'}</td>
+    <td class="mono">${d.hangs.length ? d.hangs.join('·')+'초' : '—'}</td></tr>`).join('');
+  const weeks = {};
+  days.forEach(d => { const k = auxWeekKey_(d.date); const w = weeks[k] || (weeks[k] = {k, days:0, total:0, max:0, hang:0}); w.days++; if(d.pull){ w.total += d.pull.sets.reduce((a,b)=>a+b,0); w.max = Math.max(w.max, pmax(d)); } w.hang += d.hangs.reduce((a,b)=>a+b,0); });
+  const wk = Object.values(weeks).sort((a,b) => b.k.localeCompare(a.k)).slice(0,4);
+  const weekRows = wk.map(w => `<tr><td style="text-align:left;">${w.k.slice(5)}~</td><td class="mono">${w.days}일</td><td class="mono">${w.total||'—'}${w.total?'회':''}</td><td class="mono">${w.max||'—'}</td><td class="mono">${w.hang?w.hang+'초':'—'}</td></tr>`).join('');
+  return `<section class="card">
+    <div class="section-label good">${secNum('W4e')}턱걸이 · 매달리기 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 보조운동(근력·유산소 집계 제외)</span></div>
+    ${mini}
+    <div style="overflow-x:auto;"><table class="data-table">
+      <thead><tr><th style="text-align:left">날짜</th><th style="text-align:left">턱걸이</th><th>세트별(합계)</th><th>매달리기</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="dim" style="font-size:11.5px; margin:14px 0 4px;">주간 합계 (월요일 시작, 최근 4주 · 이번 주는 진행 중)</div>
+    <div style="overflow-x:auto;"><table class="data-table">
+      <thead><tr><th style="text-align:left">주</th><th>기록일</th><th>턱걸이 합계</th><th>한 세트 최고</th><th>매달리기 합계</th></tr></thead>
+      <tbody>${weekRows}</tbody></table></div>
+  </section>`;
+}
+// ⑧ 종목별 직전 세션 대비 추정 1RM 변화(세션별 최고 세트 기준). 세션이 2번 미만이면 —.
+function prevDeltaHtml_(p){
+  const ss = p && p.sessions;
+  if(!ss || ss.length < 2) return '<span style="color:var(--text-faint);">—</span>';
+  const last = ss[ss.length-1], prev = ss[ss.length-2];
+  const d = Math.round((last.oneRM - prev.oneRM)*10)/10;
+  const tip = `${prev.date.slice(5)} ${Math.round(prev.oneRM)}kg → ${last.date.slice(5)} ${Math.round(last.oneRM)}kg`;
+  if(Math.abs(d) < 0.5) return `<span title="${tip}" style="color:var(--text-dim);">→ 0</span>`;
+  return d > 0
+    ? `<span title="${tip}" style="color:var(--c-good);">▲ +${d}kg</span>`
+    : `<span title="${tip}" style="color:var(--c-warn);">▼ ${d}kg</span>`;
+}
+
 function lineChartSVG(data, key, colorVar, opts={}){
   const w=300,h=120,padL=34,padR=6,padT=15,padB=18;
   const vals = data.map(d=>d[key]).filter(v=>v!==null&&v!==undefined);
@@ -2245,7 +2394,7 @@ function lineChartSVG(data, key, colorVar, opts={}){
   const x = i => padL + (i/(data.length-1||1)) * (w-padL-padR);
   const y = v => padT + (1-(v-min)/(max-min||1)) * (h-padT-padB);
 
-  const pts = data.map((d,i) => d[key]!=null ? [x(i), y(d[key]), !!d._ex] : null); // 2026-10-13: [2]=제외점 여부
+  const pts = data.map((d,i) => d[key]!=null ? [x(i), y(d[key]), !!d._ex, !!d._alc] : null); // 2026-10-13: [2]=제외점 여부
   let pathD = '', areaD = '';
   let started = false;
   pts.forEach((p) => {
@@ -2294,6 +2443,7 @@ function lineChartSVG(data, key, colorVar, opts={}){
     <path d="${areaD}" fill="url(#${gid})" stroke="none"/>
     <path d="${pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
     ${pts.filter(p=>p && p[2]).map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="none" stroke="#9aa0a6" stroke-width="1.6"/>`).join('')}
+    ${pts.filter(p=>p && !p[2] && p[3]).map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.6" fill="none" style="stroke:var(--c-warn)" stroke-width="1.5"/>`).join('')}
     ${xTicks}
   </svg>`;
 }
@@ -2307,6 +2457,7 @@ function lineChartSVGMulti(data, key1, data2, key2, colorVar, opts={}){
   const allVals = vals1.concat(vals2);
   if(allVals.length===0) return `<svg class="chart" viewBox="0 0 ${w} ${h}"></svg>`;
   let min = Math.min(...allVals), max = Math.max(...allVals);
+  if(opts.band){ min -= opts.band; max += opts.band; } // 2026-10-29-b: 노이즈 밴드가 차트 안에 들어오도록 범위를 넓힌다
   const pad = opts.pad ?? ((max-min)*0.15 || 1);
   min -= pad; max += pad;
   const x = i => padL + (i/(data.length-1||1)) * (w-padL-padR);
@@ -2326,6 +2477,30 @@ function lineChartSVGMulti(data, key1, data2, key2, colorVar, opts={}){
   }
   const s1 = buildPath(data, key1);
   const s2 = buildPath(data2, key2);
+  // 2026-10-29-b ⑥: MA7 ±band 음영(하루 측정 흔들림 범위). 이 띠 안의 하루 변화는 노이즈로 읽는다.
+  let bandSvg = '';
+  if(opts.band){
+    const up = [], dn = [];
+    data.forEach((d,i) => { if(d[key1]!=null){ up.push([x(i), y(d[key1]+opts.band)]); dn.push([x(i), y(d[key1]-opts.band)]); } });
+    if(up.length > 1){
+      const f = p => p[0].toFixed(1)+','+p[1].toFixed(1);
+      bandSvg = `<path d="M${up.map(f).join(' L')} L${dn.slice().reverse().map(f).join(' L')} Z" style="fill:var(${colorVar})" opacity="0.10" stroke="none"/>`;
+    }
+  }
+  // 2026-10-29-b ⑤: 근력일(긴 막대)·인정 유산소일(짧은 막대)을 그래프 바닥에 표시
+  let markSvg = '';
+  if(opts.marks && opts.marks.length && data.length){
+    const y0 = h-padB;
+    markSvg = opts.marks.filter(m => m.date >= data[0].date).map(m => {
+      const idx = data.findIndex(d => d.date >= m.date);
+      if(idx < 0) return '';
+      const mx = x(idx);
+      const sPart = m.s ? `<line x1="${mx.toFixed(1)}" x2="${mx.toFixed(1)}" y1="${y0-10}" y2="${y0}" style="stroke:var(--c-accent-strong)" stroke-width="2.2" opacity="0.9"/>` : '';
+      const cx = m.s ? mx+3 : mx;
+      const cPart = m.c ? `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${y0-5}" y2="${y0}" style="stroke:var(--text-dim)" stroke-width="1.6" opacity="0.85"/>` : '';
+      return sPart + cPart;
+    }).join('');
+  }
 
   const gridY = [0,0.5,1].map(t => ({ y: padT + t*(h-padT-padB), val: max - t*(max-min) }));
   const yDecimals = (max-min) < 8 ? 1 : 0;
@@ -2349,9 +2524,11 @@ function lineChartSVGMulti(data, key1, data2, key2, colorVar, opts={}){
     ${gridY.map(g=>`<line x1="${padL}" x2="${w-padR}" y1="${g.y}" y2="${g.y}" style="stroke:var(--c-grid)" stroke-width="1"/>`).join('')}
     ${yTicks}
     ${goalLine}
+    ${bandSvg}
     <path d="${s1.areaD}" fill="url(#${gid})" stroke="none"/>
     <path d="${s2.pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity="0.55"/>
     <path d="${s1.pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    ${markSvg}
     ${xTicks}
   </svg>`;
 }
@@ -3602,7 +3779,7 @@ function renderMounjaro(){
   if(validCycles.length===0) return `<div class="empty-state">아직 이 기간의 인바디 기록이 없습니다.</div>`;
 
   const firstDoseDate = state.mounjaroDoses[0].date;
-  const fullData = sortedInbodyAll().map(r=>({...r, _ex:isExcluded_(r)})).filter(r => r.date >= firstDoseDate); // 2026-10-13: 그래프는 제외점 포함(회색 표시)
+  const fullData = sortedInbodyAll().map(r=>({...r, _ex:isExcluded_(r), _alc:isAlcoholNextDay_(r.date)})).filter(r => r.date >= firstDoseDate); // 2026-10-13: 그래프는 제외점 포함(회색 표시)
   const vlines = state.mounjaroDoses.map(d => ({date:d.date, label:`${d.cycle}차`}));
   const insights = computeMounjaroInsights(cycles);
   const intervals = computeDoseIntervalComparison();
@@ -4321,12 +4498,13 @@ function renderWorkoutTab(){
         const shown = previewRows('exercisePRs', prs); // 2026-10-02-c: 8 → 5
         return `<div style="overflow-x:auto;">
           <table class="data-table">
-            <thead><tr><th style="text-align:left">종목</th><th style="text-align:left">부위</th><th>추정 1RM</th><th style="text-align:left">최고기록</th><th style="text-align:left">최근 기록일</th><th style="text-align:left">추이</th></tr></thead>
+            <thead><tr><th style="text-align:left">종목</th><th style="text-align:left">부위</th><th>추정 1RM</th><th>직전 대비</th><th style="text-align:left">최고기록</th><th style="text-align:left">최근 기록일</th><th style="text-align:left">추이</th></tr></thead>
             <tbody>
               ${shown.map(p => `<tr>
                 <td style="text-align:left; font-family:var(--font-body); font-weight:600;">${esc(p.displayName)}</td>
                 <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body);">${esc(p.part||'—')}</td>
                 <td class="mono" style="font-weight:700; color:var(--c-accent-strong);">${Math.round(p.best.oneRM)}kg</td>
+                <td class="mono" style="font-size:12px;">${prevDeltaHtml_(p)}</td>
                 <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body);">${p.best.weight}kg×${p.best.reps}회 (${p.best.date.slice(5)})</td>
                 <td style="text-align:left; color:var(--text-faint); font-family:var(--font-body);">${p.lastDate}</td>
                 <td style="text-align:left; font-family:var(--font-body); font-size:11.5px;">${!p.plateau ? `<span style="color:var(--text-faint);">데이터 부족(5회↑ 필요)</span>` : p.plateau.isPlateau ? `<span class="warn-text">정체(최근 ${p.plateau.recentN}회 ±${fmt(p.plateau.spreadPct,1)}%)</span>` : `<span class="good-text">진행 중</span>`}</td>
@@ -4338,6 +4516,8 @@ function renderWorkoutTab(){
         <div class="note-box" style="margin-top:10px;">Epley 공식 기반 추정치라 실측 1RM과 다를 수 있어요. 새 PR을 달성하면(클라우드 동기화 시) 텔레그램으로도 알려드려요. 종목명은 공백 유무와 무관하게 자동으로 같은 종목으로 묶여요(예: "덤벨로우"="덤벨 로우"). "추이" 열은 최근 5회 세션의 추정 1RM이 서로 3% 이내에서만 오가면 "정체"로 표시해요(5회 미만이면 판정 보류).</div>`;
       })()}
     </section>
+
+    ${renderPullupCard_()}
 
     <section>
       <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
@@ -4370,7 +4550,7 @@ function renderDashboard(){
   // 여기서 배너를 그릴 필요가 없어짐(HEADER_TEMPLATE의 top-sync-badge가 그 역할을 대신함).
   if(!last) return `<div class="empty-state">아직 기록이 없습니다. 상단의 '기록 추가'로 첫 기록을 남겨보세요.</div>`;
   const ib = sortedInbody();
-  const ibAll_ = sortedInbodyAll().map(r=>({...r, _ex:isExcluded_(r)})); // 2026-10-13: 그래프는 제외점도 회색으로 보여주기 위해 원본 전체 사용
+  const ibAll_ = sortedInbodyAll().map(r=>({...r, _ex:isExcluded_(r), _alc:isAlcoholNextDay_(r.date)})); // 2026-10-13: 그래프는 제외점도 회색으로 보여주기 위해 원본 전체 사용
   const recentMA = ma.slice(-7);
   const maTrend7 = recentMA.length>=2 ? recentMA[recentMA.length-1].fatPctMA - recentMA[0].fatPctMA : null;
   // 2026-09-14 추가: 오늘이 체중전용 기록(여행 중 등, muscle/fat=null)이면 아래 목표 계산에서
@@ -4515,8 +4695,8 @@ function renderDashboard(){
         return `
           ${insightBlock}
           <div class="chart-grid">
-            ${maTrendChartCard('체지방률 이동평균 (MA7/MA14)', maFat, maFat14, 'fatPctMA', 'fatPctMA', '%', '--c-fatpct', 17, 'down', 3)}
-            ${maTrendChartCard('골격근량 이동평균 (MA7/MA14)', maMuscle, maMuscle14, 'muscleMA', 'muscleMA', 'kg', '--c-muscle', MUSCLE_BASELINE, 'up', 3)}
+            ${maTrendChartCard('체지방률 이동평균 (MA7/MA14)', maFat, maFat14, 'fatPctMA', 'fatPctMA', '%', '--c-fatpct', 17, 'down', 3, {band:0.5})}
+            ${maTrendChartCard('골격근량 이동평균 (MA7/MA14)', maMuscle, maMuscle14, 'muscleMA', 'muscleMA', 'kg', '--c-muscle', MUSCLE_BASELINE, 'up', 3, {band:0.5, marks:workoutMarks_(maMuscle)})}
           </div>
           ${expandToggleRow('maTable', maFat.length, '일별 상세 기록 보기')}
           ${state.expandedTables['maTable'] ? `
@@ -4921,7 +5101,8 @@ function renderCreatineSection(ib){
     </details>
   </div>`;
 }
-function maTrendChartCard(title, ma7data, ma14data, key7, key14, unit, colorVar, goal, goodDirection, slopeDecimals){
+function maTrendChartCard(title, ma7data, ma14data, key7, key14, unit, colorVar, goal, goodDirection, slopeDecimals, extra){
+  extra = extra || {};
   const vals7 = ma7data.map(d=>d[key7]).filter(v=>v!=null);
   const nowVal = vals7[vals7.length-1];
   const recent7 = ma7data.slice(-7).map(d=>d[key7]).filter(v=>v!=null);
@@ -4947,9 +5128,9 @@ function maTrendChartCard(title, ma7data, ma14data, key7, key14, unit, colorVar,
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">${title}</span><span class="ch-now mono" style="color:var(${colorVar})">${fmt(nowVal)}${unit}</span></div>
     ${slopeBadge}${crossBadge}
-    ${lineChartSVGMulti(ma7data, key7, ma14data, key14, colorVar, {goal})}
+    ${lineChartSVGMulti(ma7data, key7, ma14data, key14, colorVar, {goal, band:extra.band, marks:extra.marks})}
     <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">
-      <span style="color:var(${colorVar})">━ MA7</span>&nbsp;&nbsp;<span style="color:var(${colorVar}); opacity:0.55;">┅ MA14</span>
+      <span style="color:var(${colorVar})">━ MA7</span>&nbsp;&nbsp;<span style="color:var(${colorVar}); opacity:0.55;">┅ MA14</span>${extra.band ? `&nbsp;&nbsp;<span>░ 하루 흔들림 ±${extra.band}${unit}</span>` : ''}${extra.marks && extra.marks.length ? `&nbsp;&nbsp;<span style="color:var(--c-accent-strong)">▎근력일</span>&nbsp;<span>▏유산소일</span>` : ''}
     </div>
   </div>`;
 }
@@ -4959,6 +5140,7 @@ function chartCard(title, data, key, unit, colorVar, goal, vlines){
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">${title}</span><span class="ch-now mono" style="color:var(${colorVar})">${fmt(nowVal)}${unit}</span></div>
     ${lineChartSVG(data, key, colorVar, {goal, vlines})}
+    ${data.some(d=>d._alc && !d._ex && d[key]!=null) ? `<div style="font-size:10px; color:var(--text-faint); margin-top:4px;"><span style="color:var(--c-warn)">◯</span> 음주 다음날 — 수분·나트륨 영향으로 높게 나올 수 있어요</div>` : ''}
   </div>`;
 }
 function toggleTable(){ state.showTable = !state.showTable; render(); }
@@ -5012,7 +5194,7 @@ function renderInbodyTable(ma){
           const isWeightOnly = r.muscle==null || r.fat==null;
           const exp_ = exRowParts_(r, candMap_, ctxMap_);
           return `<tr class="${exp_.cls}">
-          <td style="text-align:left;">${r.date}${exp_.badges}${exp_.reason}${isWeightOnly?`<span class="badge miss" title="체성분(골격근·체지방) 미측정 — 체중만 기록됨" style="margin-left:4px; font-size:10px;">체중만</span>`:''}</td>
+          <td style="text-align:left;">${r.date}${isAlcoholNextDay_(r.date)?`<span class="badge" title="전날 음주 — 수분·나트륨 영향으로 체중·골격근이 높게 나올 수 있어요" style="margin-left:4px; font-size:10px; background:var(--c-warn); color:#fff;">음주 다음날</span>`:''}${exp_.badges}${exp_.reason}${isWeightOnly?`<span class="badge miss" title="체성분(골격근·체지방) 미측정 — 체중만 기록됨" style="margin-left:4px; font-size:10px;">체중만</span>`:''}</td>
           <td>${editableCell('inbody', r.date, 'weight', r.weight, 1)}</td>
           <td>${editableCell('inbody', r.date, 'muscle', r.muscle, 1)}</td>
           <td>${editableCell('inbody', r.date, 'fat', r.fat, 1)}</td>
