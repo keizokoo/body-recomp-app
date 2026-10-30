@@ -158,6 +158,36 @@ main{padding-top:12px; display:flex; flex-direction:column; gap:26px;}
 .hg-detail b{color:var(--c-warn); font-family:var(--font-mono);}
 
 /* INSIGHTS */
+/* 2026-10-30-b 슬림화 */
+.hero.sl-hero{padding:14px 16px 12px;}
+.sl-hero .hero-eyebrow{margin-bottom:6px; padding:3px 10px 3px 8px;}
+.sl-head{display:flex; justify-content:space-between; align-items:flex-end; gap:8px;}
+.sl-big{font-family:var(--font-display); font-weight:var(--display-weight,700); font-size:32px; line-height:1; letter-spacing:-.02em; background:var(--grad-1); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.sl-big span{font-size:15px; -webkit-text-fill-color:var(--text-faint); color:var(--text-faint);}
+.sl-cap{font-size:11px; color:var(--text-dim); margin-top:4px; line-height:1.4;}
+.sl-chip{font-size:11px; font-weight:700; padding:3px 9px; border-radius:var(--radius-pill); white-space:nowrap; background:var(--c-track); color:var(--text-faint);}
+.sl-chip.good{background:var(--c-good-soft); color:var(--c-good);} .sl-chip.warn{background:var(--c-warn-soft); color:var(--c-warn);}
+.sl-track{position:relative; height:8px; border-radius:99px; background:var(--c-track); margin:10px 0 3px; overflow:hidden;}
+.sl-track i{position:absolute; left:0; top:0; bottom:0; border-radius:99px; background:linear-gradient(90deg, var(--c-gauge-from), var(--c-gauge-to));}
+.sl-track u{position:absolute; top:0; bottom:0; background:var(--c-goalmark); opacity:.75; text-decoration:none;}
+.sl-trackfoot{display:flex; justify-content:space-between; font-size:10px; color:var(--text-faint); font-family:var(--font-mono); margin-bottom:8px;}
+.sl-tiles{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+.sl-tile{background:var(--panel-alt); border-radius:var(--radius-sm); padding:6px 4px; text-align:center;}
+.sl-tile span{display:block; font-size:10px; color:var(--text-faint); margin-bottom:2px;}
+.sl-tile b{font-family:var(--font-mono); font-size:14px; font-weight:600;}
+.sl-goals{display:flex; flex-direction:column; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border-soft);}
+.sl-g{background:var(--panel-alt); border-radius:var(--radius-sm); padding:8px 12px;}
+.sl-g .hg-top{margin-bottom:6px;} .sl-g .hg-label{font-size:12.5px;} .sl-g .hg-foot{margin-top:5px;}
+.sl-more{background:var(--panel-alt); border-radius:var(--radius-sm); padding:8px 12px;}
+.sl-more summary{list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12.5px; font-weight:700; color:var(--text);}
+.sl-more summary::-webkit-details-marker{display:none}
+.sl-more summary:after{content:'▾'; color:var(--text-faint); margin-left:4px;}
+.sl-more[open] summary:after{content:'▴';}
+.sl-list{padding:4px 14px;}
+.sl-li{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:13px;}
+.sl-li:last-child{border-bottom:none;}
+.sl-li .l{color:var(--text-dim);} .sl-li .v{font-family:var(--font-mono); font-weight:600; text-align:right;}
+.sl-li .s{display:block; font-size:10.5px; color:var(--text-faint); font-weight:400; margin-top:1px;}
 .insight-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
 @media(min-width:720px){.insight-grid{grid-template-columns:repeat(3,1fr);}}
 .insight{padding:16px;}
@@ -546,7 +576,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -2592,7 +2622,7 @@ function sigDot_(s){
   const t = s==='g' ? '초록' : s==='y' ? '노랑' : '빨강';
   return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:${c};"><span style="width:9px; height:9px; border-radius:50%; background:${c}; display:inline-block;"></span>${t}</span>`;
 }
-function goalTrackerHtml_(){
+function goalTrackerHtml_(compact){
   const m = goalBodyMA7_();
   if(!m) return `<div class="note-box">새 목표 트래커는 인바디 기록이 3건 이상 쌓이면 표시돼요.</div>`;
   const today = todayISO();
@@ -2614,6 +2644,36 @@ function goalTrackerHtml_(){
     {l:'체중', a:fmt(m.weight,2)+'kg', p:'유지 69.0~70.3kg', d:null, s:signalOf_('weight', m.weight)}
   ];
   const sg = n => n===null ? '' : (n>=0?'+':'−')+Math.abs(n).toFixed(2);
+  if(compact){
+    // 2026-10-30-b: 대시보드용 슬림 버전 — 1·2순위는 막대 한 줄씩, 월 점검 표와 설명은 접이식(점검 기간엔 펼침)
+    const rowsHtml_ = rows.map(r => `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 0; border-top:1px solid var(--border-soft); font-size:12.5px;">
+          <span style="min-width:56px; font-weight:600;">${r.l}</span>
+          <span class="mono" style="flex:1; text-align:right;">${r.a}</span>
+          <span class="dim mono" style="flex:1.3; text-align:right; font-size:11.5px;">계획 ${r.p}${r.d===null?'':' ('+sg(r.d)+')'}</span>
+          ${showSig ? `<span style="min-width:52px; text-align:right;">${sigDot_(r.s)}</span>` : ''}
+        </div>`).join('');
+    return `
+  <div class="sl-goals">
+    <div class="sl-g">
+      <div class="hg-top"><span class="hg-label">1순위 · 골격근 <span class="dim">→ ${fmt(NEW_GOAL.muscle,1)}kg</span></span>
+        <span class="hg-status ${muscleLeft<=0?'done':''}">${muscleLeft<=0 ? '● 달성' : '+'+fmt(muscleLeft,2)+'kg 남음'}</span></div>
+      <div class="hg-bar"><div class="hg-fill" style="width:${fmt(musclePct,1)}%"></div></div>
+      <div class="hg-foot"><span>최근 7번 평균 ${fmt(m.muscle,2)}kg</span><span>저점 30.0 → ${fmt(NEW_GOAL.muscle,1)}</span></div>
+    </div>
+    <div class="sl-g">
+      <div class="hg-top"><span class="hg-label">2순위 · 체지방률 <span class="dim">→ ${NEW_GOAL.fatPctLo}~${NEW_GOAL.fatPctHi}%</span></span>
+        <span class="hg-status ${fatLeftPct<=0?'done':''}">${fatLeftPct<=0 ? '● 목표 구간' : fmt(fatLeftPct,1)+'%p 남음'}</span></div>
+      <div class="hg-bar"><div class="hg-fill" style="width:${fmt(fatFill,1)}%"></div></div>
+      <div class="hg-foot"><span>최근 7번 평균 ${fmt(m.fatPct,2)}%</span><span>${fmt(START_FAT_PCT)}% → ${NEW_GOAL.fatPctHi}%</span></div>
+    </div>
+    <details class="sl-more"${showSig ? ' open' : ''}>
+      <summary><span>월 점검 · 계획선 대비</span><span class="hg-status">${nc ? '다음 '+nc.date.slice(5).replace('-','/')+' (D-'+nc.days+')' : '점검 일정 종료'}</span></summary>
+      <div class="dim" style="font-size:11px; margin:6px 0 2px;">최근 7번 평균(${m.from.slice(5)}~${m.to.slice(5)})</div>
+      ${rowsHtml_}
+      <div class="hg-detail">월 단위로 오르는지만 봅니다. 하루 변동은 수분 영향이라 판정하지 않아요. 체중 69~70kg을 유지하면 골격근이 오르면서 체지방률이 자연히 내려오고, 체지방은 약 <b>${fmt(fatToLose,1)}kg</b> 더 줄이면 17%예요. ${showSig ? '점검 기간이라 신호등을 함께 보여드려요.' : '신호등은 점검일(매월 20일~22일)에만 표시돼요.'}</div>
+    </details>
+  </div>`;
+  }
   return `
   <div class="hero-goals" style="display:flex; flex-direction:column; gap:12px;">
     <div class="hero-goal-item">
@@ -4324,14 +4384,21 @@ function renderWorkoutTab(){
   return `
     <section>
       <div class="section-label">${secNum('W1')}Work Out 인사이트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">${state.lastUpdated ? '· 최종 갱신 '+fmtDateTime(state.lastUpdated) : ''}</span></div>
-      <div class="insight-grid">
-        ${kpis.map(k => `
-          <div class="card insight tone-${k.tone}">
-            <div class="ic-label"><span class="ic-icon">${ICONS[k.icon]||ICONS.target}</span>${k.label}</div>
-            <div class="ic-value">${k.value}</div>
-            <div class="ic-sub">${k.sub}</div>
-          </div>`).join('')}
-      </div>
+      ${(() => {
+        // 2026-10-30-b: KPI 카드 8칸 → 한 줄 목록. 주 단위 빨간(경고) 색은 쓰지 않는다.
+        const byL_ = lb => kpis.find(k => k.label===lb) || {value:'—', sub:''};
+        const kDays = byL_('최근 7일 운동일수'), kVol = byL_('최근 7일 총 볼륨'), kCov = byL_('부위 커버리지');
+        const kHr = byL_('인클라인 트레드밀 심박존 준수'), kChg = byL_('주간 볼륨 변화율');
+        const prs_ = kpis.filter(k => /PR$/.test(k.label));
+        const md_ = sub => { const m_ = String(sub||'').match(/\d{4}-(\d{2})-(\d{2})/); return m_ ? `${+m_[1]}/${+m_[2]}` : ''; };
+        const li_ = (l, v, sub, title) => `<div class="sl-li"${title?` title="${esc(title)}"`:''}><span class="l">${l}</span><span class="v">${v}${sub?`<span class="s">${sub}</span>`:''}</span></div>`;
+        return `<div class="card sl-list">
+          ${li_('최근 7일 운동일수', kDays.value, '')}
+          ${li_('최근 7일 총 볼륨', kVol.value, kChg.value!=='—' ? `${esc(kChg.sub)} (${kChg.value})` : esc(kVol.sub))}
+          ${li_('부위 커버리지 · 심박존 준수', `${kCov.value} · ${kHr.value}`, '', kHr.sub)}
+          ${prs_.map(k => li_(k.label, `${k.value} <span style="font-size:10.5px; color:var(--text-faint); font-weight:400;">${md_(k.sub)}${/🔥/.test(k.sub)?' 🔥':''}</span>`, '')).join('')}
+        </div>`;
+      })()}
     </section>
 
     <section class="card">
@@ -4561,7 +4628,7 @@ function renderDashboard(){
 
   return `
     ${renderExclusionPanel()}
-    <section class="hero card">
+    <section class="hero card sl-hero">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
         <div class="hero-eyebrow"><span class="dot"></span>Live Tracking</div>
         <div class="no-print" style="display:flex; align-items:center; gap:8px;">
@@ -4569,26 +4636,28 @@ function renderDashboard(){
           <button class="btn btn-sm" onclick="copyTodayText()">📋 오늘 데이터 복사</button>
         </div>
       </div>
-      <div class="hero-grid">
-        <div class="hero-figure">
-          ${gaugeSVG(goalStatus.ma7Last, START_FAT_PCT, NEW_FAT_GOALS_GAUGE)}
-          <div class="gauge-value mono">${fmt(goalStatus.ma7Last,2)}<span class="gauge-unit">%</span></div>
-          <div class="gauge-sub">MA7(최근 7일 평균) 기준 · 시작 대비 ${fmt(START_FAT_PCT-goalStatus.ma7Last)}%p 감소 · ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}%</div>
-          ${maTrend7!==null ? `<div class="gauge-sub" style="margin-top:2px; font-size:11px; color:${maTrend7<=-0.05?'var(--c-good)':maTrend7>=0.05?'var(--c-warn)':'var(--text-faint)'};">7일 이동평균 대비 ${maTrend7>0?'+':''}${fmt(maTrend7,2)}%p ${maTrend7<=-0.05?'↓ 개선 중':maTrend7>=0.05?'↑ 정체/반등':'· 거의 변화 없음'}</div>` : ''}
-          <div class="gauge-legend">
-            <span><span class="legend-dot legend-dot-progress"></span>진행</span>
-            <span><span class="legend-dot legend-dot-goal"></span>목표(16~17%)</span>
-          </div>
+      <div class="sl-head">
+        <div>
+          <div class="sl-big">${fmt(goalStatus.ma7Last,2)}<span>%</span></div>
+          <div class="sl-cap">MA7(최근 7일 평균) · 시작 대비 ${fmt(START_FAT_PCT-goalStatus.ma7Last)}%p 감소 · ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}% · 측정 ${last.date}</div>
         </div>
-        <div class="hero-side">
-          <div class="hero-stat"><span class="l">체중</span><span class="v mono">${fmt(last.weight)} kg</span></div>
-          <div class="hero-stat"><span class="l">골격근량</span><span class="v mono">${fmt(last.muscle)} kg</span></div>
-          <div class="hero-stat"><span class="l">체지방량</span><span class="v mono">${fmt(last.fat)} kg</span></div>
-          <div class="hero-stat"><span class="l">최근 기초대사량(BMR)</span><span class="v mono">${last.bmr ?? '—'} kcal</span></div>
-          <div class="hero-stat"><span class="l">최근 측정일</span><span class="v mono">${last.date}</span></div>
-        </div>
+        ${maTrend7!==null ? `<div class="sl-chip ${maTrend7<=-0.05?'good':maTrend7>=0.05?'warn':''}">${maTrend7<=-0.05?'↓ 개선 중':maTrend7>=0.05?'↑ 정체/반등':'· 변화 적음'} ${maTrend7>0?'+':''}${fmt(maTrend7,2)}%p</div>` : ''}
       </div>
-      ${goalTrackerHtml_()}
+      ${(() => {
+        const gLo_ = Math.min(...NEW_FAT_GOALS_GAUGE.map(g=>g.pct)), gHi_ = Math.max(...NEW_FAT_GOALS_GAUGE.map(g=>g.pct));
+        const span_ = START_FAT_PCT - gLo_;
+        const fill_ = Math.min(100, Math.max(0, (START_FAT_PCT - goalStatus.ma7Last) / span_ * 100));
+        const bandL_ = Math.min(100, Math.max(0, (START_FAT_PCT - gHi_) / span_ * 100));
+        return `<div class="sl-track"><i style="width:${fill_.toFixed(1)}%"></i><u style="left:${bandL_.toFixed(1)}%; right:0"></u></div>
+        <div class="sl-trackfoot"><span>시작 ${fmt(START_FAT_PCT)}%</span><span>목표 ${gLo_}~${gHi_}%</span></div>`;
+      })()}
+      <div class="sl-tiles">
+        <div class="sl-tile"><span>체중</span><b>${fmt(last.weight)}</b></div>
+        <div class="sl-tile"><span>골격근</span><b>${fmt(last.muscle)}</b></div>
+        <div class="sl-tile"><span>체지방</span><b>${fmt(last.fat)}</b></div>
+        <div class="sl-tile"><span>BMR</span><b>${last.bmr ?? '—'}</b></div>
+      </div>
+      ${goalTrackerHtml_(true)}
     </section>
 
     ${(() => {
