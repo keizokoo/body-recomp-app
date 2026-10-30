@@ -613,7 +613,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1738,7 +1738,7 @@ function applyGoalOverrides_(){
   PROTEIN_TARGET = (g.protein && g.protein.min!=null && g.protein.max!=null) ? {min:g.protein.min, max:g.protein.max} : PROTEIN_TARGET_DEFAULT;
 }
 applyGoalOverrides_();
-function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); }
+function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); if(typeof updateThemeColorMeta_==='function') updateThemeColorMeta_(); }
 function setTheme(t){
   state.theme = t;
   try{ localStorage.setItem(LS_KEYS.theme, t); }catch(e){}
@@ -1757,9 +1757,21 @@ const PALETTES = [
   {id:'mono-amber', name:'모노 + 앰버골드', css:'linear-gradient(90deg,#18181B 0 50%,#F5A524 50% 100%)'}
 ];
 function getPalette(){ try{ const p = localStorage.getItem(PALETTE_KEY) || ''; return PALETTES.some(x=>x.id===p) ? p : ''; }catch(e){ return ''; } }
+/* 2026-10-30-g: 휴대폰 최상단 상태바(브라우저 theme-color)가 보라색으로 고정돼 앱 색상을 바꿔도 안 변하던 문제 수정. [라이트, 다크] */
+const PALETTE_THEME_COLOR = {'':['#7C5CFC','#7C5CFC'], ocean:['#2F7BEA','#2F7BEA'], forest:['#1E9E6A','#1E9E6A'], sunset:['#F2683C','#F2683C'], mono:['#18181B','#000000'], 'mono-violet':['#7C5CFC','#7C5CFC'], 'mono-amber':['#F5A524','#F5A524']};
+function updateThemeColorMeta_(){
+  try{
+    const pair = PALETTE_THEME_COLOR[getPalette()] || PALETTE_THEME_COLOR[''];
+    const c = pair[document.documentElement.getAttribute('data-theme')==='dark' ? 1 : 0];
+    let m = document.querySelector('meta[name="theme-color"]');
+    if(!m){ m = document.createElement('meta'); m.setAttribute('name','theme-color'); document.head.appendChild(m); }
+    m.setAttribute('content', c);
+  }catch(e){}
+}
 function applyPalette(){
   const p = getPalette();
   if(p) document.documentElement.setAttribute('data-palette', p); else document.documentElement.removeAttribute('data-palette');
+  updateThemeColorMeta_();
 }
 function setPalette(p){ try{ if(p) localStorage.setItem(PALETTE_KEY, p); else localStorage.removeItem(PALETTE_KEY); }catch(e){} applyPalette(); render(); }
 function paletteGridHtml_(){
@@ -1768,9 +1780,9 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-10-30-g','최상단 상태바 색이 앱 색상에 따라 바뀌도록 수정'],
   ['2026-10-30-f','앱 색상 7종(설정에서 변경) · 맨 아래 버전 정보와 최근 변경 3개'],
-  ['2026-10-30-e','크레아틴을 이동평균 추세에 편입 · 제지방량 차트 추가'],
-  ['2026-10-30-d','리포트·운동 탭 슬림화(크레아틴·부위별 회복·이동평균·인사이트)']
+  ['2026-10-30-e','크레아틴을 이동평균 추세에 편입 · 제지방량 차트 추가']
 ];
 function appBuildShort_(){ const m = /^(\S+)/.exec(String(APP_BUILD_VERSION)); return m ? m[1] : String(APP_BUILD_VERSION); }
 function appChangelogHtml_(){ return `<ul>${APP_CHANGELOG.slice(0,3).map(c => `<li>${esc(c[0])} · ${esc(c[1])}</li>`).join('')}</ul>`; }
