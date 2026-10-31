@@ -613,7 +613,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1788,6 +1788,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-10-31-c','인바디 유형 카드 2장(요약 + 체중×골격근 산점도)을 크레아틴 뒤로 이동 · 골격근 차트는 원래대로'],
   ['2026-10-31-b','보조운동 근력일 집계: 7일 중 5일 이상이면 근력일 +1 · 턱걸이 카드에 일수 안내'],
   ['2026-10-31-a','인바디 유형(I/C) 표시 — 골격근 차트 점·기준선·요약 카드, 인바디 표 배지'],
   ['2026-10-30-g','최상단 상태바 색이 앱 색상에 따라 바뀌도록 수정'],
@@ -2043,7 +2044,6 @@ function validInbody(arr){ return (arr||[]).filter(r => !isExcluded_(r)); }
    추정으로 채우지 않는다 — 값이 없는 날(체중만 잰 날 등)은 유형 없음으로 둔다. */
 const BODYTYPE_I_COLOR_ = '#E8A200';
 function bodyTypeOf_(r){ const t = r && r.bodyType ? String(r.bodyType).trim().toUpperCase() : ''; return (t==='I'||t==='C'||t==='D') ? t : ''; }
-function bodyTypeMap_(rows){ const m = {}; (rows||[]).forEach(r=>{ const t = bodyTypeOf_(r); if(t) m[r.date] = {t}; }); return m; }
 function bodyTypeBadge_(r){
   const t = bodyTypeOf_(r); if(!t) return '';
   const base = 'margin-left:4px; font-size:10px; border-radius:4px; padding:0 5px; font-weight:700; color:#fff;';
@@ -2061,9 +2061,10 @@ function bodyTypeStats_(rowsAll){
   const minI = iRows.length ? Math.min(...iRows.map(r=>r.muscle)) : null;
   const maxI = iRows.length ? Math.max(...iRows.map(r=>r.muscle)) : null;
   const lastI = iRows.length ? iRows.map(r=>r.date).sort().slice(-1)[0] : null;
+  const minIw = iRows.length ? Math.min(...iRows.map(r=>r.weight).filter(v=>v!=null)) : null;
   const valid = sortedInbody().filter(r=>r.muscle!=null).slice(-7);
   const avg7 = valid.length ? valid.reduce((a,r)=>a+r.muscle,0)/valid.length : null;
-  return {iCount:iRows.length, cCount, other, minI, maxI, lastI, avg7, avgN:valid.length};
+  return {iCount:iRows.length, cCount, other, minI, maxI, minIw, lastI, avg7, avgN:valid.length};
 }
 function bodyTypeSummaryCard_(st){
   if(!st) return '';
@@ -2078,7 +2079,43 @@ function bodyTypeSummaryCard_(st){
       ${tile(st.minI!=null ? fmt(st.minI,1)+'kg' : '—', 'I가 확인된 최소 골격근')}
       ${tile(st.avg7!=null ? fmt(st.avg7,2)+'kg' : '—', gap!=null ? `최근 ${st.avgN}번 평균 · I 확인 최소까지 ${gap>=0?'+':'−'}${Math.abs(gap).toFixed(2)}kg` : '최근 7번 평균')}
     </div>
-    <div style="font-size:10px; color:var(--text-faint); margin-top:6px;">I는 골격근 ${st.minI!=null?fmt(st.minI,1):'—'}~${st.maxI!=null?fmt(st.maxI,1):'—'}kg·체중 71.6kg 이상일 때만 확인됐어요(체중이 낮은 지금 기준은 확인안됨).</div>
+    <div style="font-size:10px; color:var(--text-faint); margin-top:6px;">I는 골격근 ${st.minI!=null?fmt(st.minI,1):'—'}~${st.maxI!=null?fmt(st.maxI,1):'—'}kg${st.minIw!=null && isFinite(st.minIw) ? `·체중 ${fmt(st.minIw,1)}kg 이상일 때만` : '일 때만'} 확인됐어요(체중이 낮은 지금 기준은 확인안됨).</div>
+  </div>`;
+}
+// 2026-10-31-c: 체중×골격근 산점도 — I(금색 큰 점)·C(회색 작은 점)·I가 확인된 구간(옅은 사각)·오늘(검은 원). 체중 범위 밖(예: 6~7월 고체중기) 점은 그리지 않고 건수만 알려준다.
+function bodyTypeScatterCard_(rowsAll){
+  const rows = (rowsAll||[]).filter(r => !isExcluded_(r) && bodyTypeOf_(r) && r.weight!=null && r.muscle!=null);
+  if(!rows.length) return '';
+  const iRows = rows.filter(r => bodyTypeOf_(r)==='I');
+  const cur = sortedInbody().filter(r => r.weight!=null && r.muscle!=null).slice(-1)[0];
+  const ws0 = iRows.map(r=>r.weight).concat(cur ? [cur.weight] : []);
+  if(!ws0.length) return '';
+  const xmin = Math.floor(Math.min(...ws0)-1), xmax = Math.ceil(Math.max(...ws0)+0.5);
+  const shown = rows.filter(r => r.weight>=xmin && r.weight<=xmax);
+  const hidden = rows.length - shown.length;
+  const ys = shown.map(r=>r.muscle).concat(cur ? [cur.muscle] : []);
+  const ymin = Math.floor((Math.min(...ys)-0.3)*2)/2, ymax = Math.ceil((Math.max(...ys)+0.3)*2)/2;
+  const w=300, h=190, padL=32, padR=8, padT=12, padB=26;
+  const x = v => padL + (v-xmin)/(xmax-xmin||1)*(w-padL-padR);
+  const y = v => padT + (ymax-v)/(ymax-ymin||1)*(h-padT-padB);
+  const yStep = (ymax-ymin) > 3 ? 1 : 0.5;
+  let grid = '';
+  for(let v=Math.ceil(ymin/yStep)*yStep; v<=ymax+1e-9; v+=yStep) grid += `<line x1="${padL}" x2="${w-padR}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" style="stroke:var(--c-grid)" stroke-width="1"/><text class="chart-axis" x="${padL-4}" y="${(y(v)+3).toFixed(1)}" text-anchor="end">${fmt(v,yStep<1?1:0)}</text>`;
+  for(let v=xmin; v<=xmax; v++) grid += `<line x1="${x(v).toFixed(1)}" x2="${x(v).toFixed(1)}" y1="${padT}" y2="${h-padB}" style="stroke:var(--c-grid)" stroke-width="1"/><text class="chart-axis" x="${x(v).toFixed(1)}" y="${h-13}" text-anchor="middle">${v}</text>`;
+  grid += `<text class="chart-axis" x="${((padL+w-padR)/2).toFixed(1)}" y="${h-2}" text-anchor="middle">체중(kg)</text>`;
+  let zone = '';
+  if(iRows.length){
+    const zx1 = Math.min(...iRows.map(r=>r.weight)), zx2 = Math.max(...iRows.map(r=>r.weight));
+    const zy1 = Math.min(...iRows.map(r=>r.muscle)), zy2 = Math.max(...iRows.map(r=>r.muscle));
+    zone = `<rect x="${(x(zx1)-6).toFixed(1)}" y="${(y(zy2)-6).toFixed(1)}" width="${(x(zx2)-x(zx1)+12).toFixed(1)}" height="${(y(zy1)-y(zy2)+12).toFixed(1)}" fill="${BODYTYPE_I_COLOR_}" opacity="0.16" rx="4"/><text x="${(x(zx1)-6).toFixed(1)}" y="${(y(zy2)-9).toFixed(1)}" font-size="8" font-weight="700" fill="${BODYTYPE_I_COLOR_}">I 확인 구간</text>`;
+  }
+  const cDots = shown.filter(r => bodyTypeOf_(r)!=='I').map(r => `<circle cx="${x(r.weight).toFixed(1)}" cy="${y(r.muscle).toFixed(1)}" r="2.2" fill="#9aa0a6" opacity="0.6"/>`).join('');
+  const iDots = shown.filter(r => bodyTypeOf_(r)==='I').map(r => `<circle cx="${x(r.weight).toFixed(1)}" cy="${y(r.muscle).toFixed(1)}" r="5" fill="${BODYTYPE_I_COLOR_}" stroke="#fff" stroke-width="1.4"/>`).join('');
+  const now = cur ? `<circle cx="${x(cur.weight).toFixed(1)}" cy="${y(cur.muscle).toFixed(1)}" r="4.6" fill="none" style="stroke:var(--text)" stroke-width="1.7"/><text x="${(x(cur.weight)+8).toFixed(1)}" y="${(y(cur.muscle)+3).toFixed(1)}" font-size="9" font-weight="700" style="fill:var(--text)">오늘 ${fmt(cur.weight,1)}/${fmt(cur.muscle,1)}</text>` : '';
+  return `<div class="card chart-card">
+    <div class="ch-head"><span class="ch-title">체중 × 골격근 <span class="dim" style="font-weight:500;">I/C 분포</span></span></div>
+    <svg class="chart" viewBox="0 0 ${w} ${h}" style="height:${h}px">${grid}${zone}${cDots}${iDots}${now}</svg>
+    <div style="font-size:10px; color:var(--text-faint); margin-top:4px;"><span style="color:${BODYTYPE_I_COLOR_}">●</span> I자 · <span style="color:#9aa0a6">●</span> C자 · 검은 원 = 오늘${hidden>0 ? ` · 체중 ${xmin}~${xmax}kg 밖 ${hidden}건은 표시 안 함` : ''}</div>
   </div>`;
 }
 function sortedInbodyAll(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
@@ -2609,21 +2646,6 @@ function lineChartSVG(data, key, colorVar, opts={}){
     const bw_ = Math.max(1.5, (w-padL-padR)/Math.max(1, data.length-1));
     data.forEach((d,i) => { if(opts.shadeMap[d.date]) shadeSvg_ += `<rect x="${(x(i)-bw_/2).toFixed(1)}" y="${padT}" width="${bw_.toFixed(1)}" height="${h-padT-padB}" fill="var(--c-waist)" opacity="0.16"/>`; });
   }
-  // 2026-10-31-a: opts.band([lo,hi])=I·C 혼재 띠, opts.refLine({v,label})=가로 기준선, opts.typeMap({날짜:{t}})=I(금색 큰 점)·C(회색 작은 점)
-  let bandSvg_ = '', refSvg_ = '', typeSvg_ = '';
-  if(opts.band && opts.band[1]>=min && opts.band[0]<=max){
-    const by1_ = y(Math.min(opts.band[1],max)), by2_ = y(Math.max(opts.band[0],min));
-    bandSvg_ = `<rect x="${padL}" y="${by1_.toFixed(1)}" width="${w-padL-padR}" height="${Math.max(1,by2_-by1_).toFixed(1)}" fill="${BODYTYPE_I_COLOR_}" opacity="0.14"/>`;
-  }
-  if(opts.refLine && opts.refLine.v>=min && opts.refLine.v<=max){
-    const ry_ = y(opts.refLine.v);
-    refSvg_ = `<line x1="${padL}" x2="${w-padR}" y1="${ry_.toFixed(1)}" y2="${ry_.toFixed(1)}" stroke="${BODYTYPE_I_COLOR_}" stroke-width="1" stroke-dasharray="4 3" opacity="0.8"/><text x="${(padL+(w-padL-padR)*0.35).toFixed(1)}" y="${(ry_-3).toFixed(1)}" font-size="8" font-weight="700" fill="${BODYTYPE_I_COLOR_}">${opts.refLine.label||''}</text>`;
-  }
-  if(opts.typeMap){
-    data.forEach((d,i) => { const tm = opts.typeMap[d.date]; if(!tm || d._ex || d[key]==null) return;
-      if(tm.t==='I') typeSvg_ += `<circle cx="${x(i).toFixed(1)}" cy="${y(d[key]).toFixed(1)}" r="4.2" fill="${BODYTYPE_I_COLOR_}" stroke="#fff" stroke-width="1.3"/>`;
-      else typeSvg_ += `<circle cx="${x(i).toFixed(1)}" cy="${y(d[key]).toFixed(1)}" r="1.9" fill="#9aa0a6" stroke="#fff" stroke-width="0.6" opacity="0.9"/>`; });
-  }
   let maPath_ = '';
   if(opts.maMap){
     let st_ = false;
@@ -2638,16 +2660,13 @@ function lineChartSVG(data, key, colorVar, opts={}){
     ${gridY.map(g=>`<line x1="${padL}" x2="${w-padR}" y1="${g.y}" y2="${g.y}" style="stroke:var(--c-grid)" stroke-width="1"/>`).join('')}
     ${yTicks}
     ${shadeSvg_}
-    ${bandSvg_}
     ${goalLine}
-    ${refSvg_}
     ${vlines}
     ${opts.maMap ? '' : `<path d="${areaD}" fill="url(#${gid})" stroke="none"/>`}
     <path d="${pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="${opts.maMap?1.2:2.4}" ${opts.maMap?'opacity="0.4"':''} stroke-linejoin="round" stroke-linecap="round"/>
     ${maPath_ ? `<path d="${maPath_}" fill="none" style="stroke:var(${colorVar})" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
     ${pts.filter(p=>p && p[2]).map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="none" stroke="#9aa0a6" stroke-width="1.6"/>`).join('')}
     ${pts.filter(p=>p && !p[2] && p[3]).map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.6" fill="none" style="stroke:var(--c-warn)" stroke-width="1.5"/>`).join('')}
-    ${typeSvg_}
     ${xTicks}
   </svg>`;
 }
@@ -4928,15 +4947,14 @@ function renderDashboard(){
               const leanOf_ = r => (r.weight!=null && r.fat!=null) ? Math.round((r.weight-r.fat)*100)/100 : null;
               const ibLeanAll_ = ibAll_.map(r => ({...r, lean: leanOf_(r)}));
               const ibLean_ = ib.map(r => ({...r, lean: leanOf_(r)})).filter(r => r.lean!=null);
-              const btStats_ = bodyTypeStats_(ibAll_); // 2026-10-31-a: 인바디 유형(I/C) — 값이 없으면 null이라 카드·표시 모두 안 나옴
-              const btExtra_ = btStats_ ? {shadeMap: creMap_, typeMap: bodyTypeMap_(ibAll_), refLine: btStats_.minI!=null ? {v: btStats_.minI, label: 'I 확인 최소 '+fmt(btStats_.minI,1)} : null, band: btStats_.minI!=null ? [btStats_.minI-0.1, btStats_.maxI] : null} : {shadeMap: creMap_};
               return chartCardMA_('체중', ibAll_, 'weight', 'kg', '--c-weight', null, mapOf_(ib,'weight'), {shadeMap: creMap_})
-                + bodyTypeSummaryCard_(btStats_)
-                + chartCardMA_('골격근', ibAll_, 'muscle', 'kg', '--c-muscle', MUSCLE_BASELINE, mapOf_(ibBC_,'muscle'), btExtra_)
+                + chartCardMA_('골격근', ibAll_, 'muscle', 'kg', '--c-muscle', MUSCLE_BASELINE, mapOf_(ibBC_,'muscle'), {shadeMap: creMap_})
                 + chartCardMA_('체지방량', ibAll_, 'fat', 'kg', '--c-fat', null, mapOf_(ibBC_,'fat'))
                 + chartCardMA_('체지방률', ibAll_, 'fatPct', '%', '--c-fatpct', 17, mapOf_(ibBC_,'fatPct'))
                 + chartCardMA_('제지방량(체중−체지방)', ibLeanAll_, 'lean', 'kg', '--c-neutral', null, mapOf_(ibLean_,'lean'), {note:'뼈·수분 포함, 근육 보존 확인용'})
-                + renderCreatineSection(ib);
+                + renderCreatineSection(ib)
+                + bodyTypeSummaryCard_(bodyTypeStats_(ibAll_)) // 2026-10-31-c: 인바디 유형은 크레아틴 카드 뒤 2장(요약 + 체중×골격근 산점도)으로 분리
+                + bodyTypeScatterCard_(ibAll_);
             })()}
           </div>
           ${expandToggleRow('maTable', maFat.length, '일별 상세 기록 보기')}
@@ -5383,8 +5401,8 @@ function chartCardMA_(title, data, key, unit, colorVar, goal, maMap, extra){
   const nowMA = keys.length ? maMap[keys[keys.length-1]] : null;
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">${title} <span class="dim" style="font-weight:500;">7일 평균</span></span><span class="ch-now mono" style="color:var(${colorVar})">${nowMA!=null ? fmt(nowMA,2) : '—'}${unit}</span></div>
-    ${lineChartSVG(data, key, colorVar, {goal, maMap, h:94, shadeMap: extra.shadeMap, typeMap: extra.typeMap, refLine: extra.refLine, band: extra.band})}
-    <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">진한 선 = 7일 평균 · 연한 선 = 매일 값${extra.shadeMap ? ` · <span style="color:var(--c-waist)">주황 음영 = 크레아틴 복용일</span>` : ''}${extra.typeMap ? ` · <span style="color:${BODYTYPE_I_COLOR_}">●</span> I자 · <span style="color:#9aa0a6">●</span> C자${extra.refLine ? ' · 점선 = I 확인 최소 · 연한 띠 = I·C 혼재' : ''}` : ''}${extra.note ? ' · '+extra.note : ''}${data.some(d=>d._alc && !d._ex && d[key]!=null) ? ` · <span style="color:var(--c-warn)">○</span> 음주 다음날` : ''}</div>
+    ${lineChartSVG(data, key, colorVar, {goal, maMap, h:94, shadeMap: extra.shadeMap})}
+    <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">진한 선 = 7일 평균 · 연한 선 = 매일 값${extra.shadeMap ? ` · <span style="color:var(--c-waist)">주황 음영 = 크레아틴 복용일</span>` : ''}${extra.note ? ' · '+extra.note : ''}${data.some(d=>d._alc && !d._ex && d[key]!=null) ? ` · <span style="color:var(--c-warn)">○</span> 음주 다음날` : ''}</div>
   </div>`;
 }
 function toggleTable(){ state.showTable = !state.showTable; render(); }
