@@ -613,7 +613,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -749,7 +749,7 @@ function inferPartsForEntry(w){
 const CARDIO_HR_TARGET_DEFAULT = {min:105, max:125};
 let CARDIO_HR_TARGET = CARDIO_HR_TARGET_DEFAULT;
 // 단백질 목표 (기존 체중×1.6g/kg에서 상향 조정, 절대량 기준)
-const PROTEIN_TARGET_DEFAULT = {min:140, max:170}; // 2026-07-29: 하한 150→140g 조정(ISSN Aragon 2017, FFM기준 재검토)
+const PROTEIN_TARGET_DEFAULT = {min:130, max:160}; // 2026-11-07 개정: 140~170→130~160g(총 단백질 1.62g/kg 이상은 근육 증가가 더 늘지 않음(Morton 2018, 71kg 기준 115~156g) · 제지방 57kg×2.3g=131g). 점수·체크 하한은 120g. 이전: 2026-07-29 하한 150→140g(ISSN Aragon 2017)
 let PROTEIN_TARGET = PROTEIN_TARGET_DEFAULT;
 
 // 2026-08-13 추가: 특이일(과식/음주/컨디션난조 등) — 이 프로젝트의 임무 자체가 "음주, 과식 등
@@ -773,10 +773,32 @@ const SPECIAL_DAY_ADVICE = {
 // 대신 구조화 필드(avgHR/durationMin/distanceKm)로 남길 수 있게 함 — treadmillSteps 필드를 도입해
 // 걸음수 파싱 문제를 근본 해결했던 선례(2026-08-16)와 동일한 패턴. 값이 있으면 note 파싱보다
 // 최우선으로 신뢰하고, 없는 과거 기록은 기존 정규식 파싱으로 그대로 폴백한다.
-// 유산소 "인정기준"(2026-09-13 개정): 평균심박 105bpm 이상 AND 시간 20분 이상, 2조건만
-// (거리조건은 폐지, 참고정보로만 기록) — CARDIO_HR_TARGET(105-125bpm 목표존 준수 여부)과는
+// 유산소 "인정기준"(2026-11-07 개정): 30분 이상 또는 3km 이상(이전 2026-09-13: 평균심박 105bpm 이상 AND 20분 이상) — CARDIO_HR_TARGET(105-125bpm 목표존 준수 여부)과는
 // 별개 개념이므로 혼동하지 않는다.
-const CARDIO_VALID_RULE = {minHR:105, minDurationMin:20};
+// 2026-11-07 개정(정희님 지시): 유산소 "인정기준" = part가 정확히 '유산소' AND (30분 이상 OR 3km 이상). 평균심박 조건은 폐지(손목 심박 오차, 심박은 참고 기록만).
+const CARDIO_VALID_RULE = {minDurationMin:30, minDistanceKm:3};
+function isQualCardioW_(w){
+  if(!w || String(w.part||'').trim()!=='유산소') return false;
+  const n = v => (v===null||v===undefined||v===''||isNaN(Number(v))) ? null : Number(v);
+  const dur = n(w.durationMin), km = n(w.distanceKm);
+  return (dur!==null && dur>=CARDIO_VALID_RULE.minDurationMin) || (km!==null && km>=CARDIO_VALID_RULE.minDistanceKm);
+}
+// 2026-11-07 개정: 칼로리 목표 = 주 평균 고정 목표(기초대사·운동 보정 폐지).
+// 근거: 6/29~11/2 주간 인바디 변화(체지방×7,700 + 제지방×1,800kcal/kg)와 식단 평균으로 구한 유지 칼로리(4주 창 9개)가 2,117~2,254(평균 약 2,190)로 일정했다.
+// 지방 −0.14kg/주(3/9 계획선) ≈ 하루 −150kcal → 목표 2,050kcal(주 평균). 밴드 하한 1,900(근육 보호), 상한 2,200(유지 칼로리 선). 4주마다 실측으로 재보정.
+const KCAL_TARGET_MID = 2050, KCAL_BAND_LOW = 1900, KCAL_BAND_HIGH = 2200;
+// 2026-11-07 A안(정희님 확정): 운동 가산은 하루가 아니라 "주 단위". 그 주(월~일) 운동 칼로리 합계가 평소 상한 2,300kcal를 넘으면 넘은 양의 60%를 주 예산에 더한다(하루 평균으로 환산).
+// 근거: 사람이 활동으로 더 쓴 칼로리의 평균 72%가 총 소모에 더해진다(Careau 2021) × 워치 과대추정 보정 → 계수 0.6(가정, 매월 점검에서 재보정). 2,300 = 6/29~11/2 4주 창 주간 운동 평균 1,770 + 1표준편차 538.
+const KCAL_EXTRA_BASE_WEEK = 2300, KCAL_EXTRA_FACTOR = 0.6, KCAL_BAND_HALF = 150;
+function kcalWeekTarget_(dateISO){
+  const d0 = new Date((dateISO || todayISO()) + 'T12:00:00'); d0.setDate(d0.getDate() - ((d0.getDay()+6)%7));
+  const days = []; for(let i=0;i<7;i++){ const d = new Date(d0); d.setDate(d.getDate()+i); days.push(toLocalISO(d)); }
+  const ws = (typeof statWorkouts_ === 'function') ? statWorkouts_() : (state.workouts || []);
+  const eat = ws.filter(w => w && days.includes(String(w.date).slice(0,10))).reduce((s,w) => s + (Number(w.calories)||0), 0);
+  const add = Math.round(Math.max(0, eat - KCAL_EXTRA_BASE_WEEK) * KCAL_EXTRA_FACTOR / 7);
+  const mid = KCAL_TARGET_MID + add;
+  return {mid, low: mid - KCAL_BAND_HALF, high: mid + KCAL_BAND_HALF, eat: Math.round(eat), add, days};
+}
 
 // 2026-09-13 추가: 운동 기록에도 식단의 specialDayType과 대칭되는 구조화된 "특이조건" 플래그.
 // 여행중/컨디션난조/장비제약 등으로 저항운동을 못 하거나 강도를 낮춘 세션임을 명시적으로 남기면,
@@ -921,8 +943,8 @@ function computeInclineHistory(workouts){
     // 2026-09-13 추가: 유산소 "인정기준"(평균심박 105bpm 이상 AND 20분 이상, 2조건) 자동 판정.
     // avgHR/durationMin 둘 다 확보돼야 판정 가능 — 하나라도 없으면 '판정불가'로 표시하고
     // 과거처럼 사람이 수동으로 정정하지 않아도 되게 한다.
-    const creditKnown = avgHR!==null && durationMin!==null;
-    const creditValid = creditKnown ? (avgHR>=CARDIO_VALID_RULE.minHR && durationMin>=CARDIO_VALID_RULE.minDurationMin) : null;
+    const creditKnown = durationMin!==null || distanceKm>0;
+    const creditValid = creditKnown ? ((durationMin!==null && durationMin>=CARDIO_VALID_RULE.minDurationMin) || distanceKm>=CARDIO_VALID_RULE.minDistanceKm) : null;
     return {date:w.date, distanceKm, calories:w.calories, avgHR, durationMin, verdict, tone, isPreTarget, deviation, creditValid};
   }).sort((a,b)=>b.date.localeCompare(a.date));
 }
@@ -937,13 +959,9 @@ function parseVolume(v){
 // 2026-07-25 신설: 칼로리 목표 계산 — 기존 고정값 400 대신 BMR×0.3을 EAT 보정 기준점으로 사용.
 // 근거: 정희님 확정(2026-07-25) — BMR이 감량 진행에 따라 계속 낮아지는데 고정값 400은 시간이
 // 지날수록 상대적 비중이 커지는 왜곡이 있어, BMR에 비례시켜 이 왜곡을 방지.
+// 2026-11-07 개정: 기초대사·운동 보정을 쓰지 않는 주 평균 고정 목표(위 KCAL_* 상수 참고). 인자는 호환용으로만 받고 무시한다.
 function computeCalorieTarget(bmr, eatKcal){
-  if(!bmr) return null;
-  const base = Math.round(bmr*1.5-550);
-  const threshold = bmr*0.3;
-  const eat = eatKcal||0;
-  const corrected = eat > threshold ? Math.round(base + (eat-threshold)*0.6) : base;
-  return {base, threshold: Math.round(threshold), targetLow: corrected, targetHigh: corrected+100};
+  const k = kcalWeekTarget_(); return {base: k.mid, threshold: null, targetLow: k.low, targetHigh: k.high};
 }
 
 // 2026-10-26 신설(칼로리 목표 개정 B·C안, Code.gs 2026-10-26과 같은 규칙): 칼로리 목표에 쓰는 기초대사.
@@ -964,7 +982,7 @@ function targetBmrOn(dateISO, fallbackBmr){
   return smoothedBmrOn_(dateISO) || fallbackBmr || null;
 }
 // 목표 오차(추정): 기초대사 예측식은 개인에게 약 ±10% 오차 → 목표는 ×1.5로 움직이므로 ±(BMR×0.1×1.5) kcal
-function calorieErrorKcal_(bmr){ return bmr ? Math.round(bmr*0.1*1.5) : null; }
+function calorieErrorKcal_(bmr){ return KCAL_BAND_HALF; } // 2026-11-07: 밴드 반폭(±150) — 인자 무시
 
 // 2026-07-25 신설: 탄수화물 목표 계산 — 근력운동 총볼륨(kg) 기준 A/B/C 3단계.
 // 근거: 정희님 확정(2026-07-25) — 근력 없는 날=A, 있는 날은 "오늘 볼륨 vs 역대 최고볼륨(PR)의 40%"로 B/C 분리.
@@ -1392,7 +1410,7 @@ const SEED_FAVORITES = [
 // 않기 때문. 이미 적용된 과거 마이그레이션을 지금 되돌릴 이유는 없어 그대로 두지만, **앞으로
 // 스키마를 또 바꿀 일이 생기면 키 이름을 바꾸는 이 방식 대신 아래 DATA_PATCHES(선언형 마이그레이션
 // 시스템, 기존 데이터를 그대로 보정하고 적용 여부를 로그로 확인 가능)를 우선 사용할 것.**
-const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1', deletedIds:'brc_deletedids_v1', backupHistory:'brc_backuphistory_v1', pushSizeMeta:'brc_pushsizemeta_v2', favoritesUpdatedAt:'brc_favorites_updatedat_v1', lastPushHash:'brc_lastpushhash_v1', dailyScores:'brc_dailyscores_v1'}; // 2026-10-02-b: pushSizeMeta v2(운동 키 형식 변경 — v1 서명은 형식이 달라 비교 불가라 버림), lastPushHash 신규
+const LS_KEYS = {inbody:'brc_inbody_v5', workout:'brc_workout_v6', meal:'brc_meal_v4', steps:'brc_steps_v2', waist:'brc_waist_v1', ainote:'brc_ainote_v3', reportnote:'brc_reportnote_v1', cloudurl:'brc_cloudurl_v3', lastupdate:'brc_lastupdate_v3', lastautosync:'brc_lastautosync_v1', mounjaroDoses:'brc_mounjaro_v1', sideEffects:'brc_sideeffects_v1', favorites:'brc_favorites_v1', theme:'brc_theme_v1', notif:'brc_notif_v1', goals:'brc_goals_v1', reportHistory:'brc_reporthistory_v1', deletedIds:'brc_deletedids_v1', backupHistory:'brc_backuphistory_v1', pushSizeMeta:'brc_pushsizemeta_v2', favoritesUpdatedAt:'brc_favorites_updatedat_v1', lastPushHash:'brc_lastpushhash_v1', dailyScores:'brc_dailyscores_v1', weeklyScores:'brc_weeklyscores_v1'}; // 2026-10-02-b: pushSizeMeta v2(운동 키 형식 변경 — v1 서명은 형식이 달라 비교 불가라 버림), lastPushHash 신규
 /* ============================================================
    선언형 데이터 패치 시스템 (v1) — 2026-09-19 추가(머니트레일 벤치마킹)
    ============================================================
@@ -1696,6 +1714,8 @@ let state = {
   // 2026-10-04 추가: 하루 점수(100점). Code.gs가 계산해 DailyScore 시트에 저장한 값을 cloudSync pull로만
   // 받아 표시한다(앱은 점수를 직접 계산하지 않고 서버로 되돌려 보내지도 않음 — push payload에 없음).
   dailyScores: loadArr(LS_KEYS.dailyScores, []),
+  // 2026-11-07 추가: 주간 점수(100점, 월~일). Code.gs가 WeeklyScore 시트에 저장한 값을 pull/POST 응답으로만 받아 표시한다.
+  weeklyScores: loadArr(LS_KEYS.weeklyScores, []),
   // 2026-09-19 추가(머니트레일 벤치마킹): 삭제 동기화(tombstone) — 카테고리별 {키: 삭제시각(ISO)}.
   // markDeleted_/unmarkDeleted_/applyTombstones_ 참고.
   deletedIds: loadArr(LS_KEYS.deletedIds, {inbody:{}, workouts:{}, meals:{}, steps:{}, waist:{}, sideEffects:{}}),
@@ -1736,14 +1756,15 @@ function applyGoalOverrides_(){
   CARDIO_HR_TARGET = (g.cardioHR && g.cardioHR.min!=null && g.cardioHR.max!=null) ? {min:g.cardioHR.min, max:g.cardioHR.max} : CARDIO_HR_TARGET_DEFAULT;
   CARB_TARGET_RANGES = g.carbRanges ? Object.assign({}, CARB_TARGET_RANGES_DEFAULT, g.carbRanges) : CARB_TARGET_RANGES_DEFAULT;
 
-  if(g.protein && g.protein.mode==='auto' && g.protein.perKgMin && g.protein.perKgMax){
+  const proteinRuleOk_ = !!(g.protein && g.protein.rule==='2026-11-07'); // 2026-11-07: 새 기준 이전에 저장한 단백질 값(140~170 등)은 무시하고 기본값(130~160) 사용
+  if(proteinRuleOk_ && g.protein.mode==='auto' && g.protein.perKgMin && g.protein.perKgMax){
     const last = sortedInbody().slice(-1)[0];
     if(last && last.weight){
       PROTEIN_TARGET = {min: Math.round(last.weight*g.protein.perKgMin), max: Math.round(last.weight*g.protein.perKgMax)};
       return;
     }
   }
-  PROTEIN_TARGET = (g.protein && g.protein.min!=null && g.protein.max!=null) ? {min:g.protein.min, max:g.protein.max} : PROTEIN_TARGET_DEFAULT;
+  PROTEIN_TARGET = (proteinRuleOk_ && g.protein.min!=null && g.protein.max!=null) ? {min:g.protein.min, max:g.protein.max} : PROTEIN_TARGET_DEFAULT;
 }
 applyGoalOverrides_();
 function applyTheme(){ document.documentElement.setAttribute('data-theme', state.theme); if(typeof updateThemeColorMeta_==='function') updateThemeColorMeta_(); }
@@ -2461,7 +2482,7 @@ function workoutMarks_(data){
   days.forEach(d => {
     const t = classifyDayType(ws, d);
     const s = !!t && (t.type==='근력' || t.type==='둘다');
-    const c = ws.some(w => w && w.date===d && String(w.part||'').trim()==='유산소' && Number(w.avgHR)>=105 && Number(w.durationMin)>=20);
+    const c = ws.some(w => w && w.date===d && isQualCardioW_(w));
     if(s || c) out.push({date:d, s, c});
   });
   return out.sort((a,b)=>a.date.localeCompare(b.date));
@@ -2894,7 +2915,7 @@ function goalTrackerHtml_(compact){
           ${showSig ? `<span style="min-width:52px; text-align:right;">${sigDot_(r.s)}</span>` : ''}
         </div>`).join('')}
       </div>
-      <div class="hg-detail">${showSig ? '점검 기간이라 신호등을 함께 보여드려요. 활동 지표(근력·유산소·단백질 등)는 채팅의 "월 점검해줘" 레포트에서 봅니다.' : '신호등은 점검일(매월 20일~22일)에만 표시돼요. 평소엔 숫자와 다음 점검일만 보여드립니다.'}</div>
+      <div class="hg-detail">${showSig ? '점검 기간이라 신호등을 함께 보여드려요. 활동 지표(근력·유산소·단백질 등)는 채팅의 "월 점검해줘" 레포트에서 봅니다.' : '신호등은 점검일(매월 20일~22일)에만 표시돼요. 평소엔 숫자와 다음 점검일만 보여드립니다.'} 월 점검 때는 칼로리 목표·운동 가산 계수 0.6·단백질·유산소·점수 기준 전체도 데이터로 다시 확인해 보완해요.</div>
     </div>
   </div>`;
 }
@@ -3345,9 +3366,8 @@ function computeNutritionInsightV2_(ib, meals){
   const rows = meals.filter(m => days.includes(m.date) && Number(m.calories) > 0);
   const normal = rows.filter(m => !insightIsSpecialMeal_(m));
   if(normal.length < INSIGHT_CFG_.mealMinDays) return null;
-  const bmrT = targetBmrOn(today, last.bmr);
-  const targetLow = Math.round(bmrT*1.5-550), targetHigh = targetLow+100;
-  const calErr = calorieErrorKcal_(bmrT);
+  const _kt = kcalWeekTarget_(); const targetLow = _kt.low, targetHigh = _kt.high; // 2026-11-07: 주 평균 목표 밴드(운동 가산 포함)
+  const calErr = calorieErrorKcal_();
   const avg = normal.reduce((s,m)=>s+Number(m.calories),0)/normal.length;
   const pMin = PROTEIN_TARGET.min;
   const pOk = normal.filter(m => Number(m.protein) >= pMin).length;
@@ -3375,7 +3395,7 @@ function computeMuscleInsightV2_(ib){
   const delta = blockMA7Delta(ib, 'muscle');
   const toGoal = NEW_GOAL && NEW_GOAL.muscle ? NEW_GOAL.muscle - gb.muscle : 33 - gb.muscle;
   let tone, action;
-  if(gap <= INSIGHT_CFG_.muscleWarnGap){ tone='warn'; action = '단백질 140g↑과 주 2회 근력을 지키고, 월 점검일에 같이 확인해요.'; }
+  if(gap <= INSIGHT_CFG_.muscleWarnGap){ tone='warn'; action = '단백질 120g↑(목표 130~160g)과 주 2회 근력을 지키고, 월 점검일에 같이 확인해요.'; }
   else if(gap >= INSIGHT_CFG_.muscleOkGap){ tone='good'; action = '지금 루틴을 그대로 이어가세요.'; }
   else { tone='neutral'; action = '큰 문제는 아니에요. 근력 횟수와 단백질만 챙기면 돼요.'; }
   const deltaTxt = delta===null ? '' : `, 직전 7번 평균 대비 ${delta>0?'+':''}${fmt(delta,2)}kg`;
@@ -3429,13 +3449,11 @@ function computeWorkoutInsightsV2_(workouts){
   computeInclineHistory(workouts).forEach(r => { if(r.creditValid===true && last7.includes(r.date)) credit.add(r.date); });
   workouts.forEach(w => {
     if(!last7.includes(w.date)) return;
-    if(String(w.part||'').trim()!=='유산소') return;
-    const hr = w.avgHR!=null ? Number(w.avgHR) : null, mn = w.durationMin!=null ? Number(w.durationMin) : null;
-    if(hr!==null && mn!==null && hr>=CARDIO_VALID_RULE.minHR && mn>=CARDIO_VALID_RULE.minDurationMin) credit.add(w.date);
+    if(isQualCardioW_(w)) credit.add(w.date);
   });
   const c7 = credit.size, cMin = INSIGHT_CFG_.cardioMinPerWeek;
   out.push({tone: c7>=cMin?'good':'neutral', icon:'target', title:`인정 유산소 최근 7일 ${c7}회`,
-    detail:`평균 심박 ${CARDIO_VALID_RULE.minHR}bpm↑·${CARDIO_VALID_RULE.minDurationMin}분↑을 채운 날만 셌어요. ${c7>=cMin?'지금 횟수를 유지하세요.':'심박·시간이 기록된 유산소를 주 '+cMin+'회까지 늘려보세요.'}`});
+    detail:`${CARDIO_VALID_RULE.minDurationMin}분 이상 또는 ${CARDIO_VALID_RULE.minDistanceKm}km 이상인 유산소만 셌어요. ${c7>=cMin?'지금 횟수를 유지하세요.':'시간·거리가 기록된 유산소를 주 '+cMin+'회까지 늘려보세요.'}`});
 
   // 3) 종목별 진행도(추정 1RM) — 최근 2주 내 기록된 종목만
   try{
@@ -3559,9 +3577,8 @@ function computeSmartAlerts(ib, meals, workouts, opts){
   // 실측, 여유 없음)은 둘 다 칼로리 이탈을 판정하지만 기준이 달라 같은 날 서로 다른 결론(한쪽은
   // 조용한데 다른 쪽은 경고)이 날 수 있음 — 두 카드가 동시에 떠도 모순처럼 안 보이도록 제목에
   // "최근 추세"/"오늘 단기"를 명시하고 여유폭을 문구에 직접 노출.
-  if(last.bmr && meals.length >= 5){
-    const targetLow = Math.round(targetBmrOn(todayISO(), last.bmr)*1.5-550);
-    const targetHigh = targetLow+100;
+  if(meals.length >= 5){
+    const _kt = kcalWeekTarget_(); const targetLow = _kt.low, targetHigh = _kt.high; // 2026-11-07: 주 평균 목표 밴드(운동 가산 포함)
     const sortedMealsDesc = [...meals].sort((a,b)=>b.date.localeCompare(a.date));
     const normalMeals = sortedMealsDesc.filter(m=>!isSpecialDay(m));
     const recent5 = normalMeals.slice(0,5);
@@ -3591,28 +3608,7 @@ function computeSmartAlerts(ib, meals, workouts, opts){
 
   // 3b) 오늘 목표 대비 섭취 현황 — 칼로리(BMR×0.3 EAT보정)와 탄수화물(볼륨/PR 40% 기준) 둘 다 표시
   // (2026-07-25 확정: 기존 고정값 400 대신 BMR비례, 탄수화물은 세트수 대신 볼륨/PR비율 기준)
-  {
-    const todayD = todayISO();
-    const todayEAT = workouts.filter(w=>w.date===todayD).reduce((s,w)=>s+(Number(w.calories)||0),0);
-    const calBmr = targetBmrOn(todayD, last.bmr);
-    const calTarget = calBmr ? computeCalorieTarget(calBmr, todayEAT) : null;
-    const calErr = calorieErrorKcal_(calBmr);
-    const carbTarget = computeCarbTarget(workouts, todayD);
-    const todayMeal = meals.find(m=>m.date===todayD);
-    if(calTarget && carbTarget){
-      const calIntake = todayMeal ? (todayMeal.calories||0) : null;
-      const carbIntake = todayMeal ? (todayMeal.carbs||0) : null;
-      let detail = `칼로리 목표 ${calTarget.targetLow}~${calTarget.targetHigh}kcal(추정 오차 ±${calErr}kcal, 오늘 EAT ${todayEAT}kcal${todayEAT>calTarget.threshold?`, BMR×0.3=${calTarget.threshold}kcal 초과분 보정 적용`:''}) · 탄수화물 목표 ${carbTarget.tier}등급 ${carbTarget.range[0]}~${carbTarget.range[1]}g(${carbTarget.reason}).`;
-      let tone = 'neutral';
-      if(calIntake!==null && carbIntake!==null){
-        const calDelta = calIntake < calTarget.targetLow ? calIntake-calTarget.targetLow : (calIntake > calTarget.targetHigh ? calIntake-calTarget.targetHigh : 0);
-        const carbDelta = carbIntake < carbTarget.range[0] ? carbIntake-carbTarget.range[0] : (carbIntake > carbTarget.range[1] ? carbIntake-carbTarget.range[1] : 0);
-        detail += ` 현재 섭취 ${fmt(calIntake,0)}kcal(델타 ${calDelta===0?'범위내':(calDelta>0?'+':'')+fmt(calDelta,0)}, 목표 추정 오차 ±${calErr}kcal ${Math.abs(calDelta)<=calErr?'안':'밖'}) / 탄수 ${fmt(carbIntake,0)}g(델타 ${carbDelta===0?'범위내':(carbDelta>0?'+':'')+fmt(carbDelta,0)}).`;
-        if(Math.abs(calDelta)>calErr || carbDelta!==0) tone = 'warn'; else tone = 'good';
-      }
-      push({tone, icon:'target', score: 58, title:`오늘 목표 (오늘 단기 · 칼로리 EAT보정 + 탄수 ${carbTarget.tier}등급)`, detail});
-    }
-  }
+  // 2026-11-07: 3b) "오늘 목표(운동 EAT보정 + 탄수 등급)" 하루 단기 인사이트는 새 기준(주 평균 칼로리·탄수 목표 없음)과 맞지 않아 삭제했다.
 
   // 3c) 특이일(과식/음주/외식/컨디션난조) 다음날 자동 대처 가이드
   // (2026-08-13 신설 — 프로젝트 임무 "음주, 과식 등 특이이슈 발생시 대처방안 제공"에 직접 대응)
@@ -4207,7 +4203,7 @@ function computeStrengthsAndImprovements(ib, workouts, meals){
   const proteinRate = recentMeals.length ? (recentMeals.filter(m => (m.protein||0) >= PROTEIN_TARGET.min).length / recentMeals.length * 100) : null;
 
   const calorieRate = (last.bmr && recentMeals.length) ? (recentMeals.filter(m => {
-    const lo = targetBmrOn(m.date, last.bmr)*1.5-550, hi = lo+100;
+    const _kt = kcalWeekTarget_(m.date); const lo = _kt.low, hi = _kt.high; // 2026-11-07: 그 주 목표 밴드(운동 가산 포함)
     return (m.calories||0) <= hi+50;
   }).length / recentMeals.length * 100) : null;
 
@@ -4262,7 +4258,7 @@ const STRENGTH_GROUPS = [
 ];
 
 /* 2026-10-22 운동 계획 변경(정희님 확정 2026-10-20): 근력은 주 2회·요일 자유(같은 부위는 48시간 이상 간격), 세션 A(하체+등·이두)와 B(상체)를 번갈아.
-   유산소는 "인정 유산소"(part가 정확히 '유산소' AND 평균심박 105bpm 이상 AND 20분 이상, 서버 하루 점수와 같은 기준)만 주 3회(최소 2회)로 센다.
+   유산소는 "인정 유산소"(part가 정확히 '유산소' AND 30분 이상 또는 3km 이상, 서버 주간 점수와 같은 기준 — 2026-11-07 개정)만 주 3회(최소 2회)로 센다.
    요일 슬롯·계획 미이행 ❌는 폐지. FLEX_WEEK_V2_=false로 바꾸면 예전 월·목·토 계획 방식으로 돌아간다(예전 코드는 그대로 보존). */
 const FLEX_WEEK_V2_ = true;
 const FLEX_STRENGTH_TARGET_ = 2;
@@ -4276,7 +4272,7 @@ function isQualifiedCardioEntry_(w){
   if(!w || w.part!=='유산소') return false; // 서버와 같게: part가 정확히 '유산소'인 구조화 기록만 인정
   const hr = w.avgHR!=null && w.avgHR!=='' ? Number(w.avgHR) : null;
   const dur = w.durationMin!=null && w.durationMin!=='' ? Number(w.durationMin) : null;
-  return hr!==null && dur!==null && !isNaN(hr) && !isNaN(dur) && hr>=CARDIO_VALID_RULE.minHR && dur>=CARDIO_VALID_RULE.minDurationMin;
+  return isQualCardioW_(w); // 2026-11-07: 30분↑ 또는 3km↑(심박 조건 폐지) — 서버 주간 점수와 같은 기준
 }
 function qualifiedCardioOnDate_(workouts, date){ return workouts.some(w => w.date===date && isQualifiedCardioEntry_(w)); }
 function flexWeekStats_(workouts, dates){
@@ -4463,7 +4459,7 @@ function renderWeeklyPlanSection(workouts){
       })()}
       ${FLEX_WEEK_V2_ ? `<div class="plan-legend">
         <span><span class="legend-dot" style="background:var(--c-good)"></span>근력</span>
-        <span><span class="legend-dot" style="background:var(--c-neutral)"></span>인정 유산소(심박 105↑·20분↑)</span>
+        <span><span class="legend-dot" style="background:var(--c-neutral)"></span>인정 유산소(30분↑ 또는 3km↑)</span>
         <span><span class="legend-dot" style="background:var(--c-accent)"></span>둘다</span>
         <span><span class="legend-dot" style="background:var(--text-faint)"></span>휴식</span>
         <span>유산소 (미인정) = 심박·시간 기준 미달 또는 기록 없음</span>
@@ -4477,7 +4473,7 @@ function renderWeeklyPlanSection(workouts){
       </div>`}
       ${weekBlock(lastMonday, '지난주', !FLEX_WEEK_V2_)}
       ${weekBlock(thisMonday, '이번주', !FLEX_WEEK_V2_)}
-      ${FLEX_WEEK_V2_ ? `<div class="note-box">근력은 <b>주 2회·요일 자유</b>예요(같은 부위는 48시간 이상 간격, A 하체+등·이두 / B 상체를 번갈아). 유산소는 <b>평균심박 105bpm 이상·20분 이상</b>인 기록만 주 3회(최소 2회)로 세고, 기준에 못 미친 유산소는 <b>(미인정)</b>으로 따로 표시돼요. 요일별 계획과 ❌ 미이행 표시는 없애고 실제 실적만 보여드려요. 요일 칸을 누르면 그날 상세 내역이 펼쳐집니다.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
+      ${FLEX_WEEK_V2_ ? `<div class="note-box">근력은 <b>주 2회·요일 자유</b>예요(같은 부위는 48시간 이상 간격, A 하체+등·이두 / B 상체를 번갈아). 유산소는 <b>30분 이상 또는 3km 이상</b>인 기록만 주 3회(최소 2회)로 세고, 기준에 못 미친 유산소는 <b>(미인정)</b>으로 따로 표시돼요. 요일별 계획과 ❌ 미이행 표시는 없애고 실제 실적만 보여드려요. 요일 칸을 누르면 그날 상세 내역이 펼쳐집니다.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
     </section>
   `;
 }
@@ -4867,6 +4863,8 @@ function renderDashboard(){
 
     ${renderTodayRemainingCard_()}
 
+    ${renderWeeklyScoreCard()}
+
     <section class="card">
       <div class="section-label good">${secNum('00b')}스마트 인사이트 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· ${state.lastUpdated ? '최종 갱신 '+fmtDateTime(state.lastUpdated) : '데이터 기반 자동 감지'}</span></div>
       <div class="alert-list">
@@ -5033,50 +5031,50 @@ function computeActivityHint_(){
   const days = daysAgoList(7);            // [오늘, 어제, ...]
   const todayD = days[0];
   const isStrengthDay = d => { const t = classifyDayType(ws, d); return !!t && (t.type==='근력' || t.type==='둘다'); };
-  const isCardioDay = d => ws.some(w => w && w.date===d && String(w.part||'').trim()==='유산소' && Number(w.avgHR)>=105 && Number(w.durationMin)>=20);
+  const isCardioDay = d => ws.some(w => w && w.date===d && isQualCardioW_(w));
   const nS = days.filter(isStrengthDay).length + auxBonusDay_(), nC = days.filter(isCardioDay).length; // 2026-10-31-b: 보조운동 7일 중 5일 이상이면 근력일 +1(서버와 같은 규칙)
   const sToday = isStrengthDay(todayD), cToday = isCardioDay(todayD);
   const gainS = sToday ? 0 : 7.5 + ((Math.min(nS+1,3)-Math.min(nS,3))/3)*7.5;
   const gainC = cToday ? 0 : 5 + ((Math.min(nC+1,3)-Math.min(nC,3))/3)*5;
   return {nS, nC, sToday, cToday, gainS, gainC};
 }
-// 2026-10-29 복원·슬림화: 대시보드 "오늘 목표(운동 보정 포함)" 카드. 칼로리 목표 = 기본(기초대사×1.5−550) + 운동 보정을 한 줄로 풀어 보여준다.
-// 기초대사는 2026-10-27부터 최근 7번 평균 제지방 기준(targetBmrOn)으로 서버·목표 탭과 같은 값을 쓴다. 운동 보정 규칙은 computeCalorieTarget 그대로(운동소모 > 기초대사×0.3이면 초과분의 60%).
+// 2026-11-07 개편: 대시보드 "이번 주 목표" 카드. 칼로리는 하루가 아니라 이번 주(월~일) 평균 목표(2,050, 1,900~2,200)로 보고,
+// 오늘 포함 남은 날 하루 평균을 알려준다. 기초대사·운동 보정·탄수 등급은 쓰지 않는다. 단백질은 오늘 목표(130~160g, 점수 체크는 120g↑).
 function renderTodayRemainingCard_(){
   const todayD = todayISO();
-  const bmrRec = [...sortedInbody()].reverse().find(r => r && Number(r.bmr) > 0);
-  if(!bmrRec) return '';
-  const bmr = targetBmrOn(todayD, Number(bmrRec.bmr)) || Number(bmrRec.bmr);
-  const ws = statWorkouts_();
-  const eat = ws.filter(w => w && w.date===todayD).reduce((s,w)=>s+(Number(w.calories)||0),0);
-  const cal = computeCalorieTarget(bmr, eat);
-  const carb = computeCarbTarget(ws, todayD);
-  if(!cal || !carb) return '';
   const prot = PROTEIN_TARGET;
-  const corr = cal.targetLow - cal.base;
+  const monD = new Date(todayD+'T12:00:00'); monD.setDate(monD.getDate() - ((monD.getDay()+6)%7));
+  const days = []; for(let i=0;i<7;i++){ const d = new Date(monD); d.setDate(d.getDate()+i); days.push(toLocalISO(d)); }
+  const meals = (state.meals||[]).filter(m => m && days.includes(String(m.date).slice(0,10)) && Number(m.calories) > 0);
+  const byDay = {}; meals.forEach(m => { const d = String(m.date).slice(0,10); byDay[d] = (byDay[d]||0) + (Number(m.calories)||0); });
+  const doneDays = days.filter(d => d < todayD && byDay[d] != null);            // 하루가 끝난 기록일
+  const doneSum = doneDays.reduce((s,d)=>s+byDay[d],0);
+  const doneAvg = doneDays.length ? Math.round(doneSum/doneDays.length) : null;
+  const leftDays = days.filter(d => d >= todayD).length;                         // 오늘 포함 남은 날
+  const kt = kcalWeekTarget_(todayD);
+  const budget = kt.mid*7;
+  const unlogged = (days.length-leftDays) - doneDays.length;                     // 기록 없는 지난 날은 목표만큼 먹은 것으로 계산
+  const perLeft = leftDays>0 ? Math.round((budget - doneSum - unlogged*kt.mid)/leftDays) : null;
   const meal = (state.meals||[]).find(m => m && m.date===todayD);
   const has = !!meal && Number(meal.calories) > 0;
-  const cur = {kcal: has ? (Number(meal.calories)||0) : 0, p: has ? (Number(meal.protein)||0) : 0, c: has ? (Number(meal.carbs)||0) : 0};
+  const cur = {kcal: has ? (Number(meal.calories)||0) : 0, p: has ? (Number(meal.protein)||0) : 0};
   const row = (label, unit, now, lo, hi, overOk) => {
     const pct = has && hi > 0 ? Math.max(0, Math.min(100, now/hi*100)) : 0;
-    const over = has && now > hi && !overOk;
     let n;
     if(!has) n = `${lo}~${hi}${unit}`;
     else if(now < lo) n = `<b>${Math.round(lo-now)}~${Math.round(hi-now)}</b>${unit} 남음`;
     else if(now <= hi) n = '범위 안 ✓';
-    else n = overOk ? `상한 +${Math.round(now-hi)}${unit}` : `<b>+${Math.round(now-hi)}</b>${unit} 초과`;
-    return `<div class="tg-row"><span class="tg-label">${label}</span><div class="rm-bar"><div class="rm-fill${over?' over':''}" style="width:${pct}%;"></div></div><span class="tg-n">${n}</span></div>`;
+    else n = overOk ? `상한 +${Math.round(now-hi)}${unit}` : `+${Math.round(now-hi)}${unit}`;
+    return `<div class="tg-row"><span class="tg-label">${label}</span><div class="rm-bar"><div class="rm-fill" style="width:${pct}%;"></div></div><span class="tg-n">${n}</span></div>`;
   };
-  const eq = corr > 0
-    ? `기본 ${cal.base} + 운동 보정 <b>+${corr}</b> (운동 ${Math.round(eat)}kcal)`
-    : `기본 ${cal.base} · 운동 보정 <b>0</b>${eat>0 ? ` (운동 ${Math.round(eat)}kcal, 기준 ${cal.threshold} 미만)` : ''}`;
   return `<section class="card">
-    <div class="tg-head"><span class="dim">${secNum('00f')}오늘 목표 · ${esc(todayD.slice(5).replace('-','/'))}</span><span class="dim">기초대사 ${esc(String(bmr))}</span></div>
-    <div class="tg-big">${cal.targetLow}~${cal.targetHigh} kcal</div>
-    <div class="tg-eq">${eq}</div>
-    ${row('칼로리','kcal',cur.kcal,cal.targetLow,cal.targetHigh,false)}
-    ${row('단백질','g',cur.p,prot.min,prot.max,true)}
-    ${row('탄수 '+carb.tier,'g',cur.c,carb.range[0],carb.range[1],false)}
+    <div class="tg-head"><span class="dim">${secNum('00f')}이번 주 목표 · ${esc(days[0].slice(5).replace('-','/'))}~${esc(days[6].slice(5).replace('-','/'))}</span><span class="dim">칼로리는 주 평균</span></div>
+    <div class="tg-big">${kt.mid.toLocaleString()} kcal<span class="dim" style="font-size:13px; font-weight:500;"> 주 평균 (${kt.low.toLocaleString()}~${kt.high.toLocaleString()})</span></div>
+    <div class="dim" style="font-size:11.5px;">기본 ${KCAL_TARGET_MID.toLocaleString()} + 운동 가산 <b>+${kt.add}</b>/일 (이번 주 운동 ${kt.eat.toLocaleString()}kcal · 2,300 초과분의 60%)</div>
+    <div class="tg-eq">지난 ${doneDays.length}일 평균 ${doneAvg!==null ? '<b>'+doneAvg.toLocaleString()+'</b>kcal' : '–'}${perLeft===null ? '' : (perLeft >= kt.low ? ` · 오늘 포함 남은 ${leftDays}일 하루 평균 <b>${perLeft.toLocaleString()}</b>kcal이면 주 평균 ${kt.mid.toLocaleString()}` : ` · 이번 주 평균 목표는 이미 넘어섰어요 — 남은 ${leftDays}일은 ${kt.low.toLocaleString()}kcal 아래로 줄이지 말고 다음 주에 다시 맞춰요`)}</div>
+    ${row('오늘 칼로리','kcal',cur.kcal,kt.low,kt.high,false)}
+    ${row('오늘 단백질','g',cur.p,prot.min,prot.max,true)}
+    <div class="dim" style="font-size:11px; margin-top:4px;">하루 값은 참고용이고 주 평균으로 판단해요. 탄수 목표는 없어요.</div>
   </section>`;
 }
 // 2026-10-16 추가(미기록 구분): 최근 7일(오늘 포함) 식단·운동 기록 유무를 한 줄로 보여준다. 기록이 없는 날은 "0kcal·운동 안 함"이 아니라
@@ -5170,6 +5168,68 @@ function renderDailyScoreCard(){
       </div>
       <div style="display:flex; align-items:flex-end; gap:4px;">${bars}</div>
       ${evaluated && isEst(todayRow) ? `<div class="note-box" style="margin-top:10px;">식단에 추정치(외식·뷔페 등)가 포함돼 있어 칼로리·탄수 점수가 ±20~30% 오차 범위에 따라 달라질 수 있어요.</div>` : ''}
+    </section>`;
+}
+// 2026-11-07 추가: 대시보드 "주간 점수(100점)" 카드 — 하루 점수를 대신한다. 점수는 Code.gs가 WeeklyScore 시트에 저장한 값(state.weeklyScores)을 표시만 한다.
+// 일·주 단위 경고 금지 방침에 따라 색으로 좋고 나쁨을 나누지 않고 한 가지 색만 쓴다. 이번 주(월~일) 점수 + 최근 6주 추이.
+function renderWeeklyScoreCard(){
+  const rows = Array.isArray(state.weeklyScores) ? state.weeklyScores.filter(r => r && r.date) : [];
+  if(!rows.length) return '';
+  const e = s => (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const fmt = n => String(Math.round(Number(n)*10)/10);
+  const md = d => String(d).slice(5, 10).replace('-', '/');
+  const hasN = v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v));
+  const byWeek = {};
+  rows.forEach(r => { byWeek[String(r.date).slice(0,10)] = r; });
+  const base = new Date(); base.setHours(12, 0, 0, 0); base.setDate(base.getDate() - ((base.getDay() + 6) % 7));
+  const thisWeek = toLocalISO(base);
+  const cur = byWeek[thisWeek] || null;
+  const parts = [['strength30','근력',30,'strengthDays',2,'회'], ['cardio20','유산소',20,'cardioDays',3,'회'], ['protein20','단백질',20,'protein120Days',5,'일'], ['record10','기록',10,'recordDays',6,'일'], ['calories20','칼로리',20,null,0,'']];
+  const items = `<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; align-items:end;">` + parts.map(([k,label,max,ck,cmax,unit]) => {
+    const ok = !!cur && hasN(cur[k]);
+    const v = ok ? Number(cur[k]) : 0;
+    const pct = ok ? Math.max(0, Math.min(100, v / max * 100)) : 0;
+    const sub = !cur ? '' : (ck ? (hasN(cur[ck]) ? `${cur[ck]}/${cmax}${unit}` : '') : (hasN(cur.avgKcal) ? `${Number(cur.avgKcal).toLocaleString()}kcal` : ''));
+    return `<div title="${e(label)} ${ok ? fmt(v) : '–'}/${max}" style="display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0;">
+      <span style="font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:11px; white-space:nowrap;${ok ? '' : ' opacity:.5;'}">${ok ? fmt(v) : '–'}<span class="dim">/${max}</span></span>
+      <div style="width:100%; max-width:34px; height:40px; border-radius:8px; background:var(--c-track); overflow:hidden; display:flex; align-items:flex-end;"><div style="width:100%; height:${pct}%; background:var(--c-accent);"></div></div>
+      <span style="font-size:11px; white-space:nowrap;">${e(label)}</span>
+      <span class="dim" style="font-size:10px; white-space:nowrap;">${e(sub)}</span>
+    </div>`;
+  }).join('') + `</div>`;
+  const pill = t => `<span class="dim" style="font-size:11px; border:1px solid var(--border); border-radius:var(--radius-pill); padding:0 7px; line-height:18px;">${e(t)}</span>`;
+  const head = cur && hasN(cur.score)
+    ? `<div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 6px; margin:2px 0 0;">
+        <span style="font-family:var(--font-display); font-size:30px; font-weight:var(--display-weight); line-height:1;">${fmt(cur.score)}</span>
+        <span class="dim" style="font-size:13px;">/ 100</span>
+        <span class="dim" style="font-size:12px; margin-left:6px;">이번 주 ${e(md(thisWeek))}~${e(md(cur.weekEnd || thisWeek))}</span>
+        ${cur.status ? pill(cur.status) : ''}
+      </div>`
+    : `<div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 6px; margin:2px 0 0;">
+        <span style="font-family:var(--font-display); font-size:24px; font-weight:var(--display-weight); line-height:1.1; opacity:.6;">${cur ? '산출 안 함' : '집계 전'}</span>
+        <span class="dim" style="font-size:12px; margin-left:4px;">이번 주 ${e(md(thisWeek))}~</span>
+      </div>
+      <div class="dim" style="font-size:11.5px; margin-top:3px;">${cur && cur.status ? e(cur.status) : '이번 주 식단이 기록되면 계산돼요'}</div>`;
+  const recent = [...rows].sort((x,y) => String(x.date).localeCompare(String(y.date))).slice(-6);
+  const bars = recent.map(r => {
+    const d = String(r.date).slice(0,10), has = hasN(r.score), isCur = d === thisWeek;
+    const h = has ? Math.max(3, Math.round(Number(r.score) / 100 * 34)) : 3;
+    return `<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3px; min-width:0;">
+      <div style="font-size:11px; font-family:var(--font-mono); ${has ? '' : 'opacity:.45;'}">${has ? fmt(r.score) : '–'}</div>
+      <div style="width:70%; max-width:26px; height:${h}px; border-radius:6px 6px 2px 2px; background:${has ? (isCur ? 'var(--grad-1)' : 'var(--c-accent)') : 'var(--c-track)'}; opacity:${has && !isCur ? 0.5 : 1};"></div>
+      <div class="dim" style="font-size:10.5px;${isCur ? ' font-weight:700;' : ''}">${isCur ? '이번 주' : e(md(d))}</div>
+    </div>`;
+  }).join('');
+  return `
+    <section class="card">
+      <div class="section-label good">${secNum('00a')}주간 점수 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 월~일 한 주 행동 평가(체성분 판정 아님)</span></div>
+      ${head}
+      <div style="margin-top:10px;${cur && hasN(cur.score) ? '' : ' opacity:.55;'}">${items}</div>
+      <div class="dim" style="font-size:11px; margin-top:6px;">근력 주 2회·유산소(30분↑ 또는 3km↑) 주 3회·단백질 120g↑ 5일·기록 6일·주 평균 ${cur && hasN(cur.kcalTarget) ? (Number(cur.kcalTarget)-KCAL_BAND_HALF).toLocaleString()+'~'+(Number(cur.kcalTarget)+KCAL_BAND_HALF).toLocaleString() : '1,900~2,200'}kcal(운동 많은 주는 가산)이면 만점이에요. 탄수·기초대사는 점수에 쓰지 않아요.</div>
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin:10px 0 2px;">
+        <span class="dim" style="font-size:11.5px;">최근 6주 추이</span>
+      </div>
+      <div style="display:flex; align-items:flex-end; gap:4px;">${bars}</div>
     </section>`;
 }
 function secNum(n){ return `<span class="sec-num">${n}</span>`; }
@@ -5497,10 +5557,8 @@ function renderLog(){
     const avgCal = wMeals.length ? wMeals.reduce((s,m)=>s+(m.calories||0),0)/wMeals.length : null;
     const avgProtein = wMeals.length ? wMeals.reduce((s,m)=>s+(m.protein||0),0)/wMeals.length : null;
     const wkBmrRaw = (wInbody[0] && wInbody[0].bmr) || (sortedInbody().slice(-1)[0] && sortedInbody().slice(-1)[0].bmr);
-    const wkBmr = wkBmrRaw ? targetBmrOn(wDates[0], wkBmrRaw) : null;
-    const calLow = wkBmr ? Math.round(wkBmr*1.5-550) : null;
-    const calHigh = calLow!=null ? calLow+100 : null;
-    const calMid = calLow!=null ? (calLow+calHigh)/2 : null;
+    const _kt = kcalWeekTarget_(wDates[0]); const calLow = _kt.low, calHigh = _kt.high; // 2026-11-07: 그 주 목표 밴드(운동 가산 포함, 기초대사 방식 폐지)
+    const calMid = _kt.mid;
     const calAchievePct = (avgCal!=null && calMid) ? Math.round(avgCal/calMid*100) : null;
     const proteinMid = (PROTEIN_TARGET.min+PROTEIN_TARGET.max)/2;
     const proteinAchievePct = avgProtein!=null ? Math.round(avgProtein/proteinMid*100) : null;
@@ -5527,7 +5585,7 @@ function renderLog(){
 }
 
 function dayRow(date, i, wArr, m, prev){
-  const target = i && i.bmr ? Math.round(targetBmrOn(date, i.bmr)*1.5-550) : null;
+  const target = kcalWeekTarget_(date).mid; // 2026-11-07: 그 주 평균 목표(하루 참고선)
   const proteinTarget = PROTEIN_TARGET.min;
 
   let ibCol = `<span class="empty">기록 없음</span>`;
@@ -5741,21 +5799,16 @@ function renderGoal(){
         ${(() => {
           // 2026-09-14 수정: "오늘"이 체중전용 기록이면 last.bmr이 null이라 NaN*1.5-550으로
           // "NaNkcal"이 표시되던 버그 — bmr 실측값이 있는 가장 최근 기록(lastBC) 사용
-          const bmrRefRaw = (lastBC.bmr!==null && lastBC.bmr!==undefined && !isNaN(lastBC.bmr)) ? lastBC.bmr : null;
-          const bmrRef = bmrRefRaw===null ? null : targetBmrOn(todayISO(), bmrRefRaw);
-          if(bmrRef===null) return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 최신 BMR × 1.5 − 550kcal 공식을 유지하세요. 최근 BMR 실측값이 없어 권장 칼로리를 계산할 수 없어요 — 다음 InBody 측정 후 갱신됩니다.</div>`;
-          const targetLow = Math.round(bmrRef*1.5-550), targetHigh = targetLow+100;
-          const midCal = Math.round((targetLow+targetHigh)/2);
+          const _kt = kcalWeekTarget_();
+          const midCal = _kt.mid;
           const proteinMid = Math.round((PROTEIN_TARGET.min+PROTEIN_TARGET.max)/2);
           const proteinKcal = proteinMid*4;
           const remainKcal = midCal - proteinKcal;
-          const carbG = Math.round(remainKcal*0.55/4);
-          const fatG = Math.round(remainKcal*0.45/9);
-          return `<div class="guide-item"><span class="guide-num">01</span>칼로리 목표 = 기초대사 × 1.5 − 550kcal 공식을 유지하세요(2026-10-27부터 기초대사는 최근 7번 평균 제지방 기준). 기초대사 ${bmrRef}kcal${bcAsOf} 기준 <b>${targetLow}~${targetHigh}kcal</b>가 권장 범위예요(추정 오차 약 ±${calorieErrorKcal_(bmrRef)}kcal). 매크로는 단백질 ${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g 기준으로 잡으면 대략 <b>단백질 ${proteinMid}g · 탄수화물 ${carbG}g · 지방 ${fatG}g</b>(약 ${midCal}kcal)이 기준값이에요.${stepsCalorieCaveatNote_()}</div>`;
+          return `<div class="guide-item"><span class="guide-num">01</span>칼로리는 하루가 아니라 <b>이번 주 평균 ${_kt.mid.toLocaleString()}kcal(${_kt.low.toLocaleString()}~${_kt.high.toLocaleString()})</b>로 보세요(기본 2,050 + 운동 가산 ${_kt.add}, 가산 규칙: 그 주 운동 합계가 2,300kcal를 넘으면 초과분의 60%를 하루 평균으로 나눠 더함 — 이번 주 운동 ${_kt.eat.toLocaleString()}kcal). 6/29~11/2 인바디 변화와 식단 평균으로 구한 유지 칼로리가 약 2,190kcal였고, 체지방을 주 0.14kg 줄이는 계획(하루 약 −150kcal)을 뺀 값이에요. 단백질 ${proteinMid}g(${proteinKcal}kcal)을 먼저 채우고 남은 약 ${remainKcal.toLocaleString()}kcal을 탄수·지방에 자유롭게 나누면 돼요(탄수 목표는 따로 없어요). 4주마다 실제 체지방 변화로 ±100kcal씩 다시 맞춰요.</div>`;
         })()}
         <div class="guide-item"><span class="guide-num">02</span>tirzepatide DEXA 임상연구(SURMOUNT-1, Look et al. 2025, Diabetes Obes Metab)의 실측치로 계산하면 체중 -21.3% 대비 제지방량 -10.9%, 비율 0.51이에요. 지금 정희님의 골격근 비율은 ${muscleAssess.muscleLoss<=0 ? '0 (감소 없음)' : fmt(muscleAssess.ratio,2)}로 ${muscleAssess.tone==='good' ? '0.51보다 뚜렷이 낮아 근육을 잘 보존하고 있어요' : muscleAssess.tone==='neutral' ? '0.51 이내로 임상 기준 범위 안이에요' : '0.51을 넘어 저항운동 볼륨과 단백질 섭취를 점검할 필요가 있어요'}. 이 비율을 0.51 아래로 유지하는 게 목표예요.</div>
         <div class="guide-item"><span class="guide-num">03</span>체지방률의 일일 변화는 BIA 특성상 수분·글리코겐 상태에 따라 흔들릴 수 있습니다. 하루 단위 반등에 일희일비하지 말고 7일 이동평균으로 추세를 판단하세요. 현재 추세는 ${maTrendDelta<=0?'하락(개선) 중':'상승(정체) 중'}입니다.</div>
-        <div class="guide-item"><span class="guide-num">04</span>단백질은 하루 <b>${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g</b>을 목표로 하세요(체중×1.6g/kg 기준에서 상향 조정됨). 총 칼로리가 같다면 탄수화물·지방 비율 자체는 지방감량에 큰 영향이 없지만(Hall et al. 2015), 단백질을 이 범위로 올리면 포만감·근손실 방어·식이성 발열효과 측면에서 유리해요.</div>
+        <div class="guide-item"><span class="guide-num">04</span>단백질은 하루 <b>${PROTEIN_TARGET.min}~${PROTEIN_TARGET.max}g</b>을 목표로 하세요(총 단백질 1.62g/kg 이상은 근육 증가가 더 늘지 않고, 제지방 57kg×2.3g≈131g이에요. 점수 체크 기준은 120g 이상). 총 칼로리가 같다면 탄수화물·지방 비율 자체는 지방감량에 큰 영향이 없지만(Hall et al. 2015), 단백질을 이 범위로 올리면 포만감·근손실 방어·식이성 발열효과 측면에서 유리해요.</div>
       </div>
     </section>
   `;
@@ -6076,12 +6129,7 @@ function renderSettings(){
         <div class="field"><label>유산소 심박존 상한(bpm)</label><input id="goal-hr-max" type="number" value="${CARDIO_HR_TARGET.max}"></div>
       </div>
       <div class="field-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:8px; margin-top:10px;">
-        <div class="field"><label>탄수 A등급 하한(g)</label><input id="goal-carbA-min" type="number" value="${CARB_TARGET_RANGES.A[0]}"></div>
-        <div class="field"><label>탄수 A등급 상한(g)</label><input id="goal-carbA-max" type="number" value="${CARB_TARGET_RANGES.A[1]}"></div>
-        <div class="field"><label>탄수 B등급 하한(g)</label><input id="goal-carbB-min" type="number" value="${CARB_TARGET_RANGES.B[0]}"></div>
-        <div class="field"><label>탄수 B등급 상한(g)</label><input id="goal-carbB-max" type="number" value="${CARB_TARGET_RANGES.B[1]}"></div>
-        <div class="field"><label>탄수 C등급 하한(g)</label><input id="goal-carbC-min" type="number" value="${CARB_TARGET_RANGES.C[0]}"></div>
-        <div class="field"><label>탄수 C등급 상한(g)</label><input id="goal-carbC-max" type="number" value="${CARB_TARGET_RANGES.C[1]}"></div>
+        <div class="note-box" style="margin:4px 0;">탄수화물 목표는 2026-11-07부터 없어요(탄수가 많아도 근육이 독립적으로 늘지 않는다는 분석 + 칼로리·단백질 안에서 자유). 칼로리는 주 평균 2,050kcal(1,900~2,200) 고정이에요.</div>
       </div>
       <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft);">
         <div style="font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:6px;">단백질 목표 <span class="dim" style="font-weight:500;">· 5-B</span></div>
@@ -6828,6 +6876,10 @@ async function cloudSync(silent){
         state.dailyScores = data.dailyScores;
         saveArr(LS_KEYS.dailyScores, state.dailyScores);
       }
+      if(Array.isArray(data.weeklyScores)){
+        state.weeklyScores = data.weeklyScores;
+        saveArr(LS_KEYS.weeklyScores, state.weeklyScores);
+      }
       // 2026-09-19 추가(20선 1번): 설정탭 목표값(goals)도 aiNote와 동일한 "타임스탬프 비교 후
       // 더 최신 쪽 채택" 방식으로 pull. goals는 통째로 교체되는 단일 객체라(개별 필드 병합 아님)
       // updatedAt이 없는 쪽(예: 이 기능 출시 이전에 저장된 로컬 goals)은 항상 밀리도록 처리.
@@ -6947,6 +6999,10 @@ async function cloudSync(silent){
           if(postJson_ && Array.isArray(postJson_.dailyScores)){
             state.dailyScores = postJson_.dailyScores;
             saveArr(LS_KEYS.dailyScores, state.dailyScores);
+          }
+          if(postJson_ && Array.isArray(postJson_.weeklyScores)){
+            state.weeklyScores = postJson_.weeklyScores;
+            saveArr(LS_KEYS.weeklyScores, state.weeklyScores);
           }
         }catch(postErr){
           // JSON이 아닌 단순 텍스트 응답(예: "OK")은 실패로 단정하지 않고 재조회 검증으로 넘긴다.
@@ -7079,10 +7135,7 @@ function saveGoalSettings(){
   const num_ = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
   const fat1 = num_('goal-fat1'), fat2 = num_('goal-fat2');
   const hrMin = num_('goal-hr-min'), hrMax = num_('goal-hr-max');
-  const carbAMin = num_('goal-carbA-min'), carbAMax = num_('goal-carbA-max');
-  const carbBMin = num_('goal-carbB-min'), carbBMax = num_('goal-carbB-max');
-  const carbCMin = num_('goal-carbC-min'), carbCMax = num_('goal-carbC-max');
-  if([fat1,fat2,hrMin,hrMax,carbAMin,carbAMax,carbBMin,carbBMax,carbCMin,carbCMax].some(v=>v===null)){
+  if([fat1,fat2,hrMin,hrMax].some(v=>v===null)){
     alert('숫자 항목이 비어있거나 올바르지 않아요. 모든 칸을 채워주세요.'); return;
   }
   if(hrMin >= hrMax){ alert('유산소 심박존은 하한이 상한보다 작아야 해요.'); return; }
@@ -7092,17 +7145,16 @@ function saveGoalSettings(){
   if(isAuto){
     const perKgMin = num_('goal-protein-perkgmin'), perKgMax = num_('goal-protein-perkgmax');
     if(perKgMin===null || perKgMax===null || perKgMin<=0 || perKgMax<=0){ alert('체중당 배율을 올바르게 입력해주세요.'); return; }
-    protein = {mode:'auto', perKgMin, perKgMax};
+    protein = {mode:'auto', perKgMin, perKgMax, rule:'2026-11-07'};
   } else {
     const pMin = num_('goal-protein-min'), pMax = num_('goal-protein-max');
     if(pMin===null || pMax===null){ alert('단백질 목표 값을 올바르게 입력해주세요.'); return; }
-    protein = {mode:'fixed', min:pMin, max:pMax};
+    protein = {mode:'fixed', min:pMin, max:pMax, rule:'2026-11-07'};
   }
 
   state.goals = {
     fatGoals: [{label:FAT_GOALS_DEFAULT[0]?FAT_GOALS_DEFAULT[0].label:'1차 목표', pct:fat1}, {label:FAT_GOALS_DEFAULT[1]?FAT_GOALS_DEFAULT[1].label:'2차 목표', pct:fat2}],
     cardioHR: {min:hrMin, max:hrMax},
-    carbRanges: {A:[carbAMin,carbAMax], B:[carbBMin,carbBMax], C:[carbCMin,carbCMax]},
     protein,
     updatedAt: new Date().toISOString(), // 2026-09-19 추가(20선 1번): 클라우드 동기화 시 최신값 판정용
   };
@@ -7296,7 +7348,7 @@ function renderModal(){
           <!-- 2026-09-19 갱신: avgHR/durationMin/distanceKm/specialCondition(2026-09-13 도입)이
                빠진 구버전 예시였음 — 최신 구조화 필드를 예시에 포함해, 이 예시를 참고해 JSON을
                만들 때 유산소 세션 정보가 note 자유텍스트 파싱으로 되돌아가지 않게 함. -->
-          <div class="note-box" style="margin-top:6px;">유산소 세션은 note 문장 대신 avgHR(평균심박)·durationMin(분)·distanceKm(km) 숫자 필드로 넣으면 인정기준(심박 105bpm 이상 AND 20분 이상) 판정과 이력 표에 정확히 반영돼요.</div>
+          <div class="note-box" style="margin-top:6px;">유산소 세션은 note 문장 대신 avgHR(평균심박)·durationMin(분)·distanceKm(km) 숫자 필드로 넣으면 인정기준(30분 이상 또는 3km 이상) 판정과 이력 표에 정확히 반영돼요(평균심박은 참고 기록).</div>
           <button type="button" class="btn btn-sm" style="margin-top:6px;" onclick="importWorkoutJSON()">JSON으로 등록</button>
           <div class="note-box" style="margin-top:6px;">삼성헬스 스크린샷을 Claude 채팅에 올리고 "이 앱 형식 JSON으로 만들어줘"라고 하면, 그 결과를 여기 붙여넣기만 하면 돼요. 트레드밀 걸음수는 note 문장 대신 treadmillSteps 숫자 필드에 담겨서 들어오기 때문에, Claude가 표현을 어떻게 쓰든 걸음수 인식이 안 놓쳐요.</div>
         </div>
@@ -7326,7 +7378,7 @@ function renderModal(){
         ${field('volume','볼륨 (kg, 선택 — 상세입력 시 자동계산)', f.volume)}
         ${field('calories','소모 칼로리 (kcal, 선택)', f.calories)}
         ${field('treadmillSteps','트레드밀/러닝머신 걸음수 (해당 시에만 입력 — 비고 텍스트 대신 여기 숫자로 입력하면 NEAT 계산에 정확히 반영됨)', f.treadmillSteps)}
-        <div class="note-box" style="margin:2px 0 6px;">아래 3개는 유산소(트레드밀 등) 세션일 때만 입력 — 비고 텍스트 대신 숫자로 입력하면 유산소 인정기준(평균심박 105bpm↑ AND 20분↑) 판정과 인클라인 이력표에 정확히 반영돼요.</div>
+        <div class="note-box" style="margin:2px 0 6px;">아래 3개는 유산소(트레드밀 등) 세션일 때만 입력 — 비고 텍스트 대신 숫자로 입력하면 유산소 인정기준(30분↑ 또는 3km↑) 판정과 인클라인 이력표에 정확히 반영돼요.</div>
         ${field('avgHR','평균심박 (bpm, 유산소 세션만)', f.avgHR)}
         ${field('durationMin','소요시간 (분, 유산소 세션만)', f.durationMin)}
         ${field('distanceKm','거리 (km, 선택·참고용)', f.distanceKm)}
