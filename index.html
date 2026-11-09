@@ -612,7 +612,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-09-j (턱걸이 카드 개편 — 최고 기록을 유효 세트 기준으로, 매달리기 "최대 측정" 체크·연속 최대, 세션별 세트 막대 그래프(목표 구간·RIR 색·밴드 변경선)·매달리기 그래프, 일별/주간 표에 RIR·유효 세트·인정 여부, 접이식 "진행 코치"(승급·보라 밴드·2주 평가·매달리기 이정표), 2주 평가일(11/23) 알림 배너 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-i (매달리기 따로 입력 — 친업 뒤에 별도 입력·저장, "+ 매달리기 추가"로 칸을 늘려 여러 번 입력, 날짜 선택 시 저장값 불러오기, 같은 날짜 턱걸이·매달리기는 한 기록으로 합쳐 서로 덮어쓰지 않음 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-h (주간 근력/유산소 실적 일별 표에 턱걸이 추가 — 요일 칸 "턱걸이 N회" 칩(정상 반복 합계)·주 머리줄 "턱걸이 합계" 칩·칸을 누르면 세트별 정상 반복/시도/RIR/유효 여부와 매달리기 초 표시 / 표시만 추가, 점수 계산·저장 값 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-g (턱걸이 입력 안내 추가 — "쉬는 시간 기준" 접이식 안내(친업 3분·친업→매달리기 2~3분·매달리기 2분), 시도(선택) 항목 설명 / 화면 문구만 추가, 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-f (턱걸이 RIR 입력 안내 — 선택칸에 의미 표시, 선택 시 설명·목표 범위(RIR 2~3) 안내, "RIR이란?" 도움말·판단 예시 추가 / 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-e (턱걸이 인정 규칙 개정 — 주 100회 규칙 폐지, 세트별 정상 반복·시도·RIR 입력, 유효 세트(정상 5회↑·RIR 0~4) 주 6세트·2일 이상이면 주간 근력 +1(최대 1, 합계 상한 2) / Code.gs 2026-11-09b와 짝) | 이전: 2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-11-09-k (운동 스마트 인사이트 개편 — 기준 주간 월~일(주간 점수와 동일)·유산소 주 3회·이번 주 남은 일수로 달성 가능 여부 판단·턱걸이 유효 세트/RIR 미입력/2주 평가 반영·친업을 등·이두 회복 판정에 포함(RIR 0~1인 날만 강한 부하)·지난 48시간 경고는 3일 뒤 숨김·점수 영향 큰 순으로 최대 4개·유산소 시간/거리 누락과 기록 공백 알림 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-j (턱걸이 카드 개편 — 최고 기록을 유효 세트 기준으로, 매달리기 "최대 측정" 체크·연속 최대, 세션별 세트 막대 그래프(목표 구간·RIR 색·밴드 변경선)·매달리기 그래프, 일별/주간 표에 RIR·유효 세트·인정 여부, 접이식 "진행 코치"(승급·보라 밴드·2주 평가·매달리기 이정표), 2주 평가일(11/23) 알림 배너 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-i (매달리기 따로 입력 — 친업 뒤에 별도 입력·저장, "+ 매달리기 추가"로 칸을 늘려 여러 번 입력, 날짜 선택 시 저장값 불러오기, 같은 날짜 턱걸이·매달리기는 한 기록으로 합쳐 서로 덮어쓰지 않음 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-h (주간 근력/유산소 실적 일별 표에 턱걸이 추가 — 요일 칸 "턱걸이 N회" 칩(정상 반복 합계)·주 머리줄 "턱걸이 합계" 칩·칸을 누르면 세트별 정상 반복/시도/RIR/유효 여부와 매달리기 초 표시 / 표시만 추가, 점수 계산·저장 값 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-g (턱걸이 입력 안내 추가 — "쉬는 시간 기준" 접이식 안내(친업 3분·친업→매달리기 2~3분·매달리기 2분), 시도(선택) 항목 설명 / 화면 문구만 추가, 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-f (턱걸이 RIR 입력 안내 — 선택칸에 의미 표시, 선택 시 설명·목표 범위(RIR 2~3) 안내, "RIR이란?" 도움말·판단 예시 추가 / 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-e (턱걸이 인정 규칙 개정 — 주 100회 규칙 폐지, 세트별 정상 반복·시도·RIR 입력, 유효 세트(정상 5회↑·RIR 0~4) 주 6세트·2일 이상이면 주간 근력 +1(최대 1, 합계 상한 2) / Code.gs 2026-11-09b와 짝) | 이전: 2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -3528,7 +3528,8 @@ const INSIGHT_CFG_ = {
   calOverLimit: 2200,       // 하루 과다 섭취 기준
   mealMinDays: 3,           // 영양 평가에 필요한 최소 확정 일수
   strengthPerWeek: 2,       // 2026-10-22: 앱 기준 주간 근력 횟수 3→2(정희님 확정 계획: 주 2회·요일 자유). 서버 하루 점수 공식(최근 7일 근력 3일 만점)은 그대로
-  cardioMinPerWeek: 2,
+  cardioMinPerWeek: 2,       // 최소선(2회)
+  cardioGoalPerWeek: 3,      // 2026-11-09-k: 확정 목표(주 3회, 유산소 20점 만점 기준)
   stepsGoal: 10000,
   violationLookbackDays: 14
 };
@@ -3601,41 +3602,117 @@ function computeDashboardInsightsV2_(ib, meals, workouts){
   return res;
 }
 
+// 2026-11-09-k: 운동 스마트 인사이트 개편 — 기준 주간을 월~일(주간 점수와 동일)로, 유산소 주 3회 기준, 턱걸이·매달리기 반영,
+// 친업을 등·이두 회복 판정에 포함, 남은 일수로 달성 가능 여부 판단, 점수 영향 큰 순으로 최대 4개(score 정렬).
 function computeWorkoutInsightsV2_(workouts){
+  workouts = workouts || [];
+  const aux = auxDaily_();
+  if(!workouts.length && !aux.length) return [];
   const out = [];
-  if(!workouts || !workouts.length) return out;
+  const add = (score, tone, icon, title, detail, tag) => out.push({score, tone, icon, title, detail, tag});
   const today = todayISO();
-  const last7 = daysAgoList(7);
+  const mon = isoWeekKey(today), wk = getWeekDates(mon);
+  const dow = Math.max(0, wk.indexOf(today)), remain = 7 - dow; // 월=0, 오늘 포함 남은 일수
+  const lastWk = getWeekDates(pullAddDays_(mon, -7));
+  const goalS = INSIGHT_CFG_.strengthPerWeek, goalC = INSIGHT_CFG_.cardioGoalPerWeek;
   const isStrength = w => inferPartsForEntry(w).some(p => BODY_PARTS.includes(p));
-  const strengthDates = [...new Set(workouts.filter(isStrength).map(w=>w.date))].sort();
-  const n7 = strengthDates.filter(d => last7.includes(d)).length;
-  const lastS = strengthDates[strengthDates.length-1] || null;
-  const since = lastS ? insightDaysBetween_(lastS, today) : null;
-  const goal = INSIGHT_CFG_.strengthPerWeek;
+  const realStrength = ds => ds.filter(d => { const a = classifyDayType(workouts, d); return a && (a.type==='근력' || a.type==='둘다'); }).length;
+  const S = flexWeekStats_(workouts, wk), L = flexWeekStats_(workouts, lastWk);
+  const sCnt = Math.min(S.strength, goalS), cCnt = S.cardioQ;
+  const needS = Math.max(0, goalS - sCnt), needC = Math.max(0, goalC - cCnt);
+  const realS = realStrength(wk);
+  const hasLastWk = L.strength>0 || L.cardioQ>0 || workouts.some(w => lastWk.includes(w.date)) || aux.some(d => lastWk.includes(d.date));
+  const lastWkLine = (dow<=1 && hasLastWk) ? ` 지난주 결과: 근력 ${Math.min(L.strength,goalS)}/${goalS}${L.pullBonus && realStrength(lastWk)<goalS ? '(턱걸이 +1 포함)' : ''} · 유산소 ${L.cardioQ}/${goalC}${L.cardioQ<goalC ? `(${goalC-L.cardioQ}회 부족)` : ''}.` : '';
 
-  // 1) 근력 횟수 + 다음 세션
-  const lastWs = workouts.filter(w => w.date===lastS && isStrength(w));
-  const lastParts = new Set(lastWs.flatMap(w => inferPartsForEntry(w)));
-  const lastWasLower = lastParts.has('하체');
-  const nextSess = lastWasLower ? 'B 상체(가슴·어깨·삼두)' : 'A 하체+등·이두';
-  let tone1 = n7 >= goal ? 'good' : (since!==null && since >= 4 ? 'warn' : 'neutral');
-  let act1 = since===null ? '' : (since < 2 ? `오늘은 회복일이에요. 다음은 ${nextSess} — 48시간 뒤부터 좋아요.` : `다음 추천: ${nextSess}.`);
-  if(since!==null && since >= 10) act1 = `쉬는 기간이 길었어요. ${nextSess}를 평소 볼륨의 60~70%로 가볍게 시작하세요.`;
-  out.push({tone:tone1, icon:'dumbbell', title:`근력 최근 7일 ${n7}회 (주 ${goal}회 기준)`,
-    detail:`마지막 근력은 ${lastS ? (since===0?'오늘':since+'일 전')+'('+lastS.slice(5)+')' : '기록 없음'}이에요. ${act1}`});
+  // 1) 이번 주 진행 + 남은 일수로 달성 가능 여부 (월~일, 주간 점수와 같은 기준)
+  {
+    const slackS = remain - (2*needS - 1); // 근력은 같은 부위 48시간 간격 → n회에 최소 2n-1일
+    const riskS = needS>0 && slackS <= 1, riskC = needC>0 && remain <= needC;
+    const allDone = needS===0 && needC===0;
+    const tone = allDone ? 'good' : (riskS || riskC) ? 'warn' : 'neutral';
+    const fresh = dow===0 && sCnt===0 && cCnt===0;
+    const title = fresh ? `이번 주 시작 — 근력 0/${goalS} · 유산소 0/${goalC}` : `이번 주 근력 ${sCnt}/${goalS} · 유산소 ${cCnt}/${goalC}`;
+    const bits = [];
+    if(allDone) bits.push('이번 주 근력·유산소 목표를 채웠어요. 이 흐름을 유지하세요.');
+    else {
+      const need = [];
+      if(needS>0) need.push(`근력 ${needS}회 남음${riskS ? `(남은 ${remain}일, 같은 부위는 48시간 간격이라 빠듯해요)` : ''}`);
+      if(needC>0) need.push(`유산소 ${needC}회 남음(30분 이상 또는 3km 이상만 인정${remain<needC ? ' — 남은 일수가 모자라 3회는 어려워요' : remain===needC ? ' — 남은 날을 매일 해야 채워요' : ''})`);
+      bits.push(need.join(' · ') + '.');
+      if(riskS) bits.push('근력은 1회당 주간 점수 약 15점이에요.');
+      else if(riskC) bits.push('유산소는 1회당 약 7점이에요.');
+    }
+    if(S.pullBonus && realS < goalS) bits.push('턱걸이 +1이 근력에 포함돼 있어요.');
+    add(allDone ? 50 : (tone==='warn' ? 100 : 90), tone, 'target', title, bits.join(' ') + lastWkLine, '이번 주');
+  }
 
-  // 2) 인정 유산소(평균심박 105↑ & 20분↑)
-  const credit = new Set();
-  computeInclineHistory(workouts).forEach(r => { if(r.creditValid===true && last7.includes(r.date)) credit.add(r.date); });
-  workouts.forEach(w => {
-    if(!last7.includes(w.date)) return;
-    if(isQualCardioW_(w)) credit.add(w.date);
-  });
-  const c7 = credit.size, cMin = INSIGHT_CFG_.cardioMinPerWeek;
-  out.push({tone: c7>=cMin?'good':'neutral', icon:'target', title:`인정 유산소 최근 7일 ${c7}회`,
-    detail:`${CARDIO_VALID_RULE.minDurationMin}분 이상 또는 ${CARDIO_VALID_RULE.minDistanceKm}km 이상인 유산소만 셌어요. ${c7>=cMin?'지금 횟수를 유지하세요.':'시간·거리가 기록된 유산소를 주 '+cMin+'회까지 늘려보세요.'}`});
+  // 2) 턱걸이·매달리기 — 유효 세트 진행, RIR 미입력 경고, 2주 평가
+  const pullEverDays = aux.filter(d => d.pull);
+  if(pullEverDays.length){
+    const pw = pullWeekInfo_(wk), lw = pullWeekInfo_(lastWk);
+    const wkPull = pullEverDays.filter(d => wk.includes(d.date));
+    let miss = 0, bad = 0;
+    wkPull.forEach(d => pullDet_(d).forEach(s => { if(isValidPullSet_(s)) return; if(pullRirNum_(s)===null) miss++; else bad++; }));
+    const bits = [];
+    if(pw.bonus) bits.push(`근력 +1 인정 조건을 채웠어요${realS>=goalS ? '(실제 근력이 이미 2회라 점수 가산은 상한)' : ''}.`);
+    else bits.push(`유효 세트 ${Math.max(0,PULL_WEEK_MIN_SETS_-pw.sets)}개·수행 ${Math.max(0,PULL_WEEK_MIN_DAYS_-pw.days)}일이 더 필요해요.`);
+    if(miss) bits.push(`RIR을 안 적은 세트가 ${miss}개 있어요 — RIR 0~4를 입력해야 유효 세트로 세요.`);
+    if(bad) bits.push(`정상 반복 5회 미만 또는 RIR 5+인 세트 ${bad}개는 유효 세트가 아니에요.`);
+    if(!miss && !bad && pw.sets<PULL_WEEK_MIN_SETS_) bits.push('세트가 끝나면 RIR(남은 여유 횟수)을 같이 기록하세요.');
+    if(dow<=1 && (lw.sets || lw.days)) bits.push(`지난주 유효 ${lw.sets}세트(${lw.days}일) ${lw.bonus ? '달성' : '미달'}.`);
+    const dL = pullEvalDLeft_(), ev = pullEvalGet_();
+    let evNote = '';
+    if(!ev.ack && dL<=3) evNote = dL>0 ? ` 2주 평가 D-${dL}.` : ' 2주 평가 시점이에요 — 턱걸이 카드 "진행 코치"를 확인하세요.';
+    add(miss ? 95 : (evNote ? 85 : (pw.bonus ? 40 : 78)), miss ? 'warn' : (pw.bonus ? 'good' : 'neutral'), 'target',
+      `턱걸이 이번 주 유효 세트 ${pw.sets}/${PULL_WEEK_MIN_SETS_} · 수행 ${pw.days}/${PULL_WEEK_MIN_DAYS_}일`, bits.join(' ') + evNote, '턱걸이');
+  }
 
-  // 3) 종목별 진행도(추정 1RM) — 최근 2주 내 기록된 종목만
+  // 3) 회복·다음 세션 — 헬스 등·이두 + 친업(강한 날: RIR 0~1 유효 세트) 포함
+  const gymDates = [...new Set(workouts.filter(isStrength).map(w => w.date))].sort();
+  const backGym = new Set(workouts.filter(w => inferPartsForEntry(w).some(p => p==='등' || p==='이두')).map(w => w.date));
+  const pullDays = aux.filter(d => d.pull);
+  const hardPull = d => pullDet_(d).some(s => isValidPullSet_(s) && pullRirNum_(s)<=1);
+  const dayDiff = (a,b) => Math.abs(insightDaysBetween_(a,b));
+  const warns = [];
+  pullDays.forEach(p => backGym.forEach(g => {
+    const later = p.date > g ? p.date : g;
+    if(dayDiff(p.date, g) < 2 && insightDaysBetween_(later, today) <= 3 && hardPull(p)) warns.push(`${g.slice(5)} 헬스 등·이두 → ${p.date.slice(5)} 친업(RIR 0~1인 세트 포함)`);
+  }));
+  // 같은 부위 48시간 위반은 최근 3일 안에 생긴 것만 알림(지난 일은 행동할 수 없어서 숨김)
+  const byPart = {}; const vparts = new Set();
+  [...workouts].sort((a,b)=>a.date.localeCompare(b.date)).forEach(w => inferPartsForEntry(w).forEach(p => {
+    if(!BODY_PARTS.includes(p)) return;
+    if(byPart[p] && byPart[p] !== w.date && insightDaysBetween_(byPart[p], w.date) < 2 && insightDaysBetween_(w.date, today) <= 3) vparts.add(p);
+    byPart[p] = w.date;
+  }));
+  if(vparts.size) warns.push(`같은 부위 48시간 안에 다시 운동: ${[...vparts].join('·')}`);
+  if(warns.length) add(85, 'warn', 'up', '48시간 안에 같은 부위에 다시 부하', `${warns.join(' / ')}. 다음 세션에서 해당 부위는 볼륨을 70%로 줄이고, 친업은 RIR 2~3으로 낮추세요.`, '회복');
+
+  if(gymDates.length){
+    const lastS = gymDates[gymDates.length-1], since = insightDaysBetween_(lastS, today);
+    const nx = nextFlexSession_(workouts);
+    const bits = [`마지막 근력은 ${since===0?'오늘':since+'일 전'}(${lastS.slice(5)})이에요.`];
+    if(since >= 10) bits.push('쉬는 기간이 길었어요. 평소 볼륨의 60~70%로 가볍게 시작하세요.');
+    else if(since < 2) bits.push('같은 부위는 48시간 뒤부터 좋아요 — 오늘은 회복일이에요.');
+    if(nx.key==='A'){
+      const lowerDates = [...new Set(workouts.filter(w => inferPartsForEntry(w).includes('하체')).map(w => w.date))].sort();
+      const lowerGap = lowerDates.length ? insightDaysBetween_(lowerDates[lowerDates.length-1], today) : null;
+      if(lowerGap!==null && lowerGap >= 7) bits.push(`하체는 ${lowerGap}일 쉬었어요 — 하체를 우선하세요.`);
+      const yp = pullDays.filter(d => insightDaysBetween_(d.date, today) <= 1).pop();
+      if(yp) bits.push(hardPull(yp) ? `${yp.date.slice(5)} 친업이 강했어요(RIR 0~1) — 등·이두는 볼륨 70%로 시작하세요.` : `${yp.date.slice(5)} 친업은 보통 강도(RIR 2~3 이상)라 등·이두는 평소 볼륨으로 괜찮아요.`);
+    }
+    add(75, 'neutral', 'dumbbell', `다음 추천: ${nx.label}`, bits.join(' '), '다음 세션');
+  }
+
+  // 4) 데이터 품질 — 점수 누락 방지
+  const l14 = daysAgoList(14);
+  const noCredit = workouts.filter(w => String(w.part||'').trim()==='유산소' && l14.includes(w.date) && !(Number(w.durationMin)>0) && !(Number(w.distanceKm)>0));
+  if(noCredit.length) add(80, 'neutral', 'target', `유산소 ${noCredit.length}건에 시간·거리가 없어요`, `${[...new Set(noCredit.map(w => w.date.slice(5)))].join(', ')} 기록은 30분 이상 또는 3km 이상을 확인할 수 없어 인정 유산소로 못 세요. 시간(분)이나 거리(km)를 추가하세요.`, '기록 확인');
+  const allDates = [...workouts.map(w => w.date), ...aux.map(d => d.date)].sort();
+  const gap = allDates.length ? insightDaysBetween_(allDates[allDates.length-1], today) : null;
+  if(gap!==null && gap >= 3) add(72, 'neutral', 'target', `${gap}일째 운동 기록이 없어요`, '운동은 했는데 입력만 안 했다면 지금 추가해 주세요. 주간 점수는 기록된 운동만 세요.', '기록 확인');
+
+  // 5) 종목별 진행도(추정 1RM) — 참고
   try{
     const prs = computeExercisePRs();
     const near = [], stuck = [];
@@ -3649,38 +3726,27 @@ function computeWorkoutInsightsV2_(workouts){
       const parts = [];
       if(near.length) parts.push(`최근 기록이 개인 최고예요: ${near.slice(0,3).join(', ')}`);
       if(stuck.length) parts.push(`최근 5번 거의 같아요: ${stuck.slice(0,3).join(', ')} — 중량 또는 횟수를 한 단계만 올려보세요`);
-      out.push({tone: near.length?'good':'neutral', icon:'up', title:'종목별 진행도', detail:parts.join('. ')+'.'});
+      add(40, near.length?'good':'neutral', 'up', '종목별 진행도', parts.join('. ')+'.', '진행도');
     }
   }catch(e){}
 
-  // 4) 걸음수(NEAT) 한 장으로 통합
+  // 6) 걸음수(NEAT) — 참고(직전 7일 대비 15%↓면 경고)
   if(state.steps && state.steps.length){
+    const last7 = daysAgoList(7), l14b = daysAgoList(14);
     const bd = state.steps.map(s => ({date:s.date, neat: computeStepBreakdown(s, workouts).neat}));
-    const l14 = daysAgoList(14);
-    const cur = bd.filter(b => last7.includes(b.date)), prv = bd.filter(b => l14.includes(b.date) && !last7.includes(b.date));
+    const cur = bd.filter(b => last7.includes(b.date)), prv = bd.filter(b => l14b.includes(b.date) && !last7.includes(b.date));
     if(cur.length >= 3){
       const a = cur.reduce((s,b)=>s+b.neat,0)/cur.length;
       const p = prv.length>=3 ? prv.reduce((s,b)=>s+b.neat,0)/prv.length : null;
       const pct = p ? (a-p)/p*100 : null;
       const goalTxt = a >= INSIGHT_CFG_.stepsGoal ? `1만 보를 넘었어요` : `1만 보까지 ${fmt(INSIGHT_CFG_.stepsGoal-a,0)}보`;
-      out.push({tone: pct!==null && pct<=-15 ? 'warn' : 'neutral', icon:'target', title:'일상 걸음(NEAT) 최근 7일',
-        detail:`하루 평균 ${fmt(a,0)}보${pct===null?'':`(직전 7일 ${fmt(p,0)}보 대비 ${pct>0?'+':''}${fmt(pct,0)}%)`}, ${goalTxt}. ${pct!==null&&pct<=-15?'식후 15분 걷기부터 다시 늘려보세요.':'지금 흐름을 유지하세요.'}`});
+      const dn = pct!==null && pct<=-15;
+      add(dn ? 60 : 30, dn ? 'warn' : 'neutral', 'target', '일상 걸음(NEAT) 최근 7일',
+        `하루 평균 ${fmt(a,0)}보${pct===null?'':`(직전 7일 ${fmt(p,0)}보 대비 ${pct>0?'+':''}${fmt(pct,0)}%)`}, ${goalTxt}. ${dn?'식후 15분 걷기부터 다시 늘려보세요.':'지금 흐름을 유지하세요.'}`, '걸음');
     }
   }
 
-  // 5) 48시간 회복 — 최근 14일 안에서만 판정
-  const lb = daysAgoList(INSIGHT_CFG_.violationLookbackDays);
-  const byPart = {}; let vio = 0; const vparts = new Set();
-  [...workouts].sort((a,b)=>a.date.localeCompare(b.date)).forEach(w => {
-    inferPartsForEntry(w).forEach(p => {
-      if(!BODY_PARTS.includes(p)) return;
-      if(byPart[p] && byPart[p] !== w.date && lb.includes(w.date) && insightDaysBetween_(byPart[p], w.date) < 2){ vio++; vparts.add(p); }
-      byPart[p] = w.date;
-    });
-  });
-  if(vio>0) out.push({tone:'warn', icon:'up', title:'같은 부위 48시간 안에 다시 운동', detail:`최근 14일 중 ${[...vparts].join('·')} ${vio}건이에요. A/B 사이에 하루 이상 비우면 회복이 충분해요.`});
-
-  return out.slice(0,4);
+  return out.sort((a,b) => b.score - a.score).slice(0,4);
 }
 
 function computeSmartAlerts(ib, meals, workouts, opts){
@@ -4762,7 +4828,7 @@ function renderWorkoutTab(){
           <div class="alert-item ${a.tone==='warn'?'tone-warn-item':a.tone==='good'?'tone-good-item':''}">
             <div class="alert-icon tone-${a.tone}">${a.tone==='warn'?ICONS.up:a.tone==='good'?ICONS.down:ICONS.target}</div>
             <div class="alert-body">
-              <div class="alert-title tone-${a.tone}">${a.title}</div>
+              <div class="alert-title tone-${a.tone}">${a.title}${a.tag ? ` <span style="font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; background:var(--panel-alt); color:var(--text-dim); white-space:nowrap;">${a.tag}</span>` : ''}</div>
               <div class="alert-detail">${a.detail}</div>
             </div>
           </div>`).join('')}
