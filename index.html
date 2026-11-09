@@ -520,6 +520,7 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
   .shell{max-width:100%; padding:0;}
   .card{box-shadow:none; border:1px solid #ddd; break-inside:avoid;}
 }
+.pull-tbl td,.pull-tbl th{padding-left:4px;padding-right:4px;font-size:11.5px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -611,7 +612,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-09-g (턱걸이 입력 안내 추가 — "쉬는 시간 기준" 접이식 안내(친업 3분·친업→매달리기 2~3분·매달리기 2분), 시도(선택) 항목 설명 / 화면 문구만 추가, 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-f (턱걸이 RIR 입력 안내 — 선택칸에 의미 표시, 선택 시 설명·목표 범위(RIR 2~3) 안내, "RIR이란?" 도움말·판단 예시 추가 / 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-e (턱걸이 인정 규칙 개정 — 주 100회 규칙 폐지, 세트별 정상 반복·시도·RIR 입력, 유효 세트(정상 5회↑·RIR 0~4) 주 6세트·2일 이상이면 주간 근력 +1(최대 1, 합계 상한 2) / Code.gs 2026-11-09b와 짝) | 이전: 2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-11-09-j (턱걸이 카드 개편 — 최고 기록을 유효 세트 기준으로, 매달리기 "최대 측정" 체크·연속 최대, 세션별 세트 막대 그래프(목표 구간·RIR 색·밴드 변경선)·매달리기 그래프, 일별/주간 표에 RIR·유효 세트·인정 여부, 접이식 "진행 코치"(승급·보라 밴드·2주 평가·매달리기 이정표), 2주 평가일(11/23) 알림 배너 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-i (매달리기 따로 입력 — 친업 뒤에 별도 입력·저장, "+ 매달리기 추가"로 칸을 늘려 여러 번 입력, 날짜 선택 시 저장값 불러오기, 같은 날짜 턱걸이·매달리기는 한 기록으로 합쳐 서로 덮어쓰지 않음 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-h (주간 근력/유산소 실적 일별 표에 턱걸이 추가 — 요일 칸 "턱걸이 N회" 칩(정상 반복 합계)·주 머리줄 "턱걸이 합계" 칩·칸을 누르면 세트별 정상 반복/시도/RIR/유효 여부와 매달리기 초 표시 / 표시만 추가, 점수 계산·저장 값 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-g (턱걸이 입력 안내 추가 — "쉬는 시간 기준" 접이식 안내(친업 3분·친업→매달리기 2~3분·매달리기 2분), 시도(선택) 항목 설명 / 화면 문구만 추가, 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-f (턱걸이 RIR 입력 안내 — 선택칸에 의미 표시, 선택 시 설명·목표 범위(RIR 2~3) 안내, "RIR이란?" 도움말·판단 예시 추가 / 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-e (턱걸이 인정 규칙 개정 — 주 100회 규칙 폐지, 세트별 정상 반복·시도·RIR 입력, 유효 세트(정상 5회↑·RIR 0~4) 주 6세트·2일 이상이면 주간 근력 +1(최대 1, 합계 상한 2) / Code.gs 2026-11-09b와 짝) | 이전: 2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -2453,7 +2454,7 @@ function auxDaily_(){
   const days = {};
   (state.workouts||[]).filter(w => isAuxEntry_(w) && w.date && /턱걸이|친업|풀업|매달리기/.test(`${w.name||''} ${w.note||''}`)).forEach(w => {
     const date = String(w.date).slice(0,10);
-    const d = days[date] || (days[date] = {date, pull:null, hangs:[], ids:[]});
+    const d = days[date] || (days[date] = {date, pull:null, hangs:[], hangFlags:[], ids:[]});
     if(w.id) d.ids.push(w.id);
     const txt = `${w.name||''} ${w.note||''}`;
     const exs = Array.isArray(w.exercises) ? w.exercises : [];
@@ -2483,13 +2484,33 @@ function auxDaily_(){
       }
     }
     if(he.length){
-      he.forEach(e => (Array.isArray(e.sets) ? e.sets : []).forEach(st => { const v = Number(st && (st.sec!=null ? st.sec : st.seconds)); if(v>0) d.hangs.push(v); }));
+      he.forEach(e => (Array.isArray(e.sets) ? e.sets : []).forEach(st => { const v = Number(st && (st.sec!=null ? st.sec : st.seconds)); if(v>0){ d.hangs.push(v); d.hangFlags.push(!!(st && st.max)); } })); // max=최대 측정(연속 최대) 표시
     } else {
       const hm = txt.match(/매달리기\s*(\d+)\s*초/);
-      if(hm) d.hangs.push(Number(hm[1]));
+      if(hm){ d.hangs.push(Number(hm[1])); d.hangFlags.push(false); }
     }
   });
   return Object.values(days).filter(d => d.pull || d.hangs.length).sort((a,b) => a.date.localeCompare(b.date));
+}
+// 2026-11-09-h: 주간 실적 일별 표에 턱걸이 정상 반복 합계를 보여주기 위한 표시용 집계(점수 계산과 무관).
+function pullRepsOnDate_(date){
+  const d = auxDaily_().find(x => x.date === date);
+  return d && d.pull ? d.pull.sets.reduce((a,b)=>a+b,0) : 0;
+}
+function pullRepsInDates_(dates){ return dates.reduce((s,d) => s + pullRepsOnDate_(d), 0); }
+// 요일 칸을 눌렀을 때 상세 패널에 보여줄 그날의 턱걸이·매달리기 기록(세트별 정상 반복·시도·RIR·유효 여부, 매달리기 초)
+function pullDetailHtml_(date){
+  const day = auxDaily_().find(x => x.date === date);
+  if(!day) return '';
+  const rirTxt = s => (s.rir===null || s.rir===undefined || s.rir==='') ? 'RIR 미확인' : (Number(s.rir)>=5 ? 'RIR 5+' : 'RIR '+s.rir);
+  const rows = (day.pull && day.pull.det ? day.pull.det : []).map((s,i) => {
+    const ok = isValidPullSet_(s);
+    return `<div style="font-size:12px;line-height:1.6;"><span class="mono">${i+1}세트</span> · 정상 ${s.reps}회${s.tried>0?` · 시도 ${s.tried}회`:''} · ${rirTxt(s)} · <span style="color:${ok?'var(--c-good)':'var(--text-faint)'};">${ok?'유효 세트':'유효 세트 아님'}</span></div>`;
+  }).join('');
+  const hang = day.hangs.length ? `<div style="font-size:12px;line-height:1.6;margin-top:2px;">매달리기 ${day.hangs.join('·')}초 <span class="dim">(점수 미반영·개인 기록)</span></div>` : '';
+  if(!rows && !hang) return '';
+  const head = day.pull ? `${esc([day.pull.grip, day.pull.band ? day.pull.band+' 밴드' : ''].filter(Boolean).join(' · '))} · 정상 반복 합계 ${day.pull.sets.reduce((a,b)=>a+b,0)}회` : '매달리기';
+  return `<div class="plan-detail-item"><div class="plan-detail-name">턱걸이 · 매달리기 <span class="dim" style="font-weight:500;font-size:11.5px;">${head}</span></div>${rows}${hang}</div>`;
 }
 function auxWeekKey_(dateISO){
   const dt = new Date(dateISO+'T00:00:00'); const wd = (dt.getDay()+6)%7; dt.setDate(dt.getDate()-wd);
@@ -2555,16 +2576,29 @@ function auxFormHtml_(days){
         <div>· 쉬는 시간을 줄여 강도를 높일 필요는 없어요. 지금은 친업의 반복 품질이 우선이에요.</div>
         <div style="margin-top:6px;">3분·2분은 개인 훈련에 쓰는 실용적인 시작값이에요. 모든 사람에게 적용되는 의무 기준이나 공식 가이드라인 수치가 아니에요.</div>
       </div></details>
-    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:8px;">
-      <label style="font-size:12px; color:var(--text-dim);">매달리기(초)</label>
-      <input type="text" id="auxHangInput" inputmode="numeric" placeholder="예: 43 (여러 번이면 43 40)" style="width:190px; ${inp} font-family:var(--font-mono);">
-      <button onclick="saveAuxEntry()" class="btn-primary" style="padding:8px 18px; border-radius:8px; border:none; background:var(--c-good); color:#fff; font-weight:600; cursor:pointer;">저장</button>
+    <div style="margin-top:10px;">
+      <button onclick="saveAuxEntry()" class="btn-primary" style="padding:8px 18px; border-radius:8px; border:none; background:var(--c-good); color:#fff; font-weight:600; cursor:pointer;">턱걸이 저장</button>
     </div>
-    <div class="dim" style="font-size:11px; margin-top:6px;">세트마다 정상 반복(턱이 바 위까지 올라간 횟수)·시도 횟수(선택)·세트 끝 RIR을 적어요. 가동범위가 무너지면 거기서 세트를 끝내요. 같은 날짜는 덮어써요.</div>
+    <div class="dim" style="font-size:11px; margin-top:6px;">세트마다 정상 반복(턱이 바 위까지 올라간 횟수)·시도 횟수(선택)·세트 끝 RIR을 적어요. 가동범위가 무너지면 거기서 세트를 끝내요. 같은 날짜의 턱걸이 기록은 덮어쓰고, 매달리기 기록은 그대로 둬요(매달리기는 아래에서 따로 입력).</div>
   </div>`;
 }
 // 2026-11-09-f: RIR 입력 안내(화면 설명만 추가 — 저장 값·유효 세트 기준은 그대로: 미확인='' 저장 안 함, 0~4 유효, 5+는 5로 저장되어 유효 제외).
 // 각 값: [선택칸 문구, 설명, 목표 안내]
+function auxHangFormHtml_(){
+  const inp = 'padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text); background:var(--panel, transparent);';
+  return `<div class="no-print" style="border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
+    <div style="font-size:12.5px; font-weight:600; margin-bottom:4px;">매달리기 기록 입력 <span class="dim" style="font-weight:500; font-size:11.5px;">· 친업 뒤에 따로 입력</span></div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <input type="date" id="auxHangDate" value="${todayISO()}" onchange="auxHangPrefill_()" style="${inp}">
+    </div>
+    <div id="auxHangBox" style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">${(()=>{ const d = auxDaily_().find(x => x.date===todayISO()); return (d && d.hangs.length ? d.hangs.map((v,i) => ({sec:v, max:!!(d.hangFlags||[])[i]})) : ['']).map(auxHangRowHtml_).join(''); })()}</div>
+    <div style="display:flex; gap:8px; align-items:center; margin-top:8px; flex-wrap:wrap;">
+      <button type="button" onclick="auxHangAdd_()" style="padding:7px 14px; border-radius:8px; border:1px dashed var(--border); background:transparent; color:var(--text); cursor:pointer; font-size:12.5px;">+ 매달리기 추가</button>
+      <button type="button" onclick="saveHangEntry()" class="btn-primary" style="padding:8px 18px; border-radius:8px; border:none; background:var(--c-good); color:#fff; font-weight:600; cursor:pointer;">매달리기 저장</button>
+    </div>
+    <div class="dim" style="font-size:11px; margin-top:6px;">한 번 매달린 시간(초)을 한 칸에 적고, 두 번 이상 했으면 "+ 매달리기 추가"로 칸을 늘려요. 같은 날짜의 턱걸이 기록은 그대로 두고 매달리기만 저장돼요. 점수에는 반영되지 않는 개인 기록이에요.<br><b>최대 측정</b>은 "더는 못 버틸 때까지" 연속으로 매달린 날의 기록에만 체크하세요(2~4주에 한 번, 친업 안 한 날 권장). 체크한 값만 "연속 최대"와 60초 목표 진행에 쓰이고, 체크 안 한 세트는 훈련 세트(최대의 약 70%)로 누적에 더해져요.</div>
+  </div>`;
+}
 const AUX_RIR_INFO_ = {
   '':  ['미확인',     '판단하지 못함 — RIR을 확실히 모르면 비워두세요(이 세트는 유효 세트로 세지 않아요)', ''],
   '0': ['0 · 더 못함', '추가 반복 불가능 — 정상 자세로 1회도 더 못 함', '실패 지점에 도달. 다음 세트에서 같은 횟수를 무리하게 강행하지 마세요'],
@@ -2611,28 +2645,44 @@ function auxRemoveWorkoutNoConfirm_(id){
   markDeleted_('workouts', id);
   if(rec) markDeleted_('workouts', contentTombKey_(rec, 'name'));
 }
-function saveAuxEntry(){
-  const date = (document.getElementById('auxDateInput')||{}).value;
-  const grip = (document.getElementById('auxGripInput')||{}).value || '친업';
-  const band = (document.getElementById('auxBandInput')||{}).value || '';
-  const setsIn = auxReadSets_().filter(s => s.reps > 0);
-  const reps = setsIn.map(s => s.reps);
-  const hangs = String((document.getElementById('auxHangInput')||{}).value||'').split(/[\s,·\/]+/).map(v => Number(v)).filter(n => n>0);
-  if(!date || (!reps.length && !hangs.length)){ alert('날짜와 세트별 정상 반복 횟수 또는 매달리기 시간을 입력해주세요.'); return; }
-  if(setsIn.some(s => s.tried > 0 && s.tried < s.reps)){ alert('시도 횟수는 정상 반복 횟수보다 작을 수 없어요.'); return; }
+// 2026-11-09-i: 턱걸이와 매달리기를 따로 저장한다(매달리기는 친업 뒤에 하므로 나중에 따로 입력). 같은 날짜는 한 기록(id=aux_날짜)으로 합치되,
+// 한쪽을 저장해도 다른 쪽 기록은 그대로 둔다. patch.pull: 턱걸이 종목 객체(없으면 undefined=유지), patch.hangs: 초 배열(undefined=유지, []=삭제).
+function auxUpsertDay_(date, patch){
   const id = 'aux_' + date;
+  const old = state.workouts.find(r => r.id===id);
   const others = state.workouts.filter(w => isAuxEntry_(w) && String(w.date).slice(0,10)===date && w.id!==id && /턱걸이|친업|풀업|매달리기/.test(`${w.name||''} ${w.note||''}`));
-  if(others.length && !confirm(`${date}에 이미 턱걸이·매달리기 기록이 ${others.length}건 있어요. 이 입력으로 바꿀까요?`)) return;
+  if(others.length && !confirm(`${date}에 이미 턱걸이·매달리기 기록이 ${others.length}건 있어요. 하나의 기록으로 합쳐서 저장할까요?`)) return false;
+  let pullEx = null, hangs = [];
+  if(old && Array.isArray(old.exercises)){
+    pullEx = old.exercises.find(e => e && /턱걸이|친업|풀업/.test(String(e.name||''))) || null;
+    const he = old.exercises.find(e => e && /매달리기/.test(String(e.name||'')));
+    if(he) hangs = (Array.isArray(he.sets) ? he.sets : []).map(s => ({sec:Number(s && s.sec), max:!!(s && s.max)})).filter(x => x.sec>0);
+  } else {
+    const day = auxDaily_().find(d => d.date===date); // 구조화되지 않은 옛 기록은 읽어서 이어받는다
+    if(day){
+      if(day.pull) pullEx = {name:day.pull.grip, part:'등', grip:day.pull.grip, band:day.pull.band||'', sets:(day.pull.det && day.pull.det.length ? day.pull.det.map(s => { const o={reps:s.reps}; if(s.tried>0) o.tried=s.tried; if(s.rir!==null && s.rir!==undefined && s.rir!=='') o.rir=Number(s.rir); return o; }) : day.pull.sets.map(r => ({reps:r})))};
+      hangs = day.hangs.map((v,i) => ({sec:v, max:!!(day.hangFlags||[])[i]}));
+    }
+  }
+  if(patch.pull !== undefined) pullEx = patch.pull;
+  if(patch.hangs !== undefined) hangs = patch.hangs;
   others.forEach(w => auxRemoveWorkoutNoConfirm_(w.id));
+  if(!pullEx && !hangs.length){ // 둘 다 비면 그날 기록을 지운다
+    if(old){ auxRemoveWorkoutNoConfirm_(id); }
+    saveArr(LS_KEYS.workout, state.workouts); markUpdated(); scheduleSaveSync_(); render(); return true;
+  }
   const exercises = [];
-  if(reps.length) exercises.push({name:grip, part:'등', grip, band, sets:setsIn.map(s => { const o = {reps:s.reps}; if(s.tried > 0) o.tried = s.tried; if(s.rir !== '') o.rir = Number(s.rir); return o; })}); // reps=정상 반복, tried=시도(선택), rir=세트 끝 여유 횟수(추정)
-  if(hangs.length) exercises.push({name:'매달리기', part:'보조', sets:hangs.map(v => ({sec:v}))});
+  if(pullEx) exercises.push(pullEx);
+  if(hangs.length) exercises.push({name:'매달리기', part:'보조', sets:hangs.map(x => { const o = {sec:x.sec}; if(x.max) o.max = true; return o; })});
+  const reps = pullEx ? (pullEx.sets||[]).map(s => s.reps) : [];
+  const grip = pullEx ? (pullEx.grip || pullEx.name || '친업') : '';
   const nameParts = [];
-  if(reps.length) nameParts.push(`${grip} ${reps.join('·')}회`);
-  if(hangs.length) nameParts.push(`매달리기 ${hangs.join('·')}초`);
+  if(pullEx) nameParts.push(`${grip} ${reps.join('·')}회`);
+  if(hangs.length) nameParts.push(`매달리기 ${hangs.map(x => x.sec).join('·')}초`);
   const rec = {id, date, name:nameParts.join(' / '), part:'보조운동', volume:null, calories:null,
-    note:[reps.length ? `${grip}${band ? ' · '+band+' 밴드' : ' · 밴드 없음'}` : '', '앱 직접 입력'].filter(Boolean).join(' · '),
+    note:[pullEx ? `${grip}${pullEx.band ? ' · '+pullEx.band+' 밴드' : ' · 밴드 없음'}` : '', '앱 직접 입력'].filter(Boolean).join(' · '),
     treadmillSteps:null, avgHR:null, durationMin:null, distanceKm:null, specialCondition:null, ptSession:false, exercises, updatedAt:new Date().toISOString()};
+  if(old && old.name !== rec.name) markDeleted_('workouts', contentTombKey_(old, 'name')); // 이름이 바뀌면 서버의 옛 이름 행이 남지 않게 정리
   state.workouts = [...state.workouts.filter(r => r.id!==id), rec];
   saveArr(LS_KEYS.workout, state.workouts);
   unmarkDeleted_('workouts', id);
@@ -2640,6 +2690,50 @@ function saveAuxEntry(){
   markUpdated();
   scheduleSaveSync_();
   render();
+  return true;
+}
+function saveAuxEntry(){
+  const date = (document.getElementById('auxDateInput')||{}).value;
+  const grip = (document.getElementById('auxGripInput')||{}).value || '친업';
+  const band = (document.getElementById('auxBandInput')||{}).value || '';
+  const setsIn = auxReadSets_().filter(s => s.reps > 0);
+  if(!date || !setsIn.length){ alert('날짜와 세트별 정상 반복 횟수를 입력해주세요.'); return; }
+  if(setsIn.some(s => s.tried > 0 && s.tried < s.reps)){ alert('시도 횟수는 정상 반복 횟수보다 작을 수 없어요.'); return; }
+  const pullEx = {name:grip, part:'등', grip, band, sets:setsIn.map(s => { const o = {reps:s.reps}; if(s.tried > 0) o.tried = s.tried; if(s.rir !== '') o.rir = Number(s.rir); return o; })}; // reps=정상 반복, tried=시도(선택), rir=세트 끝 여유 횟수(추정)
+  auxUpsertDay_(date, {pull: pullEx});
+}
+// 매달리기 입력(친업 뒤에 따로): 칸을 "+"로 늘려 여러 번 입력, 날짜를 고르면 그날 저장된 값을 불러온다.
+function auxHangRowHtml_(v){
+  const sec = (v && typeof v==='object') ? v.sec : v, mx = !!(v && typeof v==='object' && v.max);
+  const inp = 'padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-mono); color:var(--text); background:var(--panel, transparent); width:80px; box-sizing:border-box;';
+  return `<div class="aux-hang-row" style="display:flex; gap:6px; align-items:center;"><input type="number" class="aux-hang" min="1" inputmode="numeric" placeholder="초" value="${sec||''}" style="${inp}"><span class="dim" style="font-size:12px;">초</span><label style="display:flex; gap:4px; align-items:center; font-size:12px; white-space:nowrap; cursor:pointer;"><input type="checkbox" class="aux-hang-max"${mx?' checked':''}>최대 측정</label><button type="button" onclick="auxHangRemove_(this)" style="background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:15px;" aria-label="이 칸 삭제">✕</button></div>`;
+}
+function auxHangAdd_(){
+  const box = document.getElementById('auxHangBox'); if(!box) return;
+  if(box.querySelectorAll('.aux-hang-row').length >= 6){ alert('매달리기는 한 번에 6세트까지 입력할 수 있어요.'); return; }
+  box.insertAdjacentHTML('beforeend', auxHangRowHtml_(''));
+}
+function auxHangRemove_(btn){
+  const box = document.getElementById('auxHangBox'); if(!box) return;
+  const rows = box.querySelectorAll('.aux-hang-row');
+  if(rows.length <= 1){ const i = btn.parentElement.querySelector('.aux-hang'); if(i) i.value=''; return; }
+  btn.parentElement.remove();
+}
+function auxHangPrefill_(){
+  const date = (document.getElementById('auxHangDate')||{}).value, box = document.getElementById('auxHangBox');
+  if(!box) return;
+  const day = auxDaily_().find(d => d.date===date);
+  const vals = day && day.hangs.length ? day.hangs.map((v,i) => ({sec:v, max:!!(day.hangFlags||[])[i]})) : [''];
+  box.innerHTML = vals.map(auxHangRowHtml_).join('');
+}
+function saveHangEntry(){
+  const date = (document.getElementById('auxHangDate')||{}).value;
+  const hangs = [...document.querySelectorAll('#auxHangBox .aux-hang-row')].map(r => ({sec:Number(r.querySelector('.aux-hang').value), max:!!(r.querySelector('.aux-hang-max')||{}).checked})).filter(x => x.sec>0);
+  if(!date){ alert('날짜를 입력해주세요.'); return; }
+  const day = auxDaily_().find(d => d.date===date);
+  if(!hangs.length && !(day && day.hangs.length)){ alert('매달리기 시간(초)을 입력해주세요.'); return; }
+  if(!hangs.length && !confirm(`${date} 매달리기 기록을 삭제할까요? (턱걸이 기록은 그대로 둬요)`)) return;
+  auxUpsertDay_(date, {hangs});
 }
 function deleteAuxDay_(date){
   const day = auxDaily_().find(d => d.date===date);
@@ -2651,54 +2745,189 @@ function deleteAuxDay_(date){
   scheduleSaveSync_();
   render();
 }
+// 2026-11-09-j: 턱걸이 카드 개편(A+B+C) — 숫자 정의 교정(유효 세트 기준)·세트 막대 그래프·접이식 진행 코치(승급/2주 평가/매달리기 이정표)
+const PULL_EVAL_START_ = '2026-11-09'; // 새 훈련 방식 시작일 — 2주 평가는 시작일 + 14일
+const PULL_EVAL_DAYS_ = 14;
+const PULL_STAGES_ = [{lo:6, hi:8}, {lo:8, hi:10}, {lo:10, hi:12}];
+const PULL_HANG_MILESTONES_ = [45, 50, 55, 60]; // 연속 최대 이정표(60초는 개인 목표)
+let pullCoachOpen_ = false;
+function pullEvalGet_(){ try{ return JSON.parse(localStorage.getItem('pullEval_v1') || '{}') || {}; }catch(e){ return {}; } }
+function pullEvalSet_(patch){ try{ localStorage.setItem('pullEval_v1', JSON.stringify(Object.assign(pullEvalGet_(), patch))); }catch(e){} render(); }
+function pullAddDays_(iso, n){ const d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function pullEvalDate_(){ return pullAddDays_(PULL_EVAL_START_, PULL_EVAL_DAYS_); }
+function pullEvalDLeft_(){ return Math.round((new Date(pullEvalDate_()+'T00:00:00') - new Date(todayISO()+'T00:00:00')) / 86400000); }
+function pullCoachOpen(){ pullCoachOpen_ = true; render(); setTimeout(() => { const e = document.getElementById('pullCoach'); if(e) e.scrollIntoView({behavior:'smooth', block:'center'}); }, 50); }
+function pullEvalAck_(){ pullEvalSet_({ack:true}); }
+function pullDet_(d){ return d.pull ? ((d.pull.det && d.pull.det.length) ? d.pull.det : d.pull.sets.map(r => ({reps:r}))) : []; }
+function pullRirNum_(s){ return (s.rir===null || s.rir===undefined || s.rir==='') ? null : Number(s.rir); }
+function pullSetColor_(s){
+  if(!isValidPullSet_(s)) return {c:'var(--text-faint)', o:0.35};
+  const r = pullRirNum_(s);
+  return r<=1 ? {c:'var(--c-warn)', o:1} : (r>=4 ? {c:'var(--c-neutral)', o:1} : {c:'var(--c-good)', o:1});
+}
+function pullRirTxt_(s){ const r = pullRirNum_(s); return r===null ? '<span style="color:var(--text-faint);">미확인</span>' : `<span style="color:${r<=1?'var(--c-warn)':(r>=4?'var(--text-dim)':'var(--c-good)')};font-weight:700;">r${r>=5?'5+':r}</span>`; }
+function pullSetBarsSvg_(ses, st){
+  if(!ses.length) return '';
+  const W=340, H=150, pl=26, pb=26, pt=10;
+  const mx = Math.max(12, ...ses.flatMap(s => s.det.map(x => x.reps)));
+  const y = v => pt + (H-pt-pb)*(1-v/mx);
+  const gw = (W-pl-6)/ses.length;
+  let o = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="세션별 세트 막대 그래프">`;
+  o += `<rect x="${pl}" y="${y(st.hi).toFixed(1)}" width="${W-pl-4}" height="${(y(st.lo)-y(st.hi)).toFixed(1)}" fill="var(--c-good-soft)"/>`;
+  [[st.hi,-9],[st.lo,3]].forEach(([v,dy]) => { o += `<text x="${pl-4}" y="${(y(v)+(dy<0?9:3)).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--text-faint)">${v}</text>`; });
+  if(mx>=12) o += `<line x1="${pl}" x2="${W-4}" y1="${y(12).toFixed(1)}" y2="${y(12).toFixed(1)}" stroke="var(--border)" stroke-dasharray="3 3"/><text x="${pl-4}" y="${(y(12)+3).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--text-faint)">12</text>`;
+  ses.forEach((s,i) => {
+    const x0 = pl + i*gw + 4, n = Math.max(s.det.length,1), bw = (gw-8)/n;
+    s.det.forEach((x,j) => { const c = pullSetColor_(x); o += `<rect x="${(x0+j*bw).toFixed(1)}" y="${y(x.reps).toFixed(1)}" width="${Math.max(bw-2,2).toFixed(1)}" height="${((H-pb)-y(x.reps)).toFixed(1)}" rx="2" fill="${c.c}" opacity="${c.o}"/>`; });
+    o += `<text x="${(pl+i*gw+gw/2).toFixed(1)}" y="${H-12}" text-anchor="middle" font-size="8.5" fill="var(--text-dim)">${s.date.slice(5)}</text>`;
+    if(i>0 && ses[i-1].band !== s.band){ const lx = pl+i*gw; o += `<line x1="${lx.toFixed(1)}" x2="${lx.toFixed(1)}" y1="${pt}" y2="${H-pb}" stroke="var(--c-accent)" stroke-dasharray="2 3"/><text x="${(lx+3).toFixed(1)}" y="${pt+8}" font-size="8" fill="var(--c-accent)">${esc(s.band||'밴드 없음')}</text>`; }
+  });
+  return o + `<text x="${pl+2}" y="${H-1}" font-size="8" fill="var(--text-faint)">${esc(ses[0].band||'밴드 없음')} 밴드 →</text></svg>`;
+}
+function pullHangBarsSvg_(hd){
+  if(!hd.length) return '';
+  const W=340, H=110, pl=26, pb=24, pt=8;
+  const mx = Math.max(65, ...hd.flatMap(d => d.hangs));
+  const y = v => pt + (H-pt-pb)*(1-v/mx);
+  const gw = (W-pl-6)/hd.length;
+  let o = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;" role="img" aria-label="날짜별 매달리기 막대 그래프">`;
+  o += `<line x1="${pl}" x2="${W-4}" y1="${y(60).toFixed(1)}" y2="${y(60).toFixed(1)}" stroke="var(--c-accent)" stroke-dasharray="4 3"/><text x="${pl-4}" y="${(y(60)+3).toFixed(1)}" text-anchor="end" font-size="8" fill="var(--c-accent)">60</text>`;
+  hd.forEach((d,i) => {
+    const x0 = pl + i*gw + 4, bw = (gw-8)/d.hangs.length;
+    d.hangs.forEach((v,j) => {
+      const mxf = !!(d.hangFlags||[])[j];
+      o += `<rect x="${(x0+j*bw).toFixed(1)}" y="${y(v).toFixed(1)}" width="${Math.max(bw-2,2).toFixed(1)}" height="${((H-pb)-y(v)).toFixed(1)}" rx="2" fill="${mxf?'var(--c-accent)':'var(--c-neutral)'}" opacity="${mxf?1:0.5}"/>`;
+      if(mxf) o += `<text x="${(x0+j*bw+(bw-2)/2).toFixed(1)}" y="${(y(v)-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="var(--c-accent)">★${v}</text>`;
+    });
+    o += `<text x="${(pl+i*gw+gw/2).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="8.5" fill="var(--text-dim)">${d.date.slice(5)}</text>`;
+  });
+  return o + '</svg>';
+}
+function pullCoachHtml_(ses, days, thisWk){
+  const ev = pullEvalGet_();
+  const stIdx = Math.min(Math.max(Number(ev.stage)||0,0), PULL_STAGES_.length-1), st = PULL_STAGES_[stIdx];
+  const ck = (ok, t, sub) => `<div style="display:flex; gap:8px; font-size:12px; line-height:1.55; margin-top:4px;"><span style="color:${ok===true?'var(--c-good)':ok===false?'var(--c-warn)':'var(--text-faint)'}; font-weight:700;">${ok===true?'✓':ok===false?'✗':'○'}</span><span>${t}${sub?` <span class="dim" style="font-size:10.5px;">${sub}</span>`:''}</span></div>`;
+  const bar = (label, cur, tot, note) => `<div style="margin-top:8px;"><div style="display:flex; justify-content:space-between; font-size:12px;"><span>${label}</span><span class="mono">${cur}/${tot}</span></div><div style="height:6px; border-radius:3px; background:var(--c-track, var(--border)); overflow:hidden; margin-top:3px;"><div style="height:100%; width:${Math.min(100,Math.round(cur/tot*100))}%; background:var(--c-good);"></div></div>${note?`<div class="dim" style="font-size:10.5px; margin-top:2px;">${note}</div>`:''}</div>`;
+  const sub = t => `<div style="margin-top:12px; font-size:12.5px; font-weight:600;">${t}</div>`;
+  // 승급: 직전 3세션
+  const okUp = s => s.det.length>=3 && s.det.every(x => isValidPullSet_(x) && x.reps>=st.hi && pullRirNum_(x)>=2);
+  const rec3 = ses.slice(-3);
+  const up2 = ses.length>=2 && okUp(ses[ses.length-1]) && okUp(ses[ses.length-2]);
+  const nextSt = PULL_STAGES_[stIdx+1];
+  // 보라 밴드(3×12 단계)
+  const ok12 = s => s.det.length>=3 && s.det.every(x => isValidPullSet_(x) && x.reps>=12 && pullRirNum_(x)>=2);
+  const purple2 = ses.length>=2 && ok12(ses[ses.length-1]) && ok12(ses[ses.length-2]);
+  // 2주 평가
+  const evDate = pullEvalDate_(), dLeft = pullEvalDLeft_();
+  const win = ses.filter(s => s.date>=PULL_EVAL_START_ && s.date<evDate);
+  const allValid = win.length ? win.every(s => s.det.every(isValidPullSet_)) : null;
+  const lastRir = win.length ? win.every(s => { const r = pullRirNum_(s.det[s.det.length-1]); return r!==null && r>=1 && r<=3; }) : null;
+  const tg = (key, label) => { const v = ev[key]; const b = (val, t) => `<button type="button" onclick="pullEvalSet_({${key}:${val}})" style="padding:3px 10px; border-radius:12px; border:1px solid var(--border); font-size:11px; cursor:pointer; background:${v===val?'var(--c-good-soft)':'transparent'}; color:var(--text);">${t}</button>`; return `<div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:5px; font-size:12px;"><span style="flex:1 1 150px;">${label}</span>${b(true,'이상 없음')}${b(false,'문제 있음')}</div>`; };
+  const manualOk = ev.pain===true && ev.recov===true;
+  const autoOk = allValid===true && lastRir===true && win.length>=4; // 2주 약 2회/주 이상(≥4세션) 수행
+  const verdict = (win.length<4) ? ['○','세션이 아직 부족해요(2주간 4회 이상 권장)','var(--text-dim)']
+    : (autoOk && manualOk) ? ['✓','주 3회 전환을 검토해도 좋아요(통증·회복 이상 없음 기준)','var(--c-good)']
+    : (ev.pain===false || ev.recov===false) ? ['✗','통증·회복 문제가 있어 전환 보류 — 현재 빈도 유지','var(--c-warn)']
+    : ['○','수동 항목(통증·회복)을 확인하면 판정돼요','var(--text-dim)'];
+  const maxHang = days.reduce((m,d) => d.hangs.reduce((mm,v,i) => (d.hangFlags||[])[i] ? Math.max(mm,v) : mm, m), 0);
+  const ms = PULL_HANG_MILESTONES_.map(t => { const ok = maxHang>=t; return `<div style="flex:1; text-align:center; border-radius:8px; padding:6px 2px; font-size:11.5px; font-weight:700; background:${ok?'var(--c-good-soft)':'var(--panel-alt)'}; color:${ok?'var(--c-good)':'var(--text-dim)'};">${t}초<div style="font-size:9.5px; font-weight:500;">${ok?'달성':'대기'}</div></div>`; }).join('');
+  const stBtns = PULL_STAGES_.map((s,i) => `<button type="button" onclick="pullEvalSet_({stage:${i}})" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border); font-size:11.5px; cursor:pointer; background:${i===stIdx?'var(--c-good-soft)':'transparent'}; color:var(--text); font-weight:${i===stIdx?700:500};">3×${s.lo}~${s.hi}회</button>`).join('');
+  const summary = `진행 코치 · ${up2 && nextSt ? '승급 가능' : '현재 단계 유지'} · 2주 평가 ${dLeft>0?'D-'+dLeft:(ev.ack?'완료':'시점 도래')}`;
+  return `<details id="pullCoach" ${pullCoachOpen_?'open':''} ontoggle="pullCoachOpen_=this.open" style="margin-top:14px; border:1px solid var(--border); border-radius:10px; padding:8px 12px;">
+    <summary style="cursor:pointer; font-size:12.5px; font-weight:600; color:var(--c-accent);">${summary}</summary>
+    <div style="margin-top:8px;">
+      <div style="font-size:12.5px; font-weight:600;">현재 단계 <span class="dim" style="font-weight:500; font-size:11px;">(직접 선택 · 녹색 밴드 · RIR 2~3 · 휴식 3분)</span></div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">${stBtns}</div>
+      ${bar('이번 주 인정 진행(유효 세트)', Math.min(thisWk.sets, PULL_WEEK_MIN_SETS_), PULL_WEEK_MIN_SETS_, `수행 ${thisWk.days}/${PULL_WEEK_MIN_DAYS_}일 → ${thisWk.bonus?'근력 +1 인정 중':'아직 조건 미달'}`)}
+      ${sub(nextSt ? `다음 단계(3×${nextSt.lo}~${nextSt.hi}회) 승급 조건` : '승급 조건 — 마지막 단계예요')}
+      ${nextSt ? `<div class="dim" style="font-size:10.5px;">3세트 모두 ${st.hi}회 + RIR 2 이상, 2회 연속</div>
+      ${rec3.length ? rec3.map(s => ck(okUp(s), `${s.date.slice(5)} 세션`, okUp(s)?'조건 충족':'미충족')).join('') : ck(null,'기록 없음','')}
+      ${ck(up2, up2 ? `올려도 돼요 → 3×${nextSt.lo}~${nextSt.hi}회로 선택` : '2회 연속 충족 전이에요','')}` : ''}
+      ${sub('보라 밴드 전환 검토')}
+      <div class="dim" style="font-size:10.5px;">3세트 모두 12회 + RIR 2 이상, 2회 연속 (밴드별 보조 강도 차이는 미확인 — 바꾼 첫 세션은 횟수를 낮춰 시작)</div>
+      ${ck(stIdx===2 ? purple2 : null, stIdx===2 ? (purple2 ? '조건 충족 — 보라 밴드를 시도해 보세요' : '아직 조건 전이에요') : '3×10~12회 단계에서 검토해요','')}
+      ${sub(`2주 평가 (${PULL_EVAL_START_.slice(5)} ~ ${pullAddDays_(evDate,-1).slice(5)}, 평가일 ${evDate.slice(5)})`)}
+      ${ck(win.length>=4 ? true : null, `2주간 수행 ${win.length}세션`, '4세션 이상 권장')}
+      ${ck(allValid, '모든 세트가 유효(정상 5회↑·RIR 입력)', allValid===false?'RIR 미입력/무효 세트가 있어요':'')}
+      ${ck(lastRir, '마지막 세트까지 RIR 1~3', '')}
+      ${tg('pain','어깨·팔꿈치 통증')}${tg('recov','다음 운동일까지 회복')}
+      <div style="margin-top:8px; font-size:12px; font-weight:600; color:${verdict[2]};">${verdict[0]} ${verdict[1]}</div>
+      ${ev.ack?'':`<button type="button" onclick="pullEvalAck_()" style="margin-top:8px; padding:5px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:11.5px; cursor:pointer;">평가 확인함 (알림 끄기)</button>`}
+      ${sub('매달리기 이정표 (연속 최대 · 60초는 개인 목표)')}
+      <div style="display:flex; gap:6px; margin-top:6px;">${ms}</div>
+      <div class="dim" style="font-size:10.5px; margin-top:4px;">${maxHang ? `현재 연속 최대 ${maxHang}초(최대 측정 체크 기록)` : '"최대 측정"을 체크한 기록이 아직 없어요'} · 훈련 세트는 측정값의 약 70%</div>
+      <div class="dim" style="font-size:10.5px; margin-top:10px; line-height:1.5;">단계·승급 기준은 이 앱의 실전 기준(Interpretation)이며 가이드라인 수치가 아니에요. 통증·회복 체크와 단계 선택은 이 기기에만 저장돼요.</div>
+    </div>
+  </details>`;
+}
 function renderPullupCard_(){
   const days = auxDaily_();
-  const pmax = d => d.pull ? Math.max(...d.pull.sets) : 0;
   const pullDays = days.filter(d => d.pull), hangDays = days.filter(d => d.hangs.length);
-  const bestP = pullDays.length ? pullDays.reduce((m,d) => pmax(d) > pmax(m) ? d : m, pullDays[0]) : null;
-  const bestH = hangDays.length ? hangDays.reduce((m,d) => Math.max(...d.hangs) > Math.max(...m.hangs) ? d : m, hangDays[0]) : null;
-  const lab = p => p ? [p.grip, p.band ? p.band+' 밴드' : ''].filter(Boolean).join(' · ') : ''; // 2026-11-09: 밴드 거는 방식(무릎걸이)은 항상 같아서 표시 삭제
-  const last10 = days.slice(-10);
-  const prevH = hangDays.length>1 ? Math.max(...hangDays[hangDays.length-2].hangs) : null;
-  const lastH = hangDays.length ? Math.max(...hangDays[hangDays.length-1].hangs) : null;
-  const hDelta = (prevH!=null && lastH!=null) ? lastH-prevH : null;
+  const lab = p => p ? [p.grip, p.band ? p.band+' 밴드' : ''].filter(Boolean).join(' · ') : '';
+  const ev = pullEvalGet_();
+  const st = PULL_STAGES_[Math.min(Math.max(Number(ev.stage)||0,0), PULL_STAGES_.length-1)];
+  const ses = pullDays.map(d => ({date:d.date, band:d.pull.band||'', grip:d.pull.grip, det:pullDet_(d)}));
+  // A: 유효 세트 중 최고 / 연속 최대(측정)
+  let bestV = null, legacyMax = 0;
+  ses.forEach(s => s.det.forEach(x => { if(isValidPullSet_(x)){ if(!bestV || x.reps>bestV.reps || (x.reps===bestV.reps && s.date>bestV.date)) bestV = {reps:x.reps, rir:pullRirNum_(x), date:s.date, grip:s.grip, band:s.band}; } else legacyMax = Math.max(legacyMax, x.reps); }));
+  let bestM = null, anyMax = 0;
+  hangDays.forEach(d => d.hangs.forEach((v,i) => { anyMax = Math.max(anyMax, v); if((d.hangFlags||[])[i] && (!bestM || v>bestM.v || (v===bestM.v && d.date>bestM.date))) bestM = {v, date:d.date}; }));
+  const wkDates = getWeekDates(isoWeekKey(todayISO()));
+  const thisWk_ = pullWeekInfo_(wkDates);
+  const wkHang = hangDays.filter(d => wkDates.includes(d.date)).reduce((s,d) => s + d.hangs.reduce((a,b)=>a+b,0), 0);
+  const box = 'border:1px solid var(--border); border-radius:10px; padding:10px 12px;';
   const mini = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-    <div style="border:1px solid var(--border); border-radius:10px; padding:10px 12px;">
-      <div class="dim" style="font-size:11.5px;">턱걸이 한 세트 최고</div>
-      <div style="font-size:22px; font-weight:700; color:var(--c-good);">${bestP ? pmax(bestP)+'회' : '—'}</div>
-      ${auxSpark_(last10.map(pmax),'--c-accent')}
-      <div class="dim" style="font-size:11px;">${bestP ? esc(lab(bestP.pull))+' · '+bestP.date.slice(5) : ''}</div></div>
-    <div style="border:1px solid var(--border); border-radius:10px; padding:10px 12px;">
-      <div class="dim" style="font-size:11.5px;">매달리기 최고</div>
-      <div style="font-size:22px; font-weight:700; color:var(--c-good);">${bestH ? Math.max(...bestH.hangs)+'초' : '—'}</div>
-      ${auxSpark_(last10.map(d => d.hangs.length ? Math.max(...d.hangs) : 0),'--c-good')}
-      <div class="dim" style="font-size:11px;">${bestH ? bestH.date.slice(5) : ''}${hDelta!=null && hDelta!==0 ? ` · 직전 대비 ${hDelta>0?'+':''}${hDelta}초` : ''}</div></div></div>`;
-  const rows = days.slice(-7).reverse().map(d => `<tr>
-    <td style="text-align:left;">${d.date.slice(5)}</td>
-    <td style="text-align:left; font-family:var(--font-body);">${d.pull ? esc(lab(d.pull)) : '<span class="dim">—</span>'}</td>
-    <td class="mono">${d.pull ? d.pull.sets.join('·')+' <span class="dim">(유효 '+(d.pull.det||[]).filter(isValidPullSet_).length+'세트)</span>' : '—'}</td>
-    <td class="mono">${d.hangs.length ? d.hangs.join('·')+'초' : '—'}</td>
-    <td><button onclick="deleteAuxDay_('${d.date}')" style="background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:12px;">삭제</button></td></tr>`).join('');
-  const thisWkPull_ = pullWeekInfo_(getWeekDates(isoWeekKey(todayISO())));
+    <div style="${box}"><div class="dim" style="font-size:11.5px;">유효 세트 중 최고 (정상 반복)</div>
+      <div style="font-size:22px; font-weight:700; color:var(--c-good);">${bestV ? bestV.reps+'회' : '—'}</div>
+      <div class="dim" style="font-size:11px;">${bestV ? esc(lab({grip:bestV.grip, band:bestV.band}))+' · '+bestV.date.slice(5)+' · RIR '+bestV.rir : '유효 세트 없음 (RIR 입력 필요)'}</div>
+      <div class="dim" style="font-size:10.5px; margin-top:2px;">목표 ${st.lo}~${st.hi}회 · RIR 2~3${legacyMax ? ` · RIR 없는 옛 기록 최고 ${legacyMax}회는 제외` : ''}</div></div>
+    <div style="${box}"><div class="dim" style="font-size:11.5px;">매달리기 연속 최대 (측정)</div>
+      <div style="font-size:22px; font-weight:700; color:var(--c-good);">${bestM ? bestM.v+'초' : '—'}</div>
+      <div class="dim" style="font-size:11px;">${bestM ? bestM.date.slice(5)+' 측정 · 목표 60초(개인)' : '"최대 측정" 체크한 기록 없음'+(anyMax?` · 참고: 단일 세트 최고 ${anyMax}초`:'')}</div>
+      <div class="dim" style="font-size:10.5px; margin-top:2px;">이번 주 누적 ${wkHang}초(훈련 세트 포함)</div></div></div>`;
+  // B: 그래프
+  const legend = '<div class="dim" style="font-size:10.5px; display:flex; gap:10px; flex-wrap:wrap; margin:4px 0 6px;"><span><span style="color:var(--c-good);">■</span> RIR 2~3(목표)</span><span><span style="color:var(--c-warn);">■</span> RIR 0~1(강함)</span><span><span style="color:var(--c-neutral);">■</span> RIR 4</span><span><span style="color:var(--text-faint); opacity:.6;">■</span> 무효(RIR 없음·5+·5회 미만)</span></div>';
+  const chartSes = ses.slice(-8), chartHang = hangDays.slice(-8);
+  const charts = days.length ? `<div style="font-size:12.5px; font-weight:600;">친업 — 세션별 세트 <span class="dim" style="font-weight:500; font-size:11px;">(막대 = 정상 반복, 음영 = 목표 ${st.lo}~${st.hi}회, 최근 8회)</span></div>${legend}${pullSetBarsSvg_(chartSes, st) || '<div class="dim" style="font-size:11.5px;">턱걸이 기록이 없어요.</div>'}
+    <div class="dim" style="font-size:10.5px; margin:2px 0 12px;">밴드가 바뀌면 그 지점에 구분선이 표시돼요 · 점선 12회 = 보라 밴드 검토선</div>
+    <div style="font-size:12.5px; font-weight:600;">매달리기 — 날짜별 세트 <span class="dim" style="font-weight:500; font-size:11px;">(★ 진한 보라 = 최대 측정, 연한 파랑 = 훈련 세트, 점선 60초 = 개인 목표)</span></div>${pullHangBarsSvg_(chartHang) || '<div class="dim" style="font-size:11.5px;">매달리기 기록이 없어요.</div>'}<div style="margin-bottom:12px;"></div>` : '';
+  // A: 표
+  const rows = days.slice(-7).reverse().map(d => {
+    const det = pullDet_(d), vs = det.filter(isValidPullSet_).length, legacy = d.pull && det.length && det.every(x => pullRirNum_(x)===null);
+    const setTxt = det.map(x => `${x.reps}<span class="dim" style="font-size:10.5px;">/${pullRirTxt_(x)}</span>`).join(' · ');
+    const hg = d.hangs.map((v,i) => (d.hangFlags||[])[i] ? `★${v}` : String(v)).join('·');
+    return `<tr><td style="text-align:left; white-space:nowrap; font-family:var(--font-body);">${d.date.slice(5)}${d.pull ? `<div class="dim" style="font-size:10px;">${esc([d.pull.grip, d.pull.band].filter(Boolean).join('·'))}</div>` : ''}</td>
+    <td class="mono" style="text-align:left;">${d.pull ? setTxt+(legacy?'<div class="dim" style="font-size:10px;">RIR 없는 옛 기록</div>':'') : '—'}</td>
+    <td class="mono">${d.pull ? vs+'/'+det.length : '—'}</td>
+    <td class="mono">${d.hangs.length ? hg+'초' : '—'}</td>
+    <td><button onclick="deleteAuxDay_('${d.date}')" style="background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:12px;">삭제</button></td></tr>`; }).join('');
   const weeks = {};
-  days.forEach(d => { const k = auxWeekKey_(d.date); const w = weeks[k] || (weeks[k] = {k, days:0, total:0, max:0, hang:0}); w.days++; if(d.pull){ w.total += d.pull.sets.reduce((a,b)=>a+b,0); w.max = Math.max(w.max, pmax(d)); } w.hang += d.hangs.reduce((a,b)=>a+b,0); });
+  days.forEach(d => { const k = auxWeekKey_(d.date); const w = weeks[k] || (weeks[k] = {k, total:0, hang:0}); if(d.pull) w.total += d.pull.sets.reduce((a,b)=>a+b,0); w.hang += d.hangs.reduce((a,b)=>a+b,0); });
   const wk = Object.values(weeks).sort((a,b) => b.k.localeCompare(a.k)).slice(0,4);
-  const weekRows = wk.map(w => `<tr><td style="text-align:left;">${w.k.slice(5)}~</td><td class="mono">${w.days}일</td><td class="mono">${w.total||'—'}${w.total?'회':''}</td><td class="mono">${w.max||'—'}</td><td class="mono">${w.hang?w.hang+'초':'—'}</td></tr>`).join('');
+  const chip = (t, ok) => `<span style="display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:9px; background:${ok?'var(--c-good-soft)':'var(--c-neutral-soft)'}; color:${ok?'var(--c-good)':'var(--c-neutral)'};">${t}</span>`;
+  const weekRows = wk.map(w => { const info = pullWeekInfo_(Array.from({length:7}, (_,i) => pullAddDays_(w.k, i))); return `<tr><td style="text-align:left; white-space:nowrap;">${w.k.slice(5)}~</td><td class="mono" style="white-space:nowrap;">${info.days}일·${info.sets}/${PULL_WEEK_MIN_SETS_}</td><td>${chip(info.bonus?'충족':'미충족', info.bonus)}</td><td class="mono">${w.total||'—'}${w.total?'회':''}</td><td class="mono">${w.hang?w.hang+'초':'—'}</td></tr>`; }).join('');
+  const dLeft = pullEvalDLeft_();
+  const banner = (!ev.ack && dLeft<=3) ? `<div class="no-print" style="border:1px solid var(--c-accent); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12.5px; line-height:1.55;"><b style="color:var(--c-accent);">${dLeft>0?`2주 평가 D-${dLeft}`:dLeft===0?'오늘이 2주 평가일이에요':'2주 평가 시점이 지났어요'}</b> (${pullEvalDate_().slice(5)}) — 주 3회 전환·승급 여부를 확인해 보세요. <button type="button" onclick="pullCoachOpen()" style="margin-left:6px; padding:4px 10px; border-radius:8px; border:none; background:var(--c-accent); color:#fff; font-size:12px; cursor:pointer;">평가 열기</button></div>` : '';
   return `<section class="card">
     <div class="section-label good">${secNum('W4e')}턱걸이 · 매달리기 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 보조운동 · 주간 실적 카드에 함께 표시</span></div>
-    <div class="dim" style="font-size:11.5px; margin:-2px 0 10px;">주간 점수 반영(월~일): 이번 주 유효 세트 <b>${thisWkPull_.sets}/${PULL_WEEK_MIN_SETS_}세트</b> · 수행 <b>${thisWkPull_.days}/${PULL_WEEK_MIN_DAYS_}일</b> → ${thisWkPull_.bonus ? '<b style="color:var(--c-good)">근력 +1 인정 중</b>' : '아직 조건 미달'} (정상 가동범위 5회 이상 + RIR 0~4 입력한 세트만 유효, 매달리기 제외, 주 최대 +1·근력 합계 상한 2회, 앱 내부 점수일 뿐 전신 근력운동 1회와 같다는 뜻은 아니에요)</div>
+    <div class="dim" style="font-size:11.5px; margin:-2px 0 10px;">주간 점수 반영(월~일): 이번 주 유효 세트 <b>${thisWk_.sets}/${PULL_WEEK_MIN_SETS_}세트</b> · 수행 <b>${thisWk_.days}/${PULL_WEEK_MIN_DAYS_}일</b> → ${thisWk_.bonus ? '<b style="color:var(--c-good)">근력 +1 인정 중</b>' : '아직 조건 미달'} (정상 가동범위 5회 이상 + RIR 0~4 입력한 세트만 유효, 매달리기 제외, 주 최대 +1·근력 합계 상한 2회, 앱 내부 점수일 뿐 전신 근력운동 1회와 같다는 뜻은 아니에요)</div>
+    ${banner}
     ${auxFormHtml_(days)}
+    ${auxHangFormHtml_()}
     ${days.length ? mini : ''}
+    ${charts}
     ${days.length ? '' : '<div class="empty-state" style="padding:18px 10px;">아직 턱걸이·매달리기 기록이 없어요. 위에서 입력해 추가해보세요.</div>'}
-    <div style="overflow-x:auto;${days.length ? '' : ' display:none;'}"><table class="data-table">
-      <thead><tr><th style="text-align:left">날짜</th><th style="text-align:left">턱걸이</th><th>세트별 정상 반복(유효 세트)</th><th>매달리기</th><th></th></tr></thead>
+    <div style="overflow-x:auto;${days.length ? '' : ' display:none;'}"><table class="data-table pull-tbl">
+      <thead><tr><th style="text-align:left">날짜</th><th style="text-align:left">세트 (정상 반복/RIR)</th><th>유효</th><th>매달리기</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>
-    <div class="dim" style="font-size:11.5px; margin:14px 0 4px;${days.length ? '' : ' display:none;'}">주간 합계 (월요일 시작, 최근 4주 · 이번 주는 진행 중)</div>
-    <div style="overflow-x:auto;${days.length ? '' : ' display:none;'}"><table class="data-table">
-      <thead><tr><th style="text-align:left">주</th><th>기록일</th><th>턱걸이 합계</th><th>한 세트 최고</th><th>매달리기 합계</th></tr></thead>
+    <div class="dim" style="font-size:11.5px; margin:14px 0 4px;${days.length ? '' : ' display:none;'}">주간 (월~일 · 인정 조건: 유효 세트 ${PULL_WEEK_MIN_SETS_} · 수행 ${PULL_WEEK_MIN_DAYS_}일 · 이번 주는 진행 중)</div>
+    <div style="overflow-x:auto;${days.length ? '' : ' display:none;'}"><table class="data-table pull-tbl">
+      <thead><tr><th style="text-align:left">주</th><th>유효일·세트</th><th>근력 +1</th><th>반복 합계</th><th>매달리기</th></tr></thead>
       <tbody>${weekRows}</tbody></table></div>
+    ${pullCoachHtml_(ses, days, thisWk_)}
   </section>`;
 }
+
 // ⑧ 종목별 직전 세션 대비 추정 1RM 변화(세션별 최고 세트 기준). 세션이 2번 미만이면 —.
 function prevDeltaHtml_(p){
   const ss = p && p.sessions;
@@ -4376,7 +4605,8 @@ function renderWeeklyPlanSection(workouts){
     const sT_ = FLEX_WEEK_V2_ ? FLEX_STRENGTH_TARGET_ : 3;
     const chipsHtml_ = FLEX_WEEK_V2_
       ? `<span class="chip ${strengthCount>=sT_?'good':''}">근력 ${strengthCount}회 / 목표 ${sT_}회${strengthCount>sT_?` 🔥 초과달성 (${Math.round(strengthCount/sT_*100)}%)`:strengthCount===sT_?' ✓ 달성 (100%)':''}</span>
-            <span class="chip ${fx_.cardioQ>=FLEX_CARDIO_TARGET_?'good':''}">인정 유산소 ${fx_.cardioQ}회 / 목표 ${FLEX_CARDIO_TARGET_}회(최소 ${FLEX_CARDIO_MIN_}회)${fx_.cardioQ>FLEX_CARDIO_TARGET_?` 🔥 초과달성 (${Math.round(fx_.cardioQ/FLEX_CARDIO_TARGET_*100)}%)`:fx_.cardioQ===FLEX_CARDIO_TARGET_?' ✓ 달성 (100%)':''}${fx_.cardioU>0?` · 미인정 ${fx_.cardioU}회`:''}</span>`
+            <span class="chip ${fx_.cardioQ>=FLEX_CARDIO_TARGET_?'good':''}">인정 유산소 ${fx_.cardioQ}회 / 목표 ${FLEX_CARDIO_TARGET_}회(최소 ${FLEX_CARDIO_MIN_}회)${fx_.cardioQ>FLEX_CARDIO_TARGET_?` 🔥 초과달성 (${Math.round(fx_.cardioQ/FLEX_CARDIO_TARGET_*100)}%)`:fx_.cardioQ===FLEX_CARDIO_TARGET_?' ✓ 달성 (100%)':''}${fx_.cardioU>0?` · 미인정 ${fx_.cardioU}회`:''}</span>
+            <span class="chip">턱걸이 합계 ${pullRepsInDates_(dates)}회</span>`
       : `<span class="chip ${strengthCount>=3?'good':''}">근력 ${strengthCount}회 / 목표 3회${strengthCount>3?` 🔥 초과달성 (${Math.round(strengthCount/3*100)}%)`:strengthCount===3?' ✓ 달성 (100%)':''}</span>
             <span class="chip ${cardioCount>=3?'good':''}">유산소 ${cardioCount}회 / 목표 3회${cardioCount>3?` 🔥 초과달성 (${Math.round(cardioCount/3*100)}%)`:cardioCount===3?' ✓ 달성 (100%)':''}</span>`;
     return `
@@ -4405,10 +4635,12 @@ function renderWeeklyPlanSection(workouts){
                 : actual.type==='휴식'
                   ? `<div class="plan-cell plan-rest ${showPlan?'':'solo'}">휴식${plan && plan.type==='휴식' ? ' ✓' : ''}</div>` + (planNotFulfilled(['휴식']) ? missedCellHTML(plan.type) : '')
                   : subtypeCellHTML(actual.type, plan, showPlan, actual.type==='유산소' && cardioUnq_) + (planNotFulfilled([actual.type]) ? missedCellHTML(plan.type) : '');
+            const pullReps_ = FLEX_WEEK_V2_ ? pullRepsOnDate_(d) : 0; // 2026-11-09-h: 턱걸이 정상 반복 합계 칩(표시용)
+            const pullChip_ = pullReps_ > 0 ? `<div class="plan-cell solo" style="background:var(--c-bonus-soft,var(--panel-alt)); color:var(--c-bonus,var(--text-dim)); border:1px solid var(--c-bonus,var(--border)); word-break:keep-all; line-height:1.25;">턱걸이<br>${pullReps_}회</div>` : '';
             return `<div class="plan-col ${isToday?'is-today':''} ${planDetailDate===d?'is-selected':''}" onclick="selectPlanDay('${d}')">
               <div class="plan-dow">${dow[i]}${isToday?' ·오늘':''}</div>
               ${showPlan ? `<div class="plan-cell plan-row ${plan?typeClass(plan.type):'plan-none'}">${plan?plan.type:'—'}</div>` : ''}
-              ${actualCell}
+              ${pullChip_ && !actual ? pullChip_ : actualCell + pullChip_}
               <div class="plan-label">${actual ? (actual.label.length>10?actual.label.slice(0,10)+'…':actual.label) : (plan?plan.label:'')}</div>
             </div>`;
           }).join('')}
@@ -4445,7 +4677,7 @@ function renderWeeklyPlanSection(workouts){
       </div>`}
       ${weekBlock(lastMonday, '지난주', !FLEX_WEEK_V2_)}
       ${weekBlock(thisMonday, '이번주', !FLEX_WEEK_V2_)}
-      ${FLEX_WEEK_V2_ ? `<div class="note-box">유산소는 <b>30분 이상 또는 3km 이상</b>인 기록만 세고, 기준에 못 미친 유산소는 <b>(미인정)</b>으로 따로 표시돼요. 요일 칸을 누르면 그날 상세 내역이 펼쳐집니다.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
+      ${FLEX_WEEK_V2_ ? `<div class="note-box">유산소는 <b>30분 이상 또는 3km 이상</b>인 기록만 세고, 기준에 못 미친 유산소는 <b>(미인정)</b>으로 따로 표시돼요. 턱걸이 칩은 그날 <b>정상 반복 합계</b>예요(근력 +1 인정은 유효 세트 기준 — 턱걸이 카드 참고). 요일 칸을 누르면 그날 상세 내역이 펼쳐집니다.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
     </section>
   `;
 }
@@ -4464,12 +4696,13 @@ function renderPlanDetailPanel(date, workouts){
       <button class="btn btn-ghost btn-sm" onclick="selectPlanDay('${date}')">닫기 ✕</button>
     </div>
     ${plan ? `<div class="plan-detail-plan">계획: <b>${plan.type}</b> — ${plan.label}${plan.reason?`<br><span class="dim" style="font-size:11px;">근거: ${plan.reason}</span>`:''}</div>` : ''}
-    ${entries.length===0 ? `<div class="plan-detail-empty">기록된 운동이 없습니다.</div>` : entries.map(w => `
+    ${entries.length===0 && !pullDetailHtml_(date) ? `<div class="plan-detail-empty">기록된 운동이 없습니다.</div>` : entries.map(w => `
       <div class="plan-detail-item">
         <div class="plan-detail-name">${esc(w.name||'(이름없음)')}</div>
         <div class="plan-detail-meta">${w.part?esc(w.part):''}${parseVolume(w.volume)>0?` · ${parseVolume(w.volume).toLocaleString()}kg`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
         ${w.note?`<div class="plan-detail-note">${esc(w.note)}</div>`:''}
       </div>`).join('')}
+    ${pullDetailHtml_(date)}
   </div>`;
 }
 
