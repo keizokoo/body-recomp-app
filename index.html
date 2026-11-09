@@ -611,7 +611,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -632,14 +632,14 @@ const BODY_PARTS = ['등','이두','하체','어깨','가슴','삼두'];
 // 원본 기록은 state.workouts·시트에 그대로 보존되고(동기화·데이터 탭 원본 표시는 그대로), 통계·화면 계산에서만 statWorkouts_()로 걸러낸다.
 function isAuxEntry_(w){ return !!w && String(w.part||'').trim()==='보조운동'; }
 function statWorkouts_(arr){ return (arr||state.workouts||[]).filter(w => !isAuxEntry_(w)); }
-// 2026-10-31-b 추가: 보조운동 근력일 보너스(서버 Code.gs 2026-10-31 dsIsAux_·DS_AUX_BONUS_DAYS_와 같은 규칙).
-// 보조운동은 그날 근력으로도 최근 7일 근력일로도 세지 않고, 최근 7일(오늘 포함) 중 보조운동을 한 날이 5일 이상이면 하루 점수의 근력일에 1일을 더한다(더 해도 최대 1일).
-const AUX_BONUS_DAYS_ = 5;
-function auxDaysIn7_(){
-  const set = new Set((state.workouts||[]).filter(w => isAuxEntry_(w) && w.date).map(w => String(w.date).slice(0,10)));
-  return daysAgoList(7).filter(d => set.has(d)).length;
+// 2026-11-09-d: 턱걸이 주 100회 규칙(서버 Code.gs 2026-11-09 WS_PULL_WEEK_MIN_와 같은 규칙).
+// 한 주(월~일)에 턱걸이(풀업·친업) 합계가 100회 이상이면 주간 근력 1회로 더 인정한다(최대 1회, 매달리기 제외). 보조운동 자체는 여전히 근력일이 아니다.
+// 옛 규칙(최근 7일 중 5일 보조운동 → 근력일 +1)은 폐지.
+const PULL_WEEK_MIN_ = 100;
+function pullRepsInWeek_(dates){
+  return auxDaily_().filter(d => dates.includes(d.date) && d.pull).reduce((s,d) => s + d.pull.sets.reduce((a,b)=>a+b,0), 0);
 }
-function auxBonusDay_(){ return auxDaysIn7_() >= AUX_BONUS_DAYS_ ? 1 : 0; }
+function pullWeekBonus_(dates){ return pullRepsInWeek_(dates) >= PULL_WEEK_MIN_ ? 1 : 0; }
 const BODY_PART_COLOR = {'하체':'#7C5CFC','등':'#17D9B4','가슴':'#FF6B7A','어깨':'#FFB648','이두':'#4C8DFF','삼두':'#2F6E51'};
 const BODY_PART_ICON = {'하체':'🦵','등':'🔥','가슴':'🔥','어깨':'💪','이두':'💪','삼두':'💪'};
 function partDot(part){ return `<span>${BODY_PART_ICON[part]||''}</span>`; }
@@ -667,40 +667,6 @@ function isNeckRisky(text){
   return NECK_RISK_KEYWORDS.some(k => text.includes(k));
 }
 
-// 목디스크 안전 종목 라이브러리 (부위별 추천 루틴)
-const SAFE_EXERCISE_LIBRARY = {
-  '하체': [
-    {name:'레그프레스', sets:'4×8-12', note:'메인 종목'},
-    {name:'머신 핵스쿼트', sets:'3×10-12', note:'백스쿼트 대체 — 등판 지지로 목·허리 부담 적음'},
-    {name:'힙어브덕션', sets:'3×15-20', note:''},
-    {name:'힙어덕션', sets:'3×15-20', note:''},
-    {name:'레그익스텐션', sets:'3×12-15', note:''},
-  ],
-  '등': [
-    {name:'랫풀다운', sets:'4×8-12', note:'메인 종목'},
-    {name:'케이블 시티드로우', sets:'3×8-12', note:''},
-    {name:'어시스티드 풀업/친업', sets:'3×8-12', note:''},
-    {name:'데드리프트(라이트 웨이트)', sets:'3×8-10', note:'목 중립 유지, 무게보다 폼 우선'},
-  ],
-  '가슴': [
-    {name:'머신 체스트프레스', sets:'4×8-12', note:'메인 종목 — 오버헤드프레스 대신 이걸로'},
-    {name:'케이블 체스트프레스', sets:'3×10-15', note:''},
-    {name:'머신 플라이', sets:'3×12-15', note:''},
-  ],
-  '어깨': [
-    {name:'사이드 레터럴레이즈', sets:'3×12-15', note:'가벼운 무게, 반동 없이'},
-    {name:'프론트 레이즈', sets:'2×12-15', note:'오버헤드 동작 절대 없음'},
-    {name:'페이스풀', sets:'3×15', note:'목·어깨 안정성에도 도움'},
-  ],
-  '이두': [
-    {name:'덤벨 바이셉컬', sets:'3×10-15', note:''},
-    {name:'바벨 바이셉컬', sets:'3×10-12', note:''},
-  ],
-  '삼두': [
-    {name:'케이블 트라이셉 푸시다운', sets:'3×12-15', note:''},
-    {name:'케이블 로프 트라이셉 익스텐션', sets:'3×12-15', note:''},
-  ],
-};
 
 function inferPartsForEntry(w){
   if(isAuxEntry_(w)) return []; // 2026-10-23: 보조운동은 note의 '어깨'·'풀업' 같은 단어와 상관없이 부위 자극으로 세지 않는다
@@ -960,31 +926,7 @@ function parseVolume(v){
   return isNaN(n) ? 0 : n;
 }
 
-// 2026-07-25 신설: 칼로리 목표 계산 — 기존 고정값 400 대신 BMR×0.3을 EAT 보정 기준점으로 사용.
-// 근거: 정희님 확정(2026-07-25) — BMR이 감량 진행에 따라 계속 낮아지는데 고정값 400은 시간이
-// 지날수록 상대적 비중이 커지는 왜곡이 있어, BMR에 비례시켜 이 왜곡을 방지.
-// 2026-11-07 개정: 기초대사·운동 보정을 쓰지 않는 주 평균 고정 목표(위 KCAL_* 상수 참고). 인자는 호환용으로만 받고 무시한다.
-function computeCalorieTarget(bmr, eatKcal){
-  const k = kcalWeekTarget_(); return {base: k.mid, threshold: null, targetLow: k.low, targetHigh: k.high};
-}
 
-// 2026-10-26 신설(칼로리 목표 개정 B·C안, Code.gs 2026-10-26과 같은 규칙): 칼로리 목표에 쓰는 기초대사.
-// 하루 인바디 BMR은 수분 때문에 흔들려(중앙값 9kcal, 최대 57kcal) 목표가 ×1.5로 증폭되므로, 2026-10-27부터는
-// "최근 유효 측정 7번 평균 제지방(체중−체지방량)"으로 구한 값(370+21.6×평균 제지방, 인바디 BMR 식)을 쓴다.
-// 제외 확정일·체중만 잰 날(체지방 없음)은 건너뛰고, 10/27 이전 날짜는 예전 방식(전달받은 fallbackBmr)을 그대로 쓴다.
-const BMR_SMOOTH_START_DATE = '2026-10-27';
-function smoothedBmrOn_(dateISO){
-  const num = v => (v===null || v===undefined || v==='' || isNaN(Number(v))) ? null : Number(v);
-  const rows = sortedInbody().filter(r => r && String(r.date) <= String(dateISO) && num(r.weight)!==null && num(r.fat)!==null);
-  if(!rows.length) return null;
-  const lastN = rows.slice(-7);
-  const ffm = lastN.reduce((s,r) => s + (num(r.weight) - num(r.fat)), 0) / lastN.length;
-  return Math.round(370 + 21.6*ffm);
-}
-function targetBmrOn(dateISO, fallbackBmr){
-  if(String(dateISO) < BMR_SMOOTH_START_DATE) return fallbackBmr || null;
-  return smoothedBmrOn_(dateISO) || fallbackBmr || null;
-}
 // 목표 오차(추정): 기초대사 예측식은 개인에게 약 ±10% 오차 → 목표는 ×1.5로 움직이므로 ±(BMR×0.1×1.5) kcal
 function calorieErrorKcal_(bmr){ return KCAL_BAND_HALF; } // 2026-11-07: 밴드 반폭(±150) — 인자 무시
 
@@ -2448,32 +2390,6 @@ function ma7SnapshotAt(ib, date, fields){
   });
   return out;
 }
-/* 2026-07-21 추가: MA7/MA14 추세 판단용 — 단순 두 점 차이 대신 최근 N개 지점에
-   선형회귀를 적용해 하루치 튐에 덜 흔들리는 기울기(1일당 변화량)를 계산 */
-function linRegSlope(points){
-  const n = points.length;
-  if(n<2) return null;
-  const xMean = (n-1)/2;
-  const yMean = points.reduce((a,b)=>a+b,0)/n;
-  let num=0, den=0;
-  for(let i=0;i<n;i++){ num += (i-xMean)*(points[i]-yMean); den += (i-xMean)*(i-xMean); }
-  return den===0 ? 0 : num/den;
-}
-/* MA7이 MA14를 상향/하향 돌파한 가장 최근 시점 탐지 (같은 날짜 기준 병합) */
-function detectCrossover(ma7arr, ma14arr, key7, key14){
-  const map14 = new Map(ma14arr.map(r=>[r.date, r[key14]]));
-  const merged = ma7arr.map(r => ({date:r.date, v7:r[key7], v14:map14.get(r.date)}))
-    .filter(r => r.v7!=null && r.v14!=null);
-  for(let i=merged.length-1;i>=1;i--){
-    const prevDiff = merged[i-1].v7 - merged[i-1].v14;
-    const curDiff = merged[i].v7 - merged[i].v14;
-    if(prevDiff===0) continue;
-    if((prevDiff<0 && curDiff>=0) || (prevDiff>0 && curDiff<=0)){
-      return {date: merged[i].date, direction: curDiff>=0?'up':'down', daysAgo: merged.length-1-i};
-    }
-  }
-  return null;
-}
 function isoWeekKey(dateStr){
   const d = new Date(dateStr+'T00:00:00');
   const day = (d.getDay()+6)%7;
@@ -2492,20 +2408,6 @@ function isAlcoholNextDay_(dateISO){
   const prev = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   const m = (state.meals||[]).find(x => x && String(x.date).slice(0,10)===prev);
   return !!m && m.specialDayType==='alcohol';
-}
-// ⑤ 골격근 추세 차트에 겹칠 근력일(s)·인정 유산소일(c). 보조운동(밴드 턱걸이)은 statWorkouts_가 이미 제외한다.
-function workoutMarks_(data){
-  if(!data || !data.length) return [];
-  const from = data[0].date, ws = statWorkouts_();
-  const days = new Set(ws.filter(w => w && w.date && String(w.date).slice(0,10) >= from).map(w => String(w.date).slice(0,10)));
-  const out = [];
-  days.forEach(d => {
-    const t = classifyDayType(ws, d);
-    const s = !!t && (t.type==='근력' || t.type==='둘다');
-    const c = ws.some(w => w && w.date===d && isQualCardioW_(w));
-    if(s || c) out.push({date:d, s, c});
-  });
-  return out.sort((a,b)=>a.date.localeCompare(b.date));
 }
 // ⑦ 밴드 턱걸이(part=보조운동) 기록 읽기: 구조화된 exercises 세트가 있으면 그것을, 없으면 note의 "10·10·10회" 같은 표기를 읽는다. 못 읽으면 —로 둔다.
 function pullupParse_(w){
@@ -2683,13 +2585,14 @@ function renderPullupCard_(){
     <td class="mono">${d.pull ? d.pull.sets.join('·')+' <span class="dim">('+d.pull.sets.reduce((a,b)=>a+b,0)+')</span>' : '—'}</td>
     <td class="mono">${d.hangs.length ? d.hangs.join('·')+'초' : '—'}</td>
     <td><button onclick="deleteAuxDay_('${d.date}')" style="background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:12px;">삭제</button></td></tr>`).join('');
+  const thisWkPull_ = pullRepsInWeek_(getWeekDates(isoWeekKey(todayISO())));
   const weeks = {};
   days.forEach(d => { const k = auxWeekKey_(d.date); const w = weeks[k] || (weeks[k] = {k, days:0, total:0, max:0, hang:0}); w.days++; if(d.pull){ w.total += d.pull.sets.reduce((a,b)=>a+b,0); w.max = Math.max(w.max, pmax(d)); } w.hang += d.hangs.reduce((a,b)=>a+b,0); });
   const wk = Object.values(weeks).sort((a,b) => b.k.localeCompare(a.k)).slice(0,4);
   const weekRows = wk.map(w => `<tr><td style="text-align:left;">${w.k.slice(5)}~</td><td class="mono">${w.days}일</td><td class="mono">${w.total||'—'}${w.total?'회':''}</td><td class="mono">${w.max||'—'}</td><td class="mono">${w.hang?w.hang+'초':'—'}</td></tr>`).join('');
   return `<section class="card">
     <div class="section-label good">${secNum('W4e')}턱걸이 · 매달리기 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 보조운동 · 주간 실적 카드에 함께 표시</span></div>
-    <div class="dim" style="font-size:11.5px; margin:-2px 0 10px;">하루 점수 반영: 최근 7일 보조운동 <b>${auxDaysIn7_()}일</b> / 5일 → ${auxBonusDay_() ? '<b style="color:var(--c-good)">근력일 +1 적용 중</b>' : `근력일 +1까지 ${AUX_BONUS_DAYS_-auxDaysIn7_()}일 남음`} (보조운동 자체는 근력일로 세지 않고, 5일 이상이면 최대 1일을 더해요)</div>
+    <div class="dim" style="font-size:11.5px; margin:-2px 0 10px;">주간 점수 반영: 이번 주 턱걸이 <b>${thisWkPull_}회</b> / ${PULL_WEEK_MIN_}회 → ${thisWkPull_>=PULL_WEEK_MIN_ ? '<b style="color:var(--c-good)">근력 1회로 인정 중</b>' : `근력 1회 인정까지 ${PULL_WEEK_MIN_-thisWkPull_}회 남음`} (한 주 월~일 합계, 매달리기는 제외, 최대 1회)</div>
     ${auxFormHtml_(days)}
     ${days.length ? mini : ''}
     ${days.length ? '' : '<div class="empty-state" style="padding:18px 10px;">아직 턱걸이·매달리기 기록이 없어요. 위에서 입력해 추가해보세요.</div>'}
@@ -2793,90 +2696,6 @@ function lineChartSVG(data, key, colorVar, opts={}){
   </svg>`;
 }
 
-/* 2026-07-21 추가: 기존 lineChartSVG(단일계열)는 그대로 두고, MA7(실선)+MA14(점선)를
-   같은 좌표축에 겹쳐 그리는 전용 함수를 신설 — 다른 차트 호출부에는 영향 없음 */
-function lineChartSVGMulti(data, key1, data2, key2, colorVar, opts={}){
-  const w=300,h=120,padL=34,padR=6,padT=15,padB=18;
-  const vals1 = data.map(d=>d[key1]).filter(v=>v!=null);
-  const vals2 = data2.map(d=>d[key2]).filter(v=>v!=null);
-  const allVals = vals1.concat(vals2);
-  if(allVals.length===0) return `<svg class="chart" viewBox="0 0 ${w} ${h}"></svg>`;
-  let min = Math.min(...allVals), max = Math.max(...allVals);
-  if(opts.band){ min -= opts.band; max += opts.band; } // 2026-10-29-b: 노이즈 밴드가 차트 안에 들어오도록 범위를 넓힌다
-  const pad = opts.pad ?? ((max-min)*0.15 || 1);
-  min -= pad; max += pad;
-  const x = i => padL + (i/(data.length-1||1)) * (w-padL-padR);
-  const y = v => padT + (1-(v-min)/(max-min||1)) * (h-padT-padB);
-
-  function buildPath(arr, key){
-    const pts = arr.map((d,i) => d[key]!=null ? [x(i), y(d[key])] : null);
-    let pathD = '', areaD = '', started = false;
-    pts.forEach((p) => {
-      if(!p) { started=false; return; }
-      if(!started){ pathD += `M${p[0].toFixed(1)},${p[1].toFixed(1)} `; areaD += `M${p[0].toFixed(1)},${h-padB} L${p[0].toFixed(1)},${p[1].toFixed(1)} `; started=true; }
-      else { pathD += `L${p[0].toFixed(1)},${p[1].toFixed(1)} `; areaD += `L${p[0].toFixed(1)},${p[1].toFixed(1)} `; }
-    });
-    const lastPt = [...pts].reverse().find(p=>p);
-    if(lastPt) areaD += `L${lastPt[0].toFixed(1)},${h-padB} Z`;
-    return {pathD, areaD};
-  }
-  const s1 = buildPath(data, key1);
-  const s2 = buildPath(data2, key2);
-  // 2026-10-29-b ⑥: MA7 ±band 음영(하루 측정 흔들림 범위). 이 띠 안의 하루 변화는 노이즈로 읽는다.
-  let bandSvg = '';
-  if(opts.band){
-    const up = [], dn = [];
-    data.forEach((d,i) => { if(d[key1]!=null){ up.push([x(i), y(d[key1]+opts.band)]); dn.push([x(i), y(d[key1]-opts.band)]); } });
-    if(up.length > 1){
-      const f = p => p[0].toFixed(1)+','+p[1].toFixed(1);
-      bandSvg = `<path d="M${up.map(f).join(' L')} L${dn.slice().reverse().map(f).join(' L')} Z" style="fill:var(${colorVar})" opacity="0.10" stroke="none"/>`;
-    }
-  }
-  // 2026-10-29-b ⑤: 근력일(긴 막대)·인정 유산소일(짧은 막대)을 그래프 바닥에 표시
-  let markSvg = '';
-  if(opts.marks && opts.marks.length && data.length){
-    const y0 = h-padB;
-    markSvg = opts.marks.filter(m => m.date >= data[0].date).map(m => {
-      const idx = data.findIndex(d => d.date >= m.date);
-      if(idx < 0) return '';
-      const mx = x(idx);
-      const sPart = m.s ? `<line x1="${mx.toFixed(1)}" x2="${mx.toFixed(1)}" y1="${y0-10}" y2="${y0}" style="stroke:var(--c-accent-strong)" stroke-width="2.2" opacity="0.9"/>` : '';
-      const cx = m.s ? mx+3 : mx;
-      const cPart = m.c ? `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${y0-5}" y2="${y0}" style="stroke:var(--text-dim)" stroke-width="1.6" opacity="0.85"/>` : '';
-      return sPart + cPart;
-    }).join('');
-  }
-
-  const gridY = [0,0.5,1].map(t => ({ y: padT + t*(h-padT-padB), val: max - t*(max-min) }));
-  const yDecimals = (max-min) < 8 ? 1 : 0;
-  const yTicks = gridY.map(g => `<text class="chart-axis" x="${padL-6}" y="${(g.y+3).toFixed(1)}" text-anchor="end">${fmt(g.val, yDecimals)}</text>`).join('');
-  const gid = 'g'+key1+Math.random().toString(36).slice(2,7);
-
-  let goalLine = '';
-  if(opts.goal!=null && opts.goal>=min && opts.goal<=max){
-    goalLine = `<line x1="${padL}" x2="${w-padR}" y1="${y(opts.goal)}" y2="${y(opts.goal)}" style="stroke:var(--c-goalline)" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>`;
-  }
-
-  const nTicks = Math.min(5, data.length);
-  const tickIdx = Array.from({length:nTicks}, (_,i)=>Math.round(i*(data.length-1)/(nTicks-1||1)));
-  const xTicks = [...new Set(tickIdx)].map(i => `<text class="chart-axis" x="${x(i)}" y="${h-4}" text-anchor="middle">${dLabel(data[i].date)}</text>`).join('');
-
-  return `<svg class="chart" viewBox="0 0 ${w} ${h}">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" style="stop-color:var(${colorVar})" stop-opacity="0.28"/>
-      <stop offset="100%" style="stop-color:var(${colorVar})" stop-opacity="0"/>
-    </linearGradient></defs>
-    ${gridY.map(g=>`<line x1="${padL}" x2="${w-padR}" y1="${g.y}" y2="${g.y}" style="stroke:var(--c-grid)" stroke-width="1"/>`).join('')}
-    ${yTicks}
-    ${goalLine}
-    ${bandSvg}
-    <path d="${s1.areaD}" fill="url(#${gid})" stroke="none"/>
-    <path d="${s2.pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 3" opacity="0.55"/>
-    <path d="${s1.pathD}" fill="none" style="stroke:var(${colorVar})" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
-    ${markSvg}
-    ${xTicks}
-  </svg>`;
-}
 
 /* =========================================================
    2026-10-21 새 목표 트래커 (정희님 컨펌 "이대로 진행")
@@ -3027,39 +2846,6 @@ function renderGoalTrackerCard_(){
   </section>`;
 }
 
-function gaugeSVG(current, start, goals){
-  const rangeMax = Math.max(start, 27), rangeMin = Math.min(...goals.map(g=>g.pct))-2.5;
-  const cx=150, cy=140, r=98, sw=16;
-  const angleFor = v => { const t = Math.min(1, Math.max(0, (rangeMax - v) / (rangeMax - rangeMin))); return Math.PI - t*Math.PI; };
-  const pt = (ang, rad) => [cx + rad*Math.cos(ang), cy - rad*Math.sin(ang)];
-  const arcPath = (a1, a2) => {
-    const [x1,y1] = pt(a1,r), [x2,y2] = pt(a2,r);
-    const large = Math.abs(a2-a1) > Math.PI ? 1 : 0;
-    return `M${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${large} ${a2>a1?0:1} ${x2.toFixed(1)},${y2.toFixed(1)}`;
-  };
-  const bgPath = arcPath(Math.PI, 0);
-  const curAngle = angleFor(current);
-  const progressPath = arcPath(Math.PI, curAngle);
-  const gid = 'gaugegrad'+Math.random().toString(36).slice(2,7);
-
-  const marks = goals.map(g => {
-    const a = angleFor(g.pct);
-    const [x1,y1] = pt(a, r);
-    const [lx,ly] = pt(a, r+sw/2+12);
-    const anchor = a < Math.PI/2-0.12 ? 'end' : (a > Math.PI/2+0.12 ? 'start' : 'middle');
-    return `<line x1="${x1.toFixed(1)}" y1="${(y1-sw/2-3).toFixed(1)}" x2="${x1.toFixed(1)}" y2="${(y1+sw/2+3).toFixed(1)}" style="stroke:var(--c-goalmark)" stroke-width="2.4" transform="rotate(${-a*180/Math.PI+90} ${x1} ${y1})" />
-      <text x="${lx.toFixed(1)}" y="${(ly+4).toFixed(1)}" text-anchor="${anchor}" class="gauge-mark-label" font-size="11">${g.pct}%</text>`;
-  }).join('');
-
-  return `<svg viewBox="0 0 300 165" style="width:100%; max-width:260px; overflow:visible;">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" style="stop-color:var(--c-gauge-from)"/><stop offset="100%" style="stop-color:var(--c-gauge-to)"/>
-    </linearGradient></defs>
-    <path d="${bgPath}" fill="none" style="stroke:var(--c-track)" stroke-width="${sw}" stroke-linecap="round"/>
-    <path d="${progressPath}" fill="none" stroke="url(#${gid})" stroke-width="${sw}" stroke-linecap="round"/>
-    ${marks}
-  </svg>`;
-}
 
 /* =========================================================
    (2026-09-13 제거) 사진 자동 인식(Claude Vision 직접 호출) — 이 기능을 켤 수 있는 설정 화면 UI가
@@ -3287,32 +3073,6 @@ function waistTrendNote(){
   const first = w[0], last = w[w.length-1];
   const delta = last.waist - first.waist;
   return ` 참고로 허리둘레는 ${first.date.slice(5)} ${fmt(first.waist,1)}cm → ${last.date.slice(5)} ${fmt(last.waist,1)}cm(${delta>0?'+':''}${fmt(delta,1)}cm)예요 — 체지방 변화와 같은 방향인지 함께 참고하세요.`;
-}
-// 2026-09-19 추가(20선 6번): 프로젝트 메모리(overview.md)에 명시된 "두 번째 프레임워크(InBody
-// 추세·운동수행·단백질·허리둘레)" 4축 중 허리둘레가 waistTrendNote()의 단순 캡션 문장 하나로만
-// 쓰이고 있었음 — 체지방량(kg) 변화 방향과 허리둘레 변화 방향이 서로 같은지 교차검증하는 별도
-// 인사이트를 추가해, 이 축을 "장식"이 아니라 실제 판단 근거로 채운다.
-// 2026-09-19 추가(20선 8번): computeCalorieTarget(bmr, eatKcal)는 BMR×1.5-550 고정 활동계수만
-// 쓰고 그날의 실제 걸음수/NEAT를 입력으로 받지 않음 — 공식 자체를 바꾸는 대신, 최근 평균 대비
-// 걸음수가 크게 벗어난 날에 한해 칼로리 목표 옆에 참고 문구만 가볍게 덧붙인다.
-function stepsCalorieCaveatNote_(){
-  if(!state.steps || state.steps.length<4) return '';
-  const sorted = [...state.steps].sort((a,b)=>a.date.localeCompare(b.date));
-  const todayRec = sorted.find(s=>s.date===todayISO()) || sorted[sorted.length-1];
-  if(!todayRec || todayRec.steps==null) return '';
-  const baseline = sorted.filter(s=>s.date!==todayRec.date).slice(-14).filter(s=>s.steps!=null);
-  if(baseline.length<3) return '';
-  const avgSteps = baseline.reduce((s,b)=>s+b.steps,0)/baseline.length;
-  if(!avgSteps) return '';
-  const diffPct = ((todayRec.steps-avgSteps)/avgSteps)*100;
-  const dayLabel = todayRec.date===todayISO() ? '오늘' : `${todayRec.date} 최근 기록 기준`;
-  if(diffPct >= 40){
-    return ` 참고로 ${dayLabel} 걸음수(${fmt(todayRec.steps,0)}보)가 최근 평균(${fmt(avgSteps,0)}보)보다 ${fmt(diffPct,0)}% 많아요 — 활동량이 늘어난 날이라 실제 필요 칼로리는 위 목표보다 더 높을 수 있어요.`;
-  }
-  if(diffPct <= -40){
-    return ` 참고로 ${dayLabel} 걸음수(${fmt(todayRec.steps,0)}보)가 최근 평균(${fmt(avgSteps,0)}보)보다 ${fmt(Math.abs(diffPct),0)}% 적어요 — 활동량이 줄어든 날이라 실제 필요 칼로리는 위 목표보다 더 낮을 수 있어요.`;
-  }
-  return '';
 }
 function computeWaistFatCrossCheck(){
   if(!state.waist || state.waist.length<2) return null;
@@ -4380,7 +4140,8 @@ function flexWeekStats_(workouts, dates){
     if(a.type==='근력' || a.type==='둘다') strength++;
     if(a.type==='유산소' || a.type==='둘다'){ if(qualifiedCardioOnDate_(workouts, d)) cardioQ++; else cardioU++; }
   });
-  return {strength, cardioQ, cardioU};
+  const pullBonus = pullWeekBonus_(dates); // 2026-11-09-d: 턱걸이 주 100회 이상 → 근력 +1
+  return {strength: strength + pullBonus, cardioQ, cardioU, pullBonus};
 }
 function nextFlexSession_(workouts){
   const isStrength = w => inferPartsForEntry(w).some(p => BODY_PARTS.includes(p));
@@ -4595,27 +4356,6 @@ function renderWeeklyPlanSection(workouts){
   `;
 }
 let planDetailDate = null;
-function donutChartSVG(segments, size){
-  size = size || 150;
-  const total = segments.reduce((s,x)=>s+x.value,0);
-  const r = size/2 - 16, cx=size/2, cy=size/2, circumference = 2*Math.PI*r;
-  let offset = 0;
-  const arcs = segments.map(seg => {
-    const frac = total>0 ? seg.value/total : 0;
-    const dash = frac*circumference;
-    const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:${seg.color}" stroke-width="20" stroke-dasharray="${dash.toFixed(1)} ${(circumference-dash).toFixed(1)}" stroke-dashoffset="${(-offset).toFixed(1)}" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="butt"/>`;
-    offset += dash;
-    return el;
-  }).join('');
-  return `<svg viewBox="0 0 ${size} ${size}" style="width:100%; max-width:170px; display:block; margin:0 auto;">
-    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--c-track)" stroke-width="20"/>
-    ${arcs}
-  </svg>`;
-}
-function donutLegend(segments){
-  const total = segments.reduce((s,x)=>s+x.value,0);
-  return `<div class="donut-legend">${segments.map(s=>`<div class="donut-legend-item"><span class="legend-dot" style="background:${s.color}"></span>${s.label} <b>${total>0?fmt(s.value/total*100,0):0}%</b></div>`).join('')}</div>`;
-}
 
 function selectPlanDay(date){
   planDetailDate = (planDetailDate===date) ? null : date;
@@ -5166,21 +4906,6 @@ function renderDashboard(){
     </section>
   `;
 }
-// 2026-10-18 추가(B3): 하루 점수의 "운동·활동" 항목에서 오늘 근력/인정 유산소를 하면 얼마나 오르는지 추정한다.
-// 서버 점수 공식(Code.gs, 2026-10-16 동기화)과 같은 구조: 오늘 기록 12.5(근력 7.5 + 인정 유산소 5) + 최근 7일 균형 12.5(근력일 min(n,3)/3×7.5 + 인정 유산소일 min(n,3)/3×5).
-// 앱은 점수를 직접 매기지 않으므로 "예상"으로만 표시한다. 인정 유산소 = part가 정확히 '유산소' AND 평균심박 105 이상 AND 20분 이상.
-function computeActivityHint_(){
-  const ws = statWorkouts_();
-  const days = daysAgoList(7);            // [오늘, 어제, ...]
-  const todayD = days[0];
-  const isStrengthDay = d => { const t = classifyDayType(ws, d); return !!t && (t.type==='근력' || t.type==='둘다'); };
-  const isCardioDay = d => ws.some(w => w && w.date===d && isQualCardioW_(w));
-  const nS = days.filter(isStrengthDay).length + auxBonusDay_(), nC = days.filter(isCardioDay).length; // 2026-10-31-b: 보조운동 7일 중 5일 이상이면 근력일 +1(서버와 같은 규칙)
-  const sToday = isStrengthDay(todayD), cToday = isCardioDay(todayD);
-  const gainS = sToday ? 0 : 7.5 + ((Math.min(nS+1,3)-Math.min(nS,3))/3)*7.5;
-  const gainC = cToday ? 0 : 5 + ((Math.min(nC+1,3)-Math.min(nC,3))/3)*5;
-  return {nS, nC, sToday, cToday, gainS, gainC};
-}
 // 2026-11-07 개편: 대시보드 "이번 주 목표" 카드. 칼로리는 하루가 아니라 이번 주(월~일) 평균 목표(2,050, 1,900~2,200)로 보고,
 // 오늘 포함 남은 날 하루 평균을 알려준다. 기초대사·운동 보정·탄수 등급은 쓰지 않는다. 단백질은 오늘 목표(130~160g, 점수 체크는 120g↑).
 function renderTodayRemainingCard_(){
@@ -5221,99 +4946,6 @@ function renderTodayRemainingCard_(){
     ${row('오늘 단백질','g',cur.p,prot.min,prot.max,true)}
     <div class="dim" style="font-size:11px; margin-top:4px;">하루 값은 참고용이고 주 평균으로 판단해요. 탄수 목표는 없어요.</div>
   </section>`;
-}
-// 2026-10-16 추가(미기록 구분): 최근 7일(오늘 포함) 식단·운동 기록 유무를 한 줄로 보여준다. 기록이 없는 날은 "0kcal·운동 안 함"이 아니라
-// "미기록(–)"이므로, 평균·점수를 볼 때 구분해서 읽도록 표시만 한다(점수·평균 계산 자체는 바꾸지 않음). 질병·여행 공백이 눈에 바로 보이게 하는 용도.
-function renderRecordGapCard_(){
-  const days = daysAgoList(7).reverse(); // 오래된 날 → 오늘
-  const mealOn = new Set((state.meals||[]).filter(m => m && Number(m.calories) > 0).map(m => String(m.date).slice(0,10)));
-  const woOn = new Set(statWorkouts_().filter(w => w && w.date).map(w => String(w.date).slice(0,10)));
-  const stepsOn = new Set((state.steps||[]).filter(s => s && s.date && Number(s.steps) > 0).map(s => String(s.date).slice(0,10)));
-  const mealN = days.filter(d => mealOn.has(d)).length, woN = days.filter(d => woOn.has(d)).length, stN = days.filter(d => stepsOn.has(d)).length;
-  const cell = (on, label) => `<div class="mono" style="font-size:11px; text-align:center; color:${on ? 'var(--c-good)' : 'var(--text-dim)'}; opacity:${on ? 1 : 0.7};">${label}${on ? '✓' : '–'}</div>`;
-  const cols = days.map(d => `<div style="display:flex; flex-direction:column; gap:2px; align-items:stretch;"><div class="dim mono" style="font-size:10.5px; text-align:center;">${d.slice(5).replace('-','/')}</div>${cell(mealOn.has(d),'식')}${cell(woOn.has(d),'운')}${cell(stepsOn.has(d),'걸')}</div>`).join('');
-  return `<section class="card">
-    <div class="section-label">${secNum('00e')}최근 7일 기록 현황 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 식단 ${mealN}/7일 · 운동 ${woN}/7일 · 걸음수 ${stN}/7일</span></div>
-    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px;">${cols}</div>
-    <div class="dim" style="font-size:11.5px; margin-top:8px;">– 는 "0kcal·운동 안 함"이 아니라 <b>기록 없음</b>이에요. 기록 없는 날이 섞인 평균·점수는 실제보다 낮거나 높아 보일 수 있어요.</div>
-  </section>`;
-}
-// 2026-10-04 추가, 2026-10-05 개편: 대시보드 "하루 점수(100점)" 카드. 점수는 Code.gs가 계산해 DailyScore 시트에 저장한 값
-// (state.dailyScores)을 표시만 한다. 체성분 판정이 아니라 그날 행동 평가이므로 색으로 좋고 나쁨을 나누지 않고 한 가지 색만 쓴다.
-// 2026-10-05 개편: ①맨 위 큰 점수는 "오늘" 행만 보여주고, 오늘 행이 없으면 "평가 전"으로 표시(어제 점수는 한 줄로만 따로)
-// ②평가 전에는 막대를 비우고 값은 "–"로 표시(0점과 구분) ③항목 1줄 막대 + 근거는 접기 ④최근 7일은 오늘까지 고정 7칸.
-function renderDailyScoreCard(){
-  const rows = Array.isArray(state.dailyScores) ? state.dailyScores.filter(r => r && r.date && r.score !== null && r.score !== undefined && r.score !== '' && !isNaN(Number(r.score))) : [];
-  if(!rows.length) return '';
-  const e = s => (s===null||s===undefined) ? '' : String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const fmt = n => String(Math.round(Number(n)*10)/10);
-  const md = d => String(d).slice(5, 10).replace('-', '/');
-  const isEst = r => !!r && (r.estimated === true || String(r.estimated).toUpperCase() === 'TRUE');
-  const pill = (t, extra) => `<span class="dim" style="font-size:11px; border:1px solid var(--border); border-radius:var(--radius-pill); padding:0 7px; line-height:18px; ${extra||''}">${e(t)}</span>`;
-  const byDate = {};
-  rows.forEach(r => { byDate[String(r.date).slice(0,10)] = r; });
-  const today = toLocalISO(new Date());
-  const todayRow = byDate[today] || null;               // 오늘 행이 있어야만 "점수"로 보여준다
-  const prevRow = [...rows].filter(r => String(r.date).slice(0,10) < today)
-    .sort((a,b) => String(a.date).localeCompare(String(b.date))).pop() || null;
-  const evaluated = !!todayRow;
-  const detail = (evaluated && todayRow.detail && typeof todayRow.detail === 'object') ? todayRow.detail : {};
-  const parts = [['calories','칼로리',30], ['protein','단백질',20], ['carbs','탄수',15], ['activity','운동·활동',25], ['record','기록·보조',10]];
-  // 2026-10-05-b: 5개 항목을 한 줄 세로막대 5칸으로 압축(막대 높이 = 그 항목의 득점률). 평가 전에는 막대를 비우고 값은 "–".
-  const items = `<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; align-items:end;">` + parts.map(([k,label,max]) => {
-    const raw = evaluated ? todayRow[k] : null;
-    const has = evaluated && raw !== null && raw !== undefined && raw !== '' && !isNaN(Number(raw));
-    const v = has ? Number(raw) : 0;
-    const pct = has ? Math.max(0, Math.min(100, v / max * 100)) : 0;
-    return `<div title="${e(label)} ${has ? fmt(v) : '–'}/${max}" style="display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0;">
-      <span style="font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:11px; white-space:nowrap;${has ? '' : ' opacity:.5;'}">${has ? fmt(v) : '–'}<span class="dim">/${max}</span></span>
-      <div style="width:100%; max-width:34px; height:40px; border-radius:8px; background:var(--c-track); overflow:hidden; display:flex; align-items:flex-end;"><div style="width:100%; height:${pct}%; background:var(--c-accent); border-radius:8px 8px 0 0;"></div></div>
-      <span style="font-size:11px; white-space:nowrap;">${e(label)}</span>
-    </div>`;
-  }).join('') + `</div>`;
-  const detailRows = evaluated ? parts.filter(([k]) => detail[k]).map(([k,label]) => `<div class="dim" style="font-size:11.5px; line-height:1.55;">· ${e(label)}: ${e(detail[k])}</div>`).join('') : '';
-  // 최근 7일: 오늘까지 고정 7칸(점수 없는 날은 "–"). 오늘 칸은 평가 전이면 빈 칸으로 표시.
-  const base = new Date(); base.setHours(12, 0, 0, 0);
-  const days = [];
-  for(let i = 6; i >= 0; i--){ const d = new Date(base); d.setDate(d.getDate() - i); days.push(toLocalISO(d)); }
-  const scored = days.map(d => byDate[d]).filter(Boolean);
-  const avg = scored.length ? scored.reduce((sum, r) => sum + Number(r.score), 0) / scored.length : null;
-  const bars = days.map(d => {
-    const r = byDate[d];
-    const isToday = d === today;
-    const h = r ? Math.max(3, Math.round(Number(r.score) / 100 * 34)) : 3;
-    const bg = r ? (isToday ? 'var(--grad-1)' : 'var(--c-accent)') : 'var(--c-track)';
-    return `<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3px; min-width:0;">
-      <div style="font-size:11px; font-family:var(--font-mono); ${r ? '' : 'opacity:.45;'}">${r ? fmt(r.score) : '–'}</div>
-      <div style="width:70%; max-width:26px; height:${h}px; border-radius:6px 6px 2px 2px; background:${bg}; opacity:${r && !isToday ? 0.5 : 1};"></div>
-      <div class="dim" style="font-size:10.5px;${isToday ? ' font-weight:700;' : ''}">${isToday ? '오늘' : e(md(d))}</div>
-    </div>`;
-  }).join('');
-  const head = evaluated
-    ? `<div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 6px; margin:2px 0 0;">
-        <span style="font-family:var(--font-display); font-size:30px; font-weight:var(--display-weight); line-height:1;">${fmt(todayRow.score)}</span>
-        <span class="dim" style="font-size:13px;">/ 100</span>
-        <span class="dim" style="font-size:12px; margin-left:6px;">오늘 ${e(md(today))}</span>
-        ${todayRow.status ? pill(todayRow.status) : ''}${isEst(todayRow) ? pill('추정 포함') : ''}
-      </div>`
-    : `<div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 6px; margin:2px 0 0;">
-        <span style="font-family:var(--font-display); font-size:24px; font-weight:var(--display-weight); line-height:1.1; opacity:.6;">평가 전</span>
-        <span class="dim" style="font-size:12px; margin-left:4px;">오늘 ${e(md(today))}</span>
-      </div>
-      <div class="dim" style="font-size:11.5px; margin-top:3px;">식단이 기록되면 계산돼요${prevRow ? ` · 어제 ${fmt(prevRow.score)}점${isEst(prevRow) ? '(추정 포함)' : ''}` : ''}</div>`;
-  return `
-    <section class="card">
-      <div class="section-label good">${secNum('00a')}하루 점수 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 그날 행동 평가(체성분 판정 아님)</span></div>
-      ${head}
-      <div style="margin-top:10px;${evaluated ? '' : ' opacity:.55;'}">${items}</div>
-      ${detailRows ? `<details style="margin-top:2px;"><summary class="dim" style="font-size:11.5px; cursor:pointer;">항목별 근거 보기</summary><div style="margin-top:4px;">${detailRows}</div></details>` : ''}
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin:10px 0 2px;">
-        <span class="dim" style="font-size:11.5px;">최근 7일 추이</span>
-        <span class="dim" style="font-size:11.5px;">${avg !== null ? `평균 ${fmt(avg)} (${scored.length}일)` : '점수 쌓이는 중'}</span>
-      </div>
-      <div style="display:flex; align-items:flex-end; gap:4px;">${bars}</div>
-      ${evaluated && isEst(todayRow) ? `<div class="note-box" style="margin-top:10px;">식단에 추정치(외식·뷔페 등)가 포함돼 있어 칼로리·탄수 점수가 ±20~30% 오차 범위에 따라 달라질 수 있어요.</div>` : ''}
-    </section>`;
 }
 // 2026-11-07 추가: 대시보드 "주간 점수(100점)" 카드 — 하루 점수를 대신한다. 점수는 Code.gs가 WeeklyScore 시트에 저장한 값(state.weeklyScores)을 표시만 한다.
 // 일·주 단위 경고 금지 방침에 따라 색으로 좋고 나쁨을 나누지 않고 한 가지 색만 쓴다. 이번 주(월~일) 점수 + 최근 6주 추이.
@@ -5456,46 +5088,6 @@ function creatineStage_(map, todayIso){
   else { label='복용 중 · 아직 포화 전'; tone='neutral'; }
   return {label, tone, count28, lastDate, daysSinceLast};
 }
-// A안 차트: 최근 60일, 위 두 패널(체중 MA7 / 골격근 MA7) + 아래 복용일 막대 띠
-function creatineOverlayChartSVG_(ib, map, todayIso){
-  // 2026-10-30-d: 체중·골격근 7일 평균을 한 패널에 겹쳐 그림(각자 범위로 정규화). 글자는 SVG 밖 HTML 범례로 옮겨
-  // 태블릿에서 그래프와 글자가 커지지 않게 하고, 폭은 다른 차트와 같게 제한한다.
-  const DAYS = 60;
-  const startIso = isoAddDays_(todayIso, -(DAYS-1));
-  const dayIdx = iso => Math.round((new Date(iso+'T00:00:00') - new Date(startIso+'T00:00:00'))/86400000);
-  const W = 300, padL = 4, padR = 4, panelH = 56, stripH = 8, gap = 6;
-  const x = i => padL + (W-padL-padR) * (i/(DAYS-1));
-  const maW = movingAverage(ib, 'weight', 7).filter(r => r.date>=startIso && r.date<=todayIso && r.weight!=null);
-  const ibBC = ib.filter(r => r.muscle!=null);
-  const maM = movingAverage(ibBC, 'muscle', 7).filter(r => r.date>=startIso && r.date<=todayIso);
-  const seg = (rows, key, colorVar) => {
-    const vals = rows.map(r=>r[key]).filter(v=>v!=null && !isNaN(v));
-    if(vals.length < 2) return {svg:'', lo:null, hi:null};
-    let lo = Math.min(...vals), hi = Math.max(...vals);
-    if(hi-lo < 0.4){ const mid=(hi+lo)/2; lo=mid-0.2; hi=mid+0.2; }
-    const y = v => 3 + (panelH-6) * (1-(v-lo)/(hi-lo));
-    const pts = rows.filter(r=>r[key]!=null).map(r => `${x(dayIdx(r.date)).toFixed(1)},${y(r[key]).toFixed(1)}`).join(' ');
-    return {svg:`<polyline points="${pts}" fill="none" style="stroke:var(${colorVar})" stroke-width="1.8" stroke-linejoin="round"/>`, lo, hi};
-  };
-  const sw = seg(maW, 'weightMA', '--c-weight'), sm = seg(maM, 'muscleMA', '--c-muscle');
-  const stripTop = panelH + gap;
-  const bw = Math.max(2, (W-padL-padR)/DAYS - 1);
-  let shade = '', bars = '';
-  for(let i=0;i<DAYS;i++){
-    const iso = isoAddDays_(startIso, i);
-    if(map[iso]){
-      shade += `<rect x="${(x(i)-bw/2).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${panelH}" fill="var(--c-waist)" opacity="0.13"/>`;
-      bars += `<rect x="${(x(i)-bw/2).toFixed(1)}" y="${stripTop}" width="${bw.toFixed(1)}" height="${stripH}" rx="1.5" fill="var(--c-waist)"><title>${iso} 크레아틴 ${map[iso]}g</title></rect>`;
-    }
-  }
-  const H = stripTop + stripH + 2;
-  const rng = o => o.lo==null ? '데이터 부족' : `${fmt(o.lo,1)}~${fmt(o.hi,1)}kg`;
-  return `<svg class="creatine-svg" viewBox="0 0 ${W} ${H}" style="width:100%; max-width:380px; height:auto; display:block; margin:0 auto;" role="img" aria-label="크레아틴 복용일과 체중·골격근 7일 평균">
-    <line x1="${padL}" x2="${W-padR}" y1="${panelH}" y2="${panelH}" stroke="var(--c-grid)"/>
-    ${shade}${sw.svg}${sm.svg}${bars}
-  </svg>
-  <div class="cre-legend"><span style="color:var(--c-weight)">━ 체중 7일 평균 ${rng(sw)}</span><span style="color:var(--c-muscle)">━ 골격근 7일 평균 ${rng(sm)}</span><span style="color:var(--c-waist)">▮ 복용일 · ${dLabel(startIso)} ~ ${dLabel(todayIso)}</span></div>`;
-}
 // C안: 인바디(체성분 실측) 날짜별로 "그날까지 최근 28일 복용일수"를 구해 두 그룹으로 나눠 평균 비교
 function computeCreatinePeriodCompare_(ib, map){
   const rows = ib.filter(r => r.muscle!=null && r.weight!=null && r.fatPct!=null && r.date>=CREATINE_TRACKING_START);
@@ -5555,39 +5147,6 @@ function renderCreatineSection(ib){
       ? '관찰 비교라 마운자로 용량·식단·운동 변화가 함께 섞여 있어요 — 차이를 크레아틴 효과로 단정하지 마세요. 크레아틴은 근육 속 수분을 늘려 인바디 골격근이 실제보다 높게 잡힐 수 있어요.'
       : `판단보류 — 두 구간 모두 인바디 ${CREATINE_MIN_GROUP_N}건 이상 필요해요(현재 충분 복용 ${cmp.full.n}건 / 미복용 ${cmp.none.n}건). 3g을 매일 ${CREATINE_FULL_THRESHOLD}일 이상 기록하면 자동으로 비교가 시작돼요.`}</div>
     </details>
-  </div>`;
-}
-function maTrendChartCard(title, ma7data, ma14data, key7, key14, unit, colorVar, goal, goodDirection, slopeDecimals, extra){
-  extra = extra || {};
-  const vals7 = ma7data.map(d=>d[key7]).filter(v=>v!=null);
-  const nowVal = vals7[vals7.length-1];
-  const recent7 = ma7data.slice(-7).map(d=>d[key7]).filter(v=>v!=null);
-  const slope = linRegSlope(recent7);
-  const cross = SHOW_DAILY_ALERTS ? detectCrossover(ma7data, ma14data, key7, key14) : null;
-
-  let slopeBadge = '';
-  if(slope!=null){
-    const improving = goodDirection==='down' ? slope < -0.001 : slope > 0.001;
-    const worsening = goodDirection==='down' ? slope > 0.001 : slope < -0.001;
-    const tone = improving ? 'good' : worsening ? 'warn' : 'neutral';
-    const toneColor = tone==='good' ? 'var(--c-good)' : tone==='warn' ? 'var(--c-warn)' : 'var(--text-faint)';
-    const arrow = slope>0.001 ? '↑' : slope<-0.001 ? '↓' : '→';
-    slopeBadge = `<div style="font-size:11px; color:${toneColor}; margin:2px 0 6px;">최근 7일 기울기(회귀) ${arrow} ${slope>=0?'+':''}${fmt(slope,slopeDecimals)}${unit}/day</div>`;
-  }
-  let crossBadge = '';
-  if(cross && cross.daysAgo<=5){
-    const upGood = goodDirection==='down' ? cross.direction==='down' : cross.direction==='up';
-    const toneColor = upGood ? 'var(--c-good)' : 'var(--c-warn)';
-    crossBadge = `<div style="font-size:11px; color:${toneColor}; margin-bottom:6px;">⚡ MA7이 MA14를 ${cross.direction==='up'?'상향':'하향'} 돌파 (${dLabel(cross.date)}, ${cross.daysAgo===0?'오늘':cross.daysAgo+'일 전'})</div>`;
-  }
-
-  return `<div class="card chart-card">
-    <div class="ch-head"><span class="ch-title">${title}</span><span class="ch-now mono" style="color:var(${colorVar})">${fmt(nowVal)}${unit}</span></div>
-    ${slopeBadge}${crossBadge}
-    ${lineChartSVGMulti(ma7data, key7, ma14data, key14, colorVar, {goal, band:extra.band, marks:extra.marks})}
-    <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">
-      <span style="color:var(${colorVar})">━ MA7</span>&nbsp;&nbsp;<span style="color:var(${colorVar}); opacity:0.55;">┅ MA14</span>${extra.band ? `&nbsp;&nbsp;<span>░ 하루 흔들림 ±${extra.band}${unit}</span>` : ''}${extra.marks && extra.marks.length ? `&nbsp;&nbsp;<span style="color:var(--c-accent-strong)">▎근력일</span>&nbsp;<span>▏유산소일</span>` : ''}
-    </div>
   </div>`;
 }
 function chartCard(title, data, key, unit, colorVar, goal, vlines){
@@ -5920,42 +5479,6 @@ function renderGoal(){
 /* 2026-08-23 추가: 목표 탭 "완전한 C안" — 바깥 링(MA7 진행률)·안쪽 링(MA14 진행률)을 함께 그려서
    "링은 다 찼는데 아직 미달성"처럼 서로 다른 기준이 섞여 모순으로 보이는 걸 구조적으로 방지.
    두 링이 같은 tier(pending/done/stable) 값을 공유하므로 배지 문구와 항상 일치한다. */
-function dualRingSVG(ma7Pct, ma14Pct, tier){
-  const rOuter=42, rInner=28, sw=9, swIn=7;
-  const cOuter=2*Math.PI*rOuter, cInner=2*Math.PI*rInner;
-  const p7 = Math.min(100, Math.max(0, ma7Pct)), p14 = Math.min(100, Math.max(0, ma14Pct));
-  const offOuter = cOuter*(1-p7/100), offInner = cInner*(1-p14/100);
-  const gid = 'ring'+Math.random().toString(36).slice(2,7);
-  const outerTo = tier==='pending' ? 'var(--c-ring-warn)' : 'var(--c-ring-good)';
-  return `<svg width="112" height="112" viewBox="0 0 112 112">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" style="stop-color:var(--c-ring-from)"/>
-      <stop offset="100%" style="stop-color:${outerTo}"/>
-    </linearGradient></defs>
-    <circle cx="56" cy="56" r="${rOuter}" fill="none" style="stroke:var(--c-track)" stroke-width="${sw}"/>
-    <circle cx="56" cy="56" r="${rOuter}" fill="none" stroke="url(#${gid})" stroke-width="${sw}" stroke-linecap="round"
-      stroke-dasharray="${cOuter}" stroke-dashoffset="${offOuter}" transform="rotate(-90 56 56)"/>
-    <circle cx="56" cy="56" r="${rInner}" fill="none" style="stroke:var(--c-track)" stroke-width="${swIn}"/>
-    <circle cx="56" cy="56" r="${rInner}" fill="none" style="stroke:var(--c-neutral)" stroke-width="${swIn}" stroke-linecap="round"
-      stroke-dasharray="${cInner}" stroke-dashoffset="${offInner}" transform="rotate(-90 56 56)" opacity="0.85"/>
-    <text x="56" y="52" text-anchor="middle" class="ring-num" font-size="16">${fmt(p7,1)}%</text>
-    <text x="56" y="67" text-anchor="middle" class="ring-num-sub" font-size="9">MA14 ${fmt(p14,1)}%</text>
-  </svg>`;
-}
-function ringSVG(pct, done){
-  const r=42, c=2*Math.PI*r, off = c*(1-pct/100);
-  const gid = 'ring'+Math.random().toString(36).slice(2,7);
-  return `<svg width="110" height="110" viewBox="0 0 110 110">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" style="stop-color:var(--c-ring-from)"/>
-      <stop offset="100%" style="stop-color:${done?'var(--c-ring-good)':'var(--c-ring-warn)'}"/>
-    </linearGradient></defs>
-    <circle cx="55" cy="55" r="${r}" fill="none" style="stroke:var(--c-track)" stroke-width="10"/>
-    <circle cx="55" cy="55" r="${r}" fill="none" stroke="url(#${gid})" stroke-width="10" stroke-linecap="round"
-      stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 55 55)"/>
-    <text x="55" y="60" text-anchor="middle" class="ring-num" font-size="18">${Math.round(pct)}%</text>
-  </svg>`;
-}
 
 /* ---------- 설정 ---------- */
 function renderSettings(){
@@ -6975,10 +6498,6 @@ async function installTriggerNow(name){
     triggerStatusUi = {...triggerStatusUi, checking:false, error:(e && e.message ? e.message : String(e))};
     render();
   }
-}
-function setSyncStatus(msg){
-  const el = document.getElementById('sync-status');
-  if(el) el.textContent = msg;
 }
 function saveCloudUrl(){
   const v = document.getElementById('cloud-url-input').value.trim();
