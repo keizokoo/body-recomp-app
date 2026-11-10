@@ -612,7 +612,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-09-k (운동 스마트 인사이트 개편 — 기준 주간 월~일(주간 점수와 동일)·유산소 주 3회·이번 주 남은 일수로 달성 가능 여부 판단·턱걸이 유효 세트/RIR 미입력/2주 평가 반영·친업을 등·이두 회복 판정에 포함(RIR 0~1인 날만 강한 부하)·지난 48시간 경고는 3일 뒤 숨김·점수 영향 큰 순으로 최대 4개·유산소 시간/거리 누락과 기록 공백 알림 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-j (턱걸이 카드 개편 — 최고 기록을 유효 세트 기준으로, 매달리기 "최대 측정" 체크·연속 최대, 세션별 세트 막대 그래프(목표 구간·RIR 색·밴드 변경선)·매달리기 그래프, 일별/주간 표에 RIR·유효 세트·인정 여부, 접이식 "진행 코치"(승급·보라 밴드·2주 평가·매달리기 이정표), 2주 평가일(11/23) 알림 배너 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-i (매달리기 따로 입력 — 친업 뒤에 별도 입력·저장, "+ 매달리기 추가"로 칸을 늘려 여러 번 입력, 날짜 선택 시 저장값 불러오기, 같은 날짜 턱걸이·매달리기는 한 기록으로 합쳐 서로 덮어쓰지 않음 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-h (주간 근력/유산소 실적 일별 표에 턱걸이 추가 — 요일 칸 "턱걸이 N회" 칩(정상 반복 합계)·주 머리줄 "턱걸이 합계" 칩·칸을 누르면 세트별 정상 반복/시도/RIR/유효 여부와 매달리기 초 표시 / 표시만 추가, 점수 계산·저장 값 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-g (턱걸이 입력 안내 추가 — "쉬는 시간 기준" 접이식 안내(친업 3분·친업→매달리기 2~3분·매달리기 2분), 시도(선택) 항목 설명 / 화면 문구만 추가, 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-f (턱걸이 RIR 입력 안내 — 선택칸에 의미 표시, 선택 시 설명·목표 범위(RIR 2~3) 안내, "RIR이란?" 도움말·판단 예시 추가 / 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-e (턱걸이 인정 규칙 개정 — 주 100회 규칙 폐지, 세트별 정상 반복·시도·RIR 입력, 유효 세트(정상 5회↑·RIR 0~4) 주 6세트·2일 이상이면 주간 근력 +1(최대 1, 합계 상한 2) / Code.gs 2026-11-09b와 짝) | 이전: 2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-11-10-a (오탐 팝업 수정 — 턱걸이 기록에 매달리기를 추가해 기록 이름이 바뀌면 "운동 기록 줄어듦" 경고가 잘못 뜨던 문제: 같은 기록(id)이 그대로 있으면 이름만 바뀐 것으로 보고 경고하지 않음, 진짜 삭제는 그대로 경고 / Code.gs 변경 없음) | 이전: 2026-11-09-m (동기화 30초 상한 — 받기 15초(전체 22초)·보내기 남은 시간, 30초 안에 못 끝나면 멈추고 자동 재시도 / Code.gs 2026-11-09c(속도 개선)와 짝, 점수 계산 변경 없음) | 이전: 2026-11-09-l (동기화 개선 — ①앱을 계속 열어 둔 기기(노트북)가 휴대폰 입력을 못 받던 문제: 창을 다시 누를 때(포커스)와, 서버 개선본 배포 후엔 90초마다 조용히 새 기록 확인(바뀐 게 있을 때만 화면 갱신) ②저장 직후·화면 복귀·주기 확인은 가벼운 조회(light=1&days=45: 서버가 인박스 확인·트리거 점검 생략, 최근 45일만) ③동기화 배지에 받기/보내기 소요시간 표시 / 점수 계산 변경 없음. 서버 가벼운 조회는 Code.gs 개선본 배포 후 적용(배포 전에도 앱은 정상 동작)) | 이전: 2026-11-09-k (운동 스마트 인사이트 개편 — 기준 주간 월~일(주간 점수와 동일)·유산소 주 3회·이번 주 남은 일수로 달성 가능 여부 판단·턱걸이 유효 세트/RIR 미입력/2주 평가 반영·친업을 등·이두 회복 판정에 포함(RIR 0~1인 날만 강한 부하)·지난 48시간 경고는 3일 뒤 숨김·점수 영향 큰 순으로 최대 4개·유산소 시간/거리 누락과 기록 공백 알림 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-j (턱걸이 카드 개편 — 최고 기록을 유효 세트 기준으로, 매달리기 "최대 측정" 체크·연속 최대, 세션별 세트 막대 그래프(목표 구간·RIR 색·밴드 변경선)·매달리기 그래프, 일별/주간 표에 RIR·유효 세트·인정 여부, 접이식 "진행 코치"(승급·보라 밴드·2주 평가·매달리기 이정표), 2주 평가일(11/23) 알림 배너 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-i (매달리기 따로 입력 — 친업 뒤에 별도 입력·저장, "+ 매달리기 추가"로 칸을 늘려 여러 번 입력, 날짜 선택 시 저장값 불러오기, 같은 날짜 턱걸이·매달리기는 한 기록으로 합쳐 서로 덮어쓰지 않음 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-h (주간 근력/유산소 실적 일별 표에 턱걸이 추가 — 요일 칸 "턱걸이 N회" 칩(정상 반복 합계)·주 머리줄 "턱걸이 합계" 칩·칸을 누르면 세트별 정상 반복/시도/RIR/유효 여부와 매달리기 초 표시 / 표시만 추가, 점수 계산·저장 값 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-g (턱걸이 입력 안내 추가 — "쉬는 시간 기준" 접이식 안내(친업 3분·친업→매달리기 2~3분·매달리기 2분), 시도(선택) 항목 설명 / 화면 문구만 추가, 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-f (턱걸이 RIR 입력 안내 — 선택칸에 의미 표시, 선택 시 설명·목표 범위(RIR 2~3) 안내, "RIR이란?" 도움말·판단 예시 추가 / 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-e (턱걸이 인정 규칙 개정 — 주 100회 규칙 폐지, 세트별 정상 반복·시도·RIR 입력, 유효 세트(정상 5회↑·RIR 0~4) 주 6세트·2일 이상이면 주간 근력 +1(최대 1, 합계 상한 2) / Code.gs 2026-11-09b와 짝) | 이전: 2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1527,7 +1527,7 @@ async function runSaveSync_(){
     return;
   }
   saveSyncPending_ = false;
-  await cloudSync(true);
+  await cloudSync(true, {light:true}); // 2026-11-09-l: 저장 직후엔 가벼운 조회(인박스 확인 생략·최근 45일만)
   if(syncUiStatus && syncUiStatus.phase === 'error'){
     if(saveSyncRetry_ < SAVE_SYNC_RETRY_MS.length){
       saveSyncPending_ = true;
@@ -1771,6 +1771,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-10-a','"운동 기록 줄어듦" 오탐 팝업 수정(이름만 바뀐 기록은 삭제로 보지 않음)'],
   ['2026-10-31-c','인바디 유형 카드 2장(요약 + 체중×골격근 산점도)을 크레아틴 뒤로 이동 · 골격근 차트는 원래대로'],
   ['2026-10-31-b','보조운동 근력일 집계: 7일 중 5일 이상이면 근력일 +1 · 턱걸이 카드에 일수 안내'],
   ['2026-10-31-a','인바디 유형(I/C) 표시 — 골격근 차트 점·기준선·요약 카드, 인바디 표 배지'],
@@ -6121,7 +6122,7 @@ function syncBadgeClass_(){
 }
 function syncBadgeText_(){
   if(syncUiStatus.phase==='syncing') return `⏳ 동기화 중... (${syncUiStatus.elapsedSec||0}초)`;
-  if(syncUiStatus.phase==='done') return `✅ 완료 · ${fmtDateTime(syncUiStatus.at)}`;
+  if(syncUiStatus.phase==='done') return `✅ 완료 · ${fmtDateTime(syncUiStatus.at)}` + (syncUiStatus.totalSec ? ` (${syncUiStatus.totalSec}초${syncUiStatus.postSec ? ` · 받기 ${syncUiStatus.pullSec}+보내기 ${syncUiStatus.postSec}` : ''})` : '');
   if(syncUiStatus.phase==='error') return `⚠️ ${syncUiStatus.message||'실패'}`;
   return '';
 }
@@ -6420,6 +6421,8 @@ async function fetchWithTimeout(url, opts, timeoutMs){
 }
 // 2026-07-17 재조정: 실측 동기화 소요시간이 43초까지 나와서 45초는 너무 빠듯함 → 60초로 상향.
 const SYNC_TIMEOUT_MS = 60000;
+// 2026-11-09-m: 동기화 한 번(받기+보내기)은 30초 안에 끝내거나, 끝내지 못하면 거기서 멈추고 자동 재시도로 넘긴다(서버 저장은 같은 내용을 다시 받아도 안전 — 값이 같은 행은 쓰지 않음).
+const SYNC_HARD_MS_ = 30000;
 // 2026-11-03: 저장(POST)은 서버가 시트를 여러 개 고치고 점수를 다시 계산해서 60초를 넘길 때가 있음(서버는 끝까지 처리하는데 앱만 먼저 포기하던 문제) → 150초로 늘림.
 const SYNC_POST_TIMEOUT_MS = 150000;
 // 2026-07-17 추가: 과거 데이터는 이미 이전 동기화로 시트에 반영되어 있고 보통 안 바뀌므로,
@@ -6480,10 +6483,17 @@ function pushSizeShrinkWarnings_(prev, next, cutoffStr, deletedIds){
     const nextKeySet = new Set((next[spec.keyField] || []).map(cmp));
     const missing = prevKeys.filter(k=>!nextKeySet.has(cmp(k)))
       .filter((k,i,arr)=>arr.findIndex(x=>cmp(x)===cmp(k))===i); // 같은 내용의 중복본은 1건으로
+    // 2026-11-10: 운동 기록은 이름이 바뀌어도(예: 턱걸이 기록에 매달리기를 추가하면 "친업 7·6·6회" → "친업 7·6·6회 / 매달리기 …초") id는 그대로다.
+    // 같은 id가 이번 전송분에 있으면 "사라진" 게 아니라 "이름만 바뀐" 것이므로 경고하지 않는다(11/10 오탐 사례). 이름 변경 시 앱이 남기는 내용 삭제표시(k:날짜|이름)도 설명된 감소로 본다.
+    const nextIds_ = spec.keyField==='workoutKeys' ? new Set((next[spec.keyField]||[]).map(k=>k.split(':')[0])) : null;
     const unexplained = missing.filter(k=>{
       const d = spec.dateOf(k);
       if(d && d < cutoffStr) return false;
       if(spec.delMap[spec.delKeyOf(k)]) return false;
+      if(nextIds_){
+        if(nextIds_.has(k.split(':')[0])) return false;
+        if(spec.delMap['k:' + wkContent_(k)]) return false;
+      }
       return true;
     });
     if(!unexplained.length) return;
@@ -6528,7 +6538,15 @@ async function fetchJson_(url, opts, timeoutMs){
 // 업로드 본문 해시(FNV-1a 32bit) — 직전 성공 업로드와 내용이 같으면 POST·재조회를 생략해 왕복 2회를 줄인다.
 function hashStr_(str){ let h = 0x811c9dc5; for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h>>>0).toString(36) + ':' + str.length; }
 const SYNC_DELETED_CATS_ = ['inbody','workouts','meals','steps','waist','sideEffects'];
-async function cloudSync(silent){
+// 2026-11-09-l: 화면에 영향을 주는 데이터의 지문 — 조용한 확인(poll) 때 "받아온 뒤 바뀐 게 있는지" 판단해 불필요한 전체 재그리기를 피한다.
+const SYNC_TIMING_KEY_ = 'brc_synctiming_v1';
+function syncDataSig_(){
+  return hashStr_(JSON.stringify([state.inbody, state.workouts, state.meals, state.steps, state.waist, state.sideEffects, state.dailyScores, state.weeklyScores, state.goals, state.favorites, state.mounjaroDoses, state.aiNote && state.aiNote.date, state.reportNote && state.reportNote.date]));
+}
+async function cloudSync(silent, opts){
+  // 2026-11-09-l: opts.light = 가벼운 조회(서버가 인박스 확인·트리거 점검을 건너뛰고 최근 45일만 내려줌), opts.poll = 화면을 열어 둔 채 주기적으로 새 기록을 받아오는 조용한 모드(배지·전체 재그리기 없음, 바뀐 게 있을 때만 화면 갱신).
+  const light = !!(opts && (opts.light || opts.poll)), poll = !!(opts && opts.poll);
+  const tmr_ = {t0: Date.now(), pullMs: 0, postMs: 0};
   try{
     const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
     if(!url){ if(!silent) alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
@@ -6541,15 +6559,16 @@ async function cloudSync(silent){
       return;
     }
     syncing = true; syncStartedAt_ = Date.now();
+    let sigBefore_ = ''; if(poll){ try{ sigBefore_ = syncDataSig_(); }catch(sgErr){} }
     // 2026-07-17 재작성: render() 전체 재구성 타이밍에 기대지 않고, 클릭한 바로 그 자리에서
     // paintSyncBadge()로 배지 DOM을 직접 즉시 갱신 — 실기기에서 "배지가 안 뜬다"는 문제가
     // render()의 비동기적 리페인트 타이밍에 기인했을 가능성이 높아 근본적으로 다른 방식으로 교체.
     // 2026-08-04: 자동(silent) 동기화도 대시보드 배너로 보여야 하므로 !silent 조건 제거—
     // silent는 이제 "URL 미설정 시 alert를 띄우지 않는다"는 의미로만 씀(아래 참고).
-    syncUiStatus = {phase:'syncing', at:null, elapsedSec:0}; startSyncTimer(); paintSyncBadge();
+    if(!poll){ syncUiStatus = {phase:'syncing', at:null, elapsedSec:0}; startSyncTimer(); paintSyncBadge(); }
     // 브라우저가 실제로 이 배지 갱신을 화면에 그릴 기회를 확실히 갖도록 두 번의 rAF로 강제 양보.
     // (동기적으로 DOM은 바뀌었어도, 다음 코드가 곧바로 이어지면 페인트가 씹힐 가능성을 방지)
-    if(typeof requestAnimationFrame === 'function'){
+    if(!poll && typeof requestAnimationFrame === 'function'){
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     }
     try{
@@ -6564,7 +6583,10 @@ async function cloudSync(silent){
       // 먼저 해서 로컬을 서버 기준으로 정리(mergeByDate_ 등이 서버에 있는 날짜는 로컬 것을
       // 완전 교체)한 다음에 푸시해야 이런 재생성이 발생하지 않는다.
       // 1) 시트의 최신 데이터를 먼저 가져와 로컬과 병합/정리(서버가 있는 날짜는 로컬 완전교체)
-      const data = await fetchJson_(syncUrl_(url));
+      const data = await fetchJson_(syncUrl_(url, light ? 'light=1&days=45' : ''), null, light ? 15000 : 22000); // 받기 상한: 가벼운 조회 15초·전체 22초(정상이면 수 초), 남은 시간은 보내기에 배정
+      tmr_.pullMs = Date.now() - tmr_.t0;
+      tmr_.pullServerMs = data && data.serverMs;
+      try{ if(data && data.serverMs !== undefined) localStorage.setItem(SRV_LIGHT_KEY_, '1'); }catch(slErr){} // 서버가 가벼운 조회(Code.gs 2026-11-09c 이상)를 지원한다는 표시
       // 2026-10-22: 시트가 이번 pull에서 내려준 분석 시각을 기록 — 시트에 더 새 분석이 있는데 반영이 안 된 경우를 라벨이 감지한다.
       try{ localStorage.setItem(AI_SERVER_SEEN_KEY_, JSON.stringify({date: data.aiAnalysisDate || null, hasText: !!data.aiAnalysis, at: new Date().toISOString()})); }catch(seenErr){}
       // 2026-09-19 추가(머니트레일 벤치마킹): 삭제 동기화(tombstone) — pull 시점에 로컬·클라우드
@@ -6770,8 +6792,10 @@ async function cloudSync(silent){
         // 응답이 JSON이 아니거나 ok 표시가 없을 때만 기존처럼 재조회해서 인바디 날짜를 대조한다.
         // 서버가 오류 페이지(HTML)나 {ok:false}를 돌려주면 그 내용을 그대로 실패 사유로 보여준다.
         let postConfirmed_ = false;
+        const postT0_ = Date.now();
         try{
-          const postJson_ = await fetchJson_(url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: pushBody_}, SYNC_POST_TIMEOUT_MS);
+          const postJson_ = await fetchJson_(url, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: pushBody_}, Math.max(8000, SYNC_HARD_MS_ - (Date.now() - tmr_.t0)));
+          tmr_.postMs = Date.now() - postT0_; tmr_.postServerMs = postJson_ && postJson_.serverMs;
           postConfirmed_ = !!(postJson_ && postJson_.ok === true);
           // 2026-10-05-c: 서버가 방금 저장분으로 다시 계산한 하루 점수를 응답으로 받아 즉시 반영(앞선 pull은 저장 이전 값이라 새 점수가 빠져 있었음)
           if(postJson_ && Array.isArray(postJson_.dailyScores)){
@@ -6786,7 +6810,8 @@ async function cloudSync(silent){
           // JSON이 아닌 단순 텍스트 응답(예: "OK")은 실패로 단정하지 않고 재조회 검증으로 넘긴다.
           if(postErr && postErr.isTimeout){
             // 2026-11-03: 시간 초과여도 서버는 저장을 끝냈을 수 있음 → 다시 읽어 와서 방금 올린 식단·인바디가 시트에 있으면 성공으로 인정, 없으면 실패.
-            const chk_ = await fetchJson_(syncUrl_(url));
+            if((Date.now() - tmr_.t0) > SYNC_HARD_MS_ - 3000) throw postErr; // 30초를 이미 다 썼으면 확인 조회 없이 실패로 두고 자동 재시도(같은 내용을 다시 보내도 안전)
+            const chk_ = await fetchJson_(syncUrl_(url, 'light=1&days=45'), null, Math.max(3000, SYNC_HARD_MS_ - (Date.now() - tmr_.t0)));
             const srvMeals_ = {}; (chk_.meals||[]).forEach(r => { srvMeals_[r.date] = r; });
             const srvInbody_ = new Set((chk_.inbody||[]).map(r => r.date));
             const mealsOk_ = windowedMeals_.every(m => srvMeals_[m.date] && Math.abs((Number(srvMeals_[m.date].calories)||0) - (Number(m.calories)||0)) < 1);
@@ -6813,8 +6838,14 @@ async function cloudSync(silent){
       stopSyncTimer();
       try{ localStorage.setItem(LS_KEYS.lastautosync, new Date().toISOString()); }catch(e){} // 2026-08-04 추가: 스로틀 판단용
       recordSyncOk_(); // 2026-10-22: 실제 마지막 성공 동기화 시각 기록(render() 전에 해야 라벨이 바로 반영됨)
-      syncUiStatus = {phase:'done', at: new Date().toISOString()}; // 2026-08-04: 자동 동기화도 배너로 보여야 하므로 항상 설정
-      render(); // 데이터가 실제로 바뀌었으니 여기서는 전체 재구성이 맞음(마지막 갱신 시각 등도 갱신)
+      // 2026-11-09-l: 소요시간 기록(받기·보내기 따로) — 어디서 느린지 화면에서 바로 보이게 함
+      tmr_.totalMs = Date.now() - tmr_.t0;
+      try{ localStorage.setItem(SYNC_TIMING_KEY_, JSON.stringify({at:new Date().toISOString(), light, poll, ...tmr_})); }catch(tmErr){}
+      syncUiStatus = {phase:'done', at: new Date().toISOString(), totalSec: Math.round(tmr_.totalMs/100)/10, pullSec: Math.round(tmr_.pullMs/100)/10, postSec: tmr_.postMs ? Math.round(tmr_.postMs/100)/10 : 0}; // 2026-08-04: 자동 동기화도 배너로 보여야 하므로 항상 설정
+      let changed_ = true; if(poll){ try{ changed_ = (syncDataSig_() !== sigBefore_); }catch(sgErr2){} }
+      if(poll && !changed_){ paintSyncBadge(); } // 조용한 확인 — 새 기록이 없으면 화면을 다시 그리지 않음(스크롤·펼침 상태 유지)
+      else if(poll && userIsEditing_()){ paintSyncBadge(); } // 새 기록이 있어도 입력 중이면 다음 기회에
+      else render(); // 데이터가 실제로 바뀌었으니 여기서는 전체 재구성이 맞음(마지막 갱신 시각 등도 갱신)
     } finally { syncing = false; stopSyncTimer(); }
   }catch(e){
     // render() 등 예상 못한 곳에서 예외가 나도 조용히 묻히지 않고 반드시 사용자에게 보이도록 함
@@ -6822,6 +6853,7 @@ async function cloudSync(silent){
     syncing = false;
     stopSyncTimer();
     console.error('cloudSync error', e);
+    if(poll) return; // 2026-11-09-l: 조용한 확인(poll)이 실패해도 오류 배너·기록을 남기지 않음(다음 주기에 다시 시도, 3시간 넘게 성공이 없으면 기존 "동기화 필요" 안내가 뜸)
     recordSyncErr_((e && e.message) ? e.message : '알 수 없는 오류'); // 2026-10-22: 새로고침해도 남도록 기기에 기록
     // 2026-08-04: 자동 동기화 실패도(예: 오프라인) 배너로 알려야 하므로 상태 갱신은 항상 시도.
     // 다만 paintSyncBadge 자체가 실패하는 예외적 상황의 raw alert() 폴백만 silent일 때 억제
@@ -7436,9 +7468,31 @@ document.addEventListener('visibilitychange', () => {
     const lastRaw = localStorage.getItem(LS_KEYS.lastautosync);
     const last = lastRaw ? new Date(lastRaw).getTime() : 0;
     if(Date.now() - last < AUTO_SYNC_THROTTLE_MS) return;
-    cloudSync(true);
+    cloudSync(true, {light:true});
   }catch(e){ console.warn('화면 복귀 자동 동기화 건너뜀', e); }
 });
+// 2026-11-09-l 추가: 노트북처럼 앱을 계속 열어 둔 기기는 visibilitychange가 일어나지 않아, 휴대폰에서 입력한 턱걸이·매달리기 같은 새 기록이
+// 시트에 있어도 새로고침 전까지 화면에 안 보였다. ①창이 다시 포커스를 받을 때 ②화면이 보이는 동안 POLL_SYNC_MS마다 조용히 확인한다.
+// 입력 중·동기화 중·저장 대기 중·오프라인이면 건너뛰고, 새 기록이 없으면 화면을 다시 그리지 않는다.
+const POLL_SYNC_MS = 90*1000;
+const SRV_LIGHT_KEY_ = 'brc_srvlight_v1';
+// 주기(90초) 확인은 서버가 가벼운 조회를 지원할 때만 켠다 — 옛 서버는 매 조회마다 인박스 확인까지 해서 무거운데(실측 최대 43초), 이를 90초마다 부르면 Apps Script 하루 실행시간 한도를 잡아먹을 수 있다.
+// 창 포커스 때 확인(fromFocus)은 사람이 창을 다시 눌렀을 때만 일어나므로 옛 서버에서도 켜 둔다.
+function pollSyncNow_(fromFocus){
+  try{
+    if(document.visibilityState !== 'visible') return;
+    if(fromFocus !== true){ let ok_ = false; try{ ok_ = localStorage.getItem(SRV_LIGHT_KEY_) === '1'; }catch(e){} if(!ok_) return; }
+    if(!(localStorage.getItem(LS_KEYS.cloudurl)||'').trim()) return;
+    if(syncing || saveSyncPending_ || userIsEditing_()) return;
+    if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    const lastRaw = localStorage.getItem(LS_KEYS.lastautosync);
+    const last = lastRaw ? new Date(lastRaw).getTime() : 0;
+    if(Date.now() - last < AUTO_SYNC_THROTTLE_MS) return;
+    cloudSync(true, {poll:true});
+  }catch(e){ console.warn('주기 확인 건너뜀', e); }
+}
+window.addEventListener('focus', () => pollSyncNow_(true));
+setInterval(() => pollSyncNow_(false), POLL_SYNC_MS);
 
 // 2026-07-25 복원: 이 서비스워커 등록 코드가 이전 index.html에서 누락돼 있었음(원인 불명 —
 // 세션 시작 시 받은 파일에 이미 빠져있었음). 그 결과 예전에 등록된 낡은 서비스워커가 계속
