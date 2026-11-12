@@ -612,7 +612,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-11-a (동기화 배지 줄바꿈 수정 — 서버 단계별 시간이 한 줄로 길게 나와 화면 밖으로 넘치던 문제 · 서버 단계 시간을 누적이 아닌 구간별 초로 표시 / Code.gs 2026-11-11b와 짝) | 이전: 2026-11-10-c (동기화 배지에 보내기 중 서버가 쓴 시간 표시 / Code.gs 2026-11-10b와 짝) | 이전: 2026-11-10-b (동기화 시간 초과 개선 — 앱 열기·지금 동기화의 전체 조회가 14초 안에 안 끝나면 가벼운 조회로 바로 전환해 데이터부터 받음(서버 인박스 처리는 1분 자동 확인에 맡김) · 동기화 배지에 서버 단계별 소요시간 표시 / Code.gs 2026-11-10과 짝, 점수 계산 변경 없음) | 이전: 2026-11-10-a (오탐 팝업 수정 — 턱걸이 기록에 매달리기를 추가해 기록 이름이 바뀌면 "운동 기록 줄어듦" 경고가 잘못 뜨던 문제: 같은 기록(id)이 그대로 있으면 이름만 바뀐 것으로 보고 경고하지 않음, 진짜 삭제는 그대로 경고 / Code.gs 변경 없음) | 이전: 2026-11-09-m (동기화 30초 상한 — 받기 15초(전체 22초)·보내기 남은 시간, 30초 안에 못 끝나면 멈추고 자동 재시도 / Code.gs 2026-11-09c(속도 개선)와 짝, 점수 계산 변경 없음) | 이전: 2026-11-09-l (동기화 개선 — ①앱을 계속 열어 둔 기기(노트북)가 휴대폰 입력을 못 받던 문제: 창을 다시 누를 때(포커스)와, 서버 개선본 배포 후엔 90초마다 조용히 새 기록 확인(바뀐 게 있을 때만 화면 갱신) ②저장 직후·화면 복귀·주기 확인은 가벼운 조회(light=1&days=45: 서버가 인박스 확인·트리거 점검 생략, 최근 45일만) ③동기화 배지에 받기/보내기 소요시간 표시 / 점수 계산 변경 없음. 서버 가벼운 조회는 Code.gs 개선본 배포 후 적용(배포 전에도 앱은 정상 동작)) | 이전: 2026-11-09-k (운동 스마트 인사이트 개편 — 기준 주간 월~일(주간 점수와 동일)·유산소 주 3회·이번 주 남은 일수로 달성 가능 여부 판단·턱걸이 유효 세트/RIR 미입력/2주 평가 반영·친업을 등·이두 회복 판정에 포함(RIR 0~1인 날만 강한 부하)·지난 48시간 경고는 3일 뒤 숨김·점수 영향 큰 순으로 최대 4개·유산소 시간/거리 누락과 기록 공백 알림 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-j (턱걸이 카드 개편 — 최고 기록을 유효 세트 기준으로, 매달리기 "최대 측정" 체크·연속 최대, 세션별 세트 막대 그래프(목표 구간·RIR 색·밴드 변경선)·매달리기 그래프, 일별/주간 표에 RIR·유효 세트·인정 여부, 접이식 "진행 코치"(승급·보라 밴드·2주 평가·매달리기 이정표), 2주 평가일(11/23) 알림 배너 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-i (매달리기 따로 입력 — 친업 뒤에 별도 입력·저장, "+ 매달리기 추가"로 칸을 늘려 여러 번 입력, 날짜 선택 시 저장값 불러오기, 같은 날짜 턱걸이·매달리기는 한 기록으로 합쳐 서로 덮어쓰지 않음 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-h (주간 근력/유산소 실적 일별 표에 턱걸이 추가 — 요일 칸 "턱걸이 N회" 칩(정상 반복 합계)·주 머리줄 "턱걸이 합계" 칩·칸을 누르면 세트별 정상 반복/시도/RIR/유효 여부와 매달리기 초 표시 / 표시만 추가, 점수 계산·저장 값 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-g (턱걸이 입력 안내 추가 — "쉬는 시간 기준" 접이식 안내(친업 3분·친업→매달리기 2~3분·매달리기 2분), 시도(선택) 항목 설명 / 화면 문구만 추가, 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-f (턱걸이 RIR 입력 안내 — 선택칸에 의미 표시, 선택 시 설명·목표 범위(RIR 2~3) 안내, "RIR이란?" 도움말·판단 예시 추가 / 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-e (턱걸이 인정 규칙 개정 — 주 100회 규칙 폐지, 세트별 정상 반복·시도·RIR 입력, 유효 세트(정상 5회↑·RIR 0~4) 주 6세트·2일 이상이면 주간 근력 +1(최대 1, 합계 상한 2) / Code.gs 2026-11-09b와 짝) | 이전: 2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
+const APP_BUILD_VERSION = '2026-11-12-a (삭제 보관함 — 앱에서 지운 인바디·식단·운동·허리둘레·걸음수·부작용 기록을 이 기기에 30일 보관하고 설정 탭에서 복구(머니트레일 155ab 벤치마킹) · 목표 현황의 월 점검 접이식에 도달 예상(최근 4주 추세 연장)과 정체 점검(최근 4주 식단·근력·유산소 숫자) 추가(머니트레일 goalReachDateEstimate_ 벤치마킹) / 서버 변경 없음, Code.gs 2026-11-11b 그대로) | 이전: 2026-11-11-a (동기화 배지 줄바꿈 수정 — 서버 단계별 시간이 한 줄로 길게 나와 화면 밖으로 넘치던 문제 · 서버 단계 시간을 누적이 아닌 구간별 초로 표시 / Code.gs 2026-11-11b와 짝) | 이전: 2026-11-10-c (동기화 배지에 보내기 중 서버가 쓴 시간 표시 / Code.gs 2026-11-10b와 짝) | 이전: 2026-11-10-b (동기화 시간 초과 개선 — 앱 열기·지금 동기화의 전체 조회가 14초 안에 안 끝나면 가벼운 조회로 바로 전환해 데이터부터 받음(서버 인박스 처리는 1분 자동 확인에 맡김) · 동기화 배지에 서버 단계별 소요시간 표시 / Code.gs 2026-11-10과 짝, 점수 계산 변경 없음) | 이전: 2026-11-10-a (오탐 팝업 수정 — 턱걸이 기록에 매달리기를 추가해 기록 이름이 바뀌면 "운동 기록 줄어듦" 경고가 잘못 뜨던 문제: 같은 기록(id)이 그대로 있으면 이름만 바뀐 것으로 보고 경고하지 않음, 진짜 삭제는 그대로 경고 / Code.gs 변경 없음) | 이전: 2026-11-09-m (동기화 30초 상한 — 받기 15초(전체 22초)·보내기 남은 시간, 30초 안에 못 끝나면 멈추고 자동 재시도 / Code.gs 2026-11-09c(속도 개선)와 짝, 점수 계산 변경 없음) | 이전: 2026-11-09-l (동기화 개선 — ①앱을 계속 열어 둔 기기(노트북)가 휴대폰 입력을 못 받던 문제: 창을 다시 누를 때(포커스)와, 서버 개선본 배포 후엔 90초마다 조용히 새 기록 확인(바뀐 게 있을 때만 화면 갱신) ②저장 직후·화면 복귀·주기 확인은 가벼운 조회(light=1&days=45: 서버가 인박스 확인·트리거 점검 생략, 최근 45일만) ③동기화 배지에 받기/보내기 소요시간 표시 / 점수 계산 변경 없음. 서버 가벼운 조회는 Code.gs 개선본 배포 후 적용(배포 전에도 앱은 정상 동작)) | 이전: 2026-11-09-k (운동 스마트 인사이트 개편 — 기준 주간 월~일(주간 점수와 동일)·유산소 주 3회·이번 주 남은 일수로 달성 가능 여부 판단·턱걸이 유효 세트/RIR 미입력/2주 평가 반영·친업을 등·이두 회복 판정에 포함(RIR 0~1인 날만 강한 부하)·지난 48시간 경고는 3일 뒤 숨김·점수 영향 큰 순으로 최대 4개·유산소 시간/거리 누락과 기록 공백 알림 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-j (턱걸이 카드 개편 — 최고 기록을 유효 세트 기준으로, 매달리기 "최대 측정" 체크·연속 최대, 세션별 세트 막대 그래프(목표 구간·RIR 색·밴드 변경선)·매달리기 그래프, 일별/주간 표에 RIR·유효 세트·인정 여부, 접이식 "진행 코치"(승급·보라 밴드·2주 평가·매달리기 이정표), 2주 평가일(11/23) 알림 배너 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-i (매달리기 따로 입력 — 친업 뒤에 별도 입력·저장, "+ 매달리기 추가"로 칸을 늘려 여러 번 입력, 날짜 선택 시 저장값 불러오기, 같은 날짜 턱걸이·매달리기는 한 기록으로 합쳐 서로 덮어쓰지 않음 / 점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-h (주간 근력/유산소 실적 일별 표에 턱걸이 추가 — 요일 칸 "턱걸이 N회" 칩(정상 반복 합계)·주 머리줄 "턱걸이 합계" 칩·칸을 누르면 세트별 정상 반복/시도/RIR/유효 여부와 매달리기 초 표시 / 표시만 추가, 점수 계산·저장 값 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-g (턱걸이 입력 안내 추가 — "쉬는 시간 기준" 접이식 안내(친업 3분·친업→매달리기 2~3분·매달리기 2분), 시도(선택) 항목 설명 / 화면 문구만 추가, 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-f (턱걸이 RIR 입력 안내 — 선택칸에 의미 표시, 선택 시 설명·목표 범위(RIR 2~3) 안내, "RIR이란?" 도움말·판단 예시 추가 / 저장 값·점수 계산 변경 없음, Code.gs 2026-11-09b 그대로) | 이전: 2026-11-09-e (턱걸이 인정 규칙 개정 — 주 100회 규칙 폐지, 세트별 정상 반복·시도·RIR 입력, 유효 세트(정상 5회↑·RIR 0~4) 주 6세트·2일 이상이면 주간 근력 +1(최대 1, 합계 상한 2) / Code.gs 2026-11-09b와 짝) | 이전: 2026-11-09-d (턱걸이 주 100회 → 근력 1회 인정(주간 실적 근력 횟수에 합산, 턱걸이 카드 문구 교체, 옛 "7일 중 5일 +1" 규칙 폐지) · 미사용 상수 SAFE_EXERCISE_LIBRARY 삭제 / Code.gs 2026-11-09와 짝) | 이전: 2026-11-09-c (미사용 코드 정리 — 어디서도 호출되지 않던 함수 14개와 이로 인해 안 쓰이게 된 함수 5개·상수 1개 삭제(화면 변화 없음) / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-b (정리 — 허리둘레 측정조건(공복) 입력·표시 삭제, 허리둘레 기록 표를 다른 목록과 같은 기준(최근 5건·전체 보기 토글, 기본 접힘)으로, 턱걸이 입력 기본 그립 친업, 삭제한 리포트 탭·오늘 데이터 복사·분석 펼치기의 잔여 코드(renderReport 등 11개 함수, .ai-clamp CSS) 제거 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-09-a (화면 개편 — 대시보드 오늘 칼로리·단백질 섭취량 숫자 표시 · 체중×골격근 산점도에 월간 평가 구간(매월 20일) 전체 점 표시 · Work Out 탭 순서 변경(스마트 인사이트→주간 실적→회복·볼륨→턱걸이) · 주간 실적에 부위·턱걸이/매달리기 합산, "요일 자유" 문구 삭제 · 턱걸이/매달리기 직접 입력 폼 · 운동 요약 볼륨 없어도 표시 · 허리둘레 목표탭→대시보드 · 리포트 탭·기록추가·오늘 데이터 복사·분석 펼치기 삭제 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-d (운동 부위 판정 수정 — part 값이 있으면 note 문구를 읽지 않아 "하체 운동 없음" 같은 설명이 하체로 잡히지 않음, part가 비었을 때도 "없음·제외·마지막 ○○" 문맥은 무시 / Code.gs 변경 없음, 2026-11-07c와 짝) | 이전: 2026-11-07-c (운동 가산 A안 — 칼로리 주 예산: 기본 2,050 + (그 주 운동 합계 2,300 초과분×0.6÷7), 밴드 ±150 · 단백질은 일 단위 / Code.gs 2026-11-07c와 짝) | 이전: 2026-11-07-b (기준 전면 개정 — 칼로리 주 평균 2,050kcal(1,900~2,200)·기초대사/운동 보정/탄수 등급 폐지 · 단백질 130~160g · 유산소 인정 30분↑ 또는 3km↑ · "오늘 목표" 카드→"이번 주 목표" · 설정탭 탄수 입력 삭제 / Code.gs 2026-11-07b와 짝) | 이전: 2026-11-07-a (하루 점수 → 주간 점수(100점, 월~일) — 대시보드 "주간 점수" 카드 / Code.gs 2026-11-07과 짝) | 이전: 2026-11-03-a (동기화 멈춤·텔레그램 반복 경고 수정 — 저장 대기 150초+시간 초과 시 시트 재확인, 서버에서 받은 분석 글 재전송 안 함, 멈춘 동기화 자동 해제 / Code.gs 2026-11-03과 짝) | 이전: 2026-10-31-c (인바디 유형 배치 개편 — 골격근 카드는 원래대로(7일 평균·목표선), 유형은 크레아틴 카드 뒤 2장(유형 요약 + 체중×골격근 산점도)으로 분리해 이동평균 추세 카드 8장 / Code.gs 2026-10-31과 짝, 서버 변경 없음) | 이전: 2026-10-31-b (보조운동 근력일 집계 — 보조운동은 근력일로 세지 않고 최근 7일 중 5일 이상이면 근력일 +1(서버 하루 점수와 같은 규칙), 턱걸이·매달리기 카드에 7일 보조운동 일수 안내 / Code.gs 2026-10-31과 짝: 하루 점수 근력일 규칙) | 이전: 2026-10-31-a (인바디 유형(I/C) 표시 — 대시보드 골격근 차트에 I·C 점·I 확인 최소선·I·C 혼재 띠, 골격근 차트 위 요약 카드, 인바디 표에 유형 배지 / Code.gs 2026-10-31과 짝: InBody 시트 bodyType 열) | 이전: 2026-10-30-g (최상단 상태바 색(theme-color)이 앱 색상·밝은/어두운 전환에 따라 바뀌도록 수정 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-f (앱 색상 7종(설정에서 변경, 머니트레일과 동일 구성) · 맨 아래 버전 정보+최근 변경 3개 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-e (크레아틴을 이동평균 추세 섹션에 편입: 체중·골격근 차트에 복용일 음영 + 요약 카드 · 제지방량 차트 추가(6개) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-d (리포트·운동 탭 슬림화 2차: 크레아틴 차트 1패널+고정 크기 · 부위별 회복 한 줄 요약+접기 · 이동평균 추세+체성분 변화 4차트 통합(7일 평균 겹침) · 데이터 기반 인사이트 목록화(목표 중복 2개 제외) / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-c (턱걸이·매달리기 카드를 주간 근력/유산소 실적 아래로 이동 · 운동 탭 "오늘 추천 부위 & 운동 가이드" 삭제 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-b (대시보드 목표 카드·운동 탭 인사이트 슬림화: 게이지→얇은 막대+4칸 타일, 목표 2줄+접이식 월 점검, 운동 KPI 8칸 카드→한 줄 목록, 주 단위 빨간 경고색 제거 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-30-a (턱걸이·매달리기 일별 관리: 요약 카드+일별 표+주간 합계, 그립·밴드·밴드 거는 방식 구분 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-b (③ 인바디 표·그래프에 "음주 다음날" 표시 · ⑤ 골격근 추세에 근력일·유산소일 막대 · ⑥ MA7 하루 흔들림 밴드(±0.5) · ⑦ 턱걸이 카드 · ⑧ 종목별 직전 대비 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-29-a (대시보드 "오늘 목표" 카드 복원·슬림화: 기본+운동 보정 한 줄 풀이 · 기초대사 7번 평균 기준 / Code.gs 변경 없음, 2026-10-26과 짝) | 이전: 2026-10-26-a (칼로리 목표 개정 B·C안: 2026-10-27부터 기초대사를 최근 7번 평균 제지방 기준으로 · 목표 추정 오차 ± 표시 · 7일 평균 판정 / Code.gs 2026-10-26과 짝) | 이전: 2026-10-23-a (보조운동(밴드 턱걸이 등)은 근력·유산소 판정과 최근 운동·운동일 집계에서 제외 / Code.gs 변경 없음) | 이전: 2026-10-22-a (동기화 상태 정확 표시 · 동기화 필요 배너 · 근력 주 2회 요일 자유 · 인정 유산소 집계 / Code.gs 변경 없음) | 이전: 2026-10-21-e (설정 버전 문구 축약 · 점검 보완 · 스마트 인사이트 V2 · 새 목표 반영)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1571,7 +1571,8 @@ function addWaistEntry(){
 function deleteWaistEntry(date){
   // 2026-09-13 수정: 다른 delete*Entry 함수들(인바디/식단/운동/부작용)은 전부 confirm()이 있는데
   // 이 함수만 없어서 실수로 즉시 삭제될 위험이 있었음 — 일관성 있게 확인창 추가.
-  if(!confirm(`${date} 허리둘레 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  if(!confirm(`${date} 허리둘레 기록을 삭제할까요?\n(설정 탭 "삭제 보관함"에서 30일 안에 복구할 수 있어요)`)) return;
+  trashPush_('waist', state.waist.find(w=>w.date===date));
   state.waist = state.waist.filter(w=>w.date!==date);
   saveArr(LS_KEYS.waist, state.waist);
   markDeleted_('waist', date); // 2026-09-19 추가: tombstone
@@ -1605,7 +1606,8 @@ function addStepEntry(){
   render();
 }
 function deleteStepEntry(date){
-  if(!confirm(`${date} 걸음수 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  if(!confirm(`${date} 걸음수 기록을 삭제할까요?\n(설정 탭 "삭제 보관함"에서 30일 안에 복구할 수 있어요)`)) return;
+  trashPush_('steps', state.steps.find(s=>s.date===date));
   state.steps = state.steps.filter(s=>s.date!==date);
   saveArr(LS_KEYS.steps, state.steps);
   markDeleted_('steps', date); // tombstone
@@ -1771,6 +1773,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-12-a','삭제 보관함(30일 복구) · 목표 도달 예상과 정체 점검'],
   ['2026-11-10-c','동기화 배지에 보내기 서버 소요시간 표시'],
   ['2026-11-10-b','동기화 시간 초과 개선(전체 조회 14초 초과 시 가벼운 조회로 전환) · 배지에 서버 단계별 시간 표시'],
   ['2026-11-10-a','"운동 기록 줄어듦" 오탐 팝업 수정(이름만 바뀐 기록은 삭제로 보지 않음)'],
@@ -2741,7 +2744,8 @@ function saveHangEntry(){
 function deleteAuxDay_(date){
   const day = auxDaily_().find(d => d.date===date);
   if(!day || !day.ids.length) return;
-  if(!confirm(`${date} 턱걸이·매달리기 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  if(!confirm(`${date} 턱걸이·매달리기 기록을 삭제할까요?\n(설정 탭 "삭제 보관함"에서 30일 안에 복구할 수 있어요)`)) return;
+  day.ids.forEach(id => trashPush_('workouts', state.workouts.find(r => r.id===id))); // 2026-11-12-a: 삭제 보관함(내부 병합용 auxRemoveWorkoutNoConfirm_에는 넣지 않음)
   day.ids.forEach(id => auxRemoveWorkoutNoConfirm_(id));
   saveArr(LS_KEYS.workout, state.workouts);
   markUpdated();
@@ -3082,6 +3086,142 @@ function sigDot_(s){
   const t = s==='g' ? '초록' : s==='y' ? '노랑' : '빨강';
   return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:${c};"><span style="width:9px; height:9px; border-radius:50%; background:${c}; display:inline-block;"></span>${t}</span>`;
 }
+
+/* 2026-11-12-a: 목표 도달 예상 + 정체 점검(머니트레일 goalRecentPaceRegression_ / goalReachDateEstimate_ / goalShortfallDiagnosis_ 벤치마킹).
+   월 점검용: "목표 현황"의 접이식 월 점검 안에서만 보여 준다(일·주 단위 목표 현황·경고는 하지 않는 규칙 유지, 신호등 없이 숫자만).
+   · 도달 예상: 유효 측정(제외 확정 반영)의 "최근 7번 평균" 계열 중 최근 28일 구간에 직선(최소제곱)을 맞춰 그 속도가 이어질 때 목표(골격근 33.0kg, 체지방률 17%)에 닿는 시점을 추정한다.
+     기울기가 목표 방향이 아니거나 1년 넘게 걸리면 날짜를 만들지 않고 "가늠하기 어려워요"로 둔다. 점 8개 미만·기간 14일 미만이면 계산하지 않는다.
+   · 정체 점검: 어제까지 28일의 식단(질병·회복일 제외)·근력일·하체 마지막·인정 유산소 분을 숫자로만 나열하고, 눈에 띄는 차이만 중립 문구로 적는다. 원인을 하나로 단정하지 않는다. */
+function goalMA7Series_(){
+  const rows = sortedInbody().filter(r => [r.weight, r.muscle, r.fat].every(v => v!==null && v!==undefined && v!=='' && !isNaN(v)));
+  const out = [];
+  for(let i=6; i<rows.length; i++){
+    const w = rows.slice(i-6, i+1);
+    const avg = k => w.reduce((s,r)=>s+Number(r[k]),0)/w.length;
+    const fp = w.filter(r => r.fatPct!==null && r.fatPct!==undefined && r.fatPct!=='' && !isNaN(r.fatPct));
+    const fat = avg('fat'), weight = avg('weight');
+    out.push({date:rows[i].date, muscle:avg('muscle'), fat, weight, fatPct: fp.length===w.length ? fp.reduce((s,r)=>s+Number(r.fatPct),0)/fp.length : fat/weight*100});
+  }
+  return out;
+}
+function goalSlopePerDay_(pts, key){
+  if(!pts || pts.length<2) return null;
+  const x0 = isoToMs_(pts[0].date);
+  const xs = pts.map(p => (isoToMs_(p.date)-x0)/86400000), ys = pts.map(p => p[key]);
+  const n = pts.length, xm = xs.reduce((a,b)=>a+b,0)/n, ym = ys.reduce((a,b)=>a+b,0)/n;
+  let num = 0, den = 0;
+  for(let i=0; i<n; i++){ num += (xs[i]-xm)*(ys[i]-ym); den += (xs[i]-xm)*(xs[i]-xm); }
+  return den>0 ? num/den : null;
+}
+function goalMonthLabel_(ms){ const d = new Date(ms); return `${d.getFullYear()}년 ${d.getMonth()+1}월경`; }
+// dir: +1(올라가야 목표) / -1(내려가야 목표), eps: 이 값 이하의 하루 기울기는 정체로 본다
+function goalReachText_(cur, target, slopePerDay, lastDate, dir, eps){
+  if((target-cur)*dir <= 0) return '이미 목표 구간이에요.';
+  const s = slopePerDay===null ? null : slopePerDay*dir;
+  if(s===null || s<=eps) return '정체이거나 반대 방향이라 도달 시점을 가늠하기 어려워요.';
+  const days = ((target-cur)*dir)/s;
+  if(days > 365) return '1년이 넘게 걸려 도달 시점을 가늠하기 어려워요.';
+  return `${goalMonthLabel_(isoToMs_(lastDate) + Math.ceil(days)*86400000)} 도달 예상`;
+}
+// 계획 체크포인트(PLAN_POINTS_)를 직선으로 이어 목표값을 처음 지나는 시점
+function goalPlanCrossText_(kind, target, dir){
+  const P = PLAN_POINTS_;
+  const val = p => kind==='pct' ? p[2]/p[3]*100 : p[1];
+  for(let i=1; i<P.length; i++){
+    const a = val(P[i-1]), b = val(P[i]);
+    if((a-target)*dir < 0 && (b-target)*dir >= 0){
+      const f = (target-a)/(b-a), t0 = isoToMs_(P[i-1][0]), t1 = isoToMs_(P[i][0]);
+      return goalMonthLabel_(t0 + (t1-t0)*f);
+    }
+  }
+  return null;
+}
+function goalStallHtml_(){
+  const DAYS = 28, today = todayISO();
+  const endMs = isoToMs_(today) - 86400000; // 오늘(진행 중)은 제외
+  const dates = []; for(let i=DAYS-1; i>=0; i--) dates.push(toLocalISO(new Date(endMs - i*86400000)));
+  const from = dates[0], to = dates[dates.length-1];
+  const row = (l, v) => `<div style="display:flex; justify-content:space-between; gap:8px; padding:5px 0; border-top:1px solid var(--border-soft); font-size:12px;"><span style="font-weight:600;">${l}</span><span class="mono" style="text-align:right;">${v}</span></div>`;
+  const head = `<div style="margin-top:12px; padding-top:8px; border-top:1px dashed var(--border); font-size:12px; font-weight:700;">🔎 정체 점검 <span class="dim" style="font-weight:500;">· 최근 4주(${from.slice(5)}~${to.slice(5)}) 숫자</span></div>`;
+  const dstr = r => String((r && r.date) || '').slice(0,10);
+  const kc = m => Number(m.calories) || 0;
+  const avg = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : null;
+  const meals = (state.meals||[]).filter(m => m && dstr(m)>=from && dstr(m)<=to && m.specialDayType!=='illness' && Number(m.calories)>0);
+  const ws = statWorkouts_();
+  const notes2 = [];
+  let html = head;
+  if(meals.length < 10){
+    html += `<div class="hg-detail">식단 기록이 ${meals.length}일뿐이라(질병·회복일 제외) 식단 숫자는 보여드리지 않아요.</div>`;
+  } else {
+    const drink = meals.filter(m => m.specialDayType==='alcohol'), other = meals.filter(m => m.specialDayType!=='alcohol');
+    const avgAll = avg(meals.map(kc)), avgDrink = avg(drink.map(kc)), avgOther = avg(other.map(kc));
+    const excess = drink.reduce((s,m)=> s + Math.max(0, kc(m)-KCAL_TARGET_MID), 0) / meals.length;
+    const over = meals.filter(m => kc(m) > KCAL_BAND_HIGH).length;
+    const prot = meals.map(m => Number(m.protein)||0), prot120 = prot.filter(p => p>=120).length;
+    html += row('식단 평균', `${meals.length}일 · ${Math.round(avgAll).toLocaleString('ko-KR')}kcal <span class="dim">(목표 ${KCAL_TARGET_MID.toLocaleString('ko-KR')})</span>`);
+    html += row('음주일 / 그 외', drink.length ? `${drink.length}일 ${Math.round(avgDrink).toLocaleString('ko-KR')} / ${Math.round(avgOther).toLocaleString('ko-KR')}kcal` : '음주일 없음');
+    if(drink.length) html += row('음주일 목표 초과분', `하루 평균 +${Math.round(excess)}kcal <span class="dim">(기록일 평균으로 환산)</span>`);
+    html += row(`${KCAL_BAND_HIGH.toLocaleString('ko-KR')}kcal 초과일`, `${over}일`);
+    html += row('단백질', `평균 ${Math.round(avg(prot))}g · 120g↑ ${prot120}/${meals.length}일`);
+    if(drink.length && excess >= 100 && avgOther !== null) notes2.push(`음주일 초과분이 하루 평균 +${Math.round(excess)}kcal이고, 그 외 날 평균은 ${Math.round(avgOther).toLocaleString('ko-KR')}kcal${(avgOther>=KCAL_BAND_LOW && avgOther<=KCAL_BAND_HIGH) ? '로 밴드 안이에요' : '예요'}.`);
+  }
+  let strengthDays = 0, cardioMin = 0, cardioDays = 0;
+  dates.forEach(d => { const a = classifyDayType(ws, d); if(a && (a.type==='근력' || a.type==='둘다')) strengthDays++; });
+  ws.filter(w => dstr(w)>=from && dstr(w)<=to && isQualCardioW_(w)).forEach(w => { cardioMin += Number(w.durationMin)||0; });
+  dates.forEach(d => { if(qualifiedCardioOnDate_(ws, d)) cardioDays++; });
+  let lastLower = null;
+  ws.forEach(w => { if(inferPartsForEntry(w).includes('하체')){ const d = dstr(w); if(!lastLower || d>lastLower) lastLower = d; } });
+  const lowerGap = lastLower ? Math.round((isoToMs_(today)-isoToMs_(lastLower))/86400000) : null;
+  const perWeek = strengthDays/(DAYS/7);
+  html += row('근력일', `${strengthDays}일 · 주 ${perWeek.toFixed(1)}회 <span class="dim">(계획 주 ${FLEX_STRENGTH_TARGET_}회)</span>`);
+  html += row('하체 마지막', lastLower ? `${lastLower.slice(5).replace('-','/')} (${lowerGap}일 전)` : '기록 없음');
+  html += row('인정 유산소', `${cardioDays}일 · 주 평균 ${Math.round(cardioMin/(DAYS/7))}분 <span class="dim">(분 기록 있는 것만)</span>`);
+  if(perWeek < FLEX_STRENGTH_TARGET_) notes2.push(`근력일이 주 ${perWeek.toFixed(1)}회로 계획(주 ${FLEX_STRENGTH_TARGET_}회)보다 적어요.`);
+  if(lowerGap !== null && lowerGap >= 14) notes2.push(`하체는 ${lowerGap}일째 기록이 없어요.`);
+  if(notes2.length) html += `<div class="hg-detail" style="margin-top:6px;"><b>눈에 띄는 점</b> · ${notes2.slice(0,3).join(' ')}</div>`;
+  html += `<div class="hg-detail">원인을 하나로 단정하지 않아요. 식단 기록 오차(±25%)·워치 오차·인바디 수분 노이즈가 있어 월 점검 때 함께 판단해요.</div>`;
+  return html;
+}
+function goalForecastHtml_(){
+  try{
+    const today = todayISO();
+    const all = goalMA7Series_();
+    const cut = n => toLocalISO(new Date(isoToMs_(today) - n*86400000));
+    const pts4 = all.filter(p => p.date >= cut(28)), pts8 = all.filter(p => p.date >= cut(56));
+    const sg = (n, d) => (n>=0 ? '+' : '−') + Math.abs(n).toFixed(d);
+    const spanOf = pts => pts.length ? (isoToMs_(pts[pts.length-1].date) - isoToMs_(pts[0].date))/86400000 : 0;
+    let html = `<div style="margin-top:12px; padding-top:8px; border-top:1px dashed var(--border); font-size:12px; font-weight:700;">🎯 도달 예상 <span class="dim" style="font-weight:500;">· 최근 4주·8주 추세 연장(참고용)</span></div>`;
+    if(pts4.length < 8 || spanOf(pts4) < 14){
+      html += `<div class="hg-detail">최근 4주 인바디 기록이 부족해서(7번 평균 ${pts4.length}개) 도달 예상을 계산하지 않았어요.</div>`;
+    } else {
+      const has8 = pts8.length >= 12 && spanOf(pts8) >= 35; // 8주 줄은 점이 충분할 때만
+      const last = pts4[pts4.length-1];
+      const P = PLAN_POINTS_, pd = (isoToMs_(P[P.length-1][0]) - isoToMs_(P[0][0]))/86400000;
+      const planMuscleWk = (P[P.length-1][1]-P[0][1])/pd*7, planFatWk = (P[P.length-1][2]-P[0][2])/pd*7;
+      // 한 지표의 4주·8주 두 줄: 기울기(주 단위) + 도달 시점
+      const lines = (key, unit, d, target, dir, eps) => [['4주', pts4], ['8주', has8 ? pts8 : null]].map(([lab, pts]) => {
+        if(!pts) return `<div class="dim" style="font-size:11.5px; margin-top:2px;">${lab} · 기록이 부족해서 계산하지 않았어요.</div>`;
+        const s = goalSlopePerDay_(pts, key);
+        return `<div style="font-size:11.5px; margin-top:2px;"><span class="dim">${lab} 주 ${s===null ? '—' : sg(s*7, d)}${unit} →</span> <b>${goalReachText_(last[key], target, s, last.date, dir, eps)}</b></div>`;
+      }).join('');
+      const card = (title, curTxt, body, planTxt) => `<div style="padding:6px 0; border-top:1px solid var(--border-soft); font-size:12px;">
+          <div style="display:flex; justify-content:space-between; gap:8px;"><span style="font-weight:600;">${title}</span><span class="mono">${curTxt}</span></div>
+          ${body}${planTxt ? `<div class="dim" style="font-size:11.5px; margin-top:2px;">${planTxt}</div>` : ''}</div>`;
+      const pcM = goalPlanCrossText_('muscle', NEW_GOAL.muscle, +1), pcP = goalPlanCrossText_('pct', NEW_GOAL.fatPctHi, -1);
+      html += card(`골격근 → ${fmt(NEW_GOAL.muscle,1)}kg`, `${fmt(last.muscle,2)}kg`, lines('muscle', 'kg', 2, NEW_GOAL.muscle, +1, 0.002),
+        `계획선 기준 ${pcM || '—'} · 계획 주 ${sg(planMuscleWk,2)}kg`);
+      const sF4 = goalSlopePerDay_(pts4, 'fat');
+      html += card(`체지방률 → ${NEW_GOAL.fatPctHi}%`, `${fmt(last.fatPct,2)}%`, lines('fatPct', '%p', 2, NEW_GOAL.fatPctHi, -1, 0.002),
+        `계획선 기준 ${pcP || '—'} · 체지방량 4주 주 ${sF4===null ? '—' : sg(sF4*7,2)}kg (계획 주 ${sg(planFatWk,2)}kg)`);
+      html += `<div class="hg-detail">최근 7번 평균(제외 확정 반영)에 직선을 맞춘 값이에요. 4주 줄은 아프거나 쉬었다가 회복하는 구간이 섞이면 빠르게, 8주 줄은 느리게 나올 수 있어서 둘을 같이 보여드려요. 속도는 달라질 수 있어 월 점검 때 다시 계산해요.</div>`;
+    }
+    return html + goalStallHtml_();
+  }catch(e){
+    console.warn('도달 예상 계산 실패', e);
+    return '';
+  }
+}
+
 function goalTrackerHtml_(compact){
   const m = goalBodyMA7_();
   if(!m) return `<div class="note-box">새 목표 트래커는 인바디 기록이 3건 이상 쌓이면 표시돼요.</div>`;
@@ -3129,7 +3269,7 @@ function goalTrackerHtml_(compact){
     <details class="sl-more"${showSig ? ' open' : ''}>
       <summary><span>월 점검 · 계획선 대비</span><span class="hg-status">${nc ? '다음 '+nc.date.slice(5).replace('-','/')+' (D-'+nc.days+')' : '점검 일정 종료'}</span></summary>
       <div class="dim" style="font-size:11px; margin:6px 0 2px;">최근 7번 평균(${m.from.slice(5)}~${m.to.slice(5)})</div>
-      ${rowsHtml_}
+      ${rowsHtml_}${goalForecastHtml_()}
       <div class="hg-detail">월 단위로 오르는지만 봅니다. 하루 변동은 수분 영향이라 판정하지 않아요. 체중 69~70kg을 유지하면 골격근이 오르면서 체지방률이 자연히 내려오고, 체지방은 약 <b>${fmt(fatToLose,1)}kg</b> 더 줄이면 17%예요. ${showSig ? '점검 기간이라 신호등을 함께 보여드려요.' : '신호등은 점검일(매월 20일~22일)에만 표시돼요.'}</div>
     </details>
   </div>`;
@@ -3163,6 +3303,7 @@ function goalTrackerHtml_(compact){
       </div>
       <div class="hg-detail">${showSig ? '점검 기간이라 신호등을 함께 보여드려요. 활동 지표(근력·유산소·단백질 등)는 채팅의 "월 점검해줘" 레포트에서 봅니다.' : '신호등은 점검일(매월 20일~22일)에만 표시돼요. 평소엔 숫자와 다음 점검일만 보여드립니다.'} 월 점검 때는 칼로리 목표·운동 가산 계수 0.6·단백질·유산소·점수 기준 전체도 데이터로 다시 확인해 보완해요.</div>
     </div>
+    <div class="hero-goal-item">${goalForecastHtml_()}</div>
   </div>`;
 }
 function renderGoalTrackerCard_(){
@@ -3285,7 +3426,8 @@ function openEditModal(kind, rec){
   render();
 }
 function deleteInbodyEntry(date){
-  if(!confirm(`${date} 인바디 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  if(!confirm(`${date} 인바디 기록을 삭제할까요?\n(설정 탭 "삭제 보관함"에서 30일 안에 복구할 수 있어요)`)) return;
+  trashPush_('inbody', state.inbody.find(r=>r.date===date));
   state.inbody = state.inbody.filter(r=>r.date!==date);
   saveArr(LS_KEYS.inbody, state.inbody);
   markDeleted_('inbody', date); // 2026-09-19 추가: 다음 동기화 때 서버에 남은 옛 값이 되살아나지 않도록 tombstone
@@ -3294,7 +3436,8 @@ function deleteInbodyEntry(date){
   render();
 }
 function deleteMealEntry(date){
-  if(!confirm(`${date} 식단 기록을 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  if(!confirm(`${date} 식단 기록을 삭제할까요?\n(설정 탭 "삭제 보관함"에서 30일 안에 복구할 수 있어요)`)) return;
+  trashPush_('meals', state.meals.find(r=>r.date===date));
   state.meals = state.meals.filter(r=>r.date!==date);
   saveArr(LS_KEYS.meal, state.meals);
   markDeleted_('meals', date); // 2026-09-19 추가: tombstone
@@ -3303,8 +3446,9 @@ function deleteMealEntry(date){
   render();
 }
 function deleteWorkoutEntry(id){
-  if(!confirm('이 운동 기록을 삭제할까요? 되돌릴 수 없습니다.')) return;
+  if(!confirm('이 운동 기록을 삭제할까요?\n(설정 탭 "삭제 보관함"에서 30일 안에 복구할 수 있어요)')) return;
   const delRec_ = state.workouts.find(r=>r.id===id);
+  trashPush_('workouts', delRec_);
   state.workouts = state.workouts.filter(r=>r.id!==id);
   saveArr(LS_KEYS.workout, state.workouts);
   markDeleted_('workouts', id); // 2026-09-19 추가: tombstone
@@ -4192,8 +4336,9 @@ function addSideEffect(){
   render();
 }
 function deleteSideEffect(id){
-  if(!confirm('이 부작용 기록을 삭제할까요?')) return;
+  if(!confirm('이 부작용 기록을 삭제할까요?\n(설정 탭 "삭제 보관함"에서 30일 안에 복구할 수 있어요)')) return;
   const delSE_ = state.sideEffects.find(s=>s.id===id);
+  trashPush_('sideEffects', delSE_);
   state.sideEffects = state.sideEffects.filter(s=>s.id!==id);
   saveArr(LS_KEYS.sideEffects, state.sideEffects);
   if(delSE_) markDeleted_('sideEffects', contentTombKey_(delSE_, 'symptom')); // 2026-10-02-b: 운동과 동일 이유(날짜|증상 키)
@@ -6082,6 +6227,8 @@ function renderSettings(){
       </div>
     </section>
 
+    ${trashSectionHtml_()}
+
     <section class="card">
       <div class="section-label good">${secNum('06d')}앱 색상</div>
       <p class="p-dim" style="font-size:12px; margin-bottom:0;">선택한 색은 이 기기에 저장돼요. 체중·골격근·체지방 같은 의미 색과 좋음/주의 색은 어떤 색상에서도 그대로예요.</p>
@@ -6232,6 +6379,114 @@ function markDeleted_(category, key){
 }
 // 삭제 이후 같은 키로 다시 저장(재생성/수정)되면 "삭제 의도 철회"로 보고 tombstone을 해제한다.
 // 이게 없으면 한 번 지운 날짜/id는 다시는 동기화로 못 살아나는 반대 방향 버그가 생긴다.
+
+/* 2026-11-12-a: 삭제 보관함(머니트레일 155ab trashPush_ / trashRestore_ 벤치마킹).
+   앱에서 지운 기록을 이 기기 localStorage에 30일(최대 100건) 보관하고, 설정 탭에서 복구한다. 서버(Code.gs)는 바꾸지 않는다.
+   복구 = 기록을 다시 넣고 삭제 표시(tombstone)를 풀어 다음 동기화 때 시트에도 되살린다(기존 "같은 키로 다시 저장하면 삭제 의도 철회" 규칙과 같은 방식).
+   주의 ①: 동기화는 "받기 → 병합 → 보내기" 순서라, 서버에 남은 옛 삭제 표시가 받기 때 되돌아오면 복구한 기록이 다시 걸러진다 →
+   복구 기록을 brc_restored_v1에 남기고, 받기 병합 직후 applyRestoredOverride_()가 "복구 시각 ≥ 삭제 시각"인 표시를 걷어 낸다(그 뒤 다시 삭제하면 삭제 시각이 더 늦어 정상 삭제).
+   주의 ②: 앱은 최근 14일 기록만 서버로 보내므로, 오래된 기록을 복구했을 때도 14일 동안은 함께 보내도록 recentWindow_가 복구 기록을 포함한다. */
+function trashKey_(){ return 'brc_trash_v1'; }
+function restoredKey_(){ return 'brc_restored_v1'; }
+function trashGet_(){ try{ const a = JSON.parse(localStorage.getItem(trashKey_()) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+function trashSet_(a){ try{ localStorage.setItem(trashKey_(), JSON.stringify(a)); }catch(e){ console.error('삭제 보관함 저장 실패', e); } }
+function trashActive_(){ const cut = Date.now() - 30*86400000; return trashGet_().filter(x => x && x.rec && new Date(x.at).getTime() >= cut); }
+function trashPush_(cat, rec){
+  if(!rec) return;
+  try{
+    const a = trashActive_();
+    a.unshift({id: makeId('tr'), cat, at: new Date().toISOString(), rec: JSON.parse(JSON.stringify(rec))});
+    trashSet_(a.slice(0, 100));
+  }catch(e){ console.warn('삭제 보관 실패', e); }
+}
+function restoredMap_(){ try{ const m = JSON.parse(localStorage.getItem(restoredKey_()) || '{}'); return (m && typeof m === 'object') ? m : {}; }catch(e){ return {}; } }
+function restoredMark_(cat, key, iso){
+  const m = restoredMap_(); if(!m[cat]) m[cat] = {}; m[cat][key] = iso;
+  try{ localStorage.setItem(restoredKey_(), JSON.stringify(m)); }catch(e){}
+}
+function applyRestoredOverride_(){
+  const m = restoredMap_(); let changed = 0;
+  Object.keys(m).forEach(cat => {
+    const dm = state.deletedIds && state.deletedIds[cat]; if(!dm) return;
+    Object.keys(m[cat]).forEach(key => {
+      if(dm[key] != null && String(m[cat][key]) >= String(dm[key])){ delete dm[key]; changed++; }
+    });
+  });
+  return changed;
+}
+function restoredRecent_(cat, r){
+  if(!cat || !r) return false;
+  const cm = restoredMap_()[cat]; if(!cm) return false;
+  const cut = new Date(Date.now() - 14*86400000).toISOString();
+  const keys = cat==='workouts' ? [r.id, contentTombKey_(r, 'name')] : cat==='sideEffects' ? [r.id, contentTombKey_(r, 'symptom')] : [r.date];
+  return keys.some(k => k && cm[k] && String(cm[k]) >= cut);
+}
+function trashLabel_(cat){ return ({inbody:'인바디', meals:'식단', workouts:'운동', steps:'걸음수', waist:'허리둘레', sideEffects:'부작용'})[cat] || cat; }
+function trashSummary_(cat, r){
+  const d = String((r && r.date) || '').slice(0,10);
+  if(cat==='inbody') return `${d} · ${fmt(r.weight)}kg · 골격근 ${fmt(r.muscle)} · 체지방 ${fmt(r.fat)}`;
+  if(cat==='meals') return `${d} · ${r.calories!=null ? Math.round(r.calories)+'kcal' : '—'} · 단백질 ${r.protein!=null ? Math.round(r.protein)+'g' : '—'}`;
+  if(cat==='workouts') return `${d} · ${r.name || '운동'}`;
+  if(cat==='steps') return `${d} · ${r.steps!=null ? Number(r.steps).toLocaleString('ko-KR') : '—'}걸음`;
+  if(cat==='waist') return `${d} · ${r.waist!=null ? r.waist+'cm' : '—'}`;
+  if(cat==='sideEffects') return `${d} · ${r.symptom || ''}`;
+  return d;
+}
+function trashRestore_(id){
+  const it = trashActive_().find(x => x.id === id);
+  if(!it){ alert('이미 복구했거나 보관 기간(30일)이 지난 기록이에요.'); render(); return; }
+  const cat = it.cat, rec = JSON.parse(JSON.stringify(it.rec)), now = new Date().toISOString();
+  const lsMap = {inbody:LS_KEYS.inbody, meals:LS_KEYS.meal, workouts:LS_KEYS.workout, steps:LS_KEYS.steps, waist:LS_KEYS.waist, sideEffects:LS_KEYS.sideEffects};
+  if(!Array.isArray(state[cat]) || !lsMap[cat]){ alert('이 종류의 기록은 복구할 수 없어요.'); return; }
+  const listed = (cat==='workouts' || cat==='sideEffects'); // 하루 여러 건(id·날짜|이름 키) vs 날짜당 1건
+  const field = cat==='sideEffects' ? 'symptom' : 'name';
+  const nm = r => String(r[field]==null ? '' : r[field]).trim();
+  if(listed){
+    const dup = state[cat].some(r => (rec.id && r.id===rec.id) || (r.date===rec.date && nm(r)===nm(rec)));
+    if(dup){ alert('같은 날짜·같은 이름의 기록이 이미 있어서 복구하지 않았어요. (보관함에는 그대로 남겨 둘게요)'); return; }
+    if(!rec.id) rec.id = makeId(cat==='sideEffects' ? 'se' : 'w');
+  } else {
+    const ex = state[cat].find(r => r.date===rec.date);
+    if(ex){
+      if(!confirm(`${rec.date} 기록이 이미 있어요. 보관함의 값으로 바꿀까요?\n(지금 값은 삭제 보관함으로 옮겨져요)`)) return;
+      trashPush_(cat, ex);
+      state[cat] = state[cat].filter(r => r.date!==rec.date);
+    }
+  }
+  rec.updatedAt = now;
+  state[cat].push(rec);
+  if(!listed) state[cat].sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  saveArr(lsMap[cat], state[cat]);
+  const keys = listed ? [rec.id, contentTombKey_(rec, field)] : [rec.date];
+  keys.forEach(k => { unmarkDeleted_(cat, k); restoredMark_(cat, k, now); });
+  trashSet_(trashGet_().filter(x => x && x.id !== id));
+  markUpdated();
+  scheduleSaveSync_();
+  render();
+}
+function trashClear_(){
+  if(!trashActive_().length) return;
+  if(!confirm('삭제 보관함을 비울까요? 비우면 지금까지 보관한 기록은 복구할 수 없어요.')) return;
+  trashSet_([]);
+  render();
+}
+function trashSectionHtml_(){
+  const list = trashActive_();
+  const rows = list.length ? list.map(it => `
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:12px;">
+          <div style="min-width:0;"><div style="font-weight:600;">${esc(trashLabel_(it.cat))} <span class="p-dim" style="font-weight:400;">· ${esc(fmtDateTime(it.at))} 삭제</span></div>
+            <div class="p-dim" style="font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(trashSummary_(it.cat, it.rec))}</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="trashRestore_('${it.id}')">↩ 복구</button>
+        </div>`).join('') : `<div class="p-dim" style="font-size:11.5px;">최근 30일 안에 삭제한 기록이 없어요.</div>`;
+  return `<section class="card">
+      <div class="section-label good">${secNum('06a4')}삭제 보관함(최근 30일)</div>
+      <p class="p-dim">앱에서 지운 인바디·식단·운동·허리둘레·걸음수·부작용 기록이 이 기기에 30일 동안 보관돼요(2026-11-12 이후 삭제분부터). 복구하면 목록에 다시 들어가고 다음 동기화 때 시트에도 반영됩니다.</p>
+      <div style="margin-top:8px;">${rows}</div>
+      ${list.length ? `<div class="btn-row" style="margin-top:8px;"><button class="btn btn-ghost btn-sm" onclick="trashClear_()">보관함 비우기</button></div>` : ''}
+    </section>
+`;
+}
+
 function unmarkDeleted_(category, key){
   if(state.deletedIds && state.deletedIds[category] && state.deletedIds[category][key] != null){
     delete state.deletedIds[category][key];
@@ -6432,10 +6687,10 @@ const SYNC_POST_TIMEOUT_MS = 150000;
 // 줄임. 오래된 기록을 고쳐야 할 때(예: 중복행 정리)는 지금처럼 Google Sheet에서 직접 수정하는
 // 방식을 계속 사용(이 최적화와 무관하게 항상 가능).
 const SYNC_RECENT_DAYS = 14;
-function recentWindow_(arr){
+function recentWindow_(arr, cat){
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - SYNC_RECENT_DAYS);
   const cutoffStr = toLocalISO(cutoff);
-  return (arr||[]).filter(r => r.date >= cutoffStr);
+  return (arr||[]).filter(r => r.date >= cutoffStr || restoredRecent_(cat, r)); // 2026-11-12-a: 삭제 보관함에서 복구한 오래된 기록도 14일 동안은 함께 보낸다
 }
 function pushWindowCutoff_(){
   const c = new Date(); c.setDate(c.getDate() - SYNC_RECENT_DAYS);
@@ -6614,6 +6869,7 @@ async function cloudSync(silent, opts){
       const localDeleted_ = state.deletedIds || {};
       state.deletedIds = {};
       SYNC_DELETED_CATS_.forEach(c => { state.deletedIds[c] = mergeDeletedMap_(localDeleted_[c], cloudDeletedIds[c]); });
+      applyRestoredOverride_(); // 2026-11-12-a: 삭제 보관함에서 복구한 기록은 서버에 남은 옛 삭제 표시가 되돌아와도 다시 걸러지지 않게 한다
       saveArr(LS_KEYS.deletedIds, state.deletedIds);
       state.inbody = mergeInbodyByDate_(state.inbody, data.inbody, state.deletedIds.inbody); // 2026-10-13: 제외 결정은 excludeAt이 늦은 쪽 채택
       state.workouts = mergeWorkoutsByDate_(state.workouts, data.workouts, state.deletedIds.workouts, 'name');
@@ -6743,16 +6999,16 @@ async function cloudSync(silent, opts){
       }
       // 2) 이제 서버 기준으로 정리된(중복 제거된) 로컬 데이터를 다시 시트로 전송 —
       //    이미 서버와 정합된 상태라 이 단계에서 새로운 중복이 생기지 않는다.
-      const windowedInbody_ = (state.inbody||[]).filter(r => r.date >= pushWindowCutoff_() || r.excludeAt); // 2026-10-13: 최근 14일 + 제외/유지/보류를 결정한 날(오래된 날짜도 서버에 닿게)
-      const windowedWorkouts_ = recentWindow_(state.workouts);
-      const windowedMeals_ = recentWindow_(state.meals);
-      const windowedWaist_ = recentWindow_(state.waist);
+      const windowedInbody_ = (state.inbody||[]).filter(r => r.date >= pushWindowCutoff_() || r.excludeAt || restoredRecent_('inbody', r)); // 2026-10-13: 최근 14일 + 제외/유지/보류를 결정한 날(오래된 날짜도 서버에 닿게)
+      const windowedWorkouts_ = recentWindow_(state.workouts, 'workouts');
+      const windowedMeals_ = recentWindow_(state.meals, 'meals');
+      const windowedWaist_ = recentWindow_(state.waist, 'waist');
       // 2026-09-19 추가(20선 4번): steps는 Code.gs(applyIncoming_의 upsertSheet_/doGet의 readSheet_)엔
       // 이미 완전히 구현돼 있었는데, 클라이언트 push 본문에만 빠져 있어 앱이 이 데이터에 대해
       // 사실상 읽기 전용이었음 — 다른 date-keyed 레코드와 동일하게 windowed 배열로 push.
-      const windowedSteps_ = recentWindow_(state.steps);
+      const windowedSteps_ = recentWindow_(state.steps, 'steps');
       // 2026-09-19 추가(20선 3번): sideEffects도 date 필드가 있어 recentWindow_ 그대로 적용 가능.
-      const windowedSideEffects_ = recentWindow_(state.sideEffects);
+      const windowedSideEffects_ = recentWindow_(state.sideEffects, 'sideEffects');
       const pushedInbodyDates_ = windowedInbody_.map(r=>r.date);
       // 2026-09-19 추가(머니트레일 벤치마킹): push 직전 데이터 급감 경고 — 직전 성공 push 때의
       // 서명(건수+키)과 비교해서, "기간 만료"나 "실제 삭제(tombstone)"로 설명되지 않는 감소가
