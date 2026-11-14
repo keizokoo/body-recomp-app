@@ -1,6 +1,9 @@
 /**
  * 바디 리컴포지션 앱 - 클라우드 동기화 백엔드
  *
+ * [2026-11-14 수정] 정리(앱 2026-11-14-a와 짝, 동작·점수 공식·시트 구조·응답 필드 변경 없음): 쓰이지 않는 함수 2개(옛 하루 점수 구간 계산·하루 점수 블록 문구) 삭제,
+ *    이 머리말의 2026-11-03 이전 변경 기록을 걷어냄(전체 기록은 GitHub 저장소 이력에 있음). 서버 코드는 저장소 gas/Code.gs가 원본이며 main 병합 시 자동 배포된다.
+ *
  * [2026-11-11b 수정] 추가 속도 개선(2026-11-11 배포 후 실측: 시트 하나 읽는 데 0.3~1.3초 — 데이터 양보다 시트 API 호출 횟수가 시간을 좌우함. 앱 2026-11-11-a와 짝, 점수 공식·시트 구조·응답 필드는 그대로).
  *    ①시트 헤더 확인(getLastColumn+헤더 읽기 2회)을 배포 버전당 한 번만 하고 캐시(CacheService)로 건너뜀 — getOrCreateSheet_ (시트당 호출 약 7→3회)
  *    ②앱이 보낸 본문(POST)은 컬렉션별로 직전에 처리한 본문과 지문이 같으면 그 시트를 읽지도 쓰지도 않음(채팅 업로드·?push 경로는 그대로 항상 처리) — applyIncoming_
@@ -62,239 +65,7 @@
  * 이미 이전 버전으로 배포했다면: 코드만 이 내용으로 덮어쓴 뒤
  * "배포 > 배포 관리 > 연필 아이콘 > 버전: 새 버전 > 배포" 로 갱신하면 URL은 그대로 유지됩니다.
  *
- * [2026-11-03 수정] 텔레그램 "aiAnalysis-인바디 불일치" 경고 반복 방지 + 동기화 부담 감소(앱 index.html 빌드 2026-11-03-a와 짝). 2026-10-31 기능(bodyType·보조운동)은 그대로.
- *    1) 앱/업로드가 이미 시트에 있는 것과 '똑같은 분석 글'을 보내면 아무것도 하지 않음(보관·덮어쓰기·경고 생략) — applyIncoming_.
- *    2) 같은 날짜 경고는 하루 1번만(Meta 'aiGapAlertedDate') — checkAiAnalysisInbodyGap_.
- *    3) 업로드 JSON에 "inbodySkipped": true 를 넣으면 인바디 미측정일로 보고 경고 생략.
- *    ※ 9/13 사고 방지(분석만 올라오고 인바디 구조화 데이터 없을 때 경고)는 그대로 유지.
- *
- * [2026-10-31 수정] 인바디 유형(I/C) 기록용 열 추가(앱 index.html 빌드 2026-10-31-a와 짝). InBody 시트에 bodyType('I'/'C'/'D', 정희님이 인바디 화면에서 확인한 값) 열을 더한다.
- *    같은 날짜 행을 다시 올릴 때(앱 push·채팅 인박스) 이 키가 없으면 시트에 있던 값을 지우지 않고 유지한다(식단 items와 같은 upsertSheet_ keepCols 방식). 값을 지우려면 null을 명시한다.
- *    바꾼 곳: SHEETS.inbody.cols(열 추가, 기존 시트는 getOrCreateSheet_가 헤더 끝에 자동 보강), applyIncoming_의 인바디 upsert 호출(keepCols 지정).
- *    [2026-10-31 수정 2] 하루 점수 근력일 집계: 보조운동(part='보조운동')은 그날 근력·최근 7일 근력일로 세지 않고(탄수 등급도 근력 없는 날 A등급), 최근 7일 중 5일 이상 하면 근력일 +1(최대 1). 바꾼 곳: dsIsAux_ 신설·dsIsStrength_ 첫 줄·computeDailyScoreCore_의 sDays·DAILY_SCORE_VERSION_. 점수 배점·공식은 동일.
- * [2026-10-26 수정] 칼로리 목표 개정 B안(기초대사 7일 평균, 앱 index.html 빌드 2026-10-26-a와 짝). 2026-10-27분부터 칼로리 목표·하루 점수·텔레그램 목표·허브 알림의 기초대사를
- *    '그날 측정값'이 아니라 '최근 유효 측정 7번 평균 제지방(체중−체지방량, 제외 확정일 건너뜀)'으로 구한 값(370+21.6×평균 제지방)으로 쓴다.
- *    2026-10-26 이전 날짜는 예전 방식(그날 또는 직전 측정 BMR)을 그대로 쓰므로 저장된 점수가 '점수 다시 계산'으로도 바뀌지 않는다. 점수 공식 자체(computeDailyScoreCore_)와 보정식(0.3·0.6)은 바꾸지 않음.
- *    바꾼 곳: bmrForTargetOn_ 신설, buildDailyScoreInput 어댑터·식단 등록 텔레그램·저녁 요약·허브 칼로리 알림의 BMR 입력 4곳. DAILY_SCORE_VERSION_ 2026-10-26(입력 변경 표시용).
- * [2026-10-20 수정] 마이라이프 "오늘" 화면의 인바디 변화(어제 대비·7회 평균 대비) 표시용으로 읽기 전용 요약(?summary=1)에 값 추가. 이 함수(handleHubSummary_) 외에는 바꾸지 않음.
- * 1) inbody에 muscle(골격근량 kg)·fat(체지방량 kg) 추가(기존 date·weight·fatPct는 그대로).
- * 2) inbodyPrev: 직전 유효 측정(제외 확정분 건너뜀) 1건 — {date,weight,muscle,fat,fatPct}. 어제 기록이면 앱이 "어제 대비"로 표시.
- * 3) ma7: 체중·골격근·체지방·체지방률 각각의 최근 유효 7건 평균(최신 측정 포함, 필드별로 값이 있는 것만) + ma7Count(필드별 건수).
- *    기존 fatPctMA7·fatPctMA7Count는 그대로 두었고 ma7.fatPct와 같은 값이다. 쓰기·인박스 처리·트리거 설치 없음.
- *
- * [2026-10-18 수정] 앱 개선 묶음 2차(앱 index.html 빌드 2026-10-18-b와 짝). 앞선 2026-10-16 코드에서 아래만 바꿈.
- * 1) 분석 누락 경고 개선(B1): recordInboxArrival_가 "분석 없이 들어온 데이터 건수"(inboxPendingCount)를 세고, 경고 문구에 마지막 분석 시각·마지막 데이터 시각·건수를
- *    함께 적는다. doGet 응답에 inboxStatus{dataAt, analysisAt, pendingCount}를 실어 앱 분석 카드가 "분석 이후 새 데이터 N건"을 표시한다(경고 조건·1회 발송 규칙은 그대로).
- * 2) 운동 이름 바꾸기(C1, 안전한 형태): 채팅 업로드의 workouts 레코드에 renameFrom("이전 이름")을 넣으면 같은 날짜의 그 이름 행을 새 이름으로 바꿔
- *    중복 행이 생기지 않게 한다(applyWorkoutRenames_). 새 이름 행이 이미 있으면 건드리지 않는다. ※ id 컬럼 방식은 앱이 날짜|이름 키로 병합(10/2 사고)해서 채택하지 않음.
- * 3) 식단 구성 항목(C4): Meals 시트에 items 열(JSON: [{name,kcal,protein,carbs,src,errorPct}]) 추가. 합계(calories/protein/carbs)가 점수 원본인 점은 그대로이고,
- *    items는 정정할 때 항목별로 다시 합산하기 위한 내역이다. 업로드에 items 키가 없으면 시트의 기존 items를 유지(upsertSheet_ keepCols).
- * 4) GitHub 자동배포 채널 제거(D2): deployFiles/deployChunk 처리, getGithubConfig_·deployFileToGithub_·processDeploy_·processDeployChunk_·chunkPropKey_·testGithubAuth,
- *    doGet 응답의 lastDeployStatus/lastDeployAt 삭제(앱은 이 값을 쓰지 않음). 코드 배포는 앞으로도 index.html 다운로드 → GitHub 직접 업로드만 사용.
- *    ※ 스크립트 속성의 GITHUB_TOKEN은 코드와 별개로 남아 있으므로 편집기 > 프로젝트 설정 > 스크립트 속성에서 삭제하고, GitHub에서 토큰도 폐기할 것.
- * 5) 크레아틴 메모 인식(creatineGramsFromNote_): "크레아틴 미확인/모름/확인안됨/?"을 복용으로 읽지 않는다(2026-10-08·09 점수 5점 오반영의 원인, 앱과 같은 규칙).
- *
- * [2026-10-16 수정] 앱 개선 묶음(앱 index.html 빌드 2026-10-16-b와 짝)
- * 1) findBmrForDate_: 제외 확정일의 BMR은 건너뛰고 직전 정상 측정 BMR 사용(칼로리 목표·하루 점수·알림 공통).
- * 2) 하루 점수: 식단 specialDayType='illness'(질병·회복)인 날은 점수 산출 안 함(computeDailyScoreCore_ inp.special). 공식 자체는 2026-10-05 허용오차+선형감점 그대로. DAILY_SCORE_VERSION_ 2026-10-16.
- * 3) Meals 시트에 estimated·errorPct 열 추가(기존 시트는 헤더 끝에 자동 보강). 점수의 "추정 포함" 표시는 estimated를 우선 쓰고, 없는 옛 기록은 메모의 '추정'으로 폴백.
- *    업로드에 estimated/errorPct 키가 없으면 시트에 있던 값을 유지(크레아틴과 같은 이유 — normalizeIncomingMeals_).
- * 4) 허브용 읽기 전용 요약: <웹앱 URL>?summary=1 (handleHubSummary_). 인박스 처리·쓰기 없음.
- *
- * [2026-10-13 수정] 인바디 "제외 확정" + Claude 분석 누락 경고(정희님 확정 설계, 앱 index.html 빌드 2026-10-13-a와 짝).
- * 1) SHEETS.inbody에 exclude(true=제외/false=유지/'보류'/빈 값=미결정)·excludeReason(사유)·excludeAt(결정 시각, ISO) 열 추가 —
- *    getOrCreateSheet_가 기존 InBody 시트 헤더 끝에 자동 보강(시트를 손으로 고칠 필요 없음). 제외는 삭제가 아니라 표시라 행은 그대로 남는다.
- * 2) 제외분(exclude===true)은 서버 계산에서도 건너뜀: computeInbodyMA7Compare_(최근 7건 vs 직전 7건, "유효 측정만 7건씩"),
- *    getStartInbody_(골격근 손실비율의 시작점), 체지방률 추세 정체 알림(checkDailyReminders). 전일 대비·측정 공백 알림은 "측정은 했음"이라 그대로 둔다.
- * 3) normalizeIncomingInbody_: 채팅(Drive 인박스)·앱이 같은 날짜를 다시 올릴 때 exclude 키가 빠져 있어도 시트의 제외 표시를 지우지 않는다.
- *    결정 시각(excludeAt)이 더 늦은 쪽이 이긴다(앱의 mergeInbodyByDate_와 같은 규칙). exclude를 보내면서 excludeAt이 없으면 서버가 지금 시각을 기록.
- * 4) 분석 누락 경고: 인박스(채팅 업로드)로 새 인바디/식단이 들어온 뒤 ANALYSIS_LAG_MIN_(20분) 안에 aiAnalysis가 올라오지 않으면
- *    텔레그램으로 1회 경고(recordInboxArrival_ / checkAnalysisLag_, checkInboxTrigger 1분 트리거에서 검사). 앱의 14일 동기화(doPost)는 세지 않는다.
- *    ※ 날짜 문자열(aiAnalysisDate)이 아니라 "수신 시각"으로 비교 — 시트가 날짜 문자열을 UTC Date로 바꿔 저장하는 문제를 피하려는 것.
- * 5) 하루 점수(BMR)·칼로리 목표는 이번에 건드리지 않음(제외일 BMR 처리는 정희님 판단 대기).
- *
- * [2026-10-05 수정] 서버 PR 경신 알림 복구(checkAndNotifyExercisePRs_).
- * 증상: 9/18에 넣은 PR 알림이 한 번도 울리지 않음. 원인: 종목의 ex.weight/ex.reps를 읽었는데 실제 업로드 형식은
- * {name, part, maxWeight, oneRM, sets:[{weight,reps}]}라 값이 항상 비어 있었음(시트 Workouts 실데이터로 확인).
- * 수정: 새 헬퍼 bestOneRMFromExercise_가 sets 배열에서 세트별 weight×(1+reps/30)의 최댓값을 구해 비교에 사용.
- * - 어시스티드(보조중량) 제외: 이름에 '어시스티드'가 있거나 세트에 assist 필드가 있으면 계산 안 함.
- * - 맨몸 세트({reps}만)·weight 0은 estimate1RM_이 null이라 자동 제외.
- * - 평평한 옛 형식({sets:3 또는 "20/20/20", reps:총횟수, weight}, 7/20~8/11 업로드분)은 의도적으로 계산하지 않음 —
- *   reps가 세트당이 아니라 총 횟수라 그대로 넣으면 1RM이 약 3배 부풀어 이후 진짜 PR을 가릴 수 있음.
- * 호출 순서(시트 반영 전 비교)·종목명 정규화·메시지 형식·점수 공식은 그대로. 다른 함수는 건드리지 않음.
- *
- * [2026-10-05-b 수정] ①크레아틴: 식단 메모에 "크레아틴"이 적혀 있으면(예: "쉐이크2스쿱+크레아틴", "크레아틴 5g") 크레아틴 칸이 비어 있어도 복용으로 인식.
- *    g 숫자가 없으면 3g. "크레아틴 안 먹음/미복용/없음/스킵" 같은 부정 표현은 복용 아님. 새 식단이 들어올 때(applyIncoming_)·점수 계산 때 적용하고,
- *    새 식단에 크레아틴 항목 자체가 없으면(채팅 업로드가 칸을 빼먹은 경우) 시트에 이미 있던 크레아틴 값을 지우지 않고 유지(앱 저장은 항상 값/null을 명시하므로 영향 없음).
- *    ②편집기 실행 없이 앱 설정탭 버튼 한 번으로 "크레아틴 보정 + 하루 점수 다시 계산" 실행: doGet ?recomputeScores=1 (handleRecomputeScores_).
- *
- * [2026-10-05 수정] 하루 점수 채점 기준 완화(정희님 요청: 목표에 거의 도달한 날을 과하게 깎지 않기) + 저장 직후 앱에 점수 즉시 반영.
- * 1) 칼로리·단백질·탄수를 "허용오차 + 선형 감점"으로 변경(dsBandTol_). 목표 범위에서 허용오차 이내면 만점, 그 밖은
- *    허용 가장자리 기준 이탈량에 비례해 0점까지 선형 감소. 칼로리 하한 -50kcal(상한은 기존 +100 그대로), 단백질 하한 -5g(상한은 기존대로 감점 없음),
- *    탄수 ±5g. 감소 폭: 칼로리 450kcal / 단백질·탄수 40g 이탈 시 0점(옛 단계식의 "150kcal→2/3, 300kcal→1/3", "20g→1/2"를 직선으로 이은 값).
- *    운동·활동·기록·보조 항목은 그대로. DAILY_SCORE_VERSION_ 2026-10-05. calc.py daily_score·테스트 벡터도 같은 날짜로 함께 갱신해야 한다.
- * 2) doPost 응답에 dailyScores(최근 30건)를 함께 돌려줌 — 앱이 저장 직후 동기화 응답만으로 새 점수를 바로 표시(별도 재조회 없음).
- * 3) recomputeDailyScoresAll 추가 — 편집기에서 한 번 실행하면 시작일~오늘 점수를 새 기준으로 전부 다시 계산(트리거 불필요, 기준 변경 직후 1회용).
- * 4) 시간 트리거 3종(checkInboxTrigger 1분, sendEveningDigest 21시, checkDailyReminders 9시)은 그대로 유지 — 점수 계산용이 아니라
- *    Drive 인박스 수신·텔레그램 저녁 요약·리마인더/어제 점수 확정용이라 지우면 채팅→시트 반영이 멈춘다. 점수는 이미 데이터가 들어올 때마다(applyIncoming_) 즉시 계산된다.
- *
- * [2026-10-04 추가] 하루 점수(100점 만점) — 텔레그램 저녁 요약·DailyScore 시트·앱 카드의 공통 원본.
- * 정희님 컨펌(2026-10-04): 100점 만점, 배점 칼로리30/단백질20/탄수15/운동·활동25/기록·보조10,
- * 운동·활동은 "오늘 기록 12.5 + 최근 7일 균형 12.5", 단계식 채점, 2026-10-03분부터 적용.
- * 이 점수는 체성분 판정이 아니라 "그날 행동 평가"이며 점수 단독으로 몸 상태를 판단하지 않는다.
- * 1) computeDailyScoreCore_: 순수 계산 함수. 채팅용 calc.py daily_score와 같은 공식이라
- *    scripts/daily_score_vectors.json의 36건 입력/기대값을 둘 다 통과해야 한다(수정 시 반드시 같이 갱신).
- *    JS Math.round 방식 반올림, 식단 미기록/BMR 미확인이면 0점이 아니라 score=null("산출 안 함").
- * 2) computeDailyScoreForDate_: 시트에서 그날 식단·최근 7일 운동·BMR·PR을 읽어 Core에 넣는 어댑터.
- *    인정 유산소는 구조화 필드(avgHR/durationMin)만 사용하고 note 텍스트는 파싱하지 않는다.
- *    "추정 포함" 표기만은 식단 note에 '추정'이 있는지로 판단(표시용 힌트일 뿐 점수에는 영향 없음).
- * 3) SHEETS.dailyScore('DailyScore' 시트)에 날짜당 1행을 덮어써 저장. 오늘 날짜는 '잠정', 지난 날짜는 '확정'.
- *    데이터가 들어올 때마다(applyIncoming_ 끝) 영향받는 날짜(그날~+6일)를 다시 계산해 저장하고,
- *    매일 오전 checkDailyReminders가 어제 점수를 한 번 더 계산해 '확정'으로 마감한다.
- *    저장 실패가 데이터 동기화(본 기능)를 막지 않도록 모두 try/catch로 감쌌다.
- * 4) sendEveningDigest(매일 21시대) 맨 아래에 점수 블록 추가 — 기존 요약 본문은 그대로.
- * 5) doGet 응답에 dailyScores(최근 30건) 추가 — 앱이 표시만 한다(앱은 점수를 직접 계산하지 않음).
- *
- * [2026-10-02 수정] 저항운동 부위 판정(inferPartsForEntry_) 오인식 수정 + 운동 등록 텔레그램 알림에 요약 한 줄 추가.
- * 1) inferPartsForEntry_: 앱(index.html 빌드 2026-10-02-a)의 inferPartsForEntry와 같은 규칙으로 맞춤.
- *    - part가 정확히 '유산소'인 순수 유산소 세션은 note를 훑지 않음. note에 적힌 "어깨 석회성건염 치료 중",
- *      "등/이두 근력 직후 연속 진행" 같은 설명 문구가 부위로 잡혀 걷기·러닝머신이 저항운동으로 오인식되던 문제
- *      (checkDailyReminders의 "저항운동이 N일째 없어요" 알림 판정에 영향).
- *    - 종목의 part가 '가슴/삼두'처럼 복합 표기면 BODY_PARTS_ 단위로 분해.
- * 2) buildWorkoutSummaryLine_ 신규 + notifyImmediate_의 운동 알림에 한 줄 추가: "볼륨 · 종목/세트/횟수 · 시간".
- *    구조화 필드(volume/exercises/durationMin)만 사용하고 note 텍스트는 파싱하지 않음. 값이 없으면 기존 알림과 동일.
- *
- * [2026-09-24 수정] MA7(직전 7건) 계산 버그 3곳 수정 — computeInbodyMA7Compare_,
- * buildInbodyAnalysisComment_, notifyImmediate_(인바디 메시지 작성부).
- * 실사고(2026-09-24): 여행 중 체중계만 사용해 골격근/체지방/체지방률이 빈칸인 레코드
- * (9/12·9/13·9/14)가 최근 7건 윈도우에 섞여 들어가면서, 기존 avg() 헬퍼가
- * Number(null||0)으로 빈칸을 0으로 계산 → 텔레그램 알림에 "MA7 골격근 18.6kg,
- * -4.5kg", "골격근손실비율 4.299(임계값 초과)" 같은 완전히 잘못된 값이 발송됨(실제
- * 올바른 값은 골격근 +0.37kg로 양호). 날짜 정렬 자체는 원래도 정상이었음(정렬 로직은
- * 변경하지 않음) — 문제는 오직 "빈칸을 0으로 세는" 평균 계산 방식이었음. 수정 후에는
- * 필드별로 실제 값이 있는 레코드만 걸러 평균을 내고, 유효값이 부족하면 그 필드는 null
- * 반환 → 알림 메시지에는 "판단보류(최근7건 유효값부족)"로 명시적으로 표시됨. 다른
- * 함수/로직은 전혀 손대지 않음.
- *
- * [2026-09-18 추가] 자동화 4종 — "수동으로 하던 일" 자동화 관점 보완.
- * 1) 6-A: aiAnalysis/comprehensiveReport를 덮어쓰기 직전 값을 ReportHistory 시트에 자동 보관
- *    (archiveReportBeforeOverwrite_) — 기존엔 매번 완전히 덮어써져서 지난 분석이 영구 소실됐음.
- * 2) 1-B: 운동 데이터 수신 시 종목별 추정1RM(Epley)을 계산해 역대 최고기록과 비교, 새 PR이면
- *    텔레그램 자동 발송(checkAndNotifyExercisePRs_) — 기존엔 Claude가 채팅에서 매번 수동/부정확
- *    하게 비교하던 것(2026-09-13 aiAnalysis 참고)을 서버가 원시데이터(exercises 배열)로 대체.
- * 3) 7-A·8: 인바디 2일공백/체성분실측 3일공백/저항운동 5일공백을 서버 트리거로 검사해 텔레그램
- *    발송(checkDailyReminders) — 기존 index.html의 checkReminders()는 "앱을 열었을 때만" 검사
- *    하는 구조라 앱을 안 열면 리마인더가 전혀 전달되지 않았음(코드 주석에 명시된 한계였음).
- * 4) [같은 날 추가 수정] 위 checkDailyReminders와 기존 sendEveningDigest 모두 원래는 "Apps
- *    Script 편집기 > 트리거 추가"를 사람이 손으로 한 번씩 눌러야 등록됐는데(정희님 요청: "트리거
- *    등록 방법은 머니트레일 프로젝트 참고해서 동일하게 앱에서 실행되게 수정해줘"), 이제
- *    ensureTriggersInstalled_()가 doGet() 호출 시(=앱을 열거나 동기화할 때) 자동으로 3개 트리거
- *    (checkInboxTrigger/sendEveningDigest/checkDailyReminders)를 전부 자동 등록함 — 편집기 조작
- *    불필요. 이미 등록돼 있으면 건드리지 않음(멱등). 자세한 내용은 ensureTriggersInstalled_ 주석,
- *    설정 절차는 위 "텔레그램 연동 설정" 6번 참고.
- * 이 5가지 모두 기존 함수/로직은 건드리지 않고 새 함수만 추가하는 방식으로 구현함.
- *
- * [2026-09-18 버그수정] handleTriggerStatus_에 try/catch 누락 — 정희님이 설정탭 "🩺 상태 확인"
- * 버튼을 눌렀을 때 "확인 실패: Failed to fetch"가 뜨는 문제 실사용 중 발견. 원인: 같은 파일의
- * handleInstallTrigger_는 try/catch로 감싸져 있었지만 handleTriggerStatus_는 감싸지 않아,
- * ScriptApp.getProjectTriggers() 호출이 예외를 던지면(트리거 관리 권한이 아직 미승인인 경우 등)
- * doGet 밖으로 예외가 그대로 전파 → Apps Script가 CORS 헤더 없는 자체 오류 페이지를 반환 →
- * 브라우저가 이를 네트워크 오류("Failed to fetch")로 표시. handleInstallTrigger_와 동일한
- * try/catch를 추가해 항상 CORS 안전한 JSON({ok:false, error:...})을 반환하도록 수정.
- *
- * [2026-09-14 추가] aiAnalysis-인바디 불일치 감지 경보.
- * 실사고(2026-09-13): Claude 세션이 체중 수치를 aiAnalysis 코멘트 문장 안에만 적고
- * 같은 날짜의 구조화 inbody 레코드는 올리지 않아서, 그 날짜가 시트 기반 계산(이동평균 등)
- * 에서 통째로 빠짐 — 사용자가 다음날 "어제 대비 비교"를 요청하고서야 수동으로 발견됨.
- * applyIncoming_에서 aiAnalysis 처리 직후 checkAiAnalysisInbodyGap_를 호출해서, 그 날짜에
- * 구조화 인바디 데이터가(같은 배치 payload든 기존 시트든) 전혀 없으면 텔레그램으로 즉시
- * 경고를 보내도록 함. 숫자를 정규식으로 역추출해 자동 보정하지는 않음(이 프로젝트에서
- * 과거 반복된 실패 패턴이라 의도적으로 배제) — 사람이 확인 후 수동으로 구조화 데이터를
- * 올리는 것을 전제로 한 "조기 경보"용임.
- *
- * [2026-09-13 추가] 운동 구조화 필드 4종(avgHR/durationMin/distanceKm/specialCondition) Workouts 시트 지원.
- * index.html이 유산소 세션의 note 자유텍스트 정규식 파싱(parseHR/parseDurationMin/parseKm) 대신
- * 구조화 필드로 값을 남기도록 바뀌었고(treadmillSteps 필드를 도입했던 것과 동일한 이유 —
- * 표현이 바뀔 때마다 값을 놓치는 문제 방지), 여행중/컨디션난조 등으로 강도를 낮춘 세션임을
- * 표시하는 specialCondition 필드도 추가됐음(2026-09-13). 클라이언트는 이미 cloudSync 시 이
- * 필드들을 포함해서 전송하지만, 서버(Apps Script)의 SHEETS.workouts.cols에 컬럼이 없으면
- * upsertSheet_/readSheet_가 header 기준으로 필드를 골라 쓰는 구조상 값이 조용히 버려진다
- * (2026-08-25 specialDayType 때와 동일한 원인). SHEETS.workouts.cols에 4개만 추가하면 됨 —
- * upsertSheet_/readSheet_ 둘 다 header를 기준으로 완전히 제네릭하게 동작하므로(header.map(h
- * => rec[h])), 다른 로직은 손댈 필요가 전혀 없음. 기존 Workouts 시트에도 getOrCreateSheet_가
- * 다음 doGet 호출 시 헤더 끝에 컬럼을 자동으로 보강해주므로 시트를 손으로 고칠 필요 없음.
- *
- * [2026-08-25 추가] specialDayType(과식/음주/컨디션난조/외식 등) 구조화 필드 Meals 시트 지원.
- * 기존엔 index.html 로컬 데이터 모델에만 specialDayType 필드가 있고 클라이언트는 이미
- * cloudSync 시 이 필드를 포함해서 전송하고 있었는데(meals: recentWindow_(state.meals)),
- * 서버(Apps Script)의 SHEETS.meals.cols에 이 컬럼이 없어서 upsertSheet_가 header 기준으로
- * 필드를 골라 쓰는 구조상 값이 조용히 버려지고 있었음(2026-08-25 발견) — 이 때문에 Claude가
- * Drive 인박스로 specialDayType을 올려도 절대 반영될 수 없었고, 앱 자체 동기화로도 저장이
- * 안 됐음. SHEETS.meals.cols에 'specialDayType'만 추가하면 됨 — upsertSheet_/readSheet_ 둘 다
- * header를 기준으로 완전히 제네릭하게 동작하므로(header.map(h => rec[h])), 다른 로직은 손댈
- * 필요가 전혀 없음. 기존 Meals 시트에도 getOrCreateSheet_가 다음 doGet 호출 시 헤더 끝에
- * 컬럼을 자동으로 보강해주므로 시트를 손으로 고칠 필요 없음.
- *
- * [2026-08-16 추가] 트레드밀 걸음수(treadmillSteps) 구조화 필드 지원.
- * 기존엔 인클라인 트레드밀 세션의 걸음수가 note 자유텍스트 안에 묻혀 있어서, 클라이언트
- * (index.html)가 정규식으로 재파싱하다가 표현이 바뀔 때마다 걸음수를 놓치는 문제가 반복됐음.
- * 이제 워크아웃 레코드에 treadmillSteps라는 별도 숫자 필드를 두고, 그 값을 note 텍스트와
- * 무관하게 그대로 신뢰해서 쓰도록 클라이언트를 바꿨음(2026-08-16). 이 필드가 시트 왕복
- * (pull/push) 과정에서 유실되지 않으려면 서버(Apps Script)도 이 컬럼을 알아야 하므로,
- * 아래 SHEETS.workouts.cols에 'treadmillSteps'를 추가함 — getOrCreateSheet_가 기존 시트에
- * 없는 컬럼은 헤더 끝에 자동으로 보강해주므로 시트를 손으로 고칠 필요는 없음.
- *
- * [2026-08-10 추가] 마운자로 투여 차수(MOUNJARO_DOSES) 자동화.
- * 기존엔 index.html에 하드코딩된 배열을 매주 직접 고쳐 GitHub에 재배포해야 했고,
- * 실제로 8차(7/23) 이후 9·10차가 누락된 채 방치되는 사고가 있었음(2026-08-10 발견).
- * applyIncoming_에 data.mounjaroDoses 처리 추가(Meta 'mounjaroDoses' 키에 JSON 문자열로 저장),
- * doGet() out 객체에 mounjaroDoses/mounjaroDosesDate 필드 추가. 이제 Claude가 목요일 투여 후
- * Drive 인박스에 {"mounjaroDoses":[{cycle,date,dose},...]}만 올리면 index.html 재배포 없이
- * 앱(cloudSync)에 자동 반영됨(클라이언트 측 state.mounjaroDoses 소비 로직은 index.html
- * 2026-08-10 버전부터 포함 — 반드시 그 버전 이상으로 함께 배포되어 있어야 함).
- *
- * [2026-08-06 추가] 알림봇 개선 6종.
- * 1. 부동소수점 반올림: round1_ 헬퍼를 formatDelta_ 및 누적합계(totalCal/totalProt/totalCarb)
- *    계산부에 공통 적용해서 "151.79999999999998" 같은 표시 오류 제거.
- * 2. 인바디 즉시알림에 전일 대비(±) 표시: findPrevInbody_로 직전 측정치를 찾아 각 지표
- *    옆에 전일 대비 변화량을 병기.
- * 3. 운동 알림에 Zone2(105-125bpm) 준수 여부 표시: extractAvgHeartRate_로 note에서
- *    "평균심박XXXbpm" 패턴을 추출해 목표존 준수 여부 표시. 단, part가 정확히 '유산소'인
- *    순수 유산소 세션에만 적용 — 근력+유산소 혼합 세션은 note에 등장하는 평균심박이
- *    근력 구간 값일 수 있어(정규식이 첫 매치만 잡음) 오귀속 위험이 있으므로 제외함.
- * 5. 저녁요약에 "오늘 N목표 중 M개 달성" 한 줄 요약 추가(칼로리/단백질/탄수화물 3개 기준).
- * 6. processInbox_에서 파일 처리 실패 시 텔레그램으로 실패 알림 발송(기존엔 조용히 스킵).
- * 7. 인바디 즉시알림에 MA7(직전7건) 대비 변화 + 규칙기반(A안, 템플릿) 분석 코멘트 추가:
- *    - 전일대비 방향성(골격근/체지방 동시개선·혼조 등) 자동 판정
- *    - MA7 골격근 손실폭을 합의된 롤백기준(-0.3kg)과 비교
- *    - 골격근손실비율(SURMOUNT-1 방식, 프로그램 시작일 대비 MA7 기준)을 0.51 임계값과 비교
- *    ※ 이 코멘트는 진짜 AI 분석이 아니라 정해진 규칙을 조합한 템플릿 문장입니다.
- *    맥락(질병, 특이일정 등)을 반영하지 못하므로 정밀 분석은 채팅에서 별도로 받아야 합니다.
- *
- * [2026-08-04 추가] 텔레그램 알림 (상세형: 즉시알림 + 저녁요약).
- * 필요 스크립트 속성 2개: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (설정 방법은 코드 하단
- * "텔레그램 연동 설정" 함수 주석 참고). 두 속성이 없으면 알림 관련 함수들은 조용히
- * 아무것도 하지 않고 넘어가므로(예외를 던지지 않음), 기존 동기화 동작에는 영향이 없습니다.
- * - 즉시알림: Drive 인박스 파일이 처리될 때(=processInbox_ 안에서) 그 파일에 담긴
- *   inbody/workouts/meals 내용을 바로 요약해서 보냄.
- * - 저녁요약: sendEveningDigest() 함수를 "시간 기반 트리거"로 매일 저녁(예: 21시)에
- *   실행되도록 Apps Script 편집기에서 등록해야 함(코드만으로는 자동 등록되지 않음 —
- *   Apps Script 트리거는 배포와 별개로 편집기에서 수동으로 한 번 등록하는 게 정석).
- *
- * [2026-08-05 추가] 식단 누적 알림에 목표/델타 표시.
- * index.html의 computeCalorieTarget/computeCarbTarget과 동일한 공식을 Apps Script에도
- * 이식해서(computeCalorieTarget_/computeCarbTarget_), notifyImmediate_의 식단 메시지에
- * "칼로리/단백질/탄수화물 목표 대비 부족·초과분"을 함께 표시하도록 확장함. 그날 인바디
- * BMR과 운동볼륨(그날 총 볼륨 + 역대 PR)을 시트에서 다시 읽어와 계산하므로, 값을
- * 별도로 넘겨줄 필요 없이 시트 상태만 정확하면 항상 맞게 계산됨.
- *
- * [2026-08-04 추가] "종합 리포트"(comprehensiveReport) Meta 필드 처리.
- * 앱의 새 "리포트" 탭이 aiAnalysis와 동일한 방식으로 Claude가 작성한 정기 리포트 텍스트를
- * 받아 보여주도록, Meta 시트에 comprehensiveReport/comprehensiveReportDate 키를 저장하고
- * doGet 응답에도 포함시킴.
- *
- * [2026-07-29 추가 → 2026-10-18 제거] GitHub 자동배포 채널(deployFiles/deployChunk)과 "GitHub 연동 설정"은 코드와 함께 삭제됐다.
- * 앱 코드 배포는 index.html 다운로드 → GitHub "Upload files"로만 한다. 스크립트 속성에 남은 GITHUB_TOKEN/OWNER/REPO/BRANCH는 지워도 된다.
+ * (2026-07-17 ~ 2026-11-03 변경 기록은 GitHub 저장소 이력 참고)
  *
  * ## 텔레그램 연동 설정 (최초 1회만)
  * 1) 텔레그램 앱에서 @BotFather 검색 > /newbot > 안내에 따라 봇 이름 설정
@@ -317,20 +88,6 @@
  *    뜰 수 있습니다 — "고급 > 안전하지 않음으로 이동 > 허용"으로 한 번만 승인해주면 됩니다
  *    (파일 상단 "설치 방법" 7번과 동일한 절차).
  *
- * [2026-07-19 수정] 허리둘레(Waist) 시트 연동 추가.
- * 앱(index.html)의 목표 탭에 "허리둘레 추적" 섹션이 새로 생기면서, 클라이언트가
- * cloudSync 시 waist 배열을 함께 전송/수신하도록 바뀜 — 이에 맞춰 서버(Apps Script)도
- * SHEETS.waist 정의 추가, applyIncoming_에 upsertSheet_ 호출 추가, doGet 응답에
- * waist 필드 추가. 날짜당 1건이 정상인 데이터라 인바디/걸음수와 동일하게 matchField 없이
- * "날짜만" 매칭 사용.
- *
- * [2026-07-17 수정] upsertSheet_의 matchName(boolean)을 matchField(string)로 일반화.
- * 기존엔 운동(name)만 "날짜+이름"으로 매칭하고 식단(meals)은 항상 "날짜만"으로 매칭해서,
- * 같은 날 두 번째 끼니를 올리면 첫 번째 끼니가 통째로 덮어써지는 버그가 있었음
- * (2026-07-17 실제 재현 확인: 점심 업로드 후 저녁 업로드 시 점심 유실).
- * 이제 식단도 "날짜+note"로 매칭해서, note가 다르면 별도 행으로 추가되고
- * note가 같으면(=같은 끼니 재업로드/정정) 그 행만 갱신됨 — 클라이언트 mergeMealsByDate_와 동일한 방식.
- *
  * 동작 방식: Claude가 "body-recomp-inbox"라는 Drive 폴더에 JSON 파일을 올려두면,
  * 앱이 열려서 이 스크립트(doGet)가 호출될 때마다 그 폴더를 확인해 자동으로 시트에 반영하고,
  * 처리된 파일은 같은 폴더 안의 "processed" 하위 폴더로 옮깁니다.
@@ -350,7 +107,7 @@
 // getOrCreateSheet_가 헤더 끝에 자동으로 컬럼을 보강해주므로 별도 마이그레이션 작업 불필요.
 // 기존 행은 이 값이 빈 문자열(=null)이라, 클라이언트 병합 로직은 양쪽 다 값이 있을 때만
 // 타임스탬프를 비교하고 없으면 기존처럼 "서버 값 신뢰"로 안전하게 폴백한다.
-const CODE_VERSION_ = '2026-11-11b'; // [2026-11-11] 응답의 codeVersion으로 내려감(배포된 서버 버전 확인용)
+const CODE_VERSION_ = '2026-11-14'; // [2026-11-11] 응답의 codeVersion으로 내려감(배포된 서버 버전 확인용)
 const STAGE_DETAIL_ = true;          // [2026-11-11] true면 전체 조회 stageMs에 시트별 누적 소요시간을 추가(측정 후 false로 바꿔도 됨)
 const SHEETS = {
   // [2026-10-13] exclude/excludeReason/excludeAt: 인바디 "제외 확정" — 위 헤더 설명 참고. 기존 시트는 getOrCreateSheet_가 헤더 끝에 자동 보강.
@@ -1493,15 +1250,6 @@ function dsIsQualifyingCardio_(w){
   return (dur !== null && dur >= 30) || (km !== null && km >= 3);
 }
 /** 범위 내=full, 범위 밖 gap이 nearGap 이내=near, midGap 이내=mid(없으면 null), 그 외 0 */
-function dsBand_(value, low, high, full, near, mid, nearGap, midGap){
-  if(value >= low && value <= high) return {points: full, inRange: true, over: false, gap: 0};
-  const below = value < low;
-  const gap = below ? low - value : value - high;
-  let points = 0;
-  if(gap <= nearGap) points = near;
-  else if(mid !== null && gap <= midGap) points = mid;
-  return {points: points, inRange: false, over: !below, gap: gap};
-}
 /**
  * [2026-10-05 추가] 허용오차 + 선형 감점 채점. 목표 범위(low~high) 밖이라도 허용오차(tol) 이내면 만점,
  * 그 너머는 허용 가장자리 기준 이탈량(outGap)에 비례해 full에서 0점까지 직선으로 줄어든다(decayWidth만큼 벗어나면 0점).
@@ -1776,21 +1524,6 @@ function saveDailyScore_(ss, r, status){
 
 
 /** 텔레그램 저녁 요약 맨 아래에 붙일 점수 블록. label 예: "21시 기준 잠정" */
-function formatDailyScoreBlock_(r, label){
-  if(!r || r.score === null || r.score === undefined){
-    return '🎯 하루 점수: 산출 안 함' + (r && r.reason ? ' (' + r.reason.replace(/ — 점수 산출 안 함$/, '') + ')' : '');
-  }
-  const p = r.parts;
-  let s = '🎯 <b>하루 점수 ' + dsFmt_(r.score) + ' / 100</b>' + (label ? '  (' + label + ')' : '') + '\n' +
-    '· 칼로리 ' + dsFmt_(p.calories.points) + ' / 30 — ' + p.calories.basis + '\n' +
-    '· 단백질 ' + dsFmt_(p.protein.points) + ' / 20 — ' + p.protein.basis + '\n' +
-    '· 탄수 ' + dsFmt_(p.carbs.points) + ' / 15 — ' + p.carbs.basis + '\n' +
-    '· 운동·활동 ' + dsFmt_(p.activity.points) + ' / 25 — ' + p.activity.basis + '\n' +
-    '· 기록·보조 ' + dsFmt_(p.record.points) + ' / 10 — ' + p.record.basis + '\n' +
-    '※ 체성분 판정이 아니라 그날 행동 평가예요.';
-  if(r.estimated) s += '\n※ 식단에 추정치가 포함돼 있어(±20~30%) 칼로리·탄수 점수가 달라질 수 있어요.';
-  return s;
-}
 
 
 
