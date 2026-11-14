@@ -4,7 +4,7 @@
 - 인바디·운동·식단·걸음수·마운자로(GLP-1)를 추적하는 개인용 PWA.
 - 파일: index.html(단일 파일, 약 0.6MB) · sw.js · manifest.json · 아이콘.
 - 데이터: Google 시트(InBody·식단·운동 등 탭) ↔ Apps Script 웹앱으로 동기화(`cloudSync`, pull 계열 함수).
-- 서버 코드 Code.gs: 저장소에 없음. Apps Script 편집기에 붙여넣고 "새 버전으로 배포"(GitHub 대상 아님). 수정 시 FULL본 제공.
+- 서버 코드: `gas/Code.gs` (2026-11-15 서버 현재본에서 가져옴). 텔레그램 토큰·채팅ID는 스크립트 속성(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)에서 읽는다.
 - 버전 표기: 앱 `APP_BUILD_VERSION`(index.html), 서버 `codeVersion`(Code.gs). 수정하면 둘 다 갱신하고 짝 버전을 적는다.
 
 ## 상세 기준 문서 (공개 저장소라 여기에 적지 않음)
