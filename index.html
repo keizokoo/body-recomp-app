@@ -645,7 +645,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-15-a (운동 탭 유산소 인정 기준을 서버와 맞춤 — 미인정 사유 표시·인정 유산소 합계(분)·서버 점수와 차이 안내·걷기 속도 조건(11/16부터, 인클라인 제외) / Code.gs 2026-11-15와 짝. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
+const APP_BUILD_VERSION = '2026-11-15-b (설정 탭에 "내 앱 허브" 링크 추가 — 5개 앱 바로가기를 한 화면에서. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1876,6 +1876,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-15-b','설정 탭에 "내 앱 허브" 링크 추가(hub.html) — 5개 앱 바로가기, 바디 요약은 주소를 넣으면 오늘 숫자까지 표시(선택)'],
   ['2026-11-15-a','운동 탭: 미인정 유산소 사유 표시 · 인정 유산소 합계(분) · 대시보드 점수와 차이 안내 · 걷기 속도 조건(11/16부터, 인클라인 제외) · 근력 칩을 점수 기준(턱걸이 +1 포함)으로'],
   ['2026-11-14-a','동기화 기록 · 오류 기록 · 저장공간 표시 · 글자 크기 · 홈 화면 바로가기(식단·운동·인바디 입력)'],
   ['2026-11-12-a','삭제 보관함(30일 복구) · 목표 도달 예상과 정체 점검'],
@@ -6364,6 +6365,12 @@ function renderSettings(){
       <p class="p-dim" style="font-size:12px; margin-bottom:6px;">화면이 멈추거나 버튼이 안 먹을 때 원인이 여기에 남아요. 문의할 때 복사해서 붙여 주세요.</p>
       <div style="max-height:150px; overflow:auto; font-size:12px; color:var(--text-dim);">${window.AppErrLog ? window.AppErrLog.html() : ''}</div>
       <div style="display:flex; gap:6px; margin-top:8px;"><button class="btn btn-ghost" style="flex:1;" onclick="copyErrLog_()">📋 복사</button><button class="btn btn-ghost" style="flex:1;" onclick="clearErrLog_()">지우기</button></div>
+    </section>
+
+    <section class="card">
+      <div class="section-label good">${secNum('06b2')}내 앱 허브</div>
+      <p class="p-dim" style="font-size:12px; margin-bottom:6px;">5개 앱(바디·마이라이프·머니트레일·여행경비·업무 대시보드) 바로가기를 한 화면에서.</p>
+      <a class="btn btn-ghost" style="display:inline-block;" href="./hub.html" target="_blank">🧭 허브 열기</a>
     </section>
 
     <section class="card">
