@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>내 앱 허브</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#ffffff; --ink:#1b2230; --ink2:#586174; --line:#dfe3ea; --soft:#eef1f5;
+  --accent:#1d6b78; --accent-soft:#dcedf0; --good:#1f7a4d; --warn:#a96a00; --warn-soft:#fbefd6; --bad:#b3261e;
+  --f-body:'IBM Plex Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif; --f-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12161d; --panel:#1a202a; --ink:#e8ecf3; --ink2:#9aa5b8; --line:#2b3442; --soft:#222a36;
+  --accent:#5cc0cf; --accent-soft:#183840; --good:#58c78f; --warn:#e9b24d; --warn-soft:#3a2d12; --bad:#ff8a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161d; --panel:#1a202a; --ink:#e8ecf3; --ink2:#9aa5b8; --line:#2b3442; --soft:#222a36;
+  --accent:#5cc0cf; --accent-soft:#183840; --good:#58c78f; --warn:#e9b24d; --warn-soft:#3a2d12; --bad:#ff8a80; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14.5px;line-height:1.6;padding:24px max(16px,env(safe-area-inset-left,0px)) 64px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:22px;margin:0}
+p{margin:0}
+.meta{color:var(--ink2);font-size:12.5px}
+.grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:560px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.card h2{font-size:16px;margin:0;display:flex;align-items:center;gap:8px}
+.card .sub{color:var(--ink2);font-size:12px}
+.card .nums{display:flex;flex-wrap:wrap;gap:10px;font-family:var(--f-mono);font-size:13px;margin-top:4px}
+.card .nums b{font-size:15px}
+.card a.open{align-self:flex-start;margin-top:4px;background:var(--accent);color:#fff;text-decoration:none;padding:7px 14px;border-radius:99px;font-size:13px;font-weight:600}
+.tag{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--soft);color:var(--ink2)}
+.tag.live{background:var(--accent-soft);color:var(--accent)}
+.tag.static{background:var(--soft);color:var(--ink2)}
+.settings{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13px}
+.settings summary{cursor:pointer;font-weight:600}
+.settings input{width:100%;margin-top:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:13px}
+.settings .row{display:flex;gap:8px;margin-top:8px}
+.settings button{border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:8px;padding:7px 12px;font-size:12.5px;cursor:pointer}
+.note{font-size:11.5px;color:var(--ink2);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <h1>내 앱 허브</h1>
+    <p class="meta">5개 앱 바로가기. 아래 바디 카드는 설정에서 주소를 넣으면 오늘 숫자를 바로 보여줍니다(주소는 이 기기 브라우저에만 저장되고 저장소에는 올라가지 않습니다). 2026-11-15 기준 정적 정보.</p>
+  </header>
+
+  <div class="grid" id="appGrid"></div>
+
+  <details class="settings">
+    <summary>⚙ 바디 요약 연결(선택)</summary>
+    <p class="note" style="margin-top:8px">바디 앱 설정 탭에서 "클라우드 동기화 웹앱 URL"을 복사해 아래에 붙여넣으면, 이 페이지를 열 때마다 오늘 인바디·식단 요약을 바로 보여줍니다. 그 주소는 비밀값이라 이 브라우저에만 저장됩니다.</p>
+    <input type="text" id="bodyUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <div class="row">
+      <button id="saveBodyUrl">저장</button>
+      <button id="clearBodyUrl">지우기</button>
+    </div>
+  </details>
+
+  <p class="note">마이라이프·머니트레일·여행경비·업무 대시보드는 아직 허브용 요약 주소가 없어 바로가기만 됩니다(다음 단계: 각 서버에 공개해도 안전한 요약 주소를 추가).</p>
+</div>
+
+<script>
+const APPS = [
+  { id:'body', name:'바디 리컴포지션', icon:'💪', desc:'인바디·운동·식단·걸음수', url:'./index.html', summary:true },
+  { id:'mylife', name:'마이라이프', icon:'🗂️', desc:'회의비·가격·구독·인맥·피부·옷', url:'https://keizokoo.github.io/meeting-budget/', summary:false },
+  { id:'moneytrail', name:'머니트레일', icon:'📈', desc:'주식·배당·목표·세금·MDD', url:'https://moneytrail.keizokoo.workers.dev/', summary:false },
+  { id:'travel', name:'여행경비', icon:'✈️', desc:'여행 경비 정리·정산', url:'https://keizokoo.github.io/travel-budget/', summary:false },
+  { id:'work', name:'업무 대시보드', icon:'🏢', desc:'회사 PC 전용(파일로 열기), 비공개', url:'', summary:false },
+];
+const BODY_URL_KEY = 'hub_body_summary_url_v1';
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function cardHtml(app){
+  const statusTag = app.summary ? '<span class="tag live" id="tag-'+app.id+'">연결 안 됨</span>' : '<span class="tag static">바로가기만</span>';
+  const openBtn = app.url ? `<a class="open" href="${esc(app.url)}" target="_blank" rel="noopener">열기 →</a>` : '<span class="note">회사 PC에서 파일로 직접 열기</span>';
+  return `<div class="card" id="card-${app.id}">
+    <h2>${app.icon} ${esc(app.name)} ${statusTag}</h2>
+    <div class="sub">${esc(app.desc)}</div>
+    <div class="nums" id="nums-${app.id}"></div>
+    ${openBtn}
+  </div>`;
+}
+document.getElementById('appGrid').innerHTML = APPS.map(cardHtml).join('');
+
+function fmtDate(d){ if(!d) return '—'; return String(d).slice(5).replace('-','/'); }
+async function loadBodySummary(){
+  let url = '';
+  try{ url = localStorage.getItem(BODY_URL_KEY) || ''; }catch(e){}
+  const tag = document.getElementById('tag-body');
+  const nums = document.getElementById('nums-body');
+  if(!url){ if(tag) tag.textContent = '연결 안 됨'; return; }
+  if(tag){ tag.textContent = '불러오는 중...'; }
+  try{
+    const sep = url.includes('?') ? '&' : '?';
+    const res = await fetch(url + sep + 'summary=1', { signal: AbortSignal.timeout(15000) });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    if(!d || d.ok !== true) throw new Error('응답 형식 오류');
+    if(tag){ tag.textContent = '연결됨 · ' + fmtDate(d.asOf); tag.classList.add('live'); }
+    const ib = d.inbody;
+    const parts = [];
+    if(ib) parts.push(`<div>인바디(${esc(fmtDate(ib.date))}) <b>${esc(ib.weight)}kg</b> · 골격근 ${esc(ib.muscle)}kg · 체지방률 ${esc(ib.fatPct)}%</div>`);
+    if(d.mealToday) parts.push(`<div>오늘 식단 ${d.mealToday.recorded ? `<b>${esc(d.mealToday.calories)}kcal</b> · 단백질 ${esc(d.mealToday.protein)}g` : '아직 기록 없음'}</div>`);
+    if(d.scoreToday != null) parts.push(`<div>이번 주 점수 <b>${esc(d.scoreToday)}</b></div>`);
+    nums.innerHTML = parts.join('');
+  }catch(e){
+    if(tag){ tag.textContent = '연결 실패'; }
+    nums.innerHTML = `<span class="note">불러오지 못했어요(주소 확인 필요)</span>`;
+    console.error('바디 요약 불러오기 실패:', e);
+  }
+}
+document.getElementById('saveBodyUrl').addEventListener('click', () => {
+  const v = document.getElementById('bodyUrlInput').value.trim();
+  if(!v){ return; }
+  try{ localStorage.setItem(BODY_URL_KEY, v); }catch(e){}
+  loadBodySummary();
+});
+document.getElementById('clearBodyUrl').addEventListener('click', () => {
+  try{ localStorage.removeItem(BODY_URL_KEY); }catch(e){}
+  document.getElementById('bodyUrlInput').value = '';
+  loadBodySummary();
+});
+try{
+  const saved = localStorage.getItem(BODY_URL_KEY);
+  if(saved) document.getElementById('bodyUrlInput').value = saved;
+}catch(e){}
+loadBodySummary();
+</script>
+</body>
+</html>
