@@ -1,6 +1,9 @@
 /**
  * 바디 리컴포지션 앱 - 클라우드 동기화 백엔드
  *
+ * [2026-11-15 수정] 유산소 인정 판정 보강(앱 2026-11-15-a와 짝): ①걷기 속도 조건 — 2026-11-16 이후 걷기·산책·러닝머신은 평균속도 4.0km/h 이상 또는 분당 100보 이상
+ *    (인클라인·골프·사이클은 제외, 속도 칸이 없으면 인정 유지) ②cardioCreditInfo_가 미인정 사유를 돌려줌 ③채팅 업로드 알림에 유산소 빈 칸·기준 미달 경고 한 줄.
+ *    2026-11-15 이전 주의 점수는 바뀌지 않는다(주간 점수 버전 그대로).
  * [2026-11-14 수정] 정리(앱 2026-11-14-a와 짝, 동작·점수 공식·시트 구조·응답 필드 변경 없음): 쓰이지 않는 함수 2개(옛 하루 점수 구간 계산·하루 점수 블록 문구) 삭제,
  *    이 머리말의 2026-11-03 이전 변경 기록을 걷어냄(전체 기록은 GitHub 저장소 이력에 있음). 서버 코드는 저장소 gas/Code.gs가 원본이며 main 병합 시 자동 배포된다.
  *
@@ -107,7 +110,7 @@
 // getOrCreateSheet_가 헤더 끝에 자동으로 컬럼을 보강해주므로 별도 마이그레이션 작업 불필요.
 // 기존 행은 이 값이 빈 문자열(=null)이라, 클라이언트 병합 로직은 양쪽 다 값이 있을 때만
 // 타임스탬프를 비교하고 없으면 기존처럼 "서버 값 신뢰"로 안전하게 폴백한다.
-const CODE_VERSION_ = '2026-11-14'; // [2026-11-11] 응답의 codeVersion으로 내려감(배포된 서버 버전 확인용)
+const CODE_VERSION_ = '2026-11-15'; // [2026-11-11] 응답의 codeVersion으로 내려감(배포된 서버 버전 확인용)
 const STAGE_DETAIL_ = true;          // [2026-11-11] true면 전체 조회 stageMs에 시트별 누적 소요시간을 추가(측정 후 false로 바꿔도 됨)
 const SHEETS = {
   // [2026-10-13] exclude/excludeReason/excludeAt: 인바디 "제외 확정" — 위 헤더 설명 참고. 기존 시트는 getOrCreateSheet_가 헤더 끝에 자동 보강.
@@ -1245,9 +1248,49 @@ function dsIsStrength_(w){
 /** 인정 유산소 = part가 정확히 '유산소' AND 평균심박 105 이상 AND 20분 이상(구조화 필드만, 없으면 불인정) */
 function dsIsQualifyingCardio_(w){
   // [2026-11-07] 30분 이상 또는 3km 이상(평균심박 조건 폐지) — 주간 점수 wsIsCardio_와 같은 기준
-  if(String(w.part || '').trim() !== '유산소') return false;
-  const dur = dsNum_(w.durationMin), km = dsNum_(w.distanceKm);
-  return (dur !== null && dur >= 30) || (km !== null && km >= 3);
+  // [2026-11-15] 걷기 속도 조건 추가(cardioCreditInfo_ 참고). 판정 내용은 앱 cardioCreditInfo_와 같다.
+  return cardioCreditInfo_(w).ok;
+}
+/**
+ * [2026-11-15] 인정 유산소 판정과 미인정 사유(앱 index.html의 cardioCreditInfo_와 같은 규칙 — 바꿀 때 양쪽을 같이 고친다)
+ * ① part가 정확히 '유산소' ② 운동시간 30분 이상 또는 거리 3km 이상(시트 칸만 읽고 메모는 읽지 않는다)
+ * ③ 걷기 보강(2026-11-11 승인, 2026-11-15 확정): CARDIO_WALK_RULE_START_ 이후 날짜의 걷기·산책·러닝머신은
+ *    평균속도 4.0km/h 이상 또는 분당 100보 이상이어야 한다. 인클라인(경사) 러닝머신·골프·사이클 등은 적용하지 않는다(정희님 확정 2026-11-15).
+ *    속도를 계산할 칸(거리 또는 걸음수)이 없으면 막지 않고 인정하되 사유에 "속도 확인 불가"를 남긴다.
+ * 반환: {ok, reason, dur, km, speed, cadence, walk}
+ */
+const CARDIO_WALK_RULE_START_ = '2026-11-16';     // 이 날짜(월)부터 속도 조건 적용 — 이전 주 점수는 바뀌지 않는다
+const CARDIO_WALK_MIN_KMH_ = 4.0, CARDIO_WALK_MIN_SPM_ = 100;
+function cardioIsWalkLike_(w){
+  const name = String((w && w.name) || '');
+  if(/인클라인|경사|골프|사이클|자전거|계단/.test(name)) return false;
+  return /걷기|산책|도보|워킹|러닝머신|리닝머신|트레드밀|walk|treadmill/i.test(name);
+}
+function cardioCreditInfo_(w){
+  const out = {ok: false, reason: '', dur: null, km: null, speed: null, cadence: null, walk: false};
+  if(!w || String(w.part || '').trim() !== '유산소'){ out.reason = "구분이 '유산소'가 아님"; return out; }
+  const dur = dsNum_(w.durationMin), km = dsNum_(w.distanceKm), steps = dsNum_(w.treadmillSteps);
+  out.dur = dur; out.km = km;
+  if(dur === null && km === null){ out.reason = '운동시간·거리 칸이 비어 있음'; return out; }
+  if(!((dur !== null && dur >= 30) || (km !== null && km >= 3))){
+    out.reason = '30분·3km 미만(' + (dur !== null ? Math.round(dur) + '분' : '시간 없음') + (km !== null ? '·' + km + 'km' : '') + ')';
+    return out;
+  }
+  const dt = String(w.date || '').slice(0, 10);
+  out.walk = cardioIsWalkLike_(w) && /^\d{4}-\d{2}-\d{2}$/.test(dt) && dt >= CARDIO_WALK_RULE_START_;
+  if(out.walk && dur && dur > 0){
+    if(km !== null && km > 0) out.speed = Math.round(km / (dur / 60) * 10) / 10;
+    if(steps !== null && steps > 0) out.cadence = Math.round(steps / dur);
+  }
+  if(out.walk){
+    if(out.speed === null && out.cadence === null){ out.ok = true; out.reason = '속도 확인 불가(거리·걸음수 칸 없음) — 인정'; return out; }
+    if(!((out.speed !== null && out.speed >= CARDIO_WALK_MIN_KMH_) || (out.cadence !== null && out.cadence >= CARDIO_WALK_MIN_SPM_))){
+      out.reason = '걷기 속도 미달(' + [out.speed !== null ? out.speed + 'km/h' : '', out.cadence !== null ? '분당 ' + out.cadence + '보' : ''].filter(Boolean).join('·') + ', 기준 4.0km/h 또는 분당 100보)';
+      return out;
+    }
+  }
+  out.ok = true;
+  return out;
 }
 /** 범위 내=full, 범위 밖 gap이 nearGap 이내=near, midGap 이내=mid(없으면 null), 그 외 0 */
 /**
@@ -1912,6 +1955,12 @@ function notifyImmediate_(ss, data){
       }
       // [2026-10-02 추가] 볼륨·종목/세트/횟수·시간 요약 한 줄(값이 없으면 빈 문자열이라 기존 알림과 동일)
       msg += buildWorkoutSummaryLine_(r);
+      // [2026-11-15] 유산소 행의 칸이 비었거나 기준 미달이면 바로 알린다(11-14 사고: 칸이 비어 미인정됐는데 아무도 몰랐음)
+      if(String(r.part || '').trim() === '유산소'){
+        const ci = cardioCreditInfo_(r);
+        if(!ci.ok) msg += '\n⚠️ 인정 유산소로 세지 않음: ' + ci.reason + (ci.reason.indexOf('비어') >= 0 ? ' — 운동시간(durationMin)·거리(distanceKm) 칸을 채워 같은 이름으로 다시 올려 주세요.' : '');
+        else if(ci.reason) msg += '\nℹ️ ' + ci.reason;
+      }
 
 
 

@@ -645,7 +645,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-14-a (점검 반영 — 동기화 기록·오류 기록·저장공간 표시·글자 크기·홈 화면 바로가기·저장 실패 안내 / Code.gs 2026-11-14와 짝, 점수 계산 변경 없음. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
+const APP_BUILD_VERSION = '2026-11-15-a (운동 탭 유산소 인정 기준을 서버와 맞춤 — 미인정 사유 표시·인정 유산소 합계(분)·서버 점수와 차이 안내·걷기 속도 조건(11/16부터, 인클라인 제외) / Code.gs 2026-11-15와 짝. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -800,11 +800,54 @@ const SPECIAL_DAY_ADVICE = {
 // 별개 개념이므로 혼동하지 않는다.
 // 2026-11-07 개정(정희님 지시): 유산소 "인정기준" = part가 정확히 '유산소' AND (30분 이상 OR 3km 이상). 평균심박 조건은 폐지(손목 심박 오차, 심박은 참고 기록만).
 const CARDIO_VALID_RULE = {minDurationMin:30, minDistanceKm:3};
-function isQualCardioW_(w){
-  if(!w || String(w.part||'').trim()!=='유산소') return false;
-  const n = v => (v===null||v===undefined||v===''||isNaN(Number(v))) ? null : Number(v);
-  const dur = n(w.durationMin), km = n(w.distanceKm);
-  return (dur!==null && dur>=CARDIO_VALID_RULE.minDurationMin) || (km!==null && km>=CARDIO_VALID_RULE.minDistanceKm);
+function isQualCardioW_(w){ return cardioCreditInfo_(w).ok; }
+// 2026-11-15: 인정 유산소 판정 + 미인정 사유. 서버 Code.gs cardioCreditInfo_와 같은 규칙(바꿀 때 양쪽을 같이 고친다).
+// 걷기 보강(2026-11-11 승인, 11-15 확정): 2026-11-16 이후 걷기·산책·러닝머신은 평균속도 4.0km/h 이상 또는 분당 100보 이상.
+// 인클라인(경사) 러닝머신·골프·사이클은 적용하지 않는다(정희님 확정 2026-11-15). 속도를 계산할 칸(거리·걸음수)이 없으면 인정하고 사유만 남긴다.
+const CARDIO_WALK_RULE = {start:'2026-11-16', minKmh:4.0, minSpm:100};
+function cardioIsWalkLike_(w){
+  const name = String((w && w.name) || '');
+  if(/인클라인|경사|골프|사이클|자전거|계단/.test(name)) return false;
+  return /걷기|산책|도보|워킹|러닝머신|리닝머신|트레드밀|walk|treadmill/i.test(name);
+}
+function cardioCreditInfo_(w){
+  const out = {ok:false, reason:'', dur:null, km:null, speed:null, cadence:null, walk:false};
+  if(!w || String(w.part||'').trim()!=='유산소'){ out.reason = "구분이 '유산소'가 아님"; return out; }
+  const n = v => (v===null||v===undefined||v===''||isNaN(Number(String(v).replace(/,/g,'')))) ? null : Number(String(v).replace(/,/g,''));
+  const dur = n(w.durationMin), km = n(w.distanceKm), steps = n(w.treadmillSteps);
+  out.dur = dur; out.km = km;
+  if(dur===null && km===null){ out.reason = '운동시간·거리 칸이 비어 있음'; return out; }
+  if(!((dur!==null && dur>=CARDIO_VALID_RULE.minDurationMin) || (km!==null && km>=CARDIO_VALID_RULE.minDistanceKm))){
+    out.reason = `30분·3km 미만(${dur!==null ? Math.round(dur)+'분' : '시간 없음'}${km!==null ? '·'+km+'km' : ''})`;
+    return out;
+  }
+  const dt = String(w.date||'').slice(0,10);
+  out.walk = cardioIsWalkLike_(w) && /^\d{4}-\d{2}-\d{2}$/.test(dt) && dt >= CARDIO_WALK_RULE.start;
+  if(out.walk && dur && dur>0){
+    if(km!==null && km>0) out.speed = Math.round(km/(dur/60)*10)/10;
+    if(steps!==null && steps>0) out.cadence = Math.round(steps/dur);
+  }
+  if(out.walk){
+    if(out.speed===null && out.cadence===null){ out.ok = true; out.reason = '속도 확인 불가(거리·걸음수 칸 없음) — 인정'; return out; }
+    if(!((out.speed!==null && out.speed>=CARDIO_WALK_RULE.minKmh) || (out.cadence!==null && out.cadence>=CARDIO_WALK_RULE.minSpm))){
+      out.reason = `걷기 속도 미달(${[out.speed!==null ? out.speed+'km/h' : '', out.cadence!==null ? '분당 '+out.cadence+'보' : ''].filter(Boolean).join('·')}, 기준 4.0km/h 또는 분당 100보)`;
+      return out;
+    }
+  }
+  out.ok = true;
+  return out;
+}
+// 2026-11-15: 한 주의 유산소 기록 중 인정·미인정 내역(사유 포함)과 인정 유산소 합계(분, 참고 — WHO·한국 지침 주 150분)
+function cardioWeekDetail_(workouts, dates){
+  // 유산소 기록 = part가 '유산소'이거나, 그 기록 하나만 봤을 때 화면이 유산소로 분류하는 것(근력과 한 줄로 적은 혼합 기록은 근력 쪽이라 제외)
+  const rows = workouts.filter(w => dates.includes(w.date) && !isAuxEntry_(w) && (String(w.part||'').trim()==='유산소' || ((classifyDayType([w], w.date)||{}).type==='유산소')));
+  let minutes = 0; const unq = [];
+  rows.forEach(w => {
+    const ci = cardioCreditInfo_(w);
+    if(ci.ok){ if(ci.dur) minutes += ci.dur; }
+    else unq.push({date:w.date, name:w.name||'', reason:ci.reason});
+  });
+  return {minutes: Math.round(minutes), unq};
 }
 // 2026-11-07 개정: 칼로리 목표 = 주 평균 고정 목표(기초대사·운동 보정 폐지).
 // 근거: 6/29~11/2 주간 인바디 변화(체지방×7,700 + 제지방×1,800kcal/kg)와 식단 평균으로 구한 유지 칼로리(4주 창 9개)가 2,117~2,254(평균 약 2,190)로 일정했다.
@@ -1833,6 +1876,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-15-a','운동 탭: 미인정 유산소 사유 표시 · 인정 유산소 합계(분) · 대시보드 점수와 차이 안내 · 걷기 속도 조건(11/16부터, 인클라인 제외) · 근력 칩을 점수 기준(턱걸이 +1 포함)으로'],
   ['2026-11-14-a','동기화 기록 · 오류 기록 · 저장공간 표시 · 글자 크기 · 홈 화면 바로가기(식단·운동·인바디 입력)'],
   ['2026-11-12-a','삭제 보관함(30일 복구) · 목표 도달 예상과 정체 점검'],
   ['2026-11-10-c','동기화 배지에 보내기 서버 소요시간 표시'],
@@ -4872,9 +4916,21 @@ function renderWeeklyPlanSection(workouts){
     const cardioCount = dates.filter(d => { const a=classifyDayType(workouts,d); return a && (a.type==='유산소'||a.type==='둘다'); }).length;
     const fx_ = FLEX_WEEK_V2_ ? flexWeekStats_(workouts, dates) : null; // 2026-10-22: 근력 목표 2회, 유산소는 인정 기준으로만 집계
     const sT_ = FLEX_WEEK_V2_ ? FLEX_STRENGTH_TARGET_ : 3;
+    const cwd_ = FLEX_WEEK_V2_ ? cardioWeekDetail_(workouts, dates) : {minutes:0, unq:[]}; // 2026-11-15: 미인정 사유·합계(분)
+    // 2026-11-15: 서버가 저장한 주간 점수의 횟수와 이 화면 계산이 다르면 알려준다(11-14 사고: 대시보드 2/3 vs 운동 탭 3/3)
+    const srvW_ = FLEX_WEEK_V2_ && Array.isArray(state.weeklyScores) ? state.weeklyScores.find(r => r && String(r.date).slice(0,10)===mondayDate) : null;
+    const srvDiff_ = (() => {
+      if(!srvW_) return '';
+      const d = [];
+      if(srvW_.cardioDays!==undefined && srvW_.cardioDays!=='' && Number(srvW_.cardioDays)!==fx_.cardioQ) d.push(`유산소 ${srvW_.cardioDays}회(화면 ${fx_.cardioQ}회)`);
+      if(srvW_.strengthDays!==undefined && srvW_.strengthDays!=='' && Number(srvW_.strengthDays)!==fx_.strength) d.push(`근력 ${srvW_.strengthDays}회(화면 ${fx_.strength}회)`);
+      return d.length ? `<div>대시보드 주간 점수는 서버 계산 기준 ${d.join(' · ')}이에요. 기록을 고친 직후면 다음 동기화 때 맞춰져요. 계속 다르면 아래 미인정 사유를 확인해 주세요.</div>` : '';
+    })();
+    const unqHtml_ = cwd_.unq.length ? `<div style="margin:6px 0; padding:6px 10px; border:1px solid var(--border); border-radius:10px; font-size:12px; line-height:1.5;" class="dim">${cwd_.unq.map(u => `<div>미인정 · ${esc(u.date.slice(5).replace('-','/'))} ${esc(u.name.length>16?u.name.slice(0,16)+'…':u.name)} — ${esc(u.reason)}</div>`).join('')}</div>` : '';
     const chipsHtml_ = FLEX_WEEK_V2_
-      ? `<span class="chip ${strengthCount>=sT_?'good':''}">근력 ${strengthCount}회 / 목표 ${sT_}회${strengthCount>sT_?` 🔥 초과달성 (${Math.round(strengthCount/sT_*100)}%)`:strengthCount===sT_?' ✓ 달성 (100%)':''}</span>
+      ? `<span class="chip ${fx_.strength>=sT_?'good':''}">근력 ${fx_.strength}회 / 목표 ${sT_}회${fx_.pullBonus && strengthCount<2 ? ' (턱걸이 +1 포함)' : ''}${fx_.strength>sT_?` 🔥 초과달성 (${Math.round(fx_.strength/sT_*100)}%)`:fx_.strength===sT_?' ✓ 달성 (100%)':''}</span>
             <span class="chip ${fx_.cardioQ>=FLEX_CARDIO_TARGET_?'good':''}">인정 유산소 ${fx_.cardioQ}회 / 목표 ${FLEX_CARDIO_TARGET_}회(최소 ${FLEX_CARDIO_MIN_}회)${fx_.cardioQ>FLEX_CARDIO_TARGET_?` 🔥 초과달성 (${Math.round(fx_.cardioQ/FLEX_CARDIO_TARGET_*100)}%)`:fx_.cardioQ===FLEX_CARDIO_TARGET_?' ✓ 달성 (100%)':''}${fx_.cardioU>0?` · 미인정 ${fx_.cardioU}회`:''}</span>
+            <span class="chip" title="참고 숫자(WHO·한국인 신체활동 지침 주 150분). 점수에는 쓰지 않아요.">인정 유산소 합계 ${cwd_.minutes}분 <span class="dim">(참고 150분)</span></span>
             <span class="chip">턱걸이 합계 ${pullRepsInDates_(dates)}회</span>`
       : `<span class="chip ${strengthCount>=3?'good':''}">근력 ${strengthCount}회 / 목표 3회${strengthCount>3?` 🔥 초과달성 (${Math.round(strengthCount/3*100)}%)`:strengthCount===3?' ✓ 달성 (100%)':''}</span>
             <span class="chip ${cardioCount>=3?'good':''}">유산소 ${cardioCount}회 / 목표 3회${cardioCount>3?` 🔥 초과달성 (${Math.round(cardioCount/3*100)}%)`:cardioCount===3?' ✓ 달성 (100%)':''}</span>`;
@@ -4886,6 +4942,7 @@ function renderWeeklyPlanSection(workouts){
             ${chipsHtml_}
           </div>
         </div>
+        ${srvDiff_ ? `<div style="margin:6px 0; padding:6px 10px; border:1px solid var(--border); border-radius:10px; font-size:12px; line-height:1.5;" class="dim">${srvDiff_}</div>` : ''}${unqHtml_}
         <div class="plan-grid">
           ${dates.map((d,i) => {
             const plan = showPlan ? planForDate(d, workouts) : null;
@@ -4935,7 +4992,7 @@ function renderWeeklyPlanSection(workouts){
         <span><span class="legend-dot" style="background:var(--c-neutral)"></span>인정 유산소(30분↑ 또는 3km↑)</span>
         <span><span class="legend-dot" style="background:var(--c-accent)"></span>둘다</span>
         <span><span class="legend-dot" style="background:var(--text-faint)"></span>휴식</span>
-        <span>유산소 (미인정) = 심박·시간 기준 미달 또는 기록 없음</span>
+        <span>유산소 (미인정) = 30분·3km 미만, 운동시간·거리 칸 비어 있음, 또는 걷기 속도 미달(11/16부터, 인클라인 제외)</span>
       </div>` : `<div class="plan-legend">
         <span><span class="legend-dot" style="background:var(--c-good)"></span>근력(계획칸) / 계획대로 실행 ✓</span>
         <span><span class="legend-dot" style="background:var(--c-neutral)"></span>유산소(계획칸) / 계획대로 실행 ✓</span>
@@ -4946,7 +5003,7 @@ function renderWeeklyPlanSection(workouts){
       </div>`}
       ${weekBlock(lastMonday, '지난주', !FLEX_WEEK_V2_)}
       ${weekBlock(thisMonday, '이번주', !FLEX_WEEK_V2_)}
-      ${FLEX_WEEK_V2_ ? `<div class="note-box">유산소는 <b>30분 이상 또는 3km 이상</b>인 기록만 세고, 기준에 못 미친 유산소는 <b>(미인정)</b>으로 따로 표시돼요. 턱걸이 칩은 그날 <b>정상 반복 합계</b>예요(근력 +1 인정은 유효 세트 기준 — 턱걸이 카드 참고). 요일 칸을 누르면 그날 상세 내역이 펼쳐집니다.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
+      ${FLEX_WEEK_V2_ ? `<div class="note-box">유산소는 <b>30분 이상 또는 3km 이상</b>인 기록만 세고(11/16부터 걷기·산책·평지 러닝머신은 <b>평균 4.0km/h 이상 또는 분당 100보 이상</b>도 필요, 인클라인·골프는 제외), 기준에 못 미친 유산소는 <b>(미인정)</b>과 사유를 따로 표시해요. 인정 유산소 합계(분)는 참고 숫자이고 점수에는 쓰지 않아요. 턱걸이 칩은 그날 <b>정상 반복 합계</b>예요(근력 +1 인정은 유효 세트 기준 — 턱걸이 카드 참고). 요일 칸을 누르면 그날 상세 내역이 펼쳐집니다.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
     </section>
   `;
 }
@@ -4969,6 +5026,7 @@ function renderPlanDetailPanel(date, workouts){
       <div class="plan-detail-item">
         <div class="plan-detail-name">${esc(w.name||'(이름없음)')}</div>
         <div class="plan-detail-meta">${w.part?esc(w.part):''}${parseVolume(w.volume)>0?` · ${parseVolume(w.volume).toLocaleString()}kg`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
+        ${String(w.part||'').trim()==='유산소' ? (() => { const ci = cardioCreditInfo_(w); const sp = [ci.speed!==null?ci.speed+'km/h':'', ci.cadence!==null?'분당 '+ci.cadence+'보':''].filter(Boolean).join('·'); return `<div class="plan-detail-meta">${ci.ok ? '인정 유산소' : '미인정'}${ci.reason ? ' — '+esc(ci.reason) : ''}${ci.ok && sp ? ' · '+esc(sp) : ''}</div>`; })() : ''}
         ${w.note?`<div class="plan-detail-note">${esc(w.note)}</div>`:''}
       </div>`).join('')}
     ${pullDetailHtml_(date)}
