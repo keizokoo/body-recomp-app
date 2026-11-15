@@ -1,0 +1,26 @@
+name: PR 자동 검사 (경고 전용)
+
+# 2026-11-15 도입(제안서 5번). PR이 열리거나 갱신될 때 문법·DOM id·버전·토큰 노출을 확인해
+# 결과를 Checks 탭 요약에 남긴다. 첫 2주는 "경고만" — 이 워크플로는 실패해도 병합을 막지 않는다.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: PR 자동 검사 실행
+        working-directory: .github/pr-check
+        run: node check.mjs
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
