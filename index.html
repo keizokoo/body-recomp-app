@@ -84,12 +84,12 @@ html[data-palette="mono-amber"] :is(.theme-toggle button.active,.theme-toggle-mi
 html[data-palette="mono"][data-theme="dark"] :is(.theme-toggle button.active,.theme-toggle-mini button.active,.app-ver .vtag){color:#14110A;}
 .pal-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:12px;}
 @media(max-width:520px){.pal-grid{grid-template-columns:repeat(2,1fr);}}
-.pal-btn{border:2px solid var(--border); background:var(--panel); border-radius:14px; padding:8px 4px; font-family:inherit; font-size:11.5px; font-weight:700; color:var(--text); cursor:pointer; line-height:1.35;}
+.pal-btn{border:2px solid var(--border); background:var(--panel); border-radius:14px; padding:8px 4px; font-family:inherit; font-size:12px; font-weight:700; color:var(--text); cursor:pointer; line-height:1.35;}
 .pal-btn i{display:block; height:24px; border-radius:8px; margin-bottom:6px;}
 .pal-btn.active{border-color:var(--c-accent); box-shadow:0 0 0 3px var(--c-good-soft);}
-.app-ver{margin:22px 0 8px; padding:12px 0 0; border-top:1px dashed var(--border); font-size:11.5px; color:var(--text-dim); line-height:1.8; position:relative; z-index:1;}
+.app-ver{margin:22px 0 8px; padding:12px 0 0; border-top:1px dashed var(--border); font-size:12px; color:var(--text-dim); line-height:1.8; position:relative; z-index:1;}
 .app-ver b{color:var(--text);}
-.app-ver .vtag{display:inline-block; font-size:10px; padding:1px 7px; border-radius:99px; background:var(--grad-1); color:var(--btn-primary-fg); font-weight:700; margin:0 6px;}
+.app-ver .vtag{display:inline-block; font-size:12px; padding:1px 7px; border-radius:99px; background:var(--grad-1); color:var(--btn-primary-fg); font-weight:700; margin:0 6px;}
 .app-ver ul{margin:4px 0 0; padding-left:18px;}
 .gauge-value{background:var(--grad-1); -webkit-background-clip:text; background-clip:text; color:transparent;}
 .gauge-value .gauge-unit{-webkit-text-fill-color:var(--text-faint); color:var(--text-faint);}
@@ -114,7 +114,7 @@ header.topbar{padding:24px 0 4px;}
 .brand{display:flex; align-items:center; gap:11px;}
 .brand-mark{width:36px; height:36px; border-radius:var(--radius-sm); background:var(--brand-mark-bg); display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow-glow); flex-shrink:0; color:var(--brand-mark-fg);}
 .brand h1{font-family:var(--font-display); font-weight:var(--display-weight,700); font-size:19px; letter-spacing:-.01em;}
-.brand span{color:var(--text-faint); font-size:11.5px; display:block; margin-top:-1px; font-weight:500;}
+.brand span{color:var(--text-faint); font-size:12px; display:block; margin-top:-1px; font-weight:500;}
 .topbar-actions{display:flex; gap:8px;}
 
 .btn{border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 18px; border-radius:var(--radius-pill); font-size:13px; cursor:pointer; font-weight:600; transition:all .15s ease; display:inline-flex; align-items:center; gap:6px; box-shadow:var(--shadow-sm);}
@@ -126,14 +126,14 @@ header.topbar{padding:24px 0 4px;}
 .btn-sm{padding:8px 14px; font-size:12.5px;}
 .btn.danger{color:var(--c-warn); border-color:var(--c-warn-soft);}
 .btn-row{display:flex; gap:8px; flex-wrap:wrap;}
-.sync-badge{font-size:11.5px; font-weight:700; padding:6px 12px; border-radius:14px; white-space:pre-line; overflow-wrap:anywhere; word-break:keep-all; line-height:1.55; display:inline-block; max-width:100%; box-sizing:border-box;} /* 2026-11-11-a: 서버 단계별 시간이 길어져도 카드 안에서 줄바꿈(예전엔 nowrap이라 한 줄로 화면 밖까지 나갔음) */
+.sync-badge{font-size:12px; font-weight:700; padding:6px 12px; border-radius:14px; white-space:pre-line; overflow-wrap:anywhere; word-break:keep-all; line-height:1.55; display:inline-block; max-width:100%; box-sizing:border-box;} /* 2026-11-11-a: 서버 단계별 시간이 길어져도 카드 안에서 줄바꿈(예전엔 nowrap이라 한 줄로 화면 밖까지 나갔음) */
 .sync-badge-progress{background:var(--c-neutral-soft); color:var(--c-neutral);}
 .sync-badge-done{background:var(--c-good-soft); color:var(--c-good);}
 .sync-badge-error{background:var(--c-warn-soft); color:var(--c-warn);}
 /* 2026-08-04 추가: 머니트레일 앱 벤치마킹 — 대시보드 전용 배너 대신, 모든 탭에서 항상 보이는
    상단바(topbar-actions) 펄스도트 배지로 변경. 동기화 중엔 점이 깜빡이고, 완료되면 초록으로
    바뀐 뒤 1.2초 후 자동으로 사라짐(머니트레일의 showSyncBadge/finishSyncBadge와 동일 패턴). */
-.top-sync-badge{display:none; align-items:center; gap:6px; padding:7px 13px; border-radius:var(--radius-pill); font-size:11.5px; font-weight:600; background:var(--panel-alt); color:var(--text-dim); border:1px solid var(--border-soft); font-family:var(--font-body);}
+.top-sync-badge{display:none; align-items:center; gap:6px; padding:7px 13px; border-radius:var(--radius-pill); font-size:12px; font-weight:600; background:var(--panel-alt); color:var(--text-dim); border:1px solid var(--border-soft); font-family:var(--font-body);}
 .top-sync-badge.show{display:inline-flex;}
 .top-sync-badge .sync-dot{width:7px; height:7px; border-radius:50%; background:var(--c-accent); animation:syncPulse 1s ease-in-out infinite;}
 .top-sync-badge.done .sync-dot{background:var(--c-good); animation:none;}
@@ -148,9 +148,9 @@ nav.tabs button:hover:not(.active){color:var(--text);}
 main{padding-top:12px; display:flex; flex-direction:column; gap:26px;}
 
 .card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:var(--shadow-sm);}
-.section-label{font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:12px; display:flex; align-items:center; gap:8px;}
+.section-label{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:12px; display:flex; align-items:center; gap:8px;}
 .section-label.good{color:var(--c-good);}
-.sec-num{display:none; font-family:var(--font-mono); font-size:11px; color:var(--sec-num-color); border:1px solid var(--border); border-radius:4px; padding:1px 6px;}
+.sec-num{display:none; font-family:var(--font-mono); font-size:12px; color:var(--sec-num-color); border:1px solid var(--border); border-radius:4px; padding:1px 6px;}
 
 /* HERO */
 .hero{position:relative; overflow:hidden; padding:34px 30px 28px; border-radius:var(--radius-lg); box-shadow:var(--shadow-md);}
@@ -162,7 +162,7 @@ main{padding-top:12px; display:flex; flex-direction:column; gap:26px;}
 .gauge-value{font-family:var(--font-display); font-weight:var(--display-weight,700); font-size:44px; letter-spacing:-.02em; line-height:1; margin-top:-58px; color:var(--gauge-value-color);}
 .gauge-unit{font-size:20px; color:var(--text-faint);}
 .gauge-sub{color:var(--text-dim); font-size:12.5px; margin-top:8px;}
-.gauge-legend{display:flex; gap:16px; margin-top:12px; font-size:11px; color:var(--text-faint); justify-content:center;}
+.gauge-legend{display:flex; gap:16px; margin-top:12px; font-size:12px; color:var(--text-faint); justify-content:center;}
 .legend-dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px;}
 .legend-dot-progress{background:var(--c-gauge-to);}
 .legend-dot-goal{background:var(--c-goalmark);}
@@ -180,37 +180,37 @@ main{padding-top:12px; display:flex; flex-direction:column; gap:26px;}
 .hero-goal-item{background:var(--panel-alt); border-radius:var(--radius-sm); padding:14px 16px;}
 .hg-top{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px;}
 .hg-label{font-size:13px; font-weight:700; color:var(--text);}
-.hg-status{font-size:11px; font-weight:700; padding:3px 10px; border-radius:var(--radius-pill); background:var(--c-warn-soft); color:var(--c-warn); white-space:nowrap; font-family:var(--font-mono);}
+.hg-status{font-size:12px; font-weight:700; padding:3px 10px; border-radius:var(--radius-pill); background:var(--c-warn-soft); color:var(--c-warn); white-space:nowrap; font-family:var(--font-mono);}
 .hg-status.done{background:var(--c-good-soft); color:var(--c-good);}
 .hg-status.stable{background:var(--c-good-soft); color:var(--c-good); box-shadow:inset 0 0 0 1.5px var(--c-good);}
 .hg-bar{height:7px; border-radius:99px; background:var(--c-track); overflow:hidden;}
 .hg-fill{height:100%; border-radius:99px; background:linear-gradient(90deg, var(--c-gauge-from), var(--c-gauge-to));}
-.hg-foot{display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint); margin-top:7px; font-family:var(--font-mono);}
-.hg-detail{font-size:11.5px; color:var(--text-dim); margin-top:9px; padding-top:9px; border-top:1px dashed var(--border-soft); line-height:1.55;}
+.hg-foot{display:flex; justify-content:space-between; font-size:12px; color:var(--text-faint); margin-top:7px; font-family:var(--font-mono);}
+.hg-detail{font-size:12px; color:var(--text-dim); margin-top:9px; padding-top:9px; border-top:1px dashed var(--border-soft); line-height:1.55;}
 .hg-detail b{color:var(--c-warn); font-family:var(--font-mono);}
 
 /* INSIGHTS */
 /* 2026-10-30-d 슬림화 2차 */
 .sl-sbar{display:flex; height:8px; border-radius:99px; overflow:hidden; margin:10px 0 4px; background:var(--c-track);}
 .sl-sbar i{display:block;}
-.sl-cap2{font-size:11px; color:var(--text-faint); line-height:1.5;}
-.cre-legend{display:flex; flex-wrap:wrap; gap:3px 12px; font-size:10.5px; color:var(--text-faint); margin-top:4px;}
+.sl-cap2{font-size:12px; color:var(--text-faint); line-height:1.5;}
+.cre-legend{display:flex; flex-wrap:wrap; gap:3px 12px; font-size:12px; color:var(--text-faint); margin-top:4px;}
 /* 2026-10-30-b 슬림화 */
 .hero.sl-hero{padding:14px 16px 12px;}
 .sl-hero .hero-eyebrow{margin-bottom:6px; padding:3px 10px 3px 8px;}
 .sl-head{display:flex; justify-content:space-between; align-items:flex-end; gap:8px;}
 .sl-big{font-family:var(--font-display); font-weight:var(--display-weight,700); font-size:32px; line-height:1; letter-spacing:-.02em; background:var(--grad-1); -webkit-background-clip:text; background-clip:text; color:transparent;}
 .sl-big span{font-size:15px; -webkit-text-fill-color:var(--text-faint); color:var(--text-faint);}
-.sl-cap{font-size:11px; color:var(--text-dim); margin-top:4px; line-height:1.4;}
-.sl-chip{font-size:11px; font-weight:700; padding:3px 9px; border-radius:var(--radius-pill); white-space:nowrap; background:var(--c-track); color:var(--text-faint);}
+.sl-cap{font-size:12px; color:var(--text-dim); margin-top:4px; line-height:1.4;}
+.sl-chip{font-size:12px; font-weight:700; padding:3px 9px; border-radius:var(--radius-pill); white-space:nowrap; background:var(--c-track); color:var(--text-faint);}
 .sl-chip.good{background:var(--c-good-soft); color:var(--c-good);} .sl-chip.warn{background:var(--c-warn-soft); color:var(--c-warn);}
 .sl-track{position:relative; height:8px; border-radius:99px; background:var(--c-track); margin:10px 0 3px; overflow:hidden;}
 .sl-track i{position:absolute; left:0; top:0; bottom:0; border-radius:99px; background:linear-gradient(90deg, var(--c-gauge-from), var(--c-gauge-to));}
 .sl-track u{position:absolute; top:0; bottom:0; background:var(--c-goalmark); opacity:.75; text-decoration:none;}
-.sl-trackfoot{display:flex; justify-content:space-between; font-size:10px; color:var(--text-faint); font-family:var(--font-mono); margin-bottom:8px;}
+.sl-trackfoot{display:flex; justify-content:space-between; font-size:12px; color:var(--text-faint); font-family:var(--font-mono); margin-bottom:8px;}
 .sl-tiles{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
 .sl-tile{background:var(--panel-alt); border-radius:var(--radius-sm); padding:6px 4px; text-align:center;}
-.sl-tile span{display:block; font-size:10px; color:var(--text-faint); margin-bottom:2px;}
+.sl-tile span{display:block; font-size:12px; color:var(--text-faint); margin-bottom:2px;}
 .sl-tile b{font-family:var(--font-mono); font-size:14px; font-weight:600;}
 .sl-goals{display:flex; flex-direction:column; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border-soft);}
 .sl-g{background:var(--panel-alt); border-radius:var(--radius-sm); padding:8px 12px;}
@@ -224,14 +224,14 @@ main{padding-top:12px; display:flex; flex-direction:column; gap:26px;}
 .sl-li{display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-soft); font-size:13px;}
 .sl-li:last-child{border-bottom:none;}
 .sl-li .l{color:var(--text-dim);} .sl-li .v{font-family:var(--font-mono); font-weight:600; text-align:right;}
-.sl-li .s{display:block; font-size:10.5px; color:var(--text-faint); font-weight:400; margin-top:1px;}
+.sl-li .s{display:block; font-size:12px; color:var(--text-faint); font-weight:400; margin-top:1px;}
 .insight-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
 @media(min-width:720px){.insight-grid{grid-template-columns:repeat(3,1fr);}}
 .insight{padding:16px;}
-.insight .ic-label{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--text-faint); margin-bottom:10px;}
+.insight .ic-label{display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--text-faint); margin-bottom:10px;}
 .insight .ic-icon{width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
 .insight .ic-value{font-family:var(--font-display); font-size:23px; font-weight:700;}
-.insight .ic-sub{font-size:11.5px; color:var(--text-dim); margin-top:6px; line-height:1.5;}
+.insight .ic-sub{font-size:12px; color:var(--text-dim); margin-top:6px; line-height:1.5;}
 .tone-good .ic-value{color:var(--c-good);} .tone-warn .ic-value{color:var(--c-warn);} .tone-neutral .ic-value{color:var(--c-neutral);}
 .tone-good .ic-icon{background:var(--c-good-soft); color:var(--c-good);}
 .tone-warn .ic-icon{background:var(--c-warn-soft); color:var(--c-warn);}
@@ -249,7 +249,7 @@ svg.chart{width:100%; height:120px; display:block;}
 .chart-axis text, text.chart-axis{fill:var(--text-faint); font-size:9px; font-family:var(--font-mono);}
 
 table.data-table{width:100%; border-collapse:collapse; font-size:13px;}
-table.data-table th{text-align:right; font-size:10.5px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--text-faint); padding:9px 10px; border-bottom:1px solid var(--border);}
+table.data-table th{text-align:right; font-size:12px; font-weight:700; letter-spacing:.02em; text-transform:uppercase; color:var(--text-faint); padding:9px 10px; border-bottom:1px solid var(--border);}
 table.data-table th:first-child, table.data-table td:first-child{text-align:left;}
 table.data-table td{text-align:right; padding:7px 10px; font-family:var(--font-mono); border-bottom:1px solid var(--border-soft); color:var(--text-dim); font-variant-numeric:tabular-nums;}
 /* 2026-09-25: 첫 열은 항목명(종목/지표 등 한글 텍스트)이라 본문 폰트로 표시 */
@@ -275,22 +275,22 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .week-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:8px;}
 .week-title{font-size:13px; font-weight:700; color:var(--text); font-family:var(--font-display);}
 .week-chips{display:flex; gap:6px; flex-wrap:wrap;}
-.chip{font-size:11px; font-weight:600; padding:5px 11px; border-radius:var(--radius-pill); background:var(--panel-alt); color:var(--text-dim); border:1px solid var(--border-soft);}
+.chip{font-size:12px; font-weight:600; padding:5px 11px; border-radius:var(--radius-pill); background:var(--panel-alt); color:var(--text-dim); border:1px solid var(--border-soft);}
 .chip.good{background:var(--c-good-soft); color:var(--c-good); border-color:transparent;}
 .chip.warn{background:var(--c-warn-soft); color:var(--c-warn); border-color:transparent;}
 
 .day-row{display:grid; grid-template-columns:56px 1fr; gap:14px; padding:14px 4px; border-bottom:1px solid var(--border-soft);}
 .day-row:last-child{border-bottom:none;}
 .day-date{font-family:var(--font-display); color:var(--text); font-size:13px; font-weight:700; padding-top:2px;}
-.day-date .dow{display:block; font-size:10.5px; color:var(--text-faint); font-weight:500; margin-top:2px;}
+.day-date .dow{display:block; font-size:12px; color:var(--text-faint); font-weight:500; margin-top:2px;}
 .day-cols{display:grid; grid-template-columns:1fr; gap:10px;}
 @media(min-width:640px){.day-cols{grid-template-columns:1.1fr 1fr 1fr;}}
 .day-col{font-size:12.5px; line-height:1.6; color:var(--text);}
-.day-col .k{display:flex; align-items:center; gap:5px; color:var(--text-faint); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;}
+.day-col .k{display:flex; align-items:center; gap:5px; color:var(--text-faint); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px;}
 .day-col .empty{color:var(--text-faint); font-size:12px;}
-.delta{font-family:var(--font-mono); font-size:11px; margin-left:6px; font-weight:600;}
+.delta{font-family:var(--font-mono); font-size:12px; margin-left:6px; font-weight:600;}
 .delta.up{color:var(--c-warn);} .delta.down{color:var(--c-good);}
-.badge{display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:var(--radius-pill); margin-left:5px;}
+.badge{display:inline-block; font-size:12px; font-weight:700; padding:2px 8px; border-radius:var(--radius-pill); margin-left:5px;}
 .badge.hit{background:var(--c-good-soft); color:var(--c-good);}
 .badge.miss{background:var(--c-warn-soft); color:var(--c-warn);}
 
@@ -311,10 +311,10 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .ruler-track{position:relative; height:16px; border-radius:99px; background:var(--c-track); margin:34px 0 26px;}
 .ruler-fill{position:absolute; left:0; top:0; height:100%; border-radius:99px; background:linear-gradient(90deg, var(--c-gauge-from), var(--c-gauge-to));}
 .ruler-tick{position:absolute; top:-6px; width:3px; height:28px; border-radius:2px; background:var(--c-goalmark);}
-.ruler-tick-label{position:absolute; top:-30px; font-size:11px; font-weight:700; color:var(--text); white-space:nowrap; transform:translateX(-50%);}
-.ruler-tick-sub{position:absolute; top:32px; font-size:10px; color:var(--text-faint); white-space:nowrap; transform:translateX(-50%); font-family:var(--font-mono);}
+.ruler-tick-label{position:absolute; top:-30px; font-size:12px; font-weight:700; color:var(--text); white-space:nowrap; transform:translateX(-50%);}
+.ruler-tick-sub{position:absolute; top:32px; font-size:12px; color:var(--text-faint); white-space:nowrap; transform:translateX(-50%); font-family:var(--font-mono);}
 .ruler-ma14{position:absolute; top:-6px; width:3px; height:28px; border-radius:2px; background:var(--c-neutral);}
-.ruler-endlabel{display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint); font-family:var(--font-mono);}
+.ruler-endlabel{display:flex; justify-content:space-between; font-size:12px; color:var(--text-faint); font-family:var(--font-mono);}
 .ruler-goalchips{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px;}
 @media(max-width:560px){.ruler-goalchips{grid-template-columns:1fr;}}
 .ruler-goalchip{display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--panel-alt); border-radius:var(--radius-sm); padding:10px 13px;}
@@ -342,7 +342,7 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .dropzone{border:1.5px dashed var(--border); border-radius:var(--radius); padding:32px 10px; text-align:center; color:var(--text-dim); font-size:13px; font-weight:600; display:flex; flex-direction:column; align-items:center; gap:9px; cursor:pointer;}
 .dropzone:hover{border-color:var(--c-gauge-from); color:var(--accent-strong-text); background:var(--panel-alt);}
 .field{display:flex; flex-direction:column; gap:5px;}
-.field label{font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-faint);}
+.field label{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-faint);}
 .field input{background:var(--panel-alt); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; color:var(--text); font-size:13.5px; font-family:var(--font-mono);}
 .field input:focus{outline:none; border-color:var(--c-gauge-from);}
 .btn-save{background:var(--brand-mark-bg); color:var(--btn-primary-fg); border:none; border-radius:var(--radius-sm); padding:12px; font-weight:700; font-size:14px; box-shadow:var(--shadow-glow);}
@@ -353,7 +353,7 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .loading-box{display:flex; flex-direction:column; align-items:center; gap:10px; padding:36px 0; color:var(--text-dim);}
 .msg-error{color:var(--c-warn); font-size:13px; font-weight:600;}
 .msg-good{color:var(--c-good); font-size:13px; font-weight:600;}
-.note-box{font-size:11.5px; color:var(--text-dim); line-height:1.65; background:var(--panel-alt); border-radius:var(--radius-sm); padding:12px 14px;}
+.note-box{font-size:12px; color:var(--text-dim); line-height:1.65; background:var(--panel-alt); border-radius:var(--radius-sm); padding:12px 14px;}
 .empty-state{text-align:center; padding:70px 20px; color:var(--text-faint); font-size:13.5px;}
 
 .ai-note-body{font-size:13.5px; line-height:1.75; color:var(--text); white-space:normal;}
@@ -392,20 +392,20 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .part-dot{display:inline-block; width:10px; height:10px; border-radius:50%; vertical-align:middle;}
 .recovery-item .rc-icon .part-dot{width:12px; height:12px;}
 .recovery-item .rc-part{font-size:13px; font-weight:700; color:var(--text);}
-.recovery-item .rc-status{font-size:11px; font-weight:700; margin-top:5px; padding:2px 8px; border-radius:999px; display:inline-block;}
-.recovery-item .rc-days{font-size:10.5px; color:var(--text-faint); margin-top:5px; font-family:var(--font-mono);}
+.recovery-item .rc-status{font-size:12px; font-weight:700; margin-top:5px; padding:2px 8px; border-radius:999px; display:inline-block;}
+.recovery-item .rc-days{font-size:12px; color:var(--text-faint); margin-top:5px; font-family:var(--font-mono);}
 .recovery-item.status-resting .rc-status{background:var(--c-warn-soft); color:var(--c-warn);}
 .recovery-item.status-ready .rc-status{background:var(--c-neutral-soft); color:var(--c-neutral);}
 .recovery-item.status-recovered .rc-status{background:var(--c-good-soft); color:var(--c-good);}
 .recovery-item.status-overdue .rc-status{background:var(--c-warn-soft); color:var(--c-warn);}
 .recovery-item.status-unknown .rc-status{background:var(--panel); color:var(--text-faint);}
 
-.plan-legend{display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--text-dim); margin-bottom:14px;}
+.plan-legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text-dim); margin-bottom:14px;}
 .donut-legend{display:flex; flex-direction:column; gap:8px;}
 .donut-legend-item{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text-dim);}
 .donut-legend-item b{color:var(--text); font-family:var(--font-mono); margin-left:2px;}
 .plan-advisory{background:var(--c-warn-soft); border:1px solid transparent; border-radius:var(--radius-sm); padding:12px 14px; margin-bottom:14px;}
-.plan-advisory-head{font-size:11.5px; font-weight:700; color:var(--c-warn); margin-bottom:7px;}
+.plan-advisory-head{font-size:12px; font-weight:700; color:var(--c-warn); margin-bottom:7px;}
 .plan-advisory-item{font-size:12px; color:var(--text-dim); line-height:1.6; margin-top:4px;}
 .plan-advisory-item b{color:var(--text);}
 .plan-legend .legend-dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px;}
@@ -420,11 +420,11 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .plan-detail-item{padding:8px 0; border-top:1px solid var(--border-soft);}
 .plan-detail-item:first-of-type{border-top:none;}
 .plan-detail-name{font-size:13px; font-weight:600; color:var(--text);}
-.plan-detail-meta{font-size:11.5px; color:var(--text-dim); margin-top:2px; font-family:var(--font-mono);}
-.plan-detail-note{font-size:11px; color:var(--text-faint); margin-top:2px;}
+.plan-detail-meta{font-size:12px; color:var(--text-dim); margin-top:2px; font-family:var(--font-mono);}
+.plan-detail-note{font-size:12px; color:var(--text-faint); margin-top:2px;}
 .plan-detail-empty{font-size:12.5px; color:var(--text-faint);}
-.plan-dow{font-size:10px; font-weight:700; color:var(--text-faint); margin-bottom:4px;}
-.plan-cell{font-size:10.5px; font-weight:700; padding:4px 2px; border-radius:6px; margin-bottom:2px; color:var(--panel);}
+.plan-dow{font-size:12px; font-weight:700; color:var(--text-faint); margin-bottom:4px;}
+.plan-cell{font-size:12px; font-weight:700; padding:4px 2px; border-radius:6px; margin-bottom:2px; color:var(--panel);}
 .plan-cell.solo{margin-top:0;}
 .plan-cell.plan-strength{background:var(--c-good);}
 .plan-cell.plan-cardio{background:var(--c-neutral);}
@@ -452,7 +452,7 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 /* 2026-08-13 추가: 레코드 삭제/수정 미니버튼, 특이일 선택 칩, 즐겨찾기 퀵애드, 부작용 로그,
    리마인더 배너, 복사버튼 등 신규 기능 공통 스타일 */
 .row-actions{display:flex; gap:4px; margin-top:6px;}
-.mini-btn{font-size:10.5px; font-weight:600; padding:3px 9px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
+.mini-btn{font-size:12px; font-weight:600; padding:3px 9px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
 .mini-btn:hover{color:var(--text); border-color:var(--text-faint);}
 .mini-btn.danger{color:var(--c-warn); border-color:var(--c-warn-soft);}
 .mini-btn.danger:hover{background:var(--c-warn-soft);}
@@ -463,7 +463,7 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .badge.ex-hint{background:var(--border); color:var(--text-faint);}
 .data-table tr.inbx-row td{opacity:.55;}
 .data-table tr.inbx-row td:nth-last-child(-n+2){opacity:1;}
-.ex-reason{font-size:10.5px; color:var(--text-dim); margin-top:2px; white-space:normal; min-width:120px; max-width:220px; line-height:1.35;}
+.ex-reason{font-size:12px; color:var(--text-dim); margin-top:2px; white-space:normal; min-width:120px; max-width:220px; line-height:1.35;}
 .ex-panel .ex-window, .ex-statusline{font-size:12px; color:var(--text-dim); margin:4px 0 8px;}
 .ex-statusline{padding:0 4px;}
 .ex-card{border:1px solid var(--c-warn-soft); border-radius:12px; padding:10px 12px; margin-top:8px; background:var(--panel);}
@@ -473,7 +473,7 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .ex-item{display:flex; align-items:center; gap:8px; font-size:12px; padding:5px 0; border-top:1px solid var(--border);}
 .ex-item-date{font-weight:700; min-width:34px;}
 .ex-item-reason{flex:1; color:var(--text-dim); line-height:1.35;}
-.ex-more{font-size:11.5px; color:var(--text-dim); margin-top:6px;}
+.ex-more{font-size:12px; color:var(--text-dim); margin-top:6px;}
 /* 2026-10-18: Claude 분석 카드 접기(3줄 요약 + 펼쳐보기), 오늘 남은 목표 카드 */
 .rm-row{padding:8px 0; border-top:1px solid var(--border);}
 .rm-row:first-of-type{border-top:none;}
@@ -493,12 +493,12 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .tg-n{font-family:var(--font-mono); font-size:12px; color:var(--text-dim); white-space:nowrap;}
 .tg-n b{color:var(--text);}
 .special-chip-row{display:flex; gap:6px; flex-wrap:wrap;}
-.special-chip{font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
+.special-chip{font-size:12px; font-weight:600; padding:6px 12px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel); color:var(--text-dim); cursor:pointer;}
 .special-chip.active{background:var(--eyebrow-bg); border-color:var(--c-gauge-from); color:var(--accent-strong-text);}
 .fav-chip-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
 .fav-chip{font-size:12px; font-weight:600; padding:7px 13px; border-radius:var(--radius-pill); border:1px solid var(--border); background:var(--panel-alt); color:var(--text); cursor:pointer; display:inline-flex; align-items:center; gap:6px;}
 .fav-chip:hover{border-color:var(--c-gauge-from); color:var(--accent-strong-text);}
-.fav-chip .fav-macro{color:var(--text-faint); font-family:var(--font-mono); font-size:10.5px;}
+.fav-chip .fav-macro{color:var(--text-faint); font-family:var(--font-mono); font-size:12px;}
 .reminder-banner{display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-radius:var(--radius); background:var(--c-warn-soft); border-left:3px solid var(--c-warn); margin-bottom:16px;}
 .reminder-banner .rb-title{font-size:13.5px; font-weight:700; color:var(--c-warn); margin-bottom:3px;}
 .reminder-banner .rb-detail{font-size:12.5px; color:var(--text-dim); line-height:1.55;}
@@ -520,7 +520,15 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
   .shell{max-width:100%; padding:0;}
   .card{box-shadow:none; border:1px solid #ddd; break-inside:avoid;}
 }
-.pull-tbl td,.pull-tbl th{padding-left:4px;padding-right:4px;font-size:11.5px;white-space:nowrap}
+.pull-tbl td,.pull-tbl th{padding-left:4px;padding-right:4px;font-size:12px;white-space:nowrap}
+/* 2026-11-17-a: 폰에서 누르기 쉽게 — 작은 버튼 최소 40px, 수정·삭제 버튼 사이 간격 */
+@media (max-width:640px), (pointer:coarse){
+  nav.tabs button{min-height:40px;}
+  .theme-toggle button, .theme-toggle-mini button{min-height:40px; min-width:40px;}
+  .btn-sm{min-height:40px;}
+  .mini-btn{min-height:40px; min-width:44px; padding:6px 12px;}
+  .mini-btn + .mini-btn{margin-left:8px;}
+}
 </style>
 </head>
 <body>
@@ -645,7 +653,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-15-b (설정 탭에 "내 앱 허브" 링크 추가 — 5개 앱 바로가기를 한 화면에서. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
+const APP_BUILD_VERSION = '2026-11-17-a (사용 편의 1차: 가장 작은 글자를 12px로, 폰에서 버튼 최소 40px·수정/삭제 간격, 영어·약어 표기를 한글로. 점수·계산 변경 없음. 서버 Code.gs 2026-11-15와 짝)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1193,7 +1201,7 @@ function computeGoalDriftInsight(){
   const nextGoal = FAT_GOALS.find(g => currentFat > g.pct);
   if(!nextGoal){
     const lastGoal = FAT_GOALS[FAT_GOALS.length-1];
-    return {tone:'good', title:'등록된 목표 체지방률 모두 달성', detail:`현재 MA7 체지방률 ${fmt(currentFat,1)}%로 마지막 목표(${lastGoal.label} ${lastGoal.pct}%)를 달성했어요. 설정탭에서 새 목표를 추가해보세요.`};
+    return {tone:'good', title:'등록된 목표 체지방률 모두 달성', detail:`현재 7일 평균 체지방률 ${fmt(currentFat,1)}%로 마지막 목표(${lastGoal.label} ${lastGoal.pct}%)를 달성했어요. 설정탭에서 새 목표를 추가해보세요.`};
   }
   if(slopePerPoint >= -0.005){
     return {tone:'warn', title:'체지방률 추세 정체 — 목표·전략 재검토 권장', detail:`최근 14회 측정 기준 체지방률 추세가 거의 평평해요(주당 ${fmt(-slopePerPoint*7,2)}%p). 현재 페이스로는 ${nextGoal.label}(${nextGoal.pct}%) 도달 시점을 예측하기 어려워요 — 칼로리·운동 강도 재검토를 권장해요.`};
@@ -1876,6 +1884,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-17-a','사용 편의 1차 — 12px보다 작던 글자 145곳을 12px로(그래프 축 글자는 그대로), 폰에서 탭·작은 버튼 최소 40px와 수정/삭제 버튼 간격 넓힘, "Work Out"→"운동"·"Live Tracking"→"현재 상태"·"MA7"→"7일 평균"·"BMR"→"기초대사량"·"Apps Script 웹앱 URL"→"시트 연결 주소". 점수·계산·데이터 변경 없음.'],
   ['2026-11-15-b','설정 탭에 "내 앱 허브" 링크 추가(hub.html) — 5개 앱 바로가기, 바디 요약은 주소를 넣으면 오늘 숫자까지 표시(선택)'],
   ['2026-11-15-a','운동 탭: 미인정 유산소 사유 표시 · 인정 유산소 합계(분) · 대시보드 점수와 차이 안내 · 걷기 속도 조건(11/16부터, 인클라인 제외) · 근력 칩을 점수 기준(턱걸이 +1 포함)으로'],
   ['2026-11-14-a','동기화 기록 · 오류 기록 · 저장공간 표시 · 글자 크기 · 홈 화면 바로가기(식단·운동·인바디 입력)'],
@@ -1918,7 +1927,7 @@ function checkReminders(){
   if(lastInbody){
     const gapDays = Math.round((new Date(todayD+'T00:00:00') - new Date(lastInbody.date+'T00:00:00'))/86400000);
     if(gapDays>=2){
-      results.push({title:`인바디 기록이 ${gapDays}일째 없어요`, detail:'오늘 측정해서 기록해두면 MA7 추세 판단이 더 정확해져요(공백이 길수록 이동평균이 흔들려요).'});
+      results.push({title:`인바디 기록이 ${gapDays}일째 없어요`, detail:'오늘 측정해서 기록해두면 7일 평균 추세 판단이 더 정확해져요(공백이 길수록 이동평균이 흔들려요).'});
     }
   }
   // 2026-09-13 추가: 저항운동 전체공백 경보 — 기존엔 인바디/마운자로 공백만 감지하고 저항운동
@@ -2141,7 +2150,7 @@ const BODYTYPE_I_COLOR_ = '#E8A200';
 function bodyTypeOf_(r){ const t = r && r.bodyType ? String(r.bodyType).trim().toUpperCase() : ''; return (t==='I'||t==='C'||t==='D') ? t : ''; }
 function bodyTypeBadge_(r){
   const t = bodyTypeOf_(r); if(!t) return '';
-  const base = 'margin-left:4px; font-size:10px; border-radius:4px; padding:0 5px; font-weight:700; color:#fff;';
+  const base = 'margin-left:4px; font-size:12px; border-radius:4px; padding:0 5px; font-weight:700; color:#fff;';
   const tip = t==='I' ? '표준체중 일반형(I자)' : t==='C' ? '표준체중 허약형(C자)' : ('유형 '+t);
   const bg = t==='I' ? BODYTYPE_I_COLOR_ : '#9aa0a6';
   return `<span class="badge" title="${tip}" style="${base} background:${bg};">${t}</span>`;
@@ -2165,7 +2174,7 @@ function bodyTypeSummaryCard_(st){
   if(!st) return '';
   const daysSince = st.lastI ? Math.round((new Date(todayISO()+'T00:00:00') - new Date(st.lastI+'T00:00:00'))/86400000) : null;
   const gap = (st.minI!=null && st.avg7!=null) ? st.minI - st.avg7 : null;
-  const tile = (big, small) => `<div style="background:var(--panel-alt); border-radius:var(--radius-sm); padding:8px 10px;"><div style="font-size:16px; font-weight:700;">${big}</div><div style="font-size:11px; color:var(--text-faint);">${small}</div></div>`;
+  const tile = (big, small) => `<div style="background:var(--panel-alt); border-radius:var(--radius-sm); padding:8px 10px;"><div style="font-size:16px; font-weight:700;">${big}</div><div style="font-size:12px; color:var(--text-faint);">${small}</div></div>`;
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">인바디 유형 (I/C)</span></div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:6px;">
@@ -2174,7 +2183,7 @@ function bodyTypeSummaryCard_(st){
       ${tile(st.minI!=null ? fmt(st.minI,1)+'kg' : '—', 'I가 확인된 최소 골격근')}
       ${tile(st.avg7!=null ? fmt(st.avg7,2)+'kg' : '—', gap!=null ? `최근 ${st.avgN}번 평균 · I 확인 최소까지 ${gap>=0?'+':'−'}${Math.abs(gap).toFixed(2)}kg` : '최근 7번 평균')}
     </div>
-    <div style="font-size:10px; color:var(--text-faint); margin-top:6px;">I는 골격근 ${st.minI!=null?fmt(st.minI,1):'—'}~${st.maxI!=null?fmt(st.maxI,1):'—'}kg${st.minIw!=null && isFinite(st.minIw) ? `·체중 ${fmt(st.minIw,1)}kg 이상일 때만` : '일 때만'} 확인됐어요(체중이 낮은 지금 기준은 확인안됨).</div>
+    <div style="font-size:12px; color:var(--text-faint); margin-top:6px;">I는 골격근 ${st.minI!=null?fmt(st.minI,1):'—'}~${st.maxI!=null?fmt(st.maxI,1):'—'}kg${st.minIw!=null && isFinite(st.minIw) ? `·체중 ${fmt(st.minIw,1)}kg 이상일 때만` : '일 때만'} 확인됐어요(체중이 낮은 지금 기준은 확인안됨).</div>
   </div>`;
 }
 // 2026-10-31-c: 체중×골격근 산점도 — I(금색 큰 점)·C(회색 작은 점)·I가 확인된 구간(옅은 사각)·오늘(검은 원). 체중 범위 밖(예: 6~7월 고체중기) 점은 그리지 않고 건수만 알려준다.
@@ -2230,7 +2239,7 @@ function bodyTypeScatterCard_(rowsAll){
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">체중 × 골격근 <span class="dim" style="font-weight:500;">I/C 분포 · 월간 평가 구간 ${exShort_(win.start)}~${exShort_(win.end)} (${winRows.length}건)</span></span></div>
     <svg class="chart" viewBox="0 0 ${w} ${h}" style="height:${h}px">${grid}${zone}${cDots}${iDots}${now}</svg>
-    <div style="font-size:10px; color:var(--text-faint); margin-top:4px;"><span style="color:${BODYTYPE_I_COLOR_}">●</span> I자 · <span style="color:#6b7280">●</span> C자 · <span style="color:#9aa0a6">○</span> 유형 미기록 · 흐린 점 = 구간 이전 · 검은 원 = 오늘${hidden>0 ? ` · 체중 ${xmin}~${xmax}kg 밖 ${hidden}건은 표시 안 함` : ''}</div>
+    <div style="font-size:12px; color:var(--text-faint); margin-top:4px;"><span style="color:${BODYTYPE_I_COLOR_}">●</span> I자 · <span style="color:#6b7280">●</span> C자 · <span style="color:#9aa0a6">○</span> 유형 미기록 · 흐린 점 = 구간 이전 · 검은 원 = 오늘${hidden>0 ? ` · 체중 ${xmin}~${xmax}kg 밖 ${hidden}건은 표시 안 함` : ''}</div>
   </div>`;
 }
 function sortedInbodyAll(){ return [...state.inbody].sort((a,b)=>a.date.localeCompare(b.date)); }
@@ -2622,7 +2631,7 @@ function pullDetailHtml_(date){
   const hang = day.hangs.length ? `<div style="font-size:12px;line-height:1.6;margin-top:2px;">매달리기 ${day.hangs.join('·')}초 <span class="dim">(점수 미반영·개인 기록)</span></div>` : '';
   if(!rows && !hang) return '';
   const head = day.pull ? `${esc([day.pull.grip, day.pull.band ? day.pull.band+' 밴드' : ''].filter(Boolean).join(' · '))} · 정상 반복 합계 ${day.pull.sets.reduce((a,b)=>a+b,0)}회` : '매달리기';
-  return `<div class="plan-detail-item"><div class="plan-detail-name">턱걸이 · 매달리기 <span class="dim" style="font-weight:500;font-size:11.5px;">${head}</span></div>${rows}${hang}</div>`;
+  return `<div class="plan-detail-item"><div class="plan-detail-name">턱걸이 · 매달리기 <span class="dim" style="font-weight:500;font-size:12px;">${head}</span></div>${rows}${hang}</div>`;
 }
 function auxWeekKey_(dateISO){
   const dt = new Date(dateISO+'T00:00:00'); const wd = (dt.getDay()+6)%7; dt.setDate(dt.getDate()-wd);
@@ -2645,11 +2654,11 @@ function auxFormHtml_(days){
       <label style="font-size:12px; color:var(--text-dim);">세트 수</label>
       <input type="number" id="auxSetCountInput" min="0" max="10" value="3" inputmode="numeric" oninput="auxRebuildSets_()" style="width:64px; ${inp} font-family:var(--font-mono);">
     </div>
-    <div class="dim" style="font-size:11.5px; margin-top:8px;"><b>운동을 끝낸 직후, 같은 자세로 몇 회를 더 할 수 있었을지 생각해보세요. 그 숫자가 RIR입니다.</b></div>
-    <div class="dim" style="display:grid; grid-template-columns:34px 1fr 1fr 1.35fr; gap:5px; font-size:11px; margin-top:8px;"><span></span><span>정상 반복</span><span>시도(선택)</span><span>RIR</span></div>
+    <div class="dim" style="font-size:12px; margin-top:8px;"><b>운동을 끝낸 직후, 같은 자세로 몇 회를 더 할 수 있었을지 생각해보세요. 그 숫자가 RIR입니다.</b></div>
+    <div class="dim" style="display:grid; grid-template-columns:34px 1fr 1fr 1.35fr; gap:5px; font-size:12px; margin-top:8px;"><span></span><span>정상 반복</span><span>시도(선택)</span><span>RIR</span></div>
     <div id="auxSetsBox" style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">${auxSetInputsHtml_(3, [])}</div>
     <details style="margin-top:8px; font-size:12px;"><summary style="cursor:pointer; color:var(--c-accent, var(--text)); font-weight:600;">RIR이란? (도움말)</summary>
-      <div class="dim" style="font-size:11.5px; line-height:1.6; margin-top:6px;">
+      <div class="dim" style="font-size:12px; line-height:1.6; margin-top:6px;">
         <div><b>입력 항목</b></div>
         <div>· 정상 반복: 턱이 바 위까지 올라가는 정상 가동범위로 끝낸 횟수예요.</div>
         <div>· 시도(선택): 그 세트에서 하려고 했던 반복 수(정상으로 못 끝낸 것까지 포함)예요. 예) 10회를 시도했는데 정상 반복은 8회 → 정상 8 · 시도 10. 몰라도 되고 비워도 돼요. 시도가 정상 반복보다 작으면 입력 오류라 저장되지 않아요.</div>
@@ -2668,8 +2677,8 @@ function auxFormHtml_(days){
         <div style="margin-top:4px;">유효 세트 인정 기준은 그대로예요: 정상 반복 5회 이상 + RIR 0~4 입력(5+ 와 미확인은 제외).</div>
       </div></details>
     <details style="margin-top:6px; font-size:12px;"><summary style="cursor:pointer; color:var(--c-accent, var(--text)); font-weight:600;">쉬는 시간 기준 (친업 3분 · 매달리기 2분)</summary>
-      <div class="dim" style="font-size:11.5px; line-height:1.6; margin-top:6px;">
-        <table class="data-table" style="width:100%; font-size:11.5px;"><thead><tr><th style="text-align:left">구간</th><th>쉬는 시간</th><th style="text-align:left">목적</th></tr></thead><tbody>
+      <div class="dim" style="font-size:12px; line-height:1.6; margin-top:6px;">
+        <table class="data-table" style="width:100%; font-size:12px;"><thead><tr><th style="text-align:left">구간</th><th>쉬는 시간</th><th style="text-align:left">목적</th></tr></thead><tbody>
           <tr><td style="text-align:left">친업 1→2세트</td><td class="mono">3분</td><td style="text-align:left">근력·그립 회복</td></tr>
           <tr><td style="text-align:left">친업 2→3세트</td><td class="mono">3분</td><td style="text-align:left">정상 반복 유지</td></tr>
           <tr><td style="text-align:left">친업 3세트 → 매달리기</td><td class="mono">2~3분</td><td style="text-align:left">호흡·악력 회복</td></tr>
@@ -2685,7 +2694,7 @@ function auxFormHtml_(days){
     <div style="margin-top:10px;">
       <button onclick="saveAuxEntry()" class="btn-primary" style="padding:8px 18px; border-radius:8px; border:none; background:var(--c-good); color:#fff; font-weight:600; cursor:pointer;">턱걸이 저장</button>
     </div>
-    <div class="dim" style="font-size:11px; margin-top:6px;">세트마다 정상 반복(턱이 바 위까지 올라간 횟수)·시도 횟수(선택)·세트 끝 RIR을 적어요. 가동범위가 무너지면 거기서 세트를 끝내요. 같은 날짜의 턱걸이 기록은 덮어쓰고, 매달리기 기록은 그대로 둬요(매달리기는 아래에서 따로 입력).</div>
+    <div class="dim" style="font-size:12px; margin-top:6px;">세트마다 정상 반복(턱이 바 위까지 올라간 횟수)·시도 횟수(선택)·세트 끝 RIR을 적어요. 가동범위가 무너지면 거기서 세트를 끝내요. 같은 날짜의 턱걸이 기록은 덮어쓰고, 매달리기 기록은 그대로 둬요(매달리기는 아래에서 따로 입력).</div>
   </div>`;
 }
 // 2026-11-09-f: RIR 입력 안내(화면 설명만 추가 — 저장 값·유효 세트 기준은 그대로: 미확인='' 저장 안 함, 0~4 유효, 5+는 5로 저장되어 유효 제외).
@@ -2693,7 +2702,7 @@ function auxFormHtml_(days){
 function auxHangFormHtml_(){
   const inp = 'padding:8px 10px; border-radius:8px; border:1px solid var(--border); font-family:var(--font-body); color:var(--text); background:var(--panel, transparent);';
   return `<div class="no-print" style="border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:12px;">
-    <div style="font-size:12.5px; font-weight:600; margin-bottom:4px;">매달리기 기록 입력 <span class="dim" style="font-weight:500; font-size:11.5px;">· 친업 뒤에 따로 입력</span></div>
+    <div style="font-size:12.5px; font-weight:600; margin-bottom:4px;">매달리기 기록 입력 <span class="dim" style="font-weight:500; font-size:12px;">· 친업 뒤에 따로 입력</span></div>
     <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
       <input type="date" id="auxHangDate" value="${todayISO()}" onchange="auxHangPrefill_()" style="${inp}">
     </div>
@@ -2702,7 +2711,7 @@ function auxHangFormHtml_(){
       <button type="button" onclick="auxHangAdd_()" style="padding:7px 14px; border-radius:8px; border:1px dashed var(--border); background:transparent; color:var(--text); cursor:pointer; font-size:12.5px;">+ 매달리기 추가</button>
       <button type="button" onclick="saveHangEntry()" class="btn-primary" style="padding:8px 18px; border-radius:8px; border:none; background:var(--c-good); color:#fff; font-weight:600; cursor:pointer;">매달리기 저장</button>
     </div>
-    <div class="dim" style="font-size:11px; margin-top:6px;">한 번 매달린 시간(초)을 한 칸에 적고, 두 번 이상 했으면 "+ 매달리기 추가"로 칸을 늘려요. 같은 날짜의 턱걸이 기록은 그대로 두고 매달리기만 저장돼요. 점수에는 반영되지 않는 개인 기록이에요.<br><b>최대 측정</b>은 "더는 못 버틸 때까지" 연속으로 매달린 날의 기록에만 체크하세요(2~4주에 한 번, 친업 안 한 날 권장). 체크한 값만 "연속 최대"와 60초 목표 진행에 쓰이고, 체크 안 한 세트는 훈련 세트(최대의 약 70%)로 누적에 더해져요.</div>
+    <div class="dim" style="font-size:12px; margin-top:6px;">한 번 매달린 시간(초)을 한 칸에 적고, 두 번 이상 했으면 "+ 매달리기 추가"로 칸을 늘려요. 같은 날짜의 턱걸이 기록은 그대로 두고 매달리기만 저장돼요. 점수에는 반영되지 않는 개인 기록이에요.<br><b>최대 측정</b>은 "더는 못 버틸 때까지" 연속으로 매달린 날의 기록에만 체크하세요(2~4주에 한 번, 친업 안 한 날 권장). 체크한 값만 "연속 최대"와 60초 목표 진행에 쓰이고, 체크 안 한 세트는 훈련 세트(최대의 약 70%)로 누적에 더해져요.</div>
   </div>`;
 }
 const AUX_RIR_INFO_ = {
@@ -2730,7 +2739,7 @@ function auxSetInputsHtml_(n, keep){
       <input type="number" class="aux-rep" min="1" inputmode="numeric" placeholder="정상" value="${k.reps||''}" style="${inp}">
       <input type="number" class="aux-tried" min="1" inputmode="numeric" placeholder="시도" value="${k.tried||''}" style="${inp}">
       <select class="aux-rir" onchange="auxRirChange_(this)" style="${inp} font-family:var(--font-body); font-size:12px;">${rirOpts(k)}</select>
-      <div class="aux-rir-hint dim" style="grid-column:1 / -1; font-size:11px; line-height:1.45;">${auxRirHintHtml_(k.rir)}</div></div>`; }).join('');
+      <div class="aux-rir-hint dim" style="grid-column:1 / -1; font-size:12px; line-height:1.45;">${auxRirHintHtml_(k.rir)}</div></div>`; }).join('');
 }
 function auxReadSets_(){
   return [...document.querySelectorAll('#auxSetsBox .aux-set')].map(row => ({
@@ -2913,8 +2922,8 @@ function pullHangBarsSvg_(hd){
 function pullCoachHtml_(ses, days, thisWk){
   const ev = pullEvalGet_();
   const stIdx = Math.min(Math.max(Number(ev.stage)||0,0), PULL_STAGES_.length-1), st = PULL_STAGES_[stIdx];
-  const ck = (ok, t, sub) => `<div style="display:flex; gap:8px; font-size:12px; line-height:1.55; margin-top:4px;"><span style="color:${ok===true?'var(--c-good)':ok===false?'var(--c-warn)':'var(--text-faint)'}; font-weight:700;">${ok===true?'✓':ok===false?'✗':'○'}</span><span>${t}${sub?` <span class="dim" style="font-size:10.5px;">${sub}</span>`:''}</span></div>`;
-  const bar = (label, cur, tot, note) => `<div style="margin-top:8px;"><div style="display:flex; justify-content:space-between; font-size:12px;"><span>${label}</span><span class="mono">${cur}/${tot}</span></div><div style="height:6px; border-radius:3px; background:var(--c-track, var(--border)); overflow:hidden; margin-top:3px;"><div style="height:100%; width:${Math.min(100,Math.round(cur/tot*100))}%; background:var(--c-good);"></div></div>${note?`<div class="dim" style="font-size:10.5px; margin-top:2px;">${note}</div>`:''}</div>`;
+  const ck = (ok, t, sub) => `<div style="display:flex; gap:8px; font-size:12px; line-height:1.55; margin-top:4px;"><span style="color:${ok===true?'var(--c-good)':ok===false?'var(--c-warn)':'var(--text-faint)'}; font-weight:700;">${ok===true?'✓':ok===false?'✗':'○'}</span><span>${t}${sub?` <span class="dim" style="font-size:12px;">${sub}</span>`:''}</span></div>`;
+  const bar = (label, cur, tot, note) => `<div style="margin-top:8px;"><div style="display:flex; justify-content:space-between; font-size:12px;"><span>${label}</span><span class="mono">${cur}/${tot}</span></div><div style="height:6px; border-radius:3px; background:var(--c-track, var(--border)); overflow:hidden; margin-top:3px;"><div style="height:100%; width:${Math.min(100,Math.round(cur/tot*100))}%; background:var(--c-good);"></div></div>${note?`<div class="dim" style="font-size:12px; margin-top:2px;">${note}</div>`:''}</div>`;
   const sub = t => `<div style="margin-top:12px; font-size:12.5px; font-weight:600;">${t}</div>`;
   // 승급: 직전 3세션
   const okUp = s => s.det.length>=3 && s.det.every(x => isValidPullSet_(x) && x.reps>=st.hi && pullRirNum_(x)>=2);
@@ -2929,7 +2938,7 @@ function pullCoachHtml_(ses, days, thisWk){
   const win = ses.filter(s => s.date>=PULL_EVAL_START_ && s.date<evDate);
   const allValid = win.length ? win.every(s => s.det.every(isValidPullSet_)) : null;
   const lastRir = win.length ? win.every(s => { const r = pullRirNum_(s.det[s.det.length-1]); return r!==null && r>=1 && r<=3; }) : null;
-  const tg = (key, label) => { const v = ev[key]; const b = (val, t) => `<button type="button" onclick="pullEvalSet_({${key}:${val}})" style="padding:3px 10px; border-radius:12px; border:1px solid var(--border); font-size:11px; cursor:pointer; background:${v===val?'var(--c-good-soft)':'transparent'}; color:var(--text);">${t}</button>`; return `<div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:5px; font-size:12px;"><span style="flex:1 1 150px;">${label}</span>${b(true,'이상 없음')}${b(false,'문제 있음')}</div>`; };
+  const tg = (key, label) => { const v = ev[key]; const b = (val, t) => `<button type="button" onclick="pullEvalSet_({${key}:${val}})" style="padding:3px 10px; border-radius:12px; border:1px solid var(--border); font-size:12px; cursor:pointer; background:${v===val?'var(--c-good-soft)':'transparent'}; color:var(--text);">${t}</button>`; return `<div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:5px; font-size:12px;"><span style="flex:1 1 150px;">${label}</span>${b(true,'이상 없음')}${b(false,'문제 있음')}</div>`; };
   const manualOk = ev.pain===true && ev.recov===true;
   const autoOk = allValid===true && lastRir===true && win.length>=4; // 2주 약 2회/주 이상(≥4세션) 수행
   const verdict = (win.length<4) ? ['○','세션이 아직 부족해요(2주간 4회 이상 권장)','var(--text-dim)']
@@ -2937,21 +2946,21 @@ function pullCoachHtml_(ses, days, thisWk){
     : (ev.pain===false || ev.recov===false) ? ['✗','통증·회복 문제가 있어 전환 보류 — 현재 빈도 유지','var(--c-warn)']
     : ['○','수동 항목(통증·회복)을 확인하면 판정돼요','var(--text-dim)'];
   const maxHang = days.reduce((m,d) => d.hangs.reduce((mm,v,i) => (d.hangFlags||[])[i] ? Math.max(mm,v) : mm, m), 0);
-  const ms = PULL_HANG_MILESTONES_.map(t => { const ok = maxHang>=t; return `<div style="flex:1; text-align:center; border-radius:8px; padding:6px 2px; font-size:11.5px; font-weight:700; background:${ok?'var(--c-good-soft)':'var(--panel-alt)'}; color:${ok?'var(--c-good)':'var(--text-dim)'};">${t}초<div style="font-size:9.5px; font-weight:500;">${ok?'달성':'대기'}</div></div>`; }).join('');
-  const stBtns = PULL_STAGES_.map((s,i) => `<button type="button" onclick="pullEvalSet_({stage:${i}})" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border); font-size:11.5px; cursor:pointer; background:${i===stIdx?'var(--c-good-soft)':'transparent'}; color:var(--text); font-weight:${i===stIdx?700:500};">3×${s.lo}~${s.hi}회</button>`).join('');
+  const ms = PULL_HANG_MILESTONES_.map(t => { const ok = maxHang>=t; return `<div style="flex:1; text-align:center; border-radius:8px; padding:6px 2px; font-size:12px; font-weight:700; background:${ok?'var(--c-good-soft)':'var(--panel-alt)'}; color:${ok?'var(--c-good)':'var(--text-dim)'};">${t}초<div style="font-size:12px; font-weight:500;">${ok?'달성':'대기'}</div></div>`; }).join('');
+  const stBtns = PULL_STAGES_.map((s,i) => `<button type="button" onclick="pullEvalSet_({stage:${i}})" style="padding:4px 10px; border-radius:12px; border:1px solid var(--border); font-size:12px; cursor:pointer; background:${i===stIdx?'var(--c-good-soft)':'transparent'}; color:var(--text); font-weight:${i===stIdx?700:500};">3×${s.lo}~${s.hi}회</button>`).join('');
   const summary = `진행 코치 · ${up2 && nextSt ? '승급 가능' : '현재 단계 유지'} · 2주 평가 ${dLeft>0?'D-'+dLeft:(ev.ack?'완료':'시점 도래')}`;
   return `<details id="pullCoach" ${pullCoachOpen_?'open':''} ontoggle="pullCoachOpen_=this.open" style="margin-top:14px; border:1px solid var(--border); border-radius:10px; padding:8px 12px;">
     <summary style="cursor:pointer; font-size:12.5px; font-weight:600; color:var(--c-accent);">${summary}</summary>
     <div style="margin-top:8px;">
-      <div style="font-size:12.5px; font-weight:600;">현재 단계 <span class="dim" style="font-weight:500; font-size:11px;">(직접 선택 · 녹색 밴드 · RIR 2~3 · 휴식 3분)</span></div>
+      <div style="font-size:12.5px; font-weight:600;">현재 단계 <span class="dim" style="font-weight:500; font-size:12px;">(직접 선택 · 녹색 밴드 · RIR 2~3 · 휴식 3분)</span></div>
       <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">${stBtns}</div>
       ${bar('이번 주 인정 진행(유효 세트)', Math.min(thisWk.sets, PULL_WEEK_MIN_SETS_), PULL_WEEK_MIN_SETS_, `수행 ${thisWk.days}/${PULL_WEEK_MIN_DAYS_}일 → ${thisWk.bonus?'근력 +1 인정 중':'아직 조건 미달'}`)}
       ${sub(nextSt ? `다음 단계(3×${nextSt.lo}~${nextSt.hi}회) 승급 조건` : '승급 조건 — 마지막 단계예요')}
-      ${nextSt ? `<div class="dim" style="font-size:10.5px;">3세트 모두 ${st.hi}회 + RIR 2 이상, 2회 연속</div>
+      ${nextSt ? `<div class="dim" style="font-size:12px;">3세트 모두 ${st.hi}회 + RIR 2 이상, 2회 연속</div>
       ${rec3.length ? rec3.map(s => ck(okUp(s), `${s.date.slice(5)} 세션`, okUp(s)?'조건 충족':'미충족')).join('') : ck(null,'기록 없음','')}
       ${ck(up2, up2 ? `올려도 돼요 → 3×${nextSt.lo}~${nextSt.hi}회로 선택` : '2회 연속 충족 전이에요','')}` : ''}
       ${sub('보라 밴드 전환 검토')}
-      <div class="dim" style="font-size:10.5px;">3세트 모두 12회 + RIR 2 이상, 2회 연속 (밴드별 보조 강도 차이는 미확인 — 바꾼 첫 세션은 횟수를 낮춰 시작)</div>
+      <div class="dim" style="font-size:12px;">3세트 모두 12회 + RIR 2 이상, 2회 연속 (밴드별 보조 강도 차이는 미확인 — 바꾼 첫 세션은 횟수를 낮춰 시작)</div>
       ${ck(stIdx===2 ? purple2 : null, stIdx===2 ? (purple2 ? '조건 충족 — 보라 밴드를 시도해 보세요' : '아직 조건 전이에요') : '3×10~12회 단계에서 검토해요','')}
       ${sub(`2주 평가 (${PULL_EVAL_START_.slice(5)} ~ ${pullAddDays_(evDate,-1).slice(5)}, 평가일 ${evDate.slice(5)})`)}
       ${ck(win.length>=4 ? true : null, `2주간 수행 ${win.length}세션`, '4세션 이상 권장')}
@@ -2959,11 +2968,11 @@ function pullCoachHtml_(ses, days, thisWk){
       ${ck(lastRir, '마지막 세트까지 RIR 1~3', '')}
       ${tg('pain','어깨·팔꿈치 통증')}${tg('recov','다음 운동일까지 회복')}
       <div style="margin-top:8px; font-size:12px; font-weight:600; color:${verdict[2]};">${verdict[0]} ${verdict[1]}</div>
-      ${ev.ack?'':`<button type="button" onclick="pullEvalAck_()" style="margin-top:8px; padding:5px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:11.5px; cursor:pointer;">평가 확인함 (알림 끄기)</button>`}
+      ${ev.ack?'':`<button type="button" onclick="pullEvalAck_()" style="margin-top:8px; padding:5px 12px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:12px; cursor:pointer;">평가 확인함 (알림 끄기)</button>`}
       ${sub('매달리기 이정표 (연속 최대 · 60초는 개인 목표)')}
       <div style="display:flex; gap:6px; margin-top:6px;">${ms}</div>
-      <div class="dim" style="font-size:10.5px; margin-top:4px;">${maxHang ? `현재 연속 최대 ${maxHang}초(최대 측정 체크 기록)` : '"최대 측정"을 체크한 기록이 아직 없어요'} · 훈련 세트는 측정값의 약 70%</div>
-      <div class="dim" style="font-size:10.5px; margin-top:10px; line-height:1.5;">단계·승급 기준은 이 앱의 실전 기준(Interpretation)이며 가이드라인 수치가 아니에요. 통증·회복 체크와 단계 선택은 이 기기에만 저장돼요.</div>
+      <div class="dim" style="font-size:12px; margin-top:4px;">${maxHang ? `현재 연속 최대 ${maxHang}초(최대 측정 체크 기록)` : '"최대 측정"을 체크한 기록이 아직 없어요'} · 훈련 세트는 측정값의 약 70%</div>
+      <div class="dim" style="font-size:12px; margin-top:10px; line-height:1.5;">단계·승급 기준은 이 앱의 실전 기준(Interpretation)이며 가이드라인 수치가 아니에요. 통증·회복 체크와 단계 선택은 이 기기에만 저장돼요.</div>
     </div>
   </details>`;
 }
@@ -2984,40 +2993,40 @@ function renderPullupCard_(){
   const wkHang = hangDays.filter(d => wkDates.includes(d.date)).reduce((s,d) => s + d.hangs.reduce((a,b)=>a+b,0), 0);
   const box = 'border:1px solid var(--border); border-radius:10px; padding:10px 12px;';
   const mini = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-    <div style="${box}"><div class="dim" style="font-size:11.5px;">유효 세트 중 최고 (정상 반복)</div>
+    <div style="${box}"><div class="dim" style="font-size:12px;">유효 세트 중 최고 (정상 반복)</div>
       <div style="font-size:22px; font-weight:700; color:var(--c-good);">${bestV ? bestV.reps+'회' : '—'}</div>
-      <div class="dim" style="font-size:11px;">${bestV ? esc(lab({grip:bestV.grip, band:bestV.band}))+' · '+bestV.date.slice(5)+' · RIR '+bestV.rir : '유효 세트 없음 (RIR 입력 필요)'}</div>
-      <div class="dim" style="font-size:10.5px; margin-top:2px;">목표 ${st.lo}~${st.hi}회 · RIR 2~3${legacyMax ? ` · RIR 없는 옛 기록 최고 ${legacyMax}회는 제외` : ''}</div></div>
-    <div style="${box}"><div class="dim" style="font-size:11.5px;">매달리기 연속 최대 (측정)</div>
+      <div class="dim" style="font-size:12px;">${bestV ? esc(lab({grip:bestV.grip, band:bestV.band}))+' · '+bestV.date.slice(5)+' · RIR '+bestV.rir : '유효 세트 없음 (RIR 입력 필요)'}</div>
+      <div class="dim" style="font-size:12px; margin-top:2px;">목표 ${st.lo}~${st.hi}회 · RIR 2~3${legacyMax ? ` · RIR 없는 옛 기록 최고 ${legacyMax}회는 제외` : ''}</div></div>
+    <div style="${box}"><div class="dim" style="font-size:12px;">매달리기 연속 최대 (측정)</div>
       <div style="font-size:22px; font-weight:700; color:var(--c-good);">${bestM ? bestM.v+'초' : '—'}</div>
-      <div class="dim" style="font-size:11px;">${bestM ? bestM.date.slice(5)+' 측정 · 목표 60초(개인)' : '"최대 측정" 체크한 기록 없음'+(anyMax?` · 참고: 단일 세트 최고 ${anyMax}초`:'')}</div>
-      <div class="dim" style="font-size:10.5px; margin-top:2px;">이번 주 누적 ${wkHang}초(훈련 세트 포함)</div></div></div>`;
+      <div class="dim" style="font-size:12px;">${bestM ? bestM.date.slice(5)+' 측정 · 목표 60초(개인)' : '"최대 측정" 체크한 기록 없음'+(anyMax?` · 참고: 단일 세트 최고 ${anyMax}초`:'')}</div>
+      <div class="dim" style="font-size:12px; margin-top:2px;">이번 주 누적 ${wkHang}초(훈련 세트 포함)</div></div></div>`;
   // B: 그래프
-  const legend = '<div class="dim" style="font-size:10.5px; display:flex; gap:10px; flex-wrap:wrap; margin:4px 0 6px;"><span><span style="color:var(--c-good);">■</span> RIR 2~3(목표)</span><span><span style="color:var(--c-warn);">■</span> RIR 0~1(강함)</span><span><span style="color:var(--c-neutral);">■</span> RIR 4</span><span><span style="color:var(--text-faint); opacity:.6;">■</span> 무효(RIR 없음·5+·5회 미만)</span></div>';
+  const legend = '<div class="dim" style="font-size:12px; display:flex; gap:10px; flex-wrap:wrap; margin:4px 0 6px;"><span><span style="color:var(--c-good);">■</span> RIR 2~3(목표)</span><span><span style="color:var(--c-warn);">■</span> RIR 0~1(강함)</span><span><span style="color:var(--c-neutral);">■</span> RIR 4</span><span><span style="color:var(--text-faint); opacity:.6;">■</span> 무효(RIR 없음·5+·5회 미만)</span></div>';
   const chartSes = ses.slice(-8), chartHang = hangDays.slice(-8);
-  const charts = days.length ? `<div style="font-size:12.5px; font-weight:600;">친업 — 세션별 세트 <span class="dim" style="font-weight:500; font-size:11px;">(막대 = 정상 반복, 음영 = 목표 ${st.lo}~${st.hi}회, 최근 8회)</span></div>${legend}${pullSetBarsSvg_(chartSes, st) || '<div class="dim" style="font-size:11.5px;">턱걸이 기록이 없어요.</div>'}
-    <div class="dim" style="font-size:10.5px; margin:2px 0 12px;">밴드가 바뀌면 그 지점에 구분선이 표시돼요 · 점선 12회 = 보라 밴드 검토선</div>
-    <div style="font-size:12.5px; font-weight:600;">매달리기 — 날짜별 세트 <span class="dim" style="font-weight:500; font-size:11px;">(★ 진한 보라 = 최대 측정, 연한 파랑 = 훈련 세트, 점선 60초 = 개인 목표)</span></div>${pullHangBarsSvg_(chartHang) || '<div class="dim" style="font-size:11.5px;">매달리기 기록이 없어요.</div>'}<div style="margin-bottom:12px;"></div>` : '';
+  const charts = days.length ? `<div style="font-size:12.5px; font-weight:600;">친업 — 세션별 세트 <span class="dim" style="font-weight:500; font-size:12px;">(막대 = 정상 반복, 음영 = 목표 ${st.lo}~${st.hi}회, 최근 8회)</span></div>${legend}${pullSetBarsSvg_(chartSes, st) || '<div class="dim" style="font-size:12px;">턱걸이 기록이 없어요.</div>'}
+    <div class="dim" style="font-size:12px; margin:2px 0 12px;">밴드가 바뀌면 그 지점에 구분선이 표시돼요 · 점선 12회 = 보라 밴드 검토선</div>
+    <div style="font-size:12.5px; font-weight:600;">매달리기 — 날짜별 세트 <span class="dim" style="font-weight:500; font-size:12px;">(★ 진한 보라 = 최대 측정, 연한 파랑 = 훈련 세트, 점선 60초 = 개인 목표)</span></div>${pullHangBarsSvg_(chartHang) || '<div class="dim" style="font-size:12px;">매달리기 기록이 없어요.</div>'}<div style="margin-bottom:12px;"></div>` : '';
   // A: 표
   const rows = days.slice(-7).reverse().map(d => {
     const det = pullDet_(d), vs = det.filter(isValidPullSet_).length, legacy = d.pull && det.length && det.every(x => pullRirNum_(x)===null);
-    const setTxt = det.map(x => `${x.reps}<span class="dim" style="font-size:10.5px;">/${pullRirTxt_(x)}</span>`).join(' · ');
+    const setTxt = det.map(x => `${x.reps}<span class="dim" style="font-size:12px;">/${pullRirTxt_(x)}</span>`).join(' · ');
     const hg = d.hangs.map((v,i) => (d.hangFlags||[])[i] ? `★${v}` : String(v)).join('·');
-    return `<tr><td style="text-align:left; white-space:nowrap; font-family:var(--font-body);">${d.date.slice(5)}${d.pull ? `<div class="dim" style="font-size:10px;">${esc([d.pull.grip, d.pull.band].filter(Boolean).join('·'))}</div>` : ''}</td>
-    <td class="mono" style="text-align:left;">${d.pull ? setTxt+(legacy?'<div class="dim" style="font-size:10px;">RIR 없는 옛 기록</div>':'') : '—'}</td>
+    return `<tr><td style="text-align:left; white-space:nowrap; font-family:var(--font-body);">${d.date.slice(5)}${d.pull ? `<div class="dim" style="font-size:12px;">${esc([d.pull.grip, d.pull.band].filter(Boolean).join('·'))}</div>` : ''}</td>
+    <td class="mono" style="text-align:left;">${d.pull ? setTxt+(legacy?'<div class="dim" style="font-size:12px;">RIR 없는 옛 기록</div>':'') : '—'}</td>
     <td class="mono">${d.pull ? vs+'/'+det.length : '—'}</td>
     <td class="mono">${d.hangs.length ? hg+'초' : '—'}</td>
     <td><button onclick="deleteAuxDay_('${d.date}')" style="background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:12px;">삭제</button></td></tr>`; }).join('');
   const weeks = {};
   days.forEach(d => { const k = auxWeekKey_(d.date); const w = weeks[k] || (weeks[k] = {k, total:0, hang:0}); if(d.pull) w.total += d.pull.sets.reduce((a,b)=>a+b,0); w.hang += d.hangs.reduce((a,b)=>a+b,0); });
   const wk = Object.values(weeks).sort((a,b) => b.k.localeCompare(a.k)).slice(0,4);
-  const chip = (t, ok) => `<span style="display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:9px; background:${ok?'var(--c-good-soft)':'var(--c-neutral-soft)'}; color:${ok?'var(--c-good)':'var(--c-neutral)'};">${t}</span>`;
+  const chip = (t, ok) => `<span style="display:inline-block; font-size:12px; font-weight:700; padding:1px 7px; border-radius:9px; background:${ok?'var(--c-good-soft)':'var(--c-neutral-soft)'}; color:${ok?'var(--c-good)':'var(--c-neutral)'};">${t}</span>`;
   const weekRows = wk.map(w => { const info = pullWeekInfo_(Array.from({length:7}, (_,i) => pullAddDays_(w.k, i))); return `<tr><td style="text-align:left; white-space:nowrap;">${w.k.slice(5)}~</td><td class="mono" style="white-space:nowrap;">${info.days}일·${info.sets}/${PULL_WEEK_MIN_SETS_}</td><td>${chip(info.bonus?'충족':'미충족', info.bonus)}</td><td class="mono">${w.total||'—'}${w.total?'회':''}</td><td class="mono">${w.hang?w.hang+'초':'—'}</td></tr>`; }).join('');
   const dLeft = pullEvalDLeft_();
   const banner = (!ev.ack && dLeft<=3) ? `<div class="no-print" style="border:1px solid var(--c-accent); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12.5px; line-height:1.55;"><b style="color:var(--c-accent);">${dLeft>0?`2주 평가 D-${dLeft}`:dLeft===0?'오늘이 2주 평가일이에요':'2주 평가 시점이 지났어요'}</b> (${pullEvalDate_().slice(5)}) — 주 3회 전환·승급 여부를 확인해 보세요. <button type="button" onclick="pullCoachOpen()" style="margin-left:6px; padding:4px 10px; border-radius:8px; border:none; background:var(--c-accent); color:#fff; font-size:12px; cursor:pointer;">평가 열기</button></div>` : '';
   return `<section class="card">
     <div class="section-label good">${secNum('W4e')}턱걸이 · 매달리기 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 보조운동 · 주간 실적 카드에 함께 표시</span></div>
-    <div class="dim" style="font-size:11.5px; margin:-2px 0 10px;">주간 점수 반영(월~일): 이번 주 유효 세트 <b>${thisWk_.sets}/${PULL_WEEK_MIN_SETS_}세트</b> · 수행 <b>${thisWk_.days}/${PULL_WEEK_MIN_DAYS_}일</b> → ${thisWk_.bonus ? '<b style="color:var(--c-good)">근력 +1 인정 중</b>' : '아직 조건 미달'} (정상 가동범위 5회 이상 + RIR 0~4 입력한 세트만 유효, 매달리기 제외, 주 최대 +1·근력 합계 상한 2회, 앱 내부 점수일 뿐 전신 근력운동 1회와 같다는 뜻은 아니에요)</div>
+    <div class="dim" style="font-size:12px; margin:-2px 0 10px;">주간 점수 반영(월~일): 이번 주 유효 세트 <b>${thisWk_.sets}/${PULL_WEEK_MIN_SETS_}세트</b> · 수행 <b>${thisWk_.days}/${PULL_WEEK_MIN_DAYS_}일</b> → ${thisWk_.bonus ? '<b style="color:var(--c-good)">근력 +1 인정 중</b>' : '아직 조건 미달'} (정상 가동범위 5회 이상 + RIR 0~4 입력한 세트만 유효, 매달리기 제외, 주 최대 +1·근력 합계 상한 2회, 앱 내부 점수일 뿐 전신 근력운동 1회와 같다는 뜻은 아니에요)</div>
     ${banner}
     ${auxFormHtml_(days)}
     ${auxHangFormHtml_()}
@@ -3027,7 +3036,7 @@ function renderPullupCard_(){
     <div style="overflow-x:auto;${days.length ? '' : ' display:none;'}"><table class="data-table pull-tbl">
       <thead><tr><th style="text-align:left">날짜</th><th style="text-align:left">세트 (정상 반복/RIR)</th><th>유효</th><th>매달리기</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>
-    <div class="dim" style="font-size:11.5px; margin:14px 0 4px;${days.length ? '' : ' display:none;'}">주간 (월~일 · 인정 조건: 유효 세트 ${PULL_WEEK_MIN_SETS_} · 수행 ${PULL_WEEK_MIN_DAYS_}일 · 이번 주는 진행 중)</div>
+    <div class="dim" style="font-size:12px; margin:14px 0 4px;${days.length ? '' : ' display:none;'}">주간 (월~일 · 인정 조건: 유효 세트 ${PULL_WEEK_MIN_SETS_} · 수행 ${PULL_WEEK_MIN_DAYS_}일 · 이번 주는 진행 중)</div>
     <div style="overflow-x:auto;${days.length ? '' : ' display:none;'}"><table class="data-table pull-tbl">
       <thead><tr><th style="text-align:left">주</th><th>유효일·세트</th><th>근력 +1</th><th>반복 합계</th><th>매달리기</th></tr></thead>
       <tbody>${weekRows}</tbody></table></div>
@@ -3184,7 +3193,7 @@ function signalOf_(kind, v){
 function sigDot_(s){
   const c = s==='g' ? 'var(--c-good)' : s==='y' ? '#F5A623' : 'var(--c-warn)';
   const t = s==='g' ? '초록' : s==='y' ? '노랑' : '빨강';
-  return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; color:${c};"><span style="width:9px; height:9px; border-radius:50%; background:${c}; display:inline-block;"></span>${t}</span>`;
+  return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:${c};"><span style="width:9px; height:9px; border-radius:50%; background:${c}; display:inline-block;"></span>${t}</span>`;
 }
 
 /* 2026-11-12-a: 목표 도달 예상 + 정체 점검(머니트레일 goalRecentPaceRegression_ / goalReachDateEstimate_ / goalShortfallDiagnosis_ 벤치마킹).
@@ -3300,13 +3309,13 @@ function goalForecastHtml_(){
       const planMuscleWk = (P[P.length-1][1]-P[0][1])/pd*7, planFatWk = (P[P.length-1][2]-P[0][2])/pd*7;
       // 한 지표의 4주·8주 두 줄: 기울기(주 단위) + 도달 시점
       const lines = (key, unit, d, target, dir, eps) => [['4주', pts4], ['8주', has8 ? pts8 : null]].map(([lab, pts]) => {
-        if(!pts) return `<div class="dim" style="font-size:11.5px; margin-top:2px;">${lab} · 기록이 부족해서 계산하지 않았어요.</div>`;
+        if(!pts) return `<div class="dim" style="font-size:12px; margin-top:2px;">${lab} · 기록이 부족해서 계산하지 않았어요.</div>`;
         const s = goalSlopePerDay_(pts, key);
-        return `<div style="font-size:11.5px; margin-top:2px;"><span class="dim">${lab} 주 ${s===null ? '—' : sg(s*7, d)}${unit} →</span> <b>${goalReachText_(last[key], target, s, last.date, dir, eps)}</b></div>`;
+        return `<div style="font-size:12px; margin-top:2px;"><span class="dim">${lab} 주 ${s===null ? '—' : sg(s*7, d)}${unit} →</span> <b>${goalReachText_(last[key], target, s, last.date, dir, eps)}</b></div>`;
       }).join('');
       const card = (title, curTxt, body, planTxt) => `<div style="padding:6px 0; border-top:1px solid var(--border-soft); font-size:12px;">
           <div style="display:flex; justify-content:space-between; gap:8px;"><span style="font-weight:600;">${title}</span><span class="mono">${curTxt}</span></div>
-          ${body}${planTxt ? `<div class="dim" style="font-size:11.5px; margin-top:2px;">${planTxt}</div>` : ''}</div>`;
+          ${body}${planTxt ? `<div class="dim" style="font-size:12px; margin-top:2px;">${planTxt}</div>` : ''}</div>`;
       const pcM = goalPlanCrossText_('muscle', NEW_GOAL.muscle, +1), pcP = goalPlanCrossText_('pct', NEW_GOAL.fatPctHi, -1);
       html += card(`골격근 → ${fmt(NEW_GOAL.muscle,1)}kg`, `${fmt(last.muscle,2)}kg`, lines('muscle', 'kg', 2, NEW_GOAL.muscle, +1, 0.002),
         `계획선 기준 ${pcM || '—'} · 계획 주 ${sg(planMuscleWk,2)}kg`);
@@ -3349,7 +3358,7 @@ function goalTrackerHtml_(compact){
     const rowsHtml_ = rows.map(r => `<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:6px 0; border-top:1px solid var(--border-soft); font-size:12.5px;">
           <span style="min-width:56px; font-weight:600;">${r.l}</span>
           <span class="mono" style="flex:1; text-align:right;">${r.a}</span>
-          <span class="dim mono" style="flex:1.3; text-align:right; font-size:11.5px;">계획 ${r.p}${r.d===null?'':' ('+sg(r.d)+')'}</span>
+          <span class="dim mono" style="flex:1.3; text-align:right; font-size:12px;">계획 ${r.p}${r.d===null?'':' ('+sg(r.d)+')'}</span>
           ${showSig ? `<span style="min-width:52px; text-align:right;">${sigDot_(r.s)}</span>` : ''}
         </div>`).join('');
     return `
@@ -3368,7 +3377,7 @@ function goalTrackerHtml_(compact){
     </div>
     <details class="sl-more"${showSig ? ' open' : ''}>
       <summary><span>월 점검 · 계획선 대비</span><span class="hg-status">${nc ? '다음 '+nc.date.slice(5).replace('-','/')+' (D-'+nc.days+')' : '점검 일정 종료'}</span></summary>
-      <div class="dim" style="font-size:11px; margin:6px 0 2px;">최근 7번 평균(${m.from.slice(5)}~${m.to.slice(5)})</div>
+      <div class="dim" style="font-size:12px; margin:6px 0 2px;">최근 7번 평균(${m.from.slice(5)}~${m.to.slice(5)})</div>
       ${rowsHtml_}${goalForecastHtml_()}
       <div class="hg-detail">월 단위로 오르는지만 봅니다. 하루 변동은 수분 영향이라 판정하지 않아요. 체중 69~70kg을 유지하면 골격근이 오르면서 체지방률이 자연히 내려오고, 체지방은 약 <b>${fmt(fatToLose,1)}kg</b> 더 줄이면 17%예요. ${showSig ? '점검 기간이라 신호등을 함께 보여드려요.' : '신호등은 점검일(매월 20일~22일)에만 표시돼요.'}</div>
     </details>
@@ -3433,7 +3442,7 @@ function HEADER_TEMPLATE(){
         <div class="brand-mark">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 19V9M12 19V4M20 19v-6"/></svg>
         </div>
-        <div><h1>바디 리컴포지션</h1><span>Body Composition Journal</span></div>
+        <div><h1>바디 리컴포지션</h1></div>
       </div>
       <div class="topbar-actions">
         <span class="${topSyncBadgeClass_()}" id="top-sync-badge" onclick="showSyncDetail_()" style="cursor:pointer;" title="눌러서 동기화 상세 보기"><span class="sync-dot"></span><span id="top-sync-badge-text">${topSyncBadgeText_()}</span></span>
@@ -3444,7 +3453,7 @@ function HEADER_TEMPLATE(){
       </div>
     </div>
     <nav class="tabs">
-      ${tabBtn('dashboard','대시보드')}${tabBtn('workout','Work Out')}${state.showMounjaro?tabBtn('mounjaro','추적관리'):''}${tabBtn('goal','목표')}${tabBtn('log','일별 기록')}${tabBtn('settings','설정')}
+      ${tabBtn('dashboard','대시보드')}${tabBtn('workout','운동')}${state.showMounjaro?tabBtn('mounjaro','추적관리'):''}${tabBtn('goal','목표')}${tabBtn('log','일별 기록')}${tabBtn('settings','설정')}
     </nav>
     </header>
   `;
@@ -3461,7 +3470,7 @@ function render(){
     tabHtml = renderTab();
   }catch(err){
     console.error('renderTab 실패:', err);
-    tabHtml = `<div class="empty-state">⚠️ 이 화면을 표시하는 중 오류가 발생했습니다.<br>다른 탭으로 이동했다가 다시 시도해주세요.<br><span style="font-family:var(--font-mono); font-size:11px; color:var(--text-faint);">${esc(err && err.message ? err.message : String(err))}</span></div>`;
+    tabHtml = `<div class="empty-state">⚠️ 이 화면을 표시하는 중 오류가 발생했습니다.<br>다른 탭으로 이동했다가 다시 시도해주세요.<br><span style="font-family:var(--font-mono); font-size:12px; color:var(--text-faint);">${esc(err && err.message ? err.message : String(err))}</span></div>`;
   }
   // 2026-08-13 추가: 리마인더 배너 — 대시보드에서만 노출(다른 탭까지 매번 뜨면 잔소리처럼
   // 느껴질 수 있어서). 사후경고(스마트 인사이트의 "측정 공백" 등)와 달리 이건 사전 안내.
@@ -4150,7 +4159,7 @@ function computeSmartAlerts(ib, meals, workouts, opts){
   const g18Alert = goalStatus.goals.find(g=>g.pct===18);
   if(g18Alert.tier==='pending' && g18Alert.progressed >= 90){
     push({tone:'good', icon:'target', score: 60,
-      title:'2차 목표(18%) MA7 확정 임박', detail:`MA7(최근 7일 평균) 기준 진행률 ${fmt(g18Alert.progressed,0)}% — MA7이 ${fmt(g18Alert.remain,2)}%p만 더 내려오면 확정이에요.`});
+      title:'2차 목표(18%) 7일 평균 확정 임박', detail:`최근 7일 평균 기준 진행률 ${fmt(g18Alert.progressed,0)}% — 7일 평균이 ${fmt(g18Alert.remain,2)}%p만 더 내려오면 확정이에요.`});
   }
 
   // 7) 최근 측정 공백 (데이터 최신성)
@@ -4186,7 +4195,7 @@ function computeSmartAlerts(ib, meals, workouts, opts){
     if(paceWeek !== null && paceWeek > 0){
       const weeksLeft = Math.ceil(g18Alert.remain / paceWeek);
       push({tone:'neutral', icon:'target', score: 38,
-        title:'최근 페이스 기준 목표 도달 예상', detail:`최근 1주 평균 체지방률이 그 전주 평균보다 ${fmt(paceWeek,2)}%p 낮아지는 페이스라면, MA7 기준 18% 목표까지 약 ${weeksLeft}주 남았어요.`});
+        title:'최근 페이스 기준 목표 도달 예상', detail:`최근 1주 평균 체지방률이 그 전주 평균보다 ${fmt(paceWeek,2)}%p 낮아지는 페이스라면, 7일 평균 기준 18% 목표까지 약 ${weeksLeft}주 남았어요.`});
     }
   }
 
@@ -4592,9 +4601,9 @@ function renderMounjaro(){
                    c.end.muscle 등이 null이라 "→—kg"로 표시되면서도 델타는 startBC/endBC 기반의
                    실제 값이 나와 서로 안 맞던 문제 — 표시값도 c.startBC/c.endBC로 통일하고,
                    델타가 null이면 델타칸도 '—'로 표시(0으로 오인되지 않도록) -->
-              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.muscle)}→${fmt(c.endBC.muscle)}kg <span class="${c.muscleDelta===null?'':(c.muscleDelta>=0?'good-text':'warn-text')}">(${c.muscleDelta===null?'—':`${c.muscleDelta>0?'+':''}${fmt(c.muscleDelta)}`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:10.5px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
-              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.fat)}→${fmt(c.endBC.fat)}kg <span class="${c.fatDelta===null?'':(c.fatDelta<=0?'good-text':'warn-text')}">(${c.fatDelta===null?'—':`${c.fatDelta>0?'+':''}${fmt(c.fatDelta)}`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:10.5px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
-              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.fatPct)}→${fmt(c.endBC.fatPct)}% <span class="${c.fatPctDelta===null?'':(c.fatPctDelta<=0?'good-text':'warn-text')}">(${c.fatPctDelta===null?'—':`${c.fatPctDelta>0?'+':''}${fmt(c.fatPctDelta)}%p`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:10.5px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
+              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.muscle)}→${fmt(c.endBC.muscle)}kg <span class="${c.muscleDelta===null?'':(c.muscleDelta>=0?'good-text':'warn-text')}">(${c.muscleDelta===null?'—':`${c.muscleDelta>0?'+':''}${fmt(c.muscleDelta)}`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:12px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
+              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.fat)}→${fmt(c.endBC.fat)}kg <span class="${c.fatDelta===null?'':(c.fatDelta<=0?'good-text':'warn-text')}">(${c.fatDelta===null?'—':`${c.fatDelta>0?'+':''}${fmt(c.fatDelta)}`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:12px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
+              <td>${!c.startBC||!c.endBC ? '—' : `${fmt(c.startBC.fatPct)}→${fmt(c.endBC.fatPct)}% <span class="${c.fatPctDelta===null?'':(c.fatPctDelta<=0?'good-text':'warn-text')}">(${c.fatPctDelta===null?'—':`${c.fatPctDelta>0?'+':''}${fmt(c.fatPctDelta)}%p`})</span>${c.endBC.date!==c.end.date?`<div class="dim" style="font-size:12px;">${c.endBC.date} 실측 기준</div>`:''}`}</td>
               <td>${c.count}</td>
             </tr>`).join('')}
           </tbody>
@@ -4618,7 +4627,7 @@ function renderMounjaro(){
           <div style="font-size:13px; font-weight:700; color:var(--text);">
             ${iv.startCycleNum}차(${dLabel(iv.startDose.date)}) → ${iv.endCycleNum}차${iv.isProvisional?'(예정)':`(${dLabel(iv.nominalEndDate)})`}
           </div>
-          <div class="dim" style="font-size:11.5px; margin-top:2px;">
+          <div class="dim" style="font-size:12px; margin-top:2px;">
             ${iv.isProvisional
               ? `${iv.elapsedDays}/${iv.fullIntervalDays}일 경과(${Math.round(iv.elapsedDays/iv.fullIntervalDays*100)}%) 시점 · 오늘(${dLabel(iv.endRecord.date)}) 데이터로 잠정 비교`
               : `${iv.fullIntervalDays}일 구간 · 완료된 구간 비교`}
@@ -4626,7 +4635,7 @@ function renderMounjaro(){
           <div style="overflow-x:auto; margin-top:8px;">
             <table class="data-table">
               <thead><tr>
-                <th style="text-align:left">지표</th><th>실측값 변화</th><th>MA7 기준 변화</th><th>일평균(MA7 기준)</th>
+                <th style="text-align:left">지표</th><th>실측값 변화</th><th>7일 평균 기준 변화</th><th>일평균(7일 평균 기준)</th>
               </tr></thead>
               <tbody>
                 ${FOUR_METRICS.map(m => {
@@ -4653,11 +4662,11 @@ function renderMounjaro(){
                     <td style="text-align:left">${m.label}</td>
                     <td>
                       <div class="${rawGood===null?'':(rawGood?'good-text':'warn-text')}" style="font-weight:700; font-size:13.5px;">${rawDelta===null?'—':`${rawDelta>0?'+':''}${fmt(rawDelta)}${m.unit}`}</div>
-                      <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(rawStart)}${uraw} → ${fmt(rawEnd)}${uraw}${bcAsOfNote}</div>
+                      <div class="dim" style="font-size:12px; margin-top:1px; font-family:var(--font-body);">${fmt(rawStart)}${uraw} → ${fmt(rawEnd)}${uraw}${bcAsOfNote}</div>
                     </td>
                     <td>
                       <div class="${maGood?'good-text':'warn-text'}" style="font-weight:600; font-size:13px;">${maDelta>0?'+':''}${fmt(maDelta)}${m.unit}</div>
-                      <div class="dim" style="font-size:11px; margin-top:1px; font-family:var(--font-body);">${fmt(maStart)}${uraw} → ${fmt(maEnd)}${uraw}</div>
+                      <div class="dim" style="font-size:12px; margin-top:1px; font-family:var(--font-body);">${fmt(maStart)}${uraw} → ${fmt(maEnd)}${uraw}</div>
                     </td>
                     <td>
                       <div class="dim" style="font-size:12px; font-family:var(--font-mono);">${perDay===null?'—':`${perDay>0?'+':''}${fmt(perDay,3)}${m.unit}/일`}</div>
@@ -4669,7 +4678,7 @@ function renderMounjaro(){
           </div>
         </div>
       `).join('')}
-      <div class="note-box" style="margin-top:14px;">실측값은 해당 시점의 raw 측정치, MA7 기준은 BIA 하루 노이즈를 줄인 7일 이동평균값입니다. 증량 판단 시 MA7 기준을 우선 참고하세요.</div>
+      <div class="note-box" style="margin-top:14px;">실측값은 해당 시점의 raw 측정치, 7일 평균 기준은 BIA 하루 노이즈를 줄인 7일 이동평균값입니다. 증량 판단 시 7일 평균 기준을 우선 참고하세요.</div>
     </section>` : ''}
   `;
 }
@@ -5022,7 +5031,7 @@ function renderPlanDetailPanel(date, workouts){
       <span>${date} 상세</span>
       <button class="btn btn-ghost btn-sm" onclick="selectPlanDay('${date}')">닫기 ✕</button>
     </div>
-    ${plan ? `<div class="plan-detail-plan">계획: <b>${plan.type}</b> — ${plan.label}${plan.reason?`<br><span class="dim" style="font-size:11px;">근거: ${plan.reason}</span>`:''}</div>` : ''}
+    ${plan ? `<div class="plan-detail-plan">계획: <b>${plan.type}</b> — ${plan.label}${plan.reason?`<br><span class="dim" style="font-size:12px;">근거: ${plan.reason}</span>`:''}</div>` : ''}
     ${entries.length===0 && !pullDetailHtml_(date) ? `<div class="plan-detail-empty">기록된 운동이 없습니다.</div>` : entries.map(w => `
       <div class="plan-detail-item">
         <div class="plan-detail-name">${esc(w.name||'(이름없음)')}</div>
@@ -5090,7 +5099,7 @@ function renderWorkoutTab(){
           <div class="alert-item ${a.tone==='warn'?'tone-warn-item':a.tone==='good'?'tone-good-item':''}">
             <div class="alert-icon tone-${a.tone}">${a.tone==='warn'?ICONS.up:a.tone==='good'?ICONS.down:ICONS.target}</div>
             <div class="alert-body">
-              <div class="alert-title tone-${a.tone}">${a.title}${a.tag ? ` <span style="font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; background:var(--panel-alt); color:var(--text-dim); white-space:nowrap;">${a.tag}</span>` : ''}</div>
+              <div class="alert-title tone-${a.tone}">${a.title}${a.tag ? ` <span style="font-size:12px; font-weight:700; padding:1px 6px; border-radius:8px; background:var(--panel-alt); color:var(--text-dim); white-space:nowrap;">${a.tag}</span>` : ''}</div>
               <div class="alert-detail">${a.detail}</div>
             </div>
           </div>`).join('')}
@@ -5117,7 +5126,7 @@ function renderWorkoutTab(){
           ? `<div class="sl-sbar">${segs.map(p => `<i style="width:${pct(p)}%; background:${BODY_PART_COLOR[p]}"></i>`).join('')}</div><div class="sl-cap2">최근 21일 볼륨 비중 · ${segs.map(p => `<span style="color:${BODY_PART_COLOR[p]}">${p} ${pct(p)}%</span>`).join(' · ')}</div>`
           : `<div class="sl-cap2" style="margin-top:8px;">최근 21일 볼륨 기록 없음</div>`;
         const rowsT = recovery.map(r => `<tr><td style="text-align:left; font-family:var(--font-body);">${partDot(r.part)} ${r.part}</td><td style="text-align:left; font-family:var(--font-body);">${r.label}</td><td>${r.daysElapsed===null ? '기록 없음' : r.daysElapsed===0 ? '오늘' : r.daysElapsed+'일 전'}</td><td>${pct(r.part)}%</td></tr>`).join('');
-        return `<div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap;"><b style="font-size:14px;">${sumTxt}</b><span class="dim" style="font-size:11px;">${oldest ? '가장 오래: '+oldest+' '+maxD+'일' : ''}</span></div>
+        return `<div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap;"><b style="font-size:14px;">${sumTxt}</b><span class="dim" style="font-size:12px;">${oldest ? '가장 오래: '+oldest+' '+maxD+'일' : ''}</span></div>
         ${barHtml}
         <details class="sl-more" style="margin-top:10px;"><summary><span>부위별 상세</span></summary>
           <div style="overflow-x:auto; margin-top:6px;"><table class="data-table"><thead><tr><th style="text-align:left">부위</th><th style="text-align:left">회복</th><th>최근</th><th>21일 비중</th></tr></thead><tbody>${rowsT}</tbody></table></div>
@@ -5150,7 +5159,7 @@ function renderWorkoutTab(){
             return li_('최근 7일 운동 칼로리', kc_ > 0 ? `${kc_.toLocaleString()}kcal` : '—', '') + volRow_;
           })()}
           ${li_('부위 커버리지 · 심박존 준수', `${kCov.value} · ${kHr.value}`, '', kHr.sub)}
-          ${prs_.map(k => li_(k.label, `${k.value} <span style="font-size:10.5px; color:var(--text-faint); font-weight:400;">${md_(k.sub)}${/🔥/.test(k.sub)?' 🔥':''}</span>`, '')).join('')}
+          ${prs_.map(k => li_(k.label, `${k.value} <span style="font-size:12px; color:var(--text-faint); font-weight:400;">${md_(k.sub)}${/🔥/.test(k.sub)?' 🔥':''}</span>`, '')).join('')}
         </div>`;
       })()}
     </section>
@@ -5242,7 +5251,7 @@ function renderWorkoutTab(){
                 <td>${r.durationMin?fmt(r.durationMin,0)+'분':'—'}</td>
                 <td>${r.calories?r.calories+'kcal':'—'}</td>
                 <td class="${r.tone==='good'?'good-text':r.tone==='warn'?'warn-text':''}">${r.avgHR?r.avgHR+'bpm':'—'}</td>
-                <td class="${r.creditValid===true?'good-text':r.creditValid===false?'warn-text':''}" style="font-size:11.5px;">${r.creditValid===true?'인정':r.creditValid===false?'미인정':'판정불가'}</td>
+                <td class="${r.creditValid===true?'good-text':r.creditValid===false?'warn-text':''}" style="font-size:12px;">${r.creditValid===true?'인정':r.creditValid===false?'미인정':'판정불가'}</td>
                 <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body); font-size:12px;">${r.verdict}</td>
               </tr>`).join('')}
             </tbody>
@@ -5269,7 +5278,7 @@ function renderWorkoutTab(){
                 <td class="mono" style="font-size:12px;">${prevDeltaHtml_(p)}</td>
                 <td style="text-align:left; color:var(--text-dim); font-family:var(--font-body);">${p.best.weight}kg×${p.best.reps}회 (${p.best.date.slice(5)})</td>
                 <td style="text-align:left; color:var(--text-faint); font-family:var(--font-body);">${p.lastDate}</td>
-                <td style="text-align:left; font-family:var(--font-body); font-size:11.5px;">${!p.plateau ? `<span style="color:var(--text-faint);">데이터 부족(5회↑ 필요)</span>` : p.plateau.isPlateau ? `<span class="warn-text">정체(최근 ${p.plateau.recentN}회 ±${fmt(p.plateau.spreadPct,1)}%)</span>` : `<span class="good-text">진행 중</span>`}</td>
+                <td style="text-align:left; font-family:var(--font-body); font-size:12px;">${!p.plateau ? `<span style="color:var(--text-faint);">데이터 부족(5회↑ 필요)</span>` : p.plateau.isPlateau ? `<span class="warn-text">정체(최근 ${p.plateau.recentN}회 ±${fmt(p.plateau.spreadPct,1)}%)</span>` : `<span class="good-text">진행 중</span>`}</td>
               </tr>`).join('')}
             </tbody>
           </table>
@@ -5300,7 +5309,7 @@ function workoutRow(w){
     <div>
       <div style="font-size:13px; font-weight:600; color:var(--text);">${esc(w.name||'')} ${risky?'<span class="badge miss">목디스크 확인</span>':''}${w.specialCondition?`<span class="badge miss">${esc(WORKOUT_CONDITION_LABELS[w.specialCondition]||w.specialCondition)}</span>`:''}</div>
       <div style="font-size:12px; color:var(--text-dim); margin-top:3px;">${parts.join(', ')||esc(w.part||'')}${parseVolume(w.volume)>0?` · ${parseVolume(w.volume).toLocaleString()}kg`:''}${w.calories?` · ${w.calories}kcal`:''}</div>
-      ${w.note?`<div style="font-size:11.5px; color:var(--text-faint); margin-top:3px;">${esc(w.note)}</div>`:''}
+      ${w.note?`<div style="font-size:12px; color:var(--text-faint); margin-top:3px;">${esc(w.note)}</div>`:''}
       ${w.id ? `<div class="row-actions"><button class="mini-btn" onclick="editWorkoutById('${w.id}')">수정</button><button class="mini-btn danger" onclick="deleteWorkoutEntry('${w.id}')">삭제</button></div>` : ''}
     </div>
   </div>`;
@@ -5324,12 +5333,12 @@ function renderDashboard(){
     ${renderExclusionPanel()}
     <section class="hero card sl-hero">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; flex-wrap:wrap;">
-        <div class="hero-eyebrow"><span class="dot"></span>Live Tracking</div>
+        <div class="hero-eyebrow"><span class="dot"></span>현재 상태</div>
       </div>
       <div class="sl-head">
         <div>
           <div class="sl-big">${fmt(goalStatus.ma7Last,2)}<span>%</span></div>
-          <div class="sl-cap">MA7(최근 7일 평균) · 시작 대비 ${fmt(START_FAT_PCT-goalStatus.ma7Last)}%p 감소 · ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}% · 측정 ${last.date}</div>
+          <div class="sl-cap">최근 7일 평균 · 시작 대비 ${fmt(START_FAT_PCT-goalStatus.ma7Last)}%p 감소 · ${exLastLabel_(last)} 실측 ${fmt(last.fatPct)}% · 측정 ${last.date}</div>
         </div>
         ${maTrend7!==null ? `<div class="sl-chip ${maTrend7<=-0.05?'good':maTrend7>=0.05?'warn':''}">${maTrend7<=-0.05?'↓ 개선 중':maTrend7>=0.05?'↑ 정체/반등':'· 변화 적음'} ${maTrend7>0?'+':''}${fmt(maTrend7,2)}%p</div>` : ''}
       </div>
@@ -5345,7 +5354,7 @@ function renderDashboard(){
         <div class="sl-tile"><span>체중</span><b>${fmt(last.weight)}</b></div>
         <div class="sl-tile"><span>골격근</span><b>${fmt(last.muscle)}</b></div>
         <div class="sl-tile"><span>체지방</span><b>${fmt(last.fat)}</b></div>
-        <div class="sl-tile"><span>BMR</span><b>${last.bmr ?? '—'}</b></div>
+        <div class="sl-tile"><span>기초대사</span><b>${last.bmr ?? '—'}</b></div>
       </div>
       ${goalTrackerHtml_(true)}
     </section>
@@ -5474,7 +5483,7 @@ function renderDashboard(){
           ${state.expandedTables['maTable'] ? `
           <div style="overflow-x:auto; margin-top:10px;">
             <table class="data-table">
-              <thead><tr><th style="text-align:left">날짜</th><th>체지방률(원본)</th><th>체지방률 MA7</th><th>체지방률 MA14</th><th>골격근(원본)</th><th>골격근 MA7</th><th>골격근 MA14</th></tr></thead>
+              <thead><tr><th style="text-align:left">날짜</th><th>체지방률(원본)</th><th>체지방률 7일 평균</th><th>체지방률 14일 평균</th><th>골격근(원본)</th><th>골격근 7일 평균</th><th>골격근 14일 평균</th></tr></thead>
               <tbody>
                 ${maFat.slice().reverse().map((r) => {
                   const mRow = maMuscle.find(m=>m.date===r.date);
@@ -5595,11 +5604,11 @@ function renderTodayRemainingCard_(){
   return `<section class="card">
     <div class="tg-head"><span class="dim">${secNum('00f')}이번 주 목표 · ${esc(days[0].slice(5).replace('-','/'))}~${esc(days[6].slice(5).replace('-','/'))}</span><span class="dim">칼로리는 주 평균</span></div>
     <div class="tg-big">${kt.mid.toLocaleString()} kcal<span class="dim" style="font-size:13px; font-weight:500;"> 주 평균 (${kt.low.toLocaleString()}~${kt.high.toLocaleString()})</span></div>
-    <div class="dim" style="font-size:11.5px;">기본 ${KCAL_TARGET_MID.toLocaleString()} + 운동 가산 <b>+${kt.add}</b>/일 (이번 주 운동 ${kt.eat.toLocaleString()}kcal · 2,300 초과분의 60%)</div>
+    <div class="dim" style="font-size:12px;">기본 ${KCAL_TARGET_MID.toLocaleString()} + 운동 가산 <b>+${kt.add}</b>/일 (이번 주 운동 ${kt.eat.toLocaleString()}kcal · 2,300 초과분의 60%)</div>
     <div class="tg-eq">지난 ${doneDays.length}일 평균 ${doneAvg!==null ? '<b>'+doneAvg.toLocaleString()+'</b>kcal' : '–'}${perLeft===null ? '' : (perLeft >= kt.low ? ` · 오늘 포함 남은 ${leftDays}일 하루 평균 <b>${perLeft.toLocaleString()}</b>kcal이면 주 평균 ${kt.mid.toLocaleString()}` : ` · 이번 주 평균 목표는 이미 넘어섰어요 — 남은 ${leftDays}일은 ${kt.low.toLocaleString()}kcal 아래로 줄이지 말고 다음 주에 다시 맞춰요`)}</div>
     ${row('오늘 칼로리','kcal',cur.kcal,kt.low,kt.high,false)}
     ${row('오늘 단백질','g',cur.p,prot.min,prot.max,true)}
-    <div class="dim" style="font-size:11px; margin-top:4px;">하루 값은 참고용이고 주 평균으로 판단해요. 탄수 목표는 없어요.</div>
+    <div class="dim" style="font-size:12px; margin-top:4px;">하루 값은 참고용이고 주 평균으로 판단해요. 탄수 목표는 없어요.</div>
   </section>`;
 }
 // 2026-11-07 추가: 대시보드 "주간 점수(100점)" 카드 — 하루 점수를 대신한다. 점수는 Code.gs가 WeeklyScore 시트에 저장한 값(state.weeklyScores)을 표시만 한다.
@@ -5623,13 +5632,13 @@ function renderWeeklyScoreCard(){
     const pct = ok ? Math.max(0, Math.min(100, v / max * 100)) : 0;
     const sub = !cur ? '' : (ck ? (hasN(cur[ck]) ? `${cur[ck]}/${cmax}${unit}` : '') : (hasN(cur.avgKcal) ? `${Number(cur.avgKcal).toLocaleString()}kcal` : ''));
     return `<div title="${e(label)} ${ok ? fmt(v) : '–'}/${max}" style="display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0;">
-      <span style="font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:11px; white-space:nowrap;${ok ? '' : ' opacity:.5;'}">${ok ? fmt(v) : '–'}<span class="dim">/${max}</span></span>
+      <span style="font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:12px; white-space:nowrap;${ok ? '' : ' opacity:.5;'}">${ok ? fmt(v) : '–'}<span class="dim">/${max}</span></span>
       <div style="width:100%; max-width:34px; height:40px; border-radius:8px; background:var(--c-track); overflow:hidden; display:flex; align-items:flex-end;"><div style="width:100%; height:${pct}%; background:var(--c-accent);"></div></div>
-      <span style="font-size:11px; white-space:nowrap;">${e(label)}</span>
-      <span class="dim" style="font-size:10px; white-space:nowrap;">${e(sub)}</span>
+      <span style="font-size:12px; white-space:nowrap;">${e(label)}</span>
+      <span class="dim" style="font-size:12px; white-space:nowrap;">${e(sub)}</span>
     </div>`;
   }).join('') + `</div>`;
-  const pill = t => `<span class="dim" style="font-size:11px; border:1px solid var(--border); border-radius:var(--radius-pill); padding:0 7px; line-height:18px;">${e(t)}</span>`;
+  const pill = t => `<span class="dim" style="font-size:12px; border:1px solid var(--border); border-radius:var(--radius-pill); padding:0 7px; line-height:18px;">${e(t)}</span>`;
   const head = cur && hasN(cur.score)
     ? `<div style="display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 6px; margin:2px 0 0;">
         <span style="font-family:var(--font-display); font-size:30px; font-weight:var(--display-weight); line-height:1;">${fmt(cur.score)}</span>
@@ -5641,15 +5650,15 @@ function renderWeeklyScoreCard(){
         <span style="font-family:var(--font-display); font-size:24px; font-weight:var(--display-weight); line-height:1.1; opacity:.6;">${cur ? '산출 안 함' : '집계 전'}</span>
         <span class="dim" style="font-size:12px; margin-left:4px;">이번 주 ${e(md(thisWeek))}~</span>
       </div>
-      <div class="dim" style="font-size:11.5px; margin-top:3px;">${cur && cur.status ? e(cur.status) : '이번 주 식단이 기록되면 계산돼요'}</div>`;
+      <div class="dim" style="font-size:12px; margin-top:3px;">${cur && cur.status ? e(cur.status) : '이번 주 식단이 기록되면 계산돼요'}</div>`;
   const recent = [...rows].sort((x,y) => String(x.date).localeCompare(String(y.date))).slice(-6);
   const bars = recent.map(r => {
     const d = String(r.date).slice(0,10), has = hasN(r.score), isCur = d === thisWeek;
     const h = has ? Math.max(3, Math.round(Number(r.score) / 100 * 34)) : 3;
     return `<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:3px; min-width:0;">
-      <div style="font-size:11px; font-family:var(--font-mono); ${has ? '' : 'opacity:.45;'}">${has ? fmt(r.score) : '–'}</div>
+      <div style="font-size:12px; font-family:var(--font-mono); ${has ? '' : 'opacity:.45;'}">${has ? fmt(r.score) : '–'}</div>
       <div style="width:70%; max-width:26px; height:${h}px; border-radius:6px 6px 2px 2px; background:${has ? (isCur ? 'var(--grad-1)' : 'var(--c-accent)') : 'var(--c-track)'}; opacity:${has && !isCur ? 0.5 : 1};"></div>
-      <div class="dim" style="font-size:10.5px;${isCur ? ' font-weight:700;' : ''}">${isCur ? '이번 주' : e(md(d))}</div>
+      <div class="dim" style="font-size:12px;${isCur ? ' font-weight:700;' : ''}">${isCur ? '이번 주' : e(md(d))}</div>
     </div>`;
   }).join('');
   return `
@@ -5657,9 +5666,9 @@ function renderWeeklyScoreCard(){
       <div class="section-label good">${secNum('00a')}주간 점수 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 월~일 한 주 행동 평가(체성분 판정 아님)</span></div>
       ${head}
       <div style="margin-top:10px;${cur && hasN(cur.score) ? '' : ' opacity:.55;'}">${items}</div>
-      <div class="dim" style="font-size:11px; margin-top:6px;">근력 주 2회·유산소(30분↑ 또는 3km↑) 주 3회·단백질 120g↑ 5일·기록 6일·주 평균 ${cur && hasN(cur.kcalTarget) ? (Number(cur.kcalTarget)-KCAL_BAND_HALF).toLocaleString()+'~'+(Number(cur.kcalTarget)+KCAL_BAND_HALF).toLocaleString() : '1,900~2,200'}kcal(운동 많은 주는 가산)이면 만점이에요. 탄수·기초대사는 점수에 쓰지 않아요.</div>
+      <div class="dim" style="font-size:12px; margin-top:6px;">근력 주 2회·유산소(30분↑ 또는 3km↑) 주 3회·단백질 120g↑ 5일·기록 6일·주 평균 ${cur && hasN(cur.kcalTarget) ? (Number(cur.kcalTarget)-KCAL_BAND_HALF).toLocaleString()+'~'+(Number(cur.kcalTarget)+KCAL_BAND_HALF).toLocaleString() : '1,900~2,200'}kcal(운동 많은 주는 가산)이면 만점이에요. 탄수·기초대사는 점수에 쓰지 않아요.</div>
       <div style="display:flex; justify-content:space-between; align-items:baseline; margin:10px 0 2px;">
-        <span class="dim" style="font-size:11.5px;">최근 6주 추이</span>
+        <span class="dim" style="font-size:12px;">최근 6주 추이</span>
       </div>
       <div style="display:flex; align-items:flex-end; gap:4px;">${bars}</div>
     </section>`;
@@ -5777,17 +5786,17 @@ function renderCreatineSection(ib){
   const strip = creatineStripSVG_(map, today);
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">크레아틴 복용</span><span class="ch-now mono" style="color:var(--c-waist)">${st.count28}/${CREATINE_SATURATION_DAYS}일</span></div>
-    <div class="dim" style="font-size:11px; margin-bottom:8px;"><b style="color:${toneColor}">${st.label}</b> · 마지막 <b class="mono">${st.lastDate ? `${dLabel(st.lastDate)}(${st.daysSinceLast===0?'오늘':st.daysSinceLast+'일 전'})` : '—'}</b></div>
+    <div class="dim" style="font-size:12px; margin-bottom:8px;"><b style="color:${toneColor}">${st.label}</b> · 마지막 <b class="mono">${st.lastDate ? `${dLabel(st.lastDate)}(${st.daysSinceLast===0?'오늘':st.daysSinceLast+'일 전'})` : '—'}</b></div>
     ${strip.svg}
-    <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">${dLabel(strip.startIso)} ~ ${dLabel(today)} · 주황 = 복용일</div>
+    <div style="font-size:12px; color:var(--text-faint); margin-top:4px;">${dLabel(strip.startIso)} ~ ${dLabel(today)} · 주황 = 복용일</div>
     <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px;">
       <div class="sl-tile"><span>복용 구간 골격근</span><b>${cell(cmp.full.muscle,'kg',1)}</b></div>
       <div class="sl-tile"><span>미복용 구간</span><b>${cell(cmp.none.muscle,'kg',1)}</b></div>
       <div class="sl-tile"><span>표본(건)</span><b>${cmp.full.n} / ${cmp.none.n}</b></div>
     </div>
-    <div style="font-size:10.5px; color:var(--text-faint); margin-top:6px;">${ready ? '관찰 비교예요(효과 단정 금지)' : '판단보류 — 표본이 더 필요해요'}</div>
-    <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:11.5px; color:var(--text-dim); font-weight:600;">복용 구간 vs 미복용 구간 상세 ${ready ? '' : '(판단보류)'}</summary>
-    <div class="dim" style="font-size:11px; margin:6px 0;">${CREATINE_TARGET_NOTE} · 최근 ${CREATINE_SATURATION_DAYS}일 중 ${CREATINE_FULL_THRESHOLD}일 이상 복용 vs 0일 비교(부분 복용·${CREATINE_TRACKING_START} 이전 제외)</div>
+    <div style="font-size:12px; color:var(--text-faint); margin-top:6px;">${ready ? '관찰 비교예요(효과 단정 금지)' : '판단보류 — 표본이 더 필요해요'}</div>
+    <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:12px; color:var(--text-dim); font-weight:600;">복용 구간 vs 미복용 구간 상세 ${ready ? '' : '(판단보류)'}</summary>
+    <div class="dim" style="font-size:12px; margin:6px 0;">${CREATINE_TARGET_NOTE} · 최근 ${CREATINE_SATURATION_DAYS}일 중 ${CREATINE_FULL_THRESHOLD}일 이상 복용 vs 0일 비교(부분 복용·${CREATINE_TRACKING_START} 이전 제외)</div>
     <div style="overflow-x:auto;">
       <table class="data-table">
         <thead><tr><th style="text-align:left">구간</th><th>인바디 건수</th><th>체중 평균</th><th>골격근 평균</th><th>체지방률 평균</th></tr></thead>
@@ -5798,7 +5807,7 @@ function renderCreatineSection(ib){
         </tbody>
       </table>
     </div>
-    <div class="note-box" style="margin-top:8px; font-size:11.5px;">${ready
+    <div class="note-box" style="margin-top:8px; font-size:12px;">${ready
       ? '관찰 비교라 마운자로 용량·식단·운동 변화가 함께 섞여 있어요 — 차이를 크레아틴 효과로 단정하지 마세요. 크레아틴은 근육 속 수분을 늘려 인바디 골격근이 실제보다 높게 잡힐 수 있어요.'
       : `판단보류 — 두 구간 모두 인바디 ${CREATINE_MIN_GROUP_N}건 이상 필요해요(현재 충분 복용 ${cmp.full.n}건 / 미복용 ${cmp.none.n}건). 3g을 매일 ${CREATINE_FULL_THRESHOLD}일 이상 기록하면 자동으로 비교가 시작돼요.`}</div>
     </details>
@@ -5810,7 +5819,7 @@ function chartCard(title, data, key, unit, colorVar, goal, vlines){
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">${title}</span><span class="ch-now mono" style="color:var(${colorVar})">${fmt(nowVal)}${unit}</span></div>
     ${lineChartSVG(data, key, colorVar, {goal, vlines})}
-    ${data.some(d=>d._alc && !d._ex && d[key]!=null) ? `<div style="font-size:10px; color:var(--text-faint); margin-top:4px;"><span style="color:var(--c-warn)">◯</span> 음주 다음날 — 수분·나트륨 영향으로 높게 나올 수 있어요</div>` : ''}
+    ${data.some(d=>d._alc && !d._ex && d[key]!=null) ? `<div style="font-size:12px; color:var(--text-faint); margin-top:4px;"><span style="color:var(--c-warn)">◯</span> 음주 다음날 — 수분·나트륨 영향으로 높게 나올 수 있어요</div>` : ''}
   </div>`;
 }
 // 2026-10-30-d: 이동평균 추세 + 체성분 변화 통합 카드 — 매일 값(연한 선)과 7일 평균(진한 선)을 한 차트에 겹쳐 그린다
@@ -5821,7 +5830,7 @@ function chartCardMA_(title, data, key, unit, colorVar, goal, maMap, extra){
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">${title} <span class="dim" style="font-weight:500;">7일 평균</span></span><span class="ch-now mono" style="color:var(${colorVar})">${nowMA!=null ? fmt(nowMA,2) : '—'}${unit}</span></div>
     ${lineChartSVG(data, key, colorVar, {goal, maMap, h:94, shadeMap: extra.shadeMap})}
-    <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">진한 선 = 7일 평균 · 연한 선 = 매일 값${extra.shadeMap ? ` · <span style="color:var(--c-waist)">주황 음영 = 크레아틴 복용일</span>` : ''}${extra.note ? ' · '+extra.note : ''}${data.some(d=>d._alc && !d._ex && d[key]!=null) ? ` · <span style="color:var(--c-warn)">○</span> 음주 다음날` : ''}</div>
+    <div style="font-size:12px; color:var(--text-faint); margin-top:4px;">진한 선 = 7일 평균 · 연한 선 = 매일 값${extra.shadeMap ? ` · <span style="color:var(--c-waist)">주황 음영 = 크레아틴 복용일</span>` : ''}${extra.note ? ' · '+extra.note : ''}${data.some(d=>d._alc && !d._ex && d[key]!=null) ? ` · <span style="color:var(--c-warn)">○</span> 음주 다음날` : ''}</div>
   </div>`;
 }
 function toggleTable(){ state.showTable = !state.showTable; render(); }
@@ -5865,7 +5874,7 @@ function renderInbodyTable(ma){
   const rows = sortedInbodyAll().map(r=>({...r, fatPctMA: maByDate_.get(r.date)})).reverse();
   return `<div class="card" style="margin-top:12px; overflow-x:auto;">
     <table class="data-table">
-      <thead><tr><th style="text-align:left">날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>BMR</th><th>7일 이평</th><th>제외</th><th></th></tr></thead>
+      <thead><tr><th style="text-align:left">날짜</th><th>체중</th><th>골격근</th><th>체지방량</th><th>체지방률</th><th>기초대사량</th><th>7일 이평</th><th>제외</th><th></th></tr></thead>
       <tbody>
         ${rows.map(r=>{
           // 2026-09-18 추가(7번, 데이터 신뢰도 배지): 골격근/체지방이 없는 "체중전용" 기록을
@@ -5875,7 +5884,7 @@ function renderInbodyTable(ma){
           const isWeightOnly = r.muscle==null || r.fat==null;
           const exp_ = exRowParts_(r, candMap_, ctxMap_);
           return `<tr class="${exp_.cls}">
-          <td style="text-align:left;">${r.date}${bodyTypeBadge_(r)}${isAlcoholNextDay_(r.date)?`<span class="badge" title="전날 음주 — 수분·나트륨 영향으로 체중·골격근이 높게 나올 수 있어요" style="margin-left:4px; font-size:10px; background:var(--c-warn); color:#fff;">음주 다음날</span>`:''}${exp_.badges}${exp_.reason}${isWeightOnly?`<span class="badge miss" title="체성분(골격근·체지방) 미측정 — 체중만 기록됨" style="margin-left:4px; font-size:10px;">체중만</span>`:''}</td>
+          <td style="text-align:left;">${r.date}${bodyTypeBadge_(r)}${isAlcoholNextDay_(r.date)?`<span class="badge" title="전날 음주 — 수분·나트륨 영향으로 체중·골격근이 높게 나올 수 있어요" style="margin-left:4px; font-size:12px; background:var(--c-warn); color:#fff;">음주 다음날</span>`:''}${exp_.badges}${exp_.reason}${isWeightOnly?`<span class="badge miss" title="체성분(골격근·체지방) 미측정 — 체중만 기록됨" style="margin-left:4px; font-size:12px;">체중만</span>`:''}</td>
           <td>${editableCell('inbody', r.date, 'weight', r.weight, 1)}</td>
           <td>${editableCell('inbody', r.date, 'muscle', r.muscle, 1)}</td>
           <td>${editableCell('inbody', r.date, 'fat', r.fat, 1)}</td>
@@ -5974,7 +5983,7 @@ function dayRow(date, i, wArr, m, prev){
       ${m.specialDayType?`<br><span class="badge miss">${esc(SPECIAL_DAY_LABELS[m.specialDayType]||m.specialDayType)}</span>`:''}
       ${mealCreatineG_(m)>0?`<br><span class="badge">💊 크레아틴 ${fmt(mealCreatineG_(m),0)}g</span>`:''}
       ${m.note?`<br><span class="dim">${esc(m.note)}</span>`:''}
-      ${Array.isArray(m.items)&&m.items.length?`<details style="margin-top:4px;"><summary class="dim" style="font-size:11.5px; cursor:pointer;">구성 ${m.items.length}개</summary>${m.items.map(it=>{ const k = it && (it.kcal!=null ? it.kcal : it.calories); return `<div class="dim" style="font-size:11.5px; line-height:1.5;">· ${esc((it&&it.name)||'')}${k!=null?` ${esc(String(k))}kcal`:''}${it&&it.protein!=null?` · 단백 ${esc(String(it.protein))}g`:''}${it&&it.carbs!=null?` · 탄수 ${esc(String(it.carbs))}g`:''}${it&&it.src?` <span style="opacity:.7;">(${esc(it.src)})</span>`:''}</div>`; }).join('')}</details>`:''}
+      ${Array.isArray(m.items)&&m.items.length?`<details style="margin-top:4px;"><summary class="dim" style="font-size:12px; cursor:pointer;">구성 ${m.items.length}개</summary>${m.items.map(it=>{ const k = it && (it.kcal!=null ? it.kcal : it.calories); return `<div class="dim" style="font-size:12px; line-height:1.5;">· ${esc((it&&it.name)||'')}${k!=null?` ${esc(String(k))}kcal`:''}${it&&it.protein!=null?` · 단백 ${esc(String(it.protein))}g`:''}${it&&it.carbs!=null?` · 탄수 ${esc(String(it.carbs))}g`:''}${it&&it.src?` <span style="opacity:.7;">(${esc(it.src)})</span>`:''}</div>`; }).join('')}</details>`:''}
       <div class="row-actions"><button class="mini-btn" onclick="editMealByDate('${date}')">수정</button><button class="mini-btn danger" onclick="deleteMealEntry('${date}')">삭제</button></div>`;
   }
 
@@ -6040,7 +6049,7 @@ function renderGoal(){
     <details class="card" style="padding:14px 16px;"><summary style="cursor:pointer; font-weight:600; font-size:13.5px; color:var(--text-dim);">이전 목표(1차 20% · 2차 18%) 진행 기록 보기</summary>
     <section class="card">
       <div class="section-label good">${secNum('03-old')}이전 목표 현황</div>
-      <h3 class="hero-heading">체지방률 ${fmt(START_FAT_PCT)}% → 현재 ${fmt(last.fatPct)}% <span class="dim" style="font-size:13px; font-weight:500;">(MA7 ${fmt(goalStatus.ma7Last,2)}%)</span></h3>
+      <h3 class="hero-heading">체지방률 ${fmt(START_FAT_PCT)}% → 현재 ${fmt(last.fatPct)}% <span class="dim" style="font-size:13px; font-weight:500;">(7일 평균 ${fmt(goalStatus.ma7Last,2)}%)</span></h3>
       <div class="ruler-wrap">
         <div class="ruler-track">
           <div class="ruler-fill" style="width:${fmt(rulerFillPct,1)}%"></div>
@@ -6051,36 +6060,36 @@ function renderGoal(){
             return `<div class="ruler-tick" style="left:${pos}%; background:${tickColor};"></div>
             <div class="ruler-tick-label" style="left:${pos}%;">${gs.tier==='pending' ? '' : '✓ '}${g.label} ${g.pct}%</div>`;
           }).join('')}
-          <div class="ruler-ma14" style="left:${fmt(rulerMa14Pct,1)}%;" title="MA14 위치"></div>
-          <div class="ruler-tick-sub" style="left:${fmt(rulerMa14Pct,1)}%;">MA14 ${fmt(goalStatus.ma14Last,2)}%</div>
+          <div class="ruler-ma14" style="left:${fmt(rulerMa14Pct,1)}%;" title="14일 평균 위치"></div>
+          <div class="ruler-tick-sub" style="left:${fmt(rulerMa14Pct,1)}%;">14일 평균 ${fmt(goalStatus.ma14Last,2)}%</div>
         </div>
         <div class="ruler-endlabel">
           <span>시작 ${fmt(START_FAT_PCT)}%</span>
-          <span>MA7 현재 ${fmt(goalStatus.ma7Last,2)}%</span>
+          <span>7일 평균 현재 ${fmt(goalStatus.ma7Last,2)}%</span>
           <span>최종 목표 ${fmt(rulerEnd)}%</span>
         </div>
         <div class="gauge-legend" style="margin-top:10px;">
-          <span><span class="legend-dot" style="background:var(--c-gauge-to)"></span>채움 = MA7 진행률</span>
+          <span><span class="legend-dot" style="background:var(--c-gauge-to)"></span>채움 = 7일 평균 진행률</span>
           <span><span class="legend-dot" style="background:var(--c-goalmark)"></span>세로선 = 목표 지점</span>
-          <span><span class="legend-dot" style="background:var(--c-neutral)"></span>파란선 = MA14 위치</span>
+          <span><span class="legend-dot" style="background:var(--c-neutral)"></span>파란선 = 14일 평균 위치</span>
         </div>
         <div class="ruler-goalchips">
           ${calcRowsCurrent.map(r => {
             const gs = r.gs;
             let statusText;
             if(gs.tier==='stable') statusText = '확정 ✓ · 안정 확인';
-            else if(gs.tier==='done') statusText = '확정 ✓ (MA7 기준)';
-            else if(gs.rawDone) statusText = `오늘 실측 도달 · MA7 ${fmt(gs.remain,2)}%p 남음`;
+            else if(gs.tier==='done') statusText = '확정 ✓ (7일 평균 기준)';
+            else if(gs.rawDone) statusText = `오늘 실측 도달 · 7일 평균 ${fmt(gs.remain,2)}%p 남음`;
             else statusText = `체지방 ${fmt(r.fatLossNeeded)}kg 감소 필요`;
             return `<div class="ruler-goalchip">
               <span class="gc-label">${r.g.label} · ${r.g.pct}%</span>
-              <span class="ring-status ${gs.tier}" style="padding:4px 10px; border-radius:99px; font-size:11.5px; white-space:nowrap;">${statusText}</span>
+              <span class="ring-status ${gs.tier}" style="padding:4px 10px; border-radius:99px; font-size:12px; white-space:nowrap;">${statusText}</span>
             </div>`;
           }).join('')}
         </div>
       </div>
       <div class="note-box" style="margin-top:12px;">
-        "확정"은 당일 실측값이 아니라 <b>MA7(최근 7일 평균)</b>이 목표 아래로 내려온 시점을 기준으로 표시해요(하루 컨디션에 따른 오르내림으로 뒤집히지 않도록). <b>MA14(최근 14일 평균)</b>까지 목표 아래로 내려오면 되돌림 걱정 없는 "안정 확인" 단계로 바뀝니다. 체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
+        "확정"은 당일 실측값이 아니라 <b>최근 7일 평균</b>이 목표 아래로 내려온 시점을 기준으로 표시해요(하루 컨디션에 따른 오르내림으로 뒤집히지 않도록). <b>최근 14일 평균</b>까지 목표 아래로 내려오면 되돌림 걱정 없는 "안정 확인" 단계로 바뀝니다. 체중감량 대비 골격근 손실 비율(SURMOUNT-1 0.51 기준) 판단은 아래 가이드 02번과 대시보드를 함께 참고하세요.
       </div>
     </section>
 
@@ -6094,7 +6103,7 @@ function renderGoal(){
               <td>${r.g.label}</td>
               <td>${r.g.pct}%</td>
               <td>${r.achieved
-                ? `<span class="badge hit" style="font-family:var(--font-body); font-size:11.5px; padding:3px 9px;">✓ +${fmt(r.surplus)}kg 여유</span>`
+                ? `<span class="badge hit" style="font-family:var(--font-body); font-size:12px; padding:3px 9px;">✓ +${fmt(r.surplus)}kg 여유</span>`
                 : `<span class="warn-text">${fmt(r.fatLossNeeded)}kg 필요</span>`}</td>
               <td>${fmt(r.targetMuscle)}kg</td>
               <td class="good-text">${r.muscleGainNeeded>0.05?`+${fmt(r.muscleGainNeeded)}kg`:'<span style="font-family:var(--font-body)">현 수준 유지</span>'}</td>
@@ -6104,7 +6113,7 @@ function renderGoal(){
         </table>
       </div>
       <div class="note-box" style="margin-top:14px;">
-        추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정합니다. 가장 최근 체성분 실측치(골격근 ${fmt(lastBC.muscle)}kg, 체지방 ${fmt(lastBC.fat)}kg${bcAsOf})가 그대로 유지된다는 보수적 가정으로 필요 체지방 감량을 역산했습니다 — 골격근이 실제로 늘면 필요 감량치는 인바디 측정마다 갱신되어 줄어듭니다. "✓ 여유" 표시는 위 목표 현황과 동일하게 <b>MA7 확정 기준</b>일 때만 뜨고, 여유분(kg)은 목표 체지방량보다 실측치가 얼마나 더 낮은지를 보여줘요. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
+        추정 방식: 골격근량 외 신체 구성요소(뼈·장기 등, 현재 약 ${fmt(other)}kg)는 그대로 유지된다고 가정합니다. 가장 최근 체성분 실측치(골격근 ${fmt(lastBC.muscle)}kg, 체지방 ${fmt(lastBC.fat)}kg${bcAsOf})가 그대로 유지된다는 보수적 가정으로 필요 체지방 감량을 역산했습니다 — 골격근이 실제로 늘면 필요 감량치는 인바디 측정마다 갱신되어 줄어듭니다. "✓ 여유" 표시는 위 목표 현황과 동일하게 <b>7일 평균 확정 기준</b>일 때만 뜨고, 여유분(kg)은 목표 체지방량보다 실측치가 얼마나 더 낮은지를 보여줘요. 실제 InBody 측정치는 수분 상태 등에 따라 오차가 있을 수 있습니다.
       </div>
     </section>
 
@@ -6187,7 +6196,7 @@ function renderSettings(){
           <div class="field"><label>체중당 하한(g/kg)</label><input id="goal-protein-perkgmin" type="number" step="0.1" value="${(state.goals.protein&&state.goals.protein.perKgMin)||1.6}"></div>
           <div class="field"><label>체중당 상한(g/kg)</label><input id="goal-protein-perkgmax" type="number" step="0.1" value="${(state.goals.protein&&state.goals.protein.perKgMax)||2.0}"></div>
         </div>
-        <p class="p-dim" style="font-size:11.5px; margin-top:6px;">자동 계산은 최신 인바디 체중 × 위 배율로 매번 다시 계산돼요(기본값 1.6~2.0g/kg은 일반적인 근손실 최소화 권장범위 참고치이며, 정확한 개인 기준은 의료·영양 전문가와 상담을 권장해요).</p>
+        <p class="p-dim" style="font-size:12px; margin-top:6px;">자동 계산은 최신 인바디 체중 × 위 배율로 매번 다시 계산돼요(기본값 1.6~2.0g/kg은 일반적인 근손실 최소화 권장범위 참고치이며, 정확한 개인 기준은 의료·영양 전문가와 상담을 권장해요).</p>
       </div>
       <div class="btn-row" style="margin-top:14px;">
         <button class="btn btn-primary btn-sm" onclick="saveGoalSettings()">저장</button>
@@ -6229,10 +6238,10 @@ function renderSettings(){
       <div class="section-label good">${secNum('05b')}클라우드 동기화 (Google Sheets)</div>
       <p class="p-dim">
         Google Sheet를 데이터 허브로 써서, 이 기기뿐 아니라 다른 기기·Claude 채팅에서 넣은 기록도 자동으로 합쳐집니다.
-        아래에 배포한 Apps Script 웹앱 URL을 붙여넣고 저장하면, 앱을 열 때마다 자동으로 동기화됩니다.
+        아래에 시트 연결 주소를 붙여넣고 저장하면, 앱을 열 때마다 자동으로 동기화됩니다.
       </p>
       <div class="field" style="max-width:480px;">
-        <label>Apps Script 웹앱 URL</label>
+        <label>시트 연결 주소</label>
         <input id="cloud-url-input" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(cloudUrl)}">
       </div>
       <div class="btn-row" style="margin-top:12px; align-items:center;">
@@ -6272,7 +6281,7 @@ function renderSettings(){
                 </tr>`).join('')}
               </tbody>
             </table>
-          </div>` : `<p class="p-dim" style="font-size:11.5px;">아직 확인 전이에요 — "전체 상태 점검"을 눌러보세요.</p>`}
+          </div>` : `<p class="p-dim" style="font-size:12px;">아직 확인 전이에요 — "전체 상태 점검"을 눌러보세요.</p>`}
       </div>
       <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border-soft);">
         <div style="font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:4px;">🔄 하루 점수 다시 계산</div>
@@ -6330,10 +6339,10 @@ function renderSettings(){
       <div style="margin-top:10px;">
         ${(()=>{
           const list = getBackupHistory_();
-          if(!list.length) return `<div class="p-dim" style="font-size:11.5px;">아직 저장된 백업 이력이 없어요.</div>`;
+          if(!list.length) return `<div class="p-dim" style="font-size:12px;">아직 저장된 백업 이력이 없어요.</div>`;
           return list.map(entry => `
             <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); font-size:12px;">
-              <div><div style="font-weight:600;">${esc(fmtDateTime(entry.savedAt))}</div><div class="p-dim" style="font-size:10.5px;">${esc(entry.label||'')}</div></div>
+              <div><div style="font-weight:600;">${esc(fmtDateTime(entry.savedAt))}</div><div class="p-dim" style="font-size:12px;">${esc(entry.label||'')}</div></div>
               <button class="btn btn-ghost btn-sm" onclick="restoreFromBackupHistory_('${entry.id}')">복원</button>
             </div>
           `).join('');
@@ -6377,12 +6386,12 @@ function renderSettings(){
       <div class="section-label good">${secNum('06c')}앱 버전</div>
       <p class="p-dim" style="font-family:var(--font-mono); font-size:12px; margin-bottom:6px;">${esc(appBuildShort_())}</p>
       <div class="p-dim" style="font-size:12px; margin-bottom:6px;"><b>최근 변경</b>${appChangelogHtml_()}</div>
-      <p class="p-dim" style="font-size:11.5px; margin-top:4px;">
+      <p class="p-dim" style="font-size:12px; margin-top:4px;">
         코드 수정 후 GitHub 업로드가 실제로 반영됐는지 확인할 때, 여기 빌드 번호가 바뀌었는지만 보면 됩니다
         (바뀌었으면 반영 성공, 그대로면 캐시 삭제 후 재확인 필요).
       </p>
-      <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:11.5px; color:var(--text-dim); font-weight:600;">전체 변경 이력 보기</summary>
-        <ul class="p-dim" style="font-size:11.5px; margin-top:6px; padding-left:18px;">${APP_CHANGELOG.map(c => `<li>${esc(c[0])} · ${esc(c[1])}</li>`).join('')}</ul>
+      <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:12px; color:var(--text-dim); font-weight:600;">전체 변경 이력 보기</summary>
+        <ul class="p-dim" style="font-size:12px; margin-top:6px; padding-left:18px;">${APP_CHANGELOG.map(c => `<li>${esc(c[0])} · ${esc(c[1])}</li>`).join('')}</ul>
       </details>
       ${dataPatchLogHTML_()}
     </section>
@@ -6394,7 +6403,7 @@ function dataPatchLogHTML_(){
   let log = null;
   try{ const raw = localStorage.getItem(DATA_PATCH_LOG_KEY); log = raw ? JSON.parse(raw) : null; }catch(e){ log = null; }
   if(!log) return '';
-  return `<p class="p-dim" style="font-size:11.5px; margin-top:8px; border-top:1px solid var(--border); padding-top:8px;">
+  return `<p class="p-dim" style="font-size:12px; margin-top:8px; border-top:1px solid var(--border); padding-top:8px;">
     데이터 패치: 정의됨 ${esc(String(log.totalPatchesDefined))}건 · 마지막 적용 ${esc(fmtDateTime(log.appliedAt))} · 이번에 변경 ${esc(String(log.changedThisRun))}건
   </p>`;
 }
@@ -6613,9 +6622,9 @@ function trashSectionHtml_(){
   const rows = list.length ? list.map(it => `
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); font-size:12px;">
           <div style="min-width:0;"><div style="font-weight:600;">${esc(trashLabel_(it.cat))} <span class="p-dim" style="font-weight:400;">· ${esc(fmtDateTime(it.at))} 삭제</span></div>
-            <div class="p-dim" style="font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(trashSummary_(it.cat, it.rec))}</div></div>
+            <div class="p-dim" style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(trashSummary_(it.cat, it.rec))}</div></div>
           <button class="btn btn-ghost btn-sm" onclick="trashRestore_('${it.id}')">↩ 복구</button>
-        </div>`).join('') : `<div class="p-dim" style="font-size:11.5px;">최근 30일 안에 삭제한 기록이 없어요.</div>`;
+        </div>`).join('') : `<div class="p-dim" style="font-size:12px;">최근 30일 안에 삭제한 기록이 없어요.</div>`;
   return `<section class="card">
       <div class="section-label good">${secNum('06a4')}삭제 보관함(최근 30일)</div>
       <p class="p-dim">앱에서 지운 인바디·식단·운동·허리둘레·걸음수·부작용 기록이 이 기기에 30일 동안 보관돼요(2026-11-12 이후 삭제분부터). 복구하면 목록에 다시 들어가고 다음 동기화 때 시트에도 반영됩니다.</p>
@@ -6903,9 +6912,9 @@ function pushSizeShrinkWarnings_(prev, next, cutoffStr, deletedIds){
 function syncUrl_(url, query){ return url + (url.includes('?') ? '&' : '?') + (query ? query + '&' : '') + 'ts=' + Date.now(); }
 function describeNonJson_(text){
   const t = String(text||'');
-  if(/accounts\.google\.com|ServiceLogin|Sign in|로그인/i.test(t)) return 'Apps Script가 로그인 화면을 돌려줬어요 — 배포 설정의 "액세스 권한"이 "모든 사용자"인지, URL이 최신 배포(/exec)인지 확인해주세요.';
+  if(/accounts\.google\.com|ServiceLogin|Sign in|로그인/i.test(t)) return '서버가 로그인 화면을 돌려줬어요 — 배포 설정의 "액세스 권한"이 "모든 사용자"인지, URL이 최신 배포(/exec)인지 확인해주세요.';
   const plain = t.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-  return 'Apps Script가 데이터 대신 오류를 돌려줬어요: ' + (plain.slice(0,160) || '(빈 응답)');
+  return '서버가 데이터 대신 오류를 돌려줬어요: ' + (plain.slice(0,160) || '(빈 응답)');
 }
 async function fetchJson_(url, opts, timeoutMs){
   // 2026-11-03: 응답 본문 읽기까지 같은 시간 제한 안에서 처리(이전엔 본문을 받는 중에 멈추면 시간 제한이 없었음)
@@ -6944,7 +6953,7 @@ async function cloudSync(silent, opts){
   const tmr_ = {t0: Date.now(), pullMs: 0, postMs: 0};
   try{
     const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
-    if(!url){ if(!silent) alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
+    if(!url){ if(!silent) alert('먼저 설정 탭에서 시트 연결 주소를 저장해주세요.'); return; }
     if(syncing && syncStartedAt_ && (Date.now() - syncStartedAt_) > 200000){ syncing = false; stopSyncTimer(); } // 2026-11-03: 200초 넘게 안 끝난 동기화는 멈춘 것으로 보고 풀어서 다시 시작 가능하게 함
     if(syncing){
       // 앱 열릴 때 자동으로 도는 백그라운드 동기화(silent)가 아직 끝나기 전에 사용자가
@@ -7235,7 +7244,7 @@ async function cloudSync(silent, opts){
           const serverDates_ = new Set((verifyData_.inbody||[]).map(r=>r.date));
           const missing_ = pushedInbodyDates_.filter(d => !serverDates_.has(d));
           if(missing_.length){
-            throw new Error(`인바디 ${missing_.join(', ')} 데이터가 서버(시트)에 반영되지 않았습니다. 다시 동기화하거나 Apps Script 배포 상태를 확인해주세요.`);
+            throw new Error(`인바디 ${missing_.join(', ')} 데이터가 서버(시트)에 반영되지 않았습니다. 다시 동기화해 보고, 계속되면 Claude에게 알려 주세요.`);
           }
         }
         // 검증까지 성공했을 때만 "직전 성공 push" 서명·해시를 갱신(실패한 push를 기준 삼지 않도록).
@@ -7288,7 +7297,7 @@ const TRIGGER_LABELS_ = {
 };
 async function checkTriggerStatus(){
   const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
-  if(!url){ alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
+  if(!url){ alert('먼저 설정 탭에서 시트 연결 주소를 저장해주세요.'); return; }
   triggerStatusUi = {checking:true, triggers:triggerStatusUi.triggers, error:null};
   render();
   try{
@@ -7303,7 +7312,7 @@ async function checkTriggerStatus(){
 }
 async function runScoreRecalc(){
   const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
-  if(!url){ alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
+  if(!url){ alert('먼저 설정 탭에서 시트 연결 주소를 저장해주세요.'); return; }
   scoreRecalcUi = {running:true, msg:null, error:null};
   render();
   try{
@@ -7322,7 +7331,7 @@ async function runScoreRecalc(){
 }
 async function installTriggerNow(name){
   const url = (localStorage.getItem(LS_KEYS.cloudurl)||'').trim();
-  if(!url){ alert('먼저 클라우드 동기화 URL을 저장해주세요.'); return; }
+  if(!url){ alert('먼저 설정 탭에서 시트 연결 주소를 저장해주세요.'); return; }
   triggerStatusUi = {...triggerStatusUi, checking:true};
   render();
   try{
@@ -7484,7 +7493,7 @@ function handleBackupFile(file){
   reader.onload = () => {
     let data;
     try{ data = JSON.parse(reader.result); }
-    catch(e){ alert('백업 파일을 읽지 못했습니다(JSON 형식 오류): ' + e.message); return; }
+    catch(e){ alert('백업 파일을 읽지 못했습니다(파일 형식 오류): ' + e.message); return; }
     if(!confirm('현재 기기의 데이터를 이 백업 파일 내용으로 전부 덮어씁니다. 되돌릴 수 없습니다 — 계속할까요?')) return;
     // 2026-09-19 추가(머니트레일 벤치마킹): 덮어쓰기 직전 현재 상태를 로컬 백업 히스토리에 자동
     // 저장 — 파일을 잘못 골라 복원해도 방금 전 상태로 다시 돌아갈 수 있게 함.
@@ -7531,7 +7540,7 @@ function renderModal(){
         ${field('muscle','골격근량 (kg)', f.muscle)}
         ${field('fat','체지방량 (kg)', f.fat)}
         ${field('fatPct','체지방률 (%)', f.fatPct)}
-        ${field('bmr','BMR (kcal, 선택)', f.bmr)}
+        ${field('bmr','기초대사량 BMR (kcal, 선택)', f.bmr)}
       ` : ''}
       ${modalState.kind==='meal' ? `
         ${state.favorites.length ? `

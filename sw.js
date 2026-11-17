@@ -3,7 +3,7 @@
 // 배포할 때마다 "한 버전씩 계속 뒤처져서 보이는" 문제의 근본 원인이었음. 개발 중인 앱이라
 // 최신 코드 반영이 성능보다 훨씬 중요하므로 network-first(항상 네트워크 우선, 실패시에만
 // 캐시 폴백)로 전략 변경. CACHE_NAME도 v1→v2로 올려서 이번 배포 시 낡은 캐시를 강제 정리.
-const CACHE_NAME = 'bodyrecomp-cache-v5'; // 배포할 때마다 숫자를 올린다
+const CACHE_NAME = 'bodyrecomp-cache-v6'; // 배포할 때마다 숫자를 올린다
 const CORE_ASSETS = [
   './',
   './index.html',
