@@ -110,7 +110,7 @@
 // getOrCreateSheet_가 헤더 끝에 자동으로 컬럼을 보강해주므로 별도 마이그레이션 작업 불필요.
 // 기존 행은 이 값이 빈 문자열(=null)이라, 클라이언트 병합 로직은 양쪽 다 값이 있을 때만
 // 타임스탬프를 비교하고 없으면 기존처럼 "서버 값 신뢰"로 안전하게 폴백한다.
-const CODE_VERSION_ = '2026-11-15'; // [2026-11-11] 응답의 codeVersion으로 내려감(배포된 서버 버전 확인용)
+const CODE_VERSION_ = '2026-11-20'; // [2026-11-20] 텔레그램 일일요약·인바디분석 메시지 개선(메시지 A·B만 변경, 점수 공식·시트 구조 변경 없음)
 const STAGE_DETAIL_ = true;          // [2026-11-11] true면 전체 조회 stageMs에 시트별 누적 소요시간을 추가(측정 후 false로 바꿔도 됨)
 const SHEETS = {
   // [2026-10-13] exclude/excludeReason/excludeAt: 인바디 "제외 확정" — 위 헤더 설명 참고. 기존 시트는 getOrCreateSheet_가 헤더 끝에 자동 보강.
@@ -544,6 +544,30 @@ function sendTelegramMessage_(text){
     Logger.log('텔레그램 발송 실패: ' + e);
   }
 }
+// [2026-11-20 추가] 자유입력 텍스트(운동명 등)를 HTML 메시지에 넣기 전 이스케이프.
+// parse_mode:'HTML'에서 <b>·<code>처럼 우리가 직접 쓰는 태그는 그대로 두고, 사용자가
+// 입력한 문자열에 <, >, & 가 들어 있으면 텔레그램 발송이 거부될 수 있어 그 부분만 변환.
+function escapeHtml_(s){
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+// [2026-11-20 추가] 텔레그램 한 메시지 글자수 한도(4,096자) 대응. 문단(\n\n) 단위로 잘라
+// 한도를 넘지 않게 모아서 여러 건으로 나눠 보낸다(태그가 줄 중간에서 끊기지 않도록 줄 단위로만 자름).
+const TELEGRAM_MAX_LEN_ = 4096;
+function sendTelegramMessageSplit_(text){
+  if(text.length <= TELEGRAM_MAX_LEN_){ sendTelegramMessage_(text); return; }
+  const lines = text.split('\n');
+  let chunk = '';
+  lines.forEach(line => {
+    const next = chunk ? chunk + '\n' + line : line;
+    if(next.length > TELEGRAM_MAX_LEN_ && chunk){
+      sendTelegramMessage_(chunk);
+      chunk = line;
+    } else {
+      chunk = next;
+    }
+  });
+  if(chunk) sendTelegramMessage_(chunk);
+}
 
 
 
@@ -579,6 +603,8 @@ function round1_(n){
 // 이제 let으로 바꾸고, applyGoalsOverride_(ss)가 Meta의 goals를 읽어 이 값들을 갱신한다 —
 // 클라이언트의 applyGoalOverrides_() 패턴과 동일한 구조.
 const PROTEIN_TARGET_RANGE_DEFAULT_ = [130, 160]; // 2026-11-07: 140~170→130~160g(총 단백질 1.62g/kg 이상 추가 이득 없음, 제지방 57kg×2.3g≈131g)
+// [2026-11-20 추가] 인바디 메시지에 "목표 달성 현황" 섹션을 넣을지 스위치만 구현(기본 false — 11-17 "일일 레포트는 사실만" 원칙).
+const SHOW_GOAL_STATUS_ = false;
 const KCAL_TARGET_MID_ = 2050, KCAL_BAND_LOW_ = 1900, KCAL_BAND_HIGH_ = 2200; // 2026-11-07: 칼로리 주 평균 기본 목표(밴드)
 // [2026-11-07c] A안: 운동 가산은 주 단위 — 그 주(월~일) 운동 칼로리 합계가 2,300kcal를 넘으면 초과분의 60%를 하루 평균으로 환산해 더한다(앱 kcalWeekTarget_와 같은 규칙, 매월 점검에서 재보정).
 const KCAL_EXTRA_BASE_WEEK_ = 2300, KCAL_EXTRA_FACTOR_ = 0.6, KCAL_BAND_HALF_ = 150;
@@ -647,6 +673,21 @@ function parseVolume_(v){
   if(typeof v==='number') return v;
   const n = Number(String(v).replace(/[^0-9.]/g,''));
   return isNaN(n) ? 0 : n;
+}
+// [2026-11-20 추가] meals에는 상위 지방 합계 칸이 없고 items[].fat에만 있다. items가 없거나
+// 항목 중 하나라도 fat이 비어 있으면(일부만 더하면 총합처럼 보여 오해를 줄 수 있어) null(미기록)로 본다.
+function mealsFatTotal_(mealRows){
+  let sum = 0, any = false;
+  for(const m of (mealRows || [])){
+    const items = Array.isArray(m.items) ? m.items : [];
+    if(!items.length) return null;
+    for(const it of items){
+      const f = dsNum_(it && it.fat);
+      if(f === null) return null;
+      sum += f; any = true;
+    }
+  }
+  return any ? round1_(sum) : null;
 }
 
 
@@ -747,7 +788,7 @@ function bmrForTargetOn_(inbodyRows, date){
  */
 function findPrevInbody_(allInbody, date){
   const past = allInbody
-    .filter(r => r.date < date && r.weight != null)
+    .filter(r => r.date < date && r.weight != null && !isInbodyExcluded_(r)) // 2026-11-20: 제외 확정일은 직전 비교 기준에서도 건너뜀
     .sort((a,b) => b.date.localeCompare(a.date));
   return past.length ? past[0] : null;
 }
@@ -934,7 +975,49 @@ function computeInbodyMA7Compare_(allInbody, date){
   return result;
 }
 
-
+// [2026-11-20 추가] 메시지 표시용: MA7 "최근 7번" 창에 들어간 날짜와, 그 구간에서 제외 확정으로
+// 빠진 날짜를 보여주기 위한 보조 함수. computeInbodyMA7Compare_의 산식(평균·비교)은 그대로 두고,
+// 표시 문구(산입 N건·제외 날짜)만 보강하기 위해 같은 필터·정렬 규칙을 따로 한 번 더 계산한다.
+function inbodyMA7Window_(allInbody, date){
+  const validSorted = allInbody
+    .filter(r => r.date <= date && r.weight != null && !isInbodyExcluded_(r))
+    .sort((a,b) => a.date.localeCompare(b.date));
+  if(validSorted.length < 8) return null;
+  const dates = validSorted.slice(-7).map(r => r.date);
+  const minD = dates[0], maxD = dates[dates.length - 1];
+  const excluded = allInbody
+    .filter(r => isInbodyExcluded_(r) && r.date >= minD && r.date <= maxD)
+    .map(r => r.date)
+    .sort();
+  return { dates: dates, excluded: excluded };
+}
+// [2026-11-20 추가] 최근 N번(14·30) 유효 측정 평균. MA7과 같은 "유효 측정 N건" 규칙이지만
+// 비교 기준(직전 N건)은 요청서에서 요구하지 않아 계산하지 않음 — 그만큼 실수로 쓰는 일을 막는다.
+function computeInbodyNAvg_(allInbody, date, n){
+  const sorted = allInbody
+    .filter(r => r.date <= date && r.weight != null && !isInbodyExcluded_(r))
+    .sort((a,b) => a.date.localeCompare(b.date));
+  if(sorted.length < n) return { count: sorted.length, need: n, fields: null };
+  const windowRows = sorted.slice(-n);
+  const fields = {};
+  ['weight','muscle','fat','fatPct'].forEach(f => {
+    const valid = windowRows.filter(r => r[f] != null && r[f] !== '' && !isNaN(Number(r[f])));
+    fields[f] = valid.length ? { avg: round1_(valid.reduce((s,r) => s + Number(r[f]), 0) / valid.length), validCount: valid.length } : null;
+  });
+  return { count: n, need: n, fields: fields };
+}
+function formatInbodyNAvgLine_(res, label){
+  if(!res || !res.fields) return `최근 ${label}번 평균: 데이터 부족(${res ? res.count : 0}/${label})`;
+  const f = res.fields;
+  const part = (name, obj, unit) => obj ? `${name} ${obj.avg}${unit}` : `${name} 판단보류`;
+  return `최근 ${label}번 평균: ` + [part('체중', f.weight, 'kg'), part('골격근', f.muscle, 'kg'), part('체지방', f.fat, 'kg'), part('체지방률', f.fatPct, '%')].join(' · ');
+}
+// [2026-11-20 추가] "목표 달성 현황" 섹션 스위치(SHOW_GOAL_STATUS_, 기본 OFF). 켜질 때도
+// 단일 측정값이 아니라 MA7 평균으로만 현재 목표(골격근 33kg·체지방률 16~17%·체중 69~70kg) 대비를 보여준다.
+function buildGoalStatusLine_(ma7){
+  if(!ma7 || !ma7.muscle || !ma7.weight || !ma7.fatPct) return null;
+  return `🎯 목표 대비(MA7 기준): 골격근 ${round1_(ma7.muscle.current)}/33kg · 체지방률 ${round1_(ma7.fatPct.current)}%(목표 16~17%) · 체중 ${round1_(ma7.weight.current)}/69~70kg`;
+}
 
 
 
@@ -981,78 +1064,68 @@ const MUSCLE_MA7_ROLLBACK_DELTA_ = -0.3;
  * 처리해서 "판단보류"로 표시하도록 수정. 이전엔 이 케이스를 구분하지 못하고 0으로 계산된
  * 값을 그대로 정상 수치처럼 취급해 잘못된 경고를 냈음.
  */
-function buildInbodyAnalysisComment_(r, prevRec, ma7, startRec){
-  const lines = [];
+// [2026-11-20 수정] 종합 분석을 "확인된 사실/추세 해석/주의 사항/판단 불가" 4개로 나누고,
+// 골격근손실비율(0.51 임계) 숫자는 텔레그램 출력에서 빼고 내부 로그로만 남긴다(계산 자체는 보존).
+// waterCaveat=true면 전날 식단에 음주·과식 기록이 있다는 뜻(수분 노이즈 주의문 추가용).
+function buildInbodyAnalysisComment_(r, prevRec, ma7, startRec, waterCaveat){
+  const facts = [], trends = [], cautions = [], unknowns = [], nextActions = [];
 
 
 
 
-
-
-
-
-  // 전일 대비 방향성 판정
-  if(prevRec){
-    const muscleDelta = round1_(r.muscle - prevRec.muscle);
-    const fatDelta = round1_(r.fat - prevRec.fat);
-    if(muscleDelta >= 0 && fatDelta <= 0){
-      lines.push('전일 대비 골격근+체지방 동시 개선(단일측정치, 반등 확정 아님).');
-    } else if(muscleDelta < 0 && fatDelta > 0){
-      lines.push('전일 대비 골격근 감소+체지방 증가 — 단일측정치이나 확인 필요.');
-    } else {
-      lines.push('전일 대비 지표 혼조 — 단일측정치라 추세 판단 보류.');
-    }
-  }
-
-
-
-
-
-
-
-
-  // MA7 방향성 + 롤백기준 비교
   if(ma7){
     if(!ma7.weight || !ma7.muscle || !ma7.fat || !ma7.fatPct){
-      lines.push('MA7 비교: 최근 7건 중 골격근/체지방 실측값이 부족해(체중만 기록된 날 포함) 이번엔 계산을 보류합니다.');
+      unknowns.push('MA7 비교: 최근 7건 중 골격근/체지방 실측값이 부족해(체중만 기록된 날 포함) 이번엔 계산을 보류합니다.');
     } else {
       const muscleMA7Delta = round1_(ma7.muscle.delta);
       const fatMA7Delta = round1_(ma7.fat.delta);
       const weightMA7Delta = round1_(ma7.weight.delta);
-      let ma7Line = `MA7(골격근·체지방 유효값 ${ma7.muscle.validCount}건) 체중 ${weightMA7Delta >= 0 ? '+' : ''}${weightMA7Delta}kg`;
-      ma7Line += fatMA7Delta > 0 ? ', 체지방 반등 주의' : ', 체지방 감소 추세 유지';
-      lines.push(ma7Line + '.');
+      facts.push(`체중 MA7 변화 ${weightMA7Delta >= 0 ? '+' : ''}${weightMA7Delta}kg · 체지방 MA7 변화 ${fatMA7Delta >= 0 ? '+' : ''}${fatMA7Delta}kg (유효 ${ma7.muscle.validCount}건, 비교 기준: 직전 유효 최대 7건 평균)`);
+      trends.push(fatMA7Delta > 0 ? '체지방 MA7이 반등 추세라 주의가 필요해요.' : '체지방 MA7은 감소 추세를 유지하고 있어요.');
 
-
-
-
-
-
-
-
-      if(muscleMA7Delta <= MUSCLE_MA7_ROLLBACK_DELTA_){
-        lines.push(`⚠️ MA7 골격근 손실폭(${muscleMA7Delta}kg)이 롤백기준(${MUSCLE_MA7_ROLLBACK_DELTA_}kg) 도달/초과 — 운동전략 재검토 필요.`);
-      } else {
-        lines.push(`MA7 골격근 손실폭(${muscleMA7Delta}kg)은 롤백기준(${MUSCLE_MA7_ROLLBACK_DELTA_}kg) 이내로 양호.`);
+      // 롤백 판정(요청서 7번): 현재 MA7 / 비교기준 MA7 / 변화 / 임계값 / 판정을 하나로.
+      const verdict = muscleMA7Delta <= MUSCLE_MA7_ROLLBACK_DELTA_ ? '도달/초과' : '이내';
+      facts.push(`골격근 롤백 판정: ${verdict} (현재 MA7 ${round1_(ma7.muscle.current)}kg, 비교기준 ${round1_(ma7.muscle.previous)}kg, 변화 ${muscleMA7Delta >= 0 ? '+' : ''}${muscleMA7Delta}kg, 기준 ${MUSCLE_MA7_ROLLBACK_DELTA_}kg)`);
+      if(verdict === '도달/초과'){
+        cautions.push(`⚠️ 골격근 롤백 기준에 ${verdict}했어요 — 운동전략 재검토가 필요해요.`);
+        nextActions.push('이번 주 근력 운동 빈도·단백질 섭취를 다시 점검해 보세요.');
       }
+
+      // 골격근손실비율(0.51 임계)은 2026-11-20부터 텔레그램 출력 제외(계산만 내부 로그로 보존).
       const ratioInfo = computeMuscleLossRatio_(startRec, ma7.weight.current, ma7.muscle.current);
       if(ratioInfo){
-        const ratio = Math.round(ratioInfo.ratio * 1000) / 1000;
-        lines.push(`골격근손실비율(MA7기준) ${ratio}, 임계값(${MUSCLE_LOSS_RATIO_THRESHOLD_}) ${ratio >= MUSCLE_LOSS_RATIO_THRESHOLD_ ? '초과' : '이내'}.`);
+        Logger.log('골격근손실비율(내부 전용, 텔레그램 미출력) ' + Math.round(ratioInfo.ratio * 1000) / 1000 + ' / 임계 ' + MUSCLE_LOSS_RATIO_THRESHOLD_);
       }
     }
   } else {
-    lines.push('MA7 비교: 누적 기록 8건 미만이라 계산 불가.');
+    unknowns.push('MA7 비교: 누적 기록 8건 미만이라 계산 불가.');
+    nextActions.push('MA7 비교를 보려면 인바디 기록을 계속 쌓아 주세요(8건 이상 필요).');
   }
 
+  if(prevRec){
+    const muscleDelta = round1_(r.muscle - prevRec.muscle);
+    const fatDelta = round1_(r.fat - prevRec.fat);
+    if(muscleDelta >= 0 && fatDelta <= 0){
+      trends.push('전일 대비 골격근+체지방이 동시에 개선됐어요(단일측정치, 반등 확정 아님).');
+    } else if(muscleDelta < 0 && fatDelta > 0){
+      trends.push('전일 대비 골격근은 줄고 체지방은 늘었어요 — 단일측정치이지만 확인이 필요해요.');
+    } else {
+      trends.push('전일 대비 지표가 혼조예요 — 단일측정치라 추세 판단은 보류할게요.');
+    }
+  }
 
+  cautions.push('⚠️ 체성분(BIA) 측정값 특성상, 이 결과만으로 실제 근육 손실·증가를 확정할 수 없어요.');
+  if(waterCaveat) cautions.push('⚠️ 전날 음주·과식 기록이 있어 오늘 수치에 수분 영향이 섞여 있을 수 있어요.');
+  cautions.push('체중 감소만으로 성공·실패를 판정하지 않고, 골격근 상승만으로 실제 근육 증가를 확정하지 않아요.');
 
-
-
-
-
-
-  return lines.join('\n');
+  const sections = [];
+  if(facts.length) sections.push('✅ 확인된 사실\n' + facts.map(l => '· ' + l).join('\n'));
+  if(trends.length) sections.push('📈 추세 해석\n' + trends.map(l => '· ' + l).join('\n'));
+  if(cautions.length) sections.push('⚠️ 주의 사항\n' + cautions.map(l => '· ' + l).join('\n'));
+  if(unknowns.length) sections.push('❓ 판단 불가\n' + unknowns.map(l => '· ' + l).join('\n'));
+  let out = sections.join('\n\n');
+  if(nextActions.length) out += '\n\n➡️ 다음 행동\n' + nextActions.map(l => '· ' + l).join('\n');
+  return out;
 }
 /** 부호 포함 숫자 문자열(+/-) 포맷 — 0은 "0.0"으로 표시 */
 function formatSignedDelta_(n){
@@ -1842,87 +1915,60 @@ function notifyImmediate_(ss, data){
   applyGoalsOverride_(ss);
   if(data.inbody && data.inbody.length){
     const allInbody = readSheet_(ss, SHEETS.inbody);
+    const allMealsForWater_ = readSheet_(ss, SHEETS.meals); // 2026-11-20: 수분 노이즈 caveat(전날 음주·과식) 판단용, 한 번만 읽음
     const startRec = getStartInbody_(allInbody);
     data.inbody.forEach(r => {
       const prevRec = findPrevInbody_(allInbody, r.date);
       const ma7 = computeInbodyMA7Compare_(allInbody, r.date);
 
-
-
-
-
-
-
-
       let msg = `📊 <b>인바디 등록</b> (${r.date})\n`;
 
-
-
-
-
-
-
-
       msg += `체중 ${r.weight}kg`;
-      if(prevRec) msg += ` (전일 ${formatSignedDelta_(round1_(r.weight - prevRec.weight))})`;
+      if(prevRec) msg += ` (직전측정 ${prevRec.date} 대비 ${formatSignedDelta_(round1_(r.weight - prevRec.weight))})`;
       if(ma7 && ma7.weight) msg += ` / MA7 ${round1_(ma7.weight.current)}kg, ${formatSignedDelta_(round1_(ma7.weight.delta))}`;
       else if(ma7) msg += ` / MA7 판단보류(최근7건 유효값부족)`;
 
-
-
-
-
-
-
-
       msg += `\n골격근 ${r.muscle}kg`;
-      if(prevRec) msg += ` (전일 ${formatSignedDelta_(round1_(r.muscle - prevRec.muscle))})`;
+      if(prevRec) msg += ` (직전측정 ${prevRec.date} 대비 ${formatSignedDelta_(round1_(r.muscle - prevRec.muscle))})`;
       if(ma7 && ma7.muscle) msg += ` / MA7 ${round1_(ma7.muscle.current)}kg, ${formatSignedDelta_(round1_(ma7.muscle.delta))}`;
       else if(ma7) msg += ` / MA7 판단보류(최근7건 유효값부족)`;
 
-
-
-
-
-
-
-
       msg += `\n체지방 ${r.fat}kg`;
-      if(prevRec) msg += ` (전일 ${formatSignedDelta_(round1_(r.fat - prevRec.fat))})`;
+      if(prevRec) msg += ` (직전측정 ${prevRec.date} 대비 ${formatSignedDelta_(round1_(r.fat - prevRec.fat))})`;
       if(ma7 && ma7.fat) msg += ` / MA7 ${round1_(ma7.fat.current)}kg, ${formatSignedDelta_(round1_(ma7.fat.delta))}`;
       else if(ma7) msg += ` / MA7 판단보류(최근7건 유효값부족)`;
 
-
-
-
-
-
-
-
       msg += `\n체지방률 ${r.fatPct}%`;
-      if(prevRec) msg += ` (전일 ${formatSignedDelta_(round1_(r.fatPct - prevRec.fatPct))}%p)`;
+      if(prevRec) msg += ` (직전측정 ${prevRec.date} 대비 ${formatSignedDelta_(round1_(r.fatPct - prevRec.fatPct))}%p)`;
       if(ma7 && ma7.fatPct) msg += ` / MA7 ${round1_(ma7.fatPct.current)}%, ${formatSignedDelta_(round1_(ma7.fatPct.delta))}%p`;
       else if(ma7) msg += ` / MA7 판단보류(최근7건 유효값부족)`;
 
-
-
-
-
-
-
-
       if(r.bmr) msg += `\nBMR ${r.bmr}kcal`;
 
+      // [2026-11-20 추가] MA7 "최근 7번" 창에 실제로 산입된 날짜·그 구간에서 제외된 날짜 표기
+      const win7 = inbodyMA7Window_(allInbody, r.date);
+      if(win7){
+        msg += `\n최근 7번 평균 산입일(${win7.dates.length}건): ${win7.dates.join(', ')}`;
+        if(win7.excluded.length) msg += ` · 제외: ${win7.excluded.join(', ')}`;
+      }
 
+      // [2026-11-20 추가] 최근 14번·30번 평균(부족하면 "데이터 부족", 추정값으로 채우지 않음)
+      msg += `\n${formatInbodyNAvgLine_(computeInbodyNAvg_(allInbody, r.date, 14), '14')}`;
+      msg += `\n${formatInbodyNAvgLine_(computeInbodyNAvg_(allInbody, r.date, 30), '30')}`;
 
+      // [2026-11-20 추가] 목표 달성 현황(기본 OFF, SHOW_GOAL_STATUS_ 스위치)
+      if(SHOW_GOAL_STATUS_){
+        const goalLine = buildGoalStatusLine_(ma7);
+        if(goalLine) msg += `\n\n${goalLine}`;
+      }
 
+      // [2026-11-20 추가] 수분 노이즈 caveat는 전날 meals에 음주·과식 기록이 있을 때만
+      const dayBefore_ = dsDateMinus_(r.date, 1);
+      const waterCaveat_ = allMealsForWater_.some(m => m.date === dayBefore_ && (m.specialDayType === 'alcohol' || m.specialDayType === 'overeat'));
 
-
-
-
-      const analysis = buildInbodyAnalysisComment_(r, prevRec, ma7, startRec);
+      const analysis = buildInbodyAnalysisComment_(r, prevRec, ma7, startRec, waterCaveat_);
       if(analysis) msg += `\n\n📊 분석\n${analysis}`;
-      sendTelegramMessage_(msg);
+      sendTelegramMessageSplit_(msg);
     });
   }
 
@@ -2098,132 +2144,98 @@ function sendEveningDigest(){
   const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
   const inbody = readSheet_(ss, SHEETS.inbody).filter(r => r.date === today);
   const workouts = readSheet_(ss, SHEETS.workouts).filter(r => r.date === today);
-  const meals = readSheet_(ss, SHEETS.meals).filter(r => r.date === today);
   const allInbody = readSheet_(ss, SHEETS.inbody);
   const allWorkouts = readSheet_(ss, SHEETS.workouts);
-  const prVolumeKg = allWorkouts.reduce((max,w) => Math.max(max, parseVolume_(w.volume)), 0);
+  const allMeals_ = readSheet_(ss, SHEETS.meals); // 2026-11-20: 한 번만 읽어 오늘자 필터·주간점수 계산에 같이 씀
+  const meals = allMeals_.filter(r => r.date === today);
 
-
-
-
-
-
-
+  // [2026-11-20] 주간 점수는 식단 섹션(이번 주 평균 표시)과 맨 아래 점수 블록이 같은 값을 쓰도록 먼저 한 번만 계산
+  let wsRes_ = null;
+  try{ wsRes_ = computeWeeklyScore_(wsWeekStart_(today), allWorkouts, allMeals_, today); }
+  catch(wsErr){ Logger.log('주간 점수 계산 실패(요약은 계속 진행): ' + wsErr); }
 
   let summaryLine = '';
   let mealSection = '';
-
-
-
-
-
-
-
 
   if(meals.length){
     const totalCal = round1_(meals.reduce((s,m) => s + (Number(m.calories) || 0), 0));
     const totalProt = round1_(meals.reduce((s,m) => s + (Number(m.protein) || 0), 0));
     const totalCarb = round1_(meals.reduce((s,m) => s + (Number(m.carbs) || 0), 0));
+    const totalFat_ = mealsFatTotal_(meals); // 2026-11-20: items[].fat 전부 있을 때만 합산, 아니면 null(미기록)
 
-
-
-
-
-
-
-
-    const bmr = bmrForTargetOn_(allInbody, today);
-    const eatKcal = workouts.reduce((s,w) => s + (Number(w.calories) || 0), 0);
-    const todayVolumeKg = workouts.reduce((s,w) => s + parseVolume_(w.volume), 0);
-    const hasStrengthToday = todayVolumeKg > 0;
-    const calT = computeCalorieTarget_(bmr, eatKcal);
-    const calDelta = calT ? formatDelta_(totalCal, calT.targetLow, calT.targetHigh) : null;
     const protDelta = formatDelta_(totalProt, PROTEIN_TARGET_RANGE_[0], PROTEIN_TARGET_RANGE_[1]);
-
-
-
-
-
-
-
+    const protScoreOk_ = totalProt >= WS_PROTEIN_MIN_;
 
     // [2026-11-07] 하루 목표 요약은 단백질만(칼로리는 주 평균, 탄수 목표 폐지)
     summaryLine = `✨ 오늘 단백질 ${protDelta === '범위내' ? '목표 달성' : goalStatusLabel_(protDelta)}\n\n`;
 
-
-
-
-
-
-
-
-    mealSection = `🍽 식단 합계: ${totalCal}kcal · 단백 ${totalProt}g · 탄수 ${totalCarb}g`;
+    mealSection = `🍽 식단 합계: ${totalCal}kcal · 단백 ${totalProt}g · 탄수 ${totalCarb}g · 지방 ${totalFat_ != null ? totalFat_ + 'g' : '미기록'}`;
     const kt_ = kcalWeekTargetOn_(ss, today);
-    mealSection += `\n· 칼로리는 이번 주 평균 ${kt_.mid.toLocaleString()}kcal(${kt_.low.toLocaleString()}~${kt_.high.toLocaleString()}, 운동 가산 +${kt_.add}) 기준 — 오늘 ${totalCal}kcal`;
-    mealSection += `\n· 단백질 목표 ${PROTEIN_TARGET_RANGE_[0]}~${PROTEIN_TARGET_RANGE_[1]}g (${protDelta})`;
+    mealSection += `\n· 이번 주 운동 합계 ${kt_.eat.toLocaleString()}kcal → 가산 +${kt_.add} → 이번 주 목표 ${kt_.mid.toLocaleString()}kcal(밴드 ${kt_.low.toLocaleString()}~${kt_.high.toLocaleString()})`;
+    mealSection += `\n· 오늘 섭취 ${totalCal}kcal` + (wsRes_ ? ` / 이번 주 평균 ${wsRes_.counts.avgKcal.toLocaleString()}kcal(오늘 제외, 기록 ${wsRes_.counts.recordDays}일)` : '');
+    mealSection += `\n· 단백질: 목표 ${PROTEIN_TARGET_RANGE_[0]}~${PROTEIN_TARGET_RANGE_[1]}g(${protDelta}) · 점수 기준 ${WS_PROTEIN_MIN_}g 이상(${protScoreOk_ ? '충족' : '미충족'})`;
   } else {
     mealSection = `🍽 식단 기록 없음`;
   }
 
-
-
-
-
-
-
-
   let msg = `🌙 <b>${today} 하루 요약</b>\n\n${summaryLine}`;
-
-
-
-
-
-
-
 
   if(inbody.length){
     const r = inbody[0];
     msg += `📊 인바디: 체중 ${r.weight}kg · 골격근 ${r.muscle}kg · 체지방 ${r.fat}kg(${r.fatPct}%)\n\n`;
+  } else {
+    // [2026-11-20 추가] 당일 인바디가 없을 때 이전 값을 지금 값처럼 보여주지 않음
+    const lastInbody_ = allInbody.filter(r => r.weight != null).sort((a,b) => b.date.localeCompare(a.date))[0];
+    msg += `📊 오늘 인바디 없음(마지막 측정 ${lastInbody_ ? lastInbody_.date : '기록 없음'})\n\n`;
   }
 
-
-
-
-
-
-
-
+  // [2026-11-20 수정] 운동을 part 기준 근력/유산소/기타로 분류하고, 유산소는 인정/미인정 사유를 같이 표시
   if(workouts.length){
-    msg += `🏋️ 운동 ${workouts.length}건\n`;
-    workouts.forEach(w => { msg += `· ${w.name || ''}${w.calories ? ` (${w.calories}kcal)` : ''}\n`; });
-    msg += '\n';
+    const strengthW = [], cardioW = [], etcW = [];
+    workouts.forEach(w => {
+      if(String(w.part || '').trim() === '유산소') cardioW.push(w);
+      else if(wsIsStrength_(w)) strengthW.push(w);
+      else etcW.push(w);
+    });
+    const basicLine_ = w => {
+      let l = `· ${escapeHtml_(w.name || '')}`;
+      if(w.calories) l += ` (${w.calories}kcal)`;
+      l += buildWorkoutSummaryLine_(w);
+      if(!w.durationMin) l += ' · 시간 미기록';
+      return l;
+    };
+    if(strengthW.length) msg += `🏋️ 근력 ${strengthW.length}건\n` + strengthW.map(basicLine_).join('\n') + '\n\n';
+    if(cardioW.length){
+      msg += `🏃 유산소 ${cardioW.length}건\n`;
+      cardioW.forEach(w => {
+        let l = `· ${escapeHtml_(w.name || '')}`;
+        if(w.calories) l += ` (${w.calories}kcal)`;
+        l += buildWorkoutSummaryLine_(w);
+        const ci = cardioCreditInfo_(w);
+        l += ci.ok ? ' · 인정' : ` · 미인정(${ci.reason})`;
+        msg += l + '\n';
+      });
+      msg += '\n';
+    }
+    if(etcW.length) msg += `🔹 기타 ${etcW.length}건\n` + etcW.map(basicLine_).join('\n') + '\n\n';
   } else {
     msg += `🏋️ 운동 기록 없음\n\n`;
   }
   msg += mealSection;
 
-
-
-
-
-
-
-
   // [2026-10-04 추가] 하루 점수 블록(2026-10-03분부터). 실패해도 위 요약은 그대로 발송.
   try{
     if(today >= DAILY_SCORE_START_DATE_){
-      const scoreRes = computeDailyScoreForDate_(today, allInbody, allWorkouts, readSheet_(ss, SHEETS.meals));
-      const hourLabel = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'H') + '시 기준 잠정';
-      saveDailyScore_(ss, scoreRes, '잠정');
-      // [2026-11-07] 저녁 요약에는 하루 점수 대신 이번 주 점수를 붙인다(하루 점수는 시트에만 계속 저장)
-      const wsRes_ = computeWeeklyScore_(wsWeekStart_(today), allWorkouts, readSheet_(ss, SHEETS.meals), today);
-      msg += '\n\n' + formatWeeklyScoreBlock_(wsRes_, hourLabel);
+      const scoreRes = computeDailyScoreForDate_(today, allInbody, allWorkouts, allMeals_);
+      saveDailyScore_(ss, scoreRes, '잠정'); // [2026-11-07] 저녁 요약에는 하루 점수 대신 이번 주 점수를 붙인다(하루 점수는 시트에만 계속 저장)
+      const statusLabel_ = wsRes_ ? (wsRes_.status === '확정' ? '확정' : `잠정(월~오늘, 기록 ${wsRes_.counts.recordDays}일)`) : '';
+      msg += '\n\n' + formatWeeklyScoreBlock_(wsRes_, statusLabel_);
       if(wsRes_) saveWeeklyScore_(ss, wsRes_);
     }
   } catch(scoreErr){
     Logger.log('하루 점수 계산/저장 실패(저녁 요약은 그대로 발송): ' + scoreErr);
   }
-  sendTelegramMessage_(msg);
+  sendTelegramMessageSplit_(msg);
 }
 
 
