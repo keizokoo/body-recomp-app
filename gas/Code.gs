@@ -1,6 +1,14 @@
 /**
  * 바디 리컴포지션 앱 - 클라우드 동기화 백엔드
  *
+ * [2026-11-21b 수정] "aiAnalysis-인바디 불일치 감지" 오탐 개선(앱 변경 없음, checkAiAnalysisInbodyGap_만 수정).
+ *    실사고(2026-11-21): 인바디를 측정하지 않은 날 분석 글만 올렸는데도 경고가 발송됨 — 분석 글 안 수치가
+ *    전부 직전 날짜 값을 인용한 것이었음. 이제 분석 글에서 라벨 붙은 수치(체중/골격근량/체지방량/체지방률,
+ *    "인바디 D/D/Dkg" 표기 포함)만 추출해, ①수치가 하나도 없으면(식단·운동만 쓴 날) 경고 안 함
+ *    ②추출 수치가 최근 14일 기존 기록과 오차 범위 안으로 맞으면(=과거 값 인용) 경고 안 함
+ *    ③그 외(새 수치 + 그날 구조화 인바디 없음)만 경고. 같은 날 중복 경고 방지(aiGapAlertedDate)는
+ *    기존 그대로(2026-11-03 추가). 값 자동보정은 하지 않음(기존 원칙 유지). 알림 문구도 쉬운 말로 교체.
+ *    점수 공식·시트 구조·다른 알림은 변경 없음.
  * [2026-11-15 수정] 유산소 인정 판정 보강(앱 2026-11-15-a와 짝): ①걷기 속도 조건 — 2026-11-16 이후 걷기·산책·러닝머신은 평균속도 4.0km/h 이상 또는 분당 100보 이상
  *    (인클라인·골프·사이클은 제외, 속도 칸이 없으면 인정 유지) ②cardioCreditInfo_가 미인정 사유를 돌려줌 ③채팅 업로드 알림에 유산소 빈 칸·기준 미달 경고 한 줄.
  *    2026-11-15 이전 주의 점수는 바뀌지 않는다(주간 점수 버전 그대로).
@@ -110,7 +118,8 @@
 // getOrCreateSheet_가 헤더 끝에 자동으로 컬럼을 보강해주므로 별도 마이그레이션 작업 불필요.
 // 기존 행은 이 값이 빈 문자열(=null)이라, 클라이언트 병합 로직은 양쪽 다 값이 있을 때만
 // 타임스탬프를 비교하고 없으면 기존처럼 "서버 값 신뢰"로 안전하게 폴백한다.
-const CODE_VERSION_ = '2026-11-21'; // [2026-11-21] 텔레그램 일일요약·인바디분석 메시지 개선 2차(표시 구조·문구만 변경, 점수 공식·칼로리 밴드·MA7 산식·시트 구조 변경 없음)
+const CODE_VERSION_ = '2026-11-21b'; // [2026-11-21b] aiAnalysis-인바디 불일치 경고 오탐 개선(checkAiAnalysisInbodyGap_) + 문구 쉬운 말로 교체, 점수 공식·시트 구조 변경 없음
+// [2026-11-21 버전] 텔레그램 일일요약·인바디분석 메시지 개선 2차(표시 구조·문구만 변경, 점수 공식·칼로리 밴드·MA7 산식·시트 구조 변경 없음)
 const STAGE_DETAIL_ = true;          // [2026-11-11] true면 전체 조회 stageMs에 시트별 누적 소요시간을 추가(측정 후 false로 바꿔도 됨)
 const SHEETS = {
   // [2026-10-13] exclude/excludeReason/excludeAt: 인바디 "제외 확정" — 위 헤더 설명 참고. 기존 시트는 getOrCreateSheet_가 헤더 끝에 자동 보강.
@@ -2321,13 +2330,53 @@ function sendEveningDigest(){
  * 함께 올리는 걸 빠뜨림. 그 결과 값이 Meta 시트의 자유텍스트 안에만 존재하게 되어,
  * 이동평균/기간비교 등 구조화 데이터 기반 계산에서 그 날짜가 통째로 누락됨(발견은
  * 다음날 사용자가 "어제 대비 비교" 요청했을 때 수동 확인으로만 가능했음).
- * 코드로 숫자를 다시 정규식 파싱해서 자동 채우는 방식은 이 프로젝트에서 반복적으로
- * 문제를 일으켰던 패턴(트레드밀 걸음수, 유산소 심박 등)이라 여기서도 쓰지 않음 —
- * 대신 "그 날짜에 구조화 inbody 데이터가 있는지" 존재 여부만 확인해서, 없으면 텔레그램
- * 경고만 보냄(값 추정/자동 보정은 하지 않음 — 반드시 확인 후 사람이 수동 업로드).
+ * [2026-11-21 수정] 오탐 개선(실사고: 2026-11-21, 인바디를 측정하지 않은 날 분석 글만
+ * 올렸는데도 경고가 발송됨 — 분석 글 안의 수치는 전부 직전 날짜 값을 인용한 것이었음).
+ * 예전엔 "그 날짜에 구조화 inbody 데이터가 있는지"만 봐서, 분석 글에 새 수치가 전혀
+ * 없어도(식단·운동만 쓴 날, 과거 값만 인용한 날) 매번 경고가 났음. 이제는 먼저
+ * extractLabeledInbodyNumbers_로 분석 글에서 "라벨 붙은"(체중/골격근량/체지방량/체지방률,
+ * 그리고 실제로 흔히 쓰는 "인바디 D/D/Dkg"(체중/골격근/체지방량 순) 표기) 수치만 추출한다.
+ * 라벨 없는 kg(운동 중량 등)·평균/추세 문구는 무시한다. 추출된 수치가 하나도 없으면
+ * 경고하지 않고, 추출된 수치가 최근 14일 안의 기존 인바디 기록과 오차 범위 안으로 맞으면
+ * "과거 값 인용"으로 보고 경고하지 않는다(findMatchingPastInbody_). 값을 자동으로 고치거나
+ * 추정해서 저장하는 건 여전히 하지 않음(기존 원칙 그대로) — 경고를 보낼지 판단하는 데만 씀.
  * aiAnalysisDate가 없으면(=오늘 날짜로 대체되는 경우) 검사를 건너뜀 — 스킵 사유가
  * 명확하지 않은 채로 오탐 경고를 보내는 것을 방지하기 위함.
  */
+const AI_GAP_FIELD_LABELS_ = [
+  { key: 'weight', field: 'weight', re: /체중\s*([0-9]+(?:\.[0-9]+)?)\s*kg/g, tol: 0.05 },
+  { key: 'muscle', field: 'muscle', re: /골격근량?\s*([0-9]+(?:\.[0-9]+)?)\s*kg/g, tol: 0.05 },
+  { key: 'fat',    field: 'fat',    re: /체지방량\s*([0-9]+(?:\.[0-9]+)?)\s*kg/g, tol: 0.05 },
+  { key: 'fatPct', field: 'fatPct', re: /체지방률\s*([0-9]+(?:\.[0-9]+)?)\s*%/g,  tol: 0.05 },
+];
+// "인바디 70.9/32.6/12.8kg"처럼 순서로만 적는 표기(실제로 가장 흔히 쓰는 형태) — 체중/골격근/체지방량 순.
+const AI_GAP_TRIPLET_RE_ = /인바디[^0-9]{0,6}([0-9]+(?:\.[0-9]+)?)\s*\/\s*([0-9]+(?:\.[0-9]+)?)\s*\/\s*([0-9]+(?:\.[0-9]+)?)\s*kg/g;
+const AI_GAP_LABEL_NAMES_ = { weight: '체중', muscle: '골격근량', fat: '체지방량', fatPct: '체지방률' };
+const AI_GAP_LABEL_UNITS_ = { weight: 'kg', muscle: 'kg', fat: 'kg', fatPct: '%' };
+function extractLabeledInbodyNumbers_(text){
+  const out = [];
+  const t = String(text || '');
+  AI_GAP_FIELD_LABELS_.forEach(({key, field, re, tol}) => {
+    re.lastIndex = 0;
+    let m;
+    while((m = re.exec(t))) out.push({ key, field, value: Number(m[1]), tol });
+  });
+  AI_GAP_TRIPLET_RE_.lastIndex = 0;
+  let tm;
+  while((tm = AI_GAP_TRIPLET_RE_.exec(t))){
+    out.push({ key: 'weight', field: 'weight', value: Number(tm[1]), tol: 0.05 });
+    out.push({ key: 'muscle', field: 'muscle', value: Number(tm[2]), tol: 0.05 });
+    out.push({ key: 'fat',    field: 'fat',    value: Number(tm[3]), tol: 0.05 });
+  }
+  return out;
+}
+// 추출된 수치가 전부 최근 14일 안의 기존 인바디 기록(같은 항목, 오차 범위 안)과 맞으면 true(=과거 값 인용으로 보고 경고하지 않음).
+function findMatchingPastInbody_(ss, extracted, targetDate){
+  const recent = readSheet_(ss, SHEETS.inbody).filter(r => r && r.date && daysBetween_(r.date, targetDate) >= 0 && daysBetween_(r.date, targetDate) <= 14);
+  return extracted.every(({field, value, tol}) =>
+    recent.some(r => r[field] !== '' && r[field] != null && Math.abs(Number(r[field]) - value) <= tol)
+  );
+}
 function checkAiAnalysisInbodyGap_(ss, data){
   if(!data.aiAnalysisDate) return;
   const targetDate = String(data.aiAnalysisDate).slice(0, 10);
@@ -2339,12 +2388,20 @@ function checkAiAnalysisInbodyGap_(ss, data){
   if(hasInPayload) return; // 같은 배치에 구조화 데이터가 함께 왔으면 정상
   const existing = readSheet_(ss, SHEETS.inbody).find(r => r.date === targetDate);
   if(existing) return; // 이미 시트에 있으면 정상(과거 분석 재업로드 등)
+  // [2026-11-21 추가] 분석 글에 라벨 붙은 새 수치가 있는지부터 확인 — 없으면(식단·운동만 쓴 날) 경고하지 않음.
+  const extracted = extractLabeledInbodyNumbers_(data.aiAnalysis);
+  if(!extracted.length) return;
+  // [2026-11-21 추가] 추출된 수치가 전부 최근 14일 기존 기록과 일치하면(=과거 값 인용) 경고하지 않음.
+  if(findMatchingPastInbody_(ss, extracted, targetDate)) return;
   setMeta_(ss, 'aiGapAlertedDate', targetDate); // 2026-11-03: 발송 전에 먼저 기록(발송이 느려져도 중복 방지)
+  const summary = extracted
+    .map(e => `${AI_GAP_LABEL_NAMES_[e.key]} ${e.value}${AI_GAP_LABEL_UNITS_[e.key]}`)
+    .join(', ');
   sendTelegramMessage_(
-    `⚠️ <b>aiAnalysis-인바디 불일치 감지</b> (${targetDate})\n` +
-    `이 날짜의 분석 코멘트는 등록됐지만, 같은 날짜의 구조화 인바디 데이터(체중 등)는 ` +
-    `시트에 없습니다. 분석 텍스트 안에 수치가 언급됐다면 확인 후 구조화 데이터로 별도 ` +
-    `업로드가 필요할 수 있습니다.`
+    `📋 <b>인바디 수치 확인 필요</b> (${targetDate})\n` +
+    `분석 글에 새 ${summary} 수치가 있는데, 같은 날 인바디 기록이 시트에 없어요.\n` +
+    `→ 오늘 실제로 쟀다면: 인바디 수치를 보내주세요.\n` +
+    `→ 안 쟀다면: 아무것도 안 하셔도 돼요.`
   );
 }
 
