@@ -1,6 +1,13 @@
 /**
  * 바디 리컴포지션 앱 - 클라우드 동기화 백엔드
  *
+ * [2026-11-22 추가] 채팅 분석용 읽기 전용 조회 2종 추가(쓰기·인박스 처리·점수 재계산 없음, 점수 공식·시트 구조 변경 없음).
+ *    ①?brief=1&date=YYYY-MM-DD — 인바디 최근 45일(exclude 등 숫자 위주 필드만)·식단·운동 최근 14일(note·items·exercises 제외)·
+ *    주간점수 최근 4주 전체를 작은 JSON으로 반환(meta.bytes로 응답 크기 동봉) — 채팅 분석 때 시트 읽기량을 줄이는 용도 — handleBrief_
+ *    ②?reports=1 — Drive "바디리컴포지션 리포트" 폴더의 최근 30개 레포트 파일을 날짜별로 묶어 최신 수정본 먼저 반환
+ *    (폴더 접근 실패 시 빈 목록 + 사유) — handleReports_. 기존 ReportHistory 시트(aiAnalysis/comprehensiveReport 텍스트 덮어쓰기 이력)와는
+ *    목적·내용이 달라 겹치지 않음(그대로 둠).
+ *
  * [2026-11-21b 수정] "aiAnalysis-인바디 불일치 감지" 오탐 개선(앱 변경 없음, checkAiAnalysisInbodyGap_만 수정).
  *    실사고(2026-11-21): 인바디를 측정하지 않은 날 분석 글만 올렸는데도 경고가 발송됨 — 분석 글 안 수치가
  *    전부 직전 날짜 값을 인용한 것이었음. 이제 분석 글에서 라벨 붙은 수치(체중/골격근량/체지방량/체지방률,
@@ -118,7 +125,7 @@
 // getOrCreateSheet_가 헤더 끝에 자동으로 컬럼을 보강해주므로 별도 마이그레이션 작업 불필요.
 // 기존 행은 이 값이 빈 문자열(=null)이라, 클라이언트 병합 로직은 양쪽 다 값이 있을 때만
 // 타임스탬프를 비교하고 없으면 기존처럼 "서버 값 신뢰"로 안전하게 폴백한다.
-const CODE_VERSION_ = '2026-11-21b'; // [2026-11-21b] aiAnalysis-인바디 불일치 경고 오탐 개선(checkAiAnalysisInbodyGap_) + 문구 쉬운 말로 교체, 점수 공식·시트 구조 변경 없음
+const CODE_VERSION_ = '2026-11-22'; // [2026-11-22] 채팅 분석용 ?brief=1&date=·?reports=1 읽기 전용 조회 추가, 점수 공식·시트 구조 변경 없음
 // [2026-11-21 버전] 텔레그램 일일요약·인바디분석 메시지 개선 2차(표시 구조·문구만 변경, 점수 공식·칼로리 밴드·MA7 산식·시트 구조 변경 없음)
 const STAGE_DETAIL_ = true;          // [2026-11-11] true면 전체 조회 stageMs에 시트별 누적 소요시간을 추가(측정 후 false로 바꿔도 됨)
 const SHEETS = {
@@ -3310,10 +3317,109 @@ function handleHubSummary_(ss){
 }
 
 
+/**
+ * [2026-11-22 추가] 채팅 분석용 숫자 요약 — ?brief=1&date=YYYY-MM-DD
+ * 반환: {ok, inbody:[{date,weight,muscle,fat,fatPct,bmr,bodyType,exclude}](최근 45일),
+ *        meals:[{date,calories,protein,carbs,specialDayType,errorPct,estimated}](최근 14일, note·items 제외),
+ *        workouts:[{date,name,part,calories,durationMin,distanceKm,avgHR,treadmillSteps,ptSession}](최근 14일, note·exercises 제외),
+ *        weeklyScore:[WeeklyScore 시트 행 전체](최근 4주), meta:{codeVersion,generatedAt,bytes}}
+ * date 파라미터를 기준으로 "최근 N일"을 계산(없으면 서버 오늘 날짜). 날짜는 시트 행 순서와 무관하게 오름차순으로 정렬해서 반환.
+ * 쓰기·인박스 처리·점수 재계산은 하지 않는다(summary=1과 동일하게 가볍게 응답).
+ */
+const BRIEF_INBODY_DAYS_ = 45;
+const BRIEF_RECENT_DAYS_ = 14;
+const BRIEF_WEEKLY_DAYS_ = 28; // 4주
+const BRIEF_INBODY_FIELDS_ = ['date','weight','muscle','fat','fatPct','bmr','bodyType','exclude'];
+const BRIEF_MEALS_FIELDS_ = ['date','calories','protein','carbs','specialDayType','errorPct','estimated'];
+const BRIEF_WORKOUTS_FIELDS_ = ['date','name','part','calories','durationMin','distanceKm','avgHR','treadmillSteps','ptSession'];
+function briefAddDays_(dateStr, delta, tz){
+  const p = dateStr.split('-').map(Number);
+  const d = new Date(p[0], p[1] - 1, p[2]);
+  d.setDate(d.getDate() + delta);
+  return Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+}
+function briefPick_(r, fields){
+  const o = {};
+  fields.forEach(f => { o[f] = (r[f] === undefined) ? null : r[f]; });
+  return o;
+}
+// fromDate~toDate(둘 다 포함) 구간만 남기고 날짜 오름차순 정렬 후 필요한 필드만 추림 — 시트 행 순서가 뒤바뀐 날이 있어도 날짜값 기준으로 정렬·필터하므로 안전.
+function briefWindow_(rows, fromDate, toDate, fields){
+  return rows
+    .filter(r => r.date && String(r.date) >= fromDate && String(r.date) <= toDate)
+    .sort((a,b) => String(a.date).localeCompare(String(b.date)))
+    .map(r => briefPick_(r, fields));
+}
+function handleBrief_(ss, e){
+  const tz = Session.getScriptTimeZone();
+  const dateParam = (e.parameter && e.parameter.date) || '';
+  const asOf = /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  const inbodyFrom = briefAddDays_(asOf, -(BRIEF_INBODY_DAYS_ - 1), tz);
+  const recentFrom = briefAddDays_(asOf, -(BRIEF_RECENT_DAYS_ - 1), tz);
+  const weeklyFrom = briefAddDays_(asOf, -(BRIEF_WEEKLY_DAYS_ - 1), tz);
 
+  const inbody = briefWindow_(readSheet_(ss, SHEETS.inbody), inbodyFrom, asOf, BRIEF_INBODY_FIELDS_);
+  const meals = briefWindow_(readSheetSince_(ss, SHEETS.meals, recentFrom), recentFrom, asOf, BRIEF_MEALS_FIELDS_);
+  const workouts = briefWindow_(readSheetSince_(ss, SHEETS.workouts, recentFrom), recentFrom, asOf, BRIEF_WORKOUTS_FIELDS_);
+  const weeklyScore = readSheet_(ss, SHEETS.weeklyScore)
+    .filter(r => r.date && String(r.date) >= weeklyFrom && String(r.date) <= asOf)
+    .sort((a,b) => String(a.date).localeCompare(String(b.date)));
 
+  const out = {
+    ok: true,
+    inbody: inbody,
+    meals: meals,
+    workouts: workouts,
+    weeklyScore: weeklyScore,
+    meta: { codeVersion: CODE_VERSION_, generatedAt: Utilities.formatDate(new Date(), tz, "yyyy-MM-dd'T'HH:mm:ssXXX") },
+  };
+  // meta.bytes는 이 필드 자신을 채우기 전 기준으로 잰 크기(실제 응답보다 10여 바이트 작게 나올 수 있음) — 절감량 비교용이라 그 오차는 무시해도 됨.
+  out.meta.bytes = Utilities.newBlob(JSON.stringify(out)).getBytes().length;
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
 
-
+/**
+ * [2026-11-22 추가] 일일 레포트(Drive HTML 파일) 목록 — ?reports=1
+ * Drive "바디리컴포지션 리포트" 폴더에서 가장 최근 수정된 30개 파일을 찾아, 같은 날짜 파일이 여러 개면
+ * 날짜별로 묶어 그 안에서는 최신 수정본을 먼저 보여준다. 파일명이 REPORT_FILE_PATTERN_과 안 맞으면 날짜를 알 수 없어 건너뜀.
+ * 폴더 접근 권한이 없거나 조회에 실패하면 빈 목록 + reason을 반환(ok는 true 그대로 — 앱이 에러 없이 빈 목록으로 표시할 수 있는 정상 상태).
+ */
+const REPORT_FOLDER_ID_ = '19wwPdR8JaT2d9nZ6GMTr_tn4l6YTHgEi';
+const REPORT_FILE_PATTERN_ = /^inbody_daily_report_(\d{4}-\d{2}-\d{2})(?:_v\d+)?\.html$/;
+function handleReports_(){
+  const tz = Session.getScriptTimeZone();
+  let folder;
+  try{
+    folder = DriveApp.getFolderById(REPORT_FOLDER_ID_);
+  } catch(e){
+    return ContentService.createTextOutput(JSON.stringify({ok:true, reports:[], reason:'레포트 폴더에 접근할 수 없음: ' + String(e)})).setMimeType(ContentService.MimeType.JSON);
+  }
+  const files = [];
+  try{
+    const it = folder.getFiles();
+    while(it.hasNext()){
+      const f = it.next();
+      const m = REPORT_FILE_PATTERN_.exec(f.getName());
+      if(!m) continue; // 레포트 파일명 규칙과 안 맞는 파일은 날짜를 알 수 없어 건너뜀
+      files.push({
+        name: f.getName(),
+        date: m[1],
+        id: f.getId(),
+        webViewLink: f.getUrl(),
+        modifiedTime: Utilities.formatDate(f.getLastUpdated(), tz, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+      });
+    }
+  } catch(e){
+    return ContentService.createTextOutput(JSON.stringify({ok:true, reports:[], reason:'레포트 폴더 파일 목록을 읽지 못함: ' + String(e)})).setMimeType(ContentService.MimeType.JSON);
+  }
+  files.sort((a,b) => String(b.modifiedTime).localeCompare(String(a.modifiedTime))); // 전체 중 가장 최근 수정된 파일부터
+  const recent = files.slice(0, 30);
+  recent.sort((a,b) => { // 화면 표시용: 날짜별로 묶고, 같은 날짜면 최신 수정본을 먼저
+    if(a.date !== b.date) return a.date < b.date ? 1 : -1;
+    return String(b.modifiedTime).localeCompare(String(a.modifiedTime));
+  });
+  return ContentService.createTextOutput(JSON.stringify({ok:true, reports:recent, reason:null})).setMimeType(ContentService.MimeType.JSON);
+}
 
 
 function doGet(e){
@@ -3328,6 +3434,8 @@ function doGet(e){
   if(e.parameter && e.parameter.triggerStatus) return handleTriggerStatus_();
   if(e.parameter && e.parameter.recomputeScores) return handleRecomputeScores_(); // 2026-10-05-b: 앱 설정탭 버튼
   if(e.parameter && e.parameter.summary) return handleHubSummary_(ss); // 2026-10-16: 앱 허브용 읽기 전용 요약(인박스 처리·트리거 확인 없이 가볍게 응답)
+  if(e.parameter && e.parameter.brief) return handleBrief_(ss, e); // 2026-11-22: 채팅 분석용 숫자 요약(쓰기·인박스 처리·점수 재계산 없이 가볍게 응답)
+  if(e.parameter && e.parameter.reports) return handleReports_(); // 2026-11-22: 일일 레포트(Drive) 목록, 읽기 전용
   if(!light_){
     ensureTriggersInstalled_(); // 앱을 그냥 열기만 해도(=버튼을 누르지 않아도) 여전히 자동으로 한 번 더 확인(이중 안전장치)
     stage_('triggers');
