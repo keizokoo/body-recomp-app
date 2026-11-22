@@ -125,7 +125,8 @@
 // getOrCreateSheet_가 헤더 끝에 자동으로 컬럼을 보강해주므로 별도 마이그레이션 작업 불필요.
 // 기존 행은 이 값이 빈 문자열(=null)이라, 클라이언트 병합 로직은 양쪽 다 값이 있을 때만
 // 타임스탬프를 비교하고 없으면 기존처럼 "서버 값 신뢰"로 안전하게 폴백한다.
-const CODE_VERSION_ = '2026-11-22'; // [2026-11-22] 채팅 분석용 ?brief=1&date=·?reports=1 읽기 전용 조회 추가, 점수 공식·시트 구조 변경 없음
+const CODE_VERSION_ = '2026-11-22b'; // [2026-11-22b] 텔레그램 인바디 메시지 "📊분석요약" 개편(결론/근거1/근거2/안전지표/오늘), 점수 공식·칼로리 밴드·MA7 산식·시트 구조 변경 없음
+// [2026-11-22] 채팅 분석용 ?brief=1&date=·?reports=1 읽기 전용 조회 추가, 점수 공식·시트 구조 변경 없음
 // [2026-11-21 버전] 텔레그램 일일요약·인바디분석 메시지 개선 2차(표시 구조·문구만 변경, 점수 공식·칼로리 밴드·MA7 산식·시트 구조 변경 없음)
 const STAGE_DETAIL_ = true;          // [2026-11-11] true면 전체 조회 stageMs에 시트별 누적 소요시간을 추가(측정 후 false로 바꿔도 됨)
 const SHEETS = {
@@ -1073,6 +1074,21 @@ function computeMuscleLossRatio_(startRec, ma7CurrentWeight, ma7CurrentMuscle){
 const MUSCLE_LOSS_RATIO_THRESHOLD_ = 0.51;
 const MUSCLE_MA7_ROLLBACK_DELTA_ = -0.3;
 
+// [2026-11-22 추가] 인바디 "📊분석요약" 상수(요청문 "변경 3" — 정희님이 아직 확정하지 않은 문구/기준값들.
+// 전부 한 곳에 모아 둬서 나중에 이 블록만 고치면 되게 함). 점수·칼로리·기존 롤백·손실비율 기준은 그대로.
+const INBODY_WEIGHT_SMALL_CHANGE_KG_ = 0.2; // 근거2: 7번 평균의 직전 7번 대비 "체중 변화가 작다" 판정 기준(kg). 정희님 확정 없어 임의 설정(2026-11-22).
+const INBODY_SAFETY_OK_TITLE_ = '• 안전 지표 (모두 기준 이내)';
+const INBODY_SAFETY_WARN_TITLE_ = '⚠️ 안전 지표 (기준 초과 있음)'; // 임시 문구, 수정 가능(요청문 안내)
+// 골격근(up/down/flat) × 체지방(up/down) 7번 평균 변화 방향 조합 → 결론 문구(임시, 요청문 표 그대로 + flat 두 칸은 정희님 확정 전 임시 문구)
+const INBODY_CONCLUSION_TABLE_ = {
+  up_down:   '7번 평균 기준 체성분 개선 유지\n(근육↑ 지방↓)',
+  up_up:     '근육 증가, 지방도\n함께 증가',
+  down_down: '지방 감소, 근육도\n함께 감소',
+  down_up:   '체성분 악화 신호',
+  flat_down: '골격근 변화 없음,\n체지방 감소 흐름',
+  flat_up:   '골격근 변화 없음,\n체지방 증가 주의'
+};
+
 
 
 
@@ -1090,44 +1106,82 @@ const MUSCLE_MA7_ROLLBACK_DELTA_ = -0.3;
  * 처리해서 "판단보류"로 표시하도록 수정. 이전엔 이 케이스를 구분하지 못하고 0으로 계산된
  * 값을 그대로 정상 수치처럼 취급해 잘못된 경고를 냈음.
  */
-// [2026-11-21 수정] 요청문(텔레그램 알림 개선 2차)에 따라 [분석]을 최대 4줄로 압축:
-// ①7번 평균(직전 7번 평균 대비) 추세 한 줄 ②"하루 변동은 추세로 보지 않음"(혼조일 때만, 기존 판정 재사용)
-// ③골격근 롤백 — 직전 7번 평균 대비, "기준 도달/기준 초과/기준 이내" 3단계(정희님 확정 2026-11-21)
-// ④골격근손실비율 — 2026-11-20엔 출력에서 뺐던 걸 다시 노출(산식·기준이 코드와 일치함을 재확인, 2026-11-21 결정).
-// 수분 노이즈 caveat는 이 4줄과 별도로 그대로 둔다(CLAUDE.md: "조건부 문구는 그대로 둔다").
-function buildInbodyAnalysisComment_(r, prevRec, ma7, startRec, waterCaveat){
-  const lines = [];
+// [2026-11-22 수정] 요청문(텔레그램 메시지 양식 변경)에 따라 "[분석]" 4줄을 "📊분석요약"
+// (결론/근거1/근거2/안전 지표/오늘) 구조로 전면 교체. 계산값(ma7·롤백·손실비율)은 그대로
+// 재사용하고, 14번 평균 대비 차이(근거1 괄호)만 새로 계산한다 — "7번 평균 − 14번 평균"
+// 뺄셈뿐이고, computeInbodyNAvg_(이미 있는 14건 평균 계산 함수)가 돌려준 값을 그대로 빼는
+// 것이라 새 통계식을 만든 건 아니다. n14가 null(14건 미달)이면 그 괄호만 생략한다.
+// 수분 노이즈 caveat와 "오늘" 하루 변동 판정은 기존 로직을 그대로 재사용한다.
+function buildInbodyAnalysisComment_(r, prevRec, ma7, startRec, waterCaveat, n14){
+  const blocks = [];
+  const hasMA7 = ma7 && ma7.weight && ma7.muscle && ma7.fat && ma7.fatPct;
+  const sign_ = n => n > 0 ? 1 : (n < 0 ? -1 : 0);
 
-  if(ma7 && ma7.weight && ma7.muscle && ma7.fat && ma7.fatPct){
+  if(hasMA7){
+    const muscleMA7Delta = round1_(ma7.muscle.delta);
     const fatMA7Delta = round1_(ma7.fat.delta);
     const weightMA7Delta = round1_(ma7.weight.delta);
-    const fatPhrase = fatMA7Delta > 0 ? '체지방 반등 주의' : '체지방 감소 유지';
-    const weightPhrase = weightMA7Delta === 0 ? '체중 유지' : (weightMA7Delta < 0 ? '체중 감소' : '체중 증가');
-    lines.push(`7번 평균: ${fatPhrase}, ${weightPhrase}`);
+    const fatPctMA7Delta = round1_(ma7.fatPct.delta);
 
-    // 롤백 판정: 직전 7번 평균 대비(= [7번 평균] 섹션과 같은 비교 기준, 별도 "기준선" 아님).
-    const muscleMA7Delta = round1_(ma7.muscle.delta);
-    const verdict = muscleMA7Delta === MUSCLE_MA7_ROLLBACK_DELTA_ ? '기준 도달'
+    // ✅ 결론 — 골격근·체지방 7번 평균(직전 7번 대비) 변화 방향 조합(상수표 INBODY_CONCLUSION_TABLE_, 요청문 표 그대로)
+    const muscleDir = sign_(muscleMA7Delta) > 0 ? 'up' : (sign_(muscleMA7Delta) < 0 ? 'down' : 'flat');
+    const fatDir = fatMA7Delta > 0 ? 'up' : 'down';
+    const conclusionKey = muscleDir === 'flat' ? `flat_${fatDir}` : `${muscleDir}_${fatDir}`;
+    blocks.push(`✅ 결론\n${INBODY_CONCLUSION_TABLE_[conclusionKey]}`);
+
+    // • 근거 1 — 7번 평균 변화 + (있으면) 14번 평균 대비 같은/다른 방향
+    let ev1 = `골격근 ${formatSignedDelta_(muscleMA7Delta)}kg, 체지방 ${formatSignedDelta_(fatMA7Delta)}kg`;
+    if(n14 && n14.fields && n14.fields.muscle && n14.fields.fat){
+      const muscleVs14 = round1_(ma7.muscle.current - n14.fields.muscle.avg);
+      const fatVs14 = round1_(ma7.fat.current - n14.fields.fat.avg);
+      const muscleSame = sign_(muscleMA7Delta) === sign_(muscleVs14);
+      const fatSame = sign_(fatMA7Delta) === sign_(fatVs14);
+      const dirPhrase = (muscleSame && fatSame) ? '같은 방향' : ((!muscleSame && !fatSame) ? '다른 방향' : '방향 엇갈림');
+      ev1 += `\n14번 평균 대비로도 ${dirPhrase}\n(골격근 ${formatSignedDelta_(muscleVs14)}kg, 체지방 ${formatSignedDelta_(fatVs14)}kg)`;
+    }
+    blocks.push(`• 근거 1\n${ev1}`);
+
+    // • 근거 2 — 체중 변화폭(INBODY_WEIGHT_SMALL_CHANGE_KG_ 기준 "작다" 판정) + 체지방률 방향
+    const weightPhrase = Math.abs(weightMA7Delta) <= INBODY_WEIGHT_SMALL_CHANGE_KG_
+      ? '변화폭이 작고'
+      : (weightMA7Delta > 0 ? '증가했고' : '감소했고');
+    const fatPctPhrase = fatPctMA7Delta > 0 ? '증가' : (fatPctMA7Delta < 0 ? '감소' : '유지');
+    blocks.push(`• 근거 2\n체중 ${formatSignedDelta_(weightMA7Delta)}kg은 ${weightPhrase}\n체지방률은 ${formatSignedDelta_(fatPctMA7Delta)}%p ${fatPctPhrase}`);
+
+    // 안전 지표 — 기존 롤백 판정(기준 도달/초과/이내)·손실비율 기준값 그대로 재사용.
+    // 롤백이 "기준 도달"이거나 "기준 초과"면, 손실비율이 기준을 넘으면 각각 ⚠️ 표시하고
+    // 둘 중 하나라도 걸리면 제목을 INBODY_SAFETY_WARN_TITLE_로 바꾼다(정희님 확정, 기존 ⚠️ 표시 방식과 동일).
+    const rollbackVerdict = muscleMA7Delta === MUSCLE_MA7_ROLLBACK_DELTA_ ? '기준 도달'
       : (muscleMA7Delta < MUSCLE_MA7_ROLLBACK_DELTA_ ? '기준 초과' : '기준 이내');
-    const mark = verdict === '기준 이내' ? '' : '⚠️ ';
-    lines.push(`${mark}골격근 롤백(직전 7번 평균 대비): ${muscleMA7Delta >= 0 ? '+' : ''}${muscleMA7Delta}kg · 기준 ${MUSCLE_MA7_ROLLBACK_DELTA_}kg · ${verdict}`);
-
+    const rollbackWarn = rollbackVerdict !== '기준 이내';
     const ratioInfo = computeMuscleLossRatio_(startRec, ma7.weight.current, ma7.muscle.current);
-    if(ratioInfo) lines.push(`골격근 손실비율 ${Math.round(ratioInfo.ratio * 100) / 100} · 기준 ${MUSCLE_LOSS_RATIO_THRESHOLD_}`);
+    const ratioWarn = !!(ratioInfo && ratioInfo.ratio > MUSCLE_LOSS_RATIO_THRESHOLD_);
+    let safety = `${(rollbackWarn || ratioWarn) ? INBODY_SAFETY_WARN_TITLE_ : INBODY_SAFETY_OK_TITLE_}\n`;
+    safety += `${rollbackWarn ? '⚠️ ' : ''}골격근 롤백 ${formatSignedDelta_(muscleMA7Delta)}kg\n(기준 ${MUSCLE_MA7_ROLLBACK_DELTA_}kg)`;
+    if(ratioInfo){
+      safety += `\n${ratioWarn ? '⚠️ ' : ''}손실비율 ${Math.round(ratioInfo.ratio * 100) / 100}\n(기준 ${MUSCLE_LOSS_RATIO_THRESHOLD_})`;
+    }
+    blocks.push(safety);
   } else if(ma7){
-    lines.push('7번 평균: 최근 7건 중 골격근/체지방 실측값이 부족해 이번엔 판단을 보류합니다.');
+    blocks.push('⚠️ 판단 보류\n최근 7건 중 골격근·체지방\n실측값이 부족해 이번엔\n분석을 보류합니다.');
   }
 
+  // • 오늘 — 하루 변동(기존 "혼조" 판정 재사용: 추세와 어긋나는 하루치는 판단에서 제외)
   if(prevRec){
     const muscleDelta = round1_(r.muscle - prevRec.muscle);
     const fatDelta = round1_(r.fat - prevRec.fat);
-    const mixed = !((muscleDelta >= 0 && fatDelta <= 0) || (muscleDelta < 0 && fatDelta > 0)); // 기존 "혼조" 판정 재사용
-    if(mixed) lines.push('하루 변동은 추세로 보지 않음');
+    const weightDelta = round1_(r.weight - prevRec.weight);
+    const mixed = !((muscleDelta >= 0 && fatDelta <= 0) || (muscleDelta < 0 && fatDelta > 0));
+    if(mixed){
+      blocks.push(`• 오늘\n체중 ${formatSignedDelta_(weightDelta)} / 체지방 ${formatSignedDelta_(fatDelta)}는\n7번 평균과 다른 하루 변동\n추세 판단에서 제외`);
+    }
   }
 
-  if(waterCaveat) lines.push('⚠️ 전날 음주·과식 기록이 있어 오늘 수치에 수분 영향이 섞여 있을 수 있어요.');
+  if(waterCaveat){
+    blocks.push('⚠️ 전날 음주·과식 기록이 있어\n오늘 수치에 수분 영향이\n섞여 있을 수 있어요.');
+  }
 
-  return lines.length ? lines.map(l => '• ' + l).join('\n') : '';
+  return blocks.length ? blocks.join('\n\n') : '';
 }
 /** 부호 포함 숫자 문자열(+/-) 포맷 — 0은 "0.0"으로 표시 */
 function formatSignedDelta_(n){
@@ -2001,23 +2055,15 @@ function notifyImmediate_(ss, data){
         msg += ma7Line_('체중', ma7.weight, 'kg') + '\n';
         msg += ma7Line_('골격근', ma7.muscle, 'kg') + '\n';
         msg += ma7Line_('체지방', ma7.fat, 'kg') + '\n';
-        msg += ma7Line_('체지방률', ma7.fatPct, '%', '%p') + '\n';
-        msg += `유효 ${ma7.currentCount}건`;
+        msg += ma7Line_('체지방률', ma7.fatPct, '%', '%p');
       } else {
         // 요청문 3번: 비교 기준(직전 7건)이 없을 때는 변화 없이 "유효 n/7건"만 표시
         msg += `유효 ${inbodyCurrentAvgPartial7_(allInbody, r.date).count}/7건(비교 기준 부족)`;
       }
 
-      // [2026-11-20 추가, 2026-11-21 유지 결정] MA7 "최근 7번" 창에 실제로 산입된 날짜·그 구간에서 제외된 날짜 표기
-      const win7 = inbodyMA7Window_(allInbody, r.date);
-      if(win7){
-        msg += `\n최근 7번 평균 산입일(${win7.dates.length}건): ${win7.dates.join(', ')}`;
-        if(win7.excluded.length) msg += ` · 제외: ${win7.excluded.join(', ')}`;
-      }
-
-      // [2026-11-20 추가, 2026-11-21 유지 결정] 최근 14번·30번 평균(부족하면 "데이터 부족", 추정값으로 채우지 않음)
-      msg += `\n${formatInbodyNAvgLine_(computeInbodyNAvg_(allInbody, r.date, 14), '14')}`;
-      msg += `\n${formatInbodyNAvgLine_(computeInbodyNAvg_(allInbody, r.date, 30), '30')}`;
+      // [2026-11-22 삭제] "유효 N건" · "최근 7번 평균 산입일" · "최근 14·30번 평균" 3줄은
+      // 요청문(텔레그램 메시지 양식 변경)에 따라 메시지에서 제거. 14번 평균은 아래 n14_로
+      // "📊분석요약" 근거1 비교에만 내부 사용하고 메시지에 직접 찍지 않는다(요청문 변경1·2).
 
       // [2026-11-20 추가] 목표 달성 현황(기본 OFF, SHOW_GOAL_STATUS_ 스위치)
       if(SHOW_GOAL_STATUS_){
@@ -2029,8 +2075,10 @@ function notifyImmediate_(ss, data){
       const dayBefore_ = dsDateMinus_(r.date, 1);
       const waterCaveat_ = allMealsForWater_.some(m => m.date === dayBefore_ && (m.specialDayType === 'alcohol' || m.specialDayType === 'overeat'));
 
-      const analysis = buildInbodyAnalysisComment_(r, prevRec, ma7, startRec, waterCaveat_);
-      if(analysis) msg += `\n\n[분석]\n${analysis}`;
+      // [2026-11-22 추가] 14번 평균(근거1 비교용으로만 내부에서 사용 — computeInbodyNAvg_ 재사용, 메시지엔 직접 안 씀)
+      const n14_ = computeInbodyNAvg_(allInbody, r.date, 14);
+      const analysis = buildInbodyAnalysisComment_(r, prevRec, ma7, startRec, waterCaveat_, n14_);
+      if(analysis) msg += `\n\n📊분석요약\n\n${analysis}`;
       sendTelegramMessageSplit_(msg);
     });
   }
