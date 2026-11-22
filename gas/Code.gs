@@ -1,6 +1,17 @@
 /**
  * 바디 리컴포지션 앱 - 클라우드 동기화 백엔드
  *
+ * [2026-11-22c 수정] 주간 근력 점수: 홈트(맨몸·밴드·턱걸이 등)만 새 기준(유효 세트 + 운동일 + 단계 인정)으로
+ *    판정, PT·헬스장은 기존 규칙 그대로(과거 점수 안 바뀜 — 세트별 RIR을 쓴 적이 없어서). 바뀐 곳:
+ *    SHEETS.workouts.cols에 place(home/gym/pt, 선택값) 추가 · wsIsHomeTierEntry_·wsEntryHasAnyRir_ 신설(홈트
+ *    판정: place 명시값 우선, 없으면 세트별 RIR 실제 기록 여부로 판단) · wsPullValidSet_/wsPullValidSets_/
+ *    wsPullWeek_ → wsHomeValidSet_/wsHomeValidSetsForEntry_/wsHomeWeek_로 일반화(턱걸이류 이름 제한 삭제,
+ *    매달리기는 reps 미기록으로 자동 제외) · 단계안(정희님 확정 2026-11-22): 유효 세트 6개↑·운동일 2일↑=근력
+ *    +0.5회, 12개↑=+1회(그 외 0, 홈트 상한 1회·전체 상한 2회는 기존과 동일) · wsIsStrength_는 홈트로 판정된
+ *    기록을 "근력일"(기존 하루 1회 규칙)에서 제외해 이중 집계를 막음 · 같은 날 PT·헬스장이 있으면 그 날은
+ *    홈트 운동일에서 빠짐(PT만 인정) · computeWeeklyScore_·weeklyScoreRecord_·formatWeeklyScoreBlock_·
+ *    WEEKLY_SCORE_VERSION_(옛 주 자동 재계산, 세트별 RIR 없는 과거 주는 숫자 그대로). 앱 index.html
+ *    2026-11-22-c·스킬 calc.py와 짝.
  * [2026-11-22 추가] 채팅 분석용 읽기 전용 조회 2종 추가(쓰기·인박스 처리·점수 재계산 없음, 점수 공식·시트 구조 변경 없음).
  *    ①?brief=1&date=YYYY-MM-DD — 인바디 최근 45일(exclude 등 숫자 위주 필드만)·식단·운동 최근 14일(note·items·exercises 제외)·
  *    주간점수 최근 4주 전체를 작은 JSON으로 반환(meta.bytes로 응답 크기 동봉) — 채팅 분석 때 시트 읽기량을 줄이는 용도 — handleBrief_
@@ -125,7 +136,7 @@
 // getOrCreateSheet_가 헤더 끝에 자동으로 컬럼을 보강해주므로 별도 마이그레이션 작업 불필요.
 // 기존 행은 이 값이 빈 문자열(=null)이라, 클라이언트 병합 로직은 양쪽 다 값이 있을 때만
 // 타임스탬프를 비교하고 없으면 기존처럼 "서버 값 신뢰"로 안전하게 폴백한다.
-const CODE_VERSION_ = '2026-11-22'; // [2026-11-22] 채팅 분석용 ?brief=1&date=·?reports=1 읽기 전용 조회 추가, 점수 공식·시트 구조 변경 없음
+const CODE_VERSION_ = '2026-11-22c'; // [2026-11-22c] 홈트(맨몸·밴드·턱걸이) 근력 판정 새 기준(유효 세트+단계), PT·헬스장 기존 규칙 유지
 // [2026-11-21 버전] 텔레그램 일일요약·인바디분석 메시지 개선 2차(표시 구조·문구만 변경, 점수 공식·칼로리 밴드·MA7 산식·시트 구조 변경 없음)
 const STAGE_DETAIL_ = true;          // [2026-11-11] true면 전체 조회 stageMs에 시트별 누적 소요시간을 추가(측정 후 false로 바꿔도 됨)
 const SHEETS = {
@@ -133,7 +144,10 @@ const SHEETS = {
   inbody: {name:'InBody', cols:['date','weight','muscle','fat','fatPct','bmr','updatedAt','exclude','excludeReason','excludeAt','bodyType']}, // 2026-10-31: bodyType(인바디 유형 I/C) 추가
   // [2026-09-19 수정, 20선 16번] ptSession(PT 세션 여부, boolean) 컬럼 추가 — getOrCreateSheet_가
   // 헤더 끝에 자동 보강하므로 기존 데이터에는 영향 없음.
-  workouts: {name:'Workouts', cols:['date','name','part','volume','calories','note','treadmillSteps','avgHR','durationMin','distanceKm','specialCondition','ptSession','exercises','updatedAt']},
+  // [2026-11-22 추가] place(선택값: home/gym/pt) — 홈트(맨몸·밴드·턱걸이 등)와 헬스장·PT를 구분하는 필드.
+  // 명시적으로 안 적은 기존 기록은 place 없이 그대로 두고(재평가 안 함), 세트별 RIR이 실제로 기록된 경우에만
+  // 홈트 유효 세트 규칙을 적용한다(wsIsHomeTierEntry_ 참고). getOrCreateSheet_가 헤더 끝에 자동 보강.
+  workouts: {name:'Workouts', cols:['date','name','part','volume','calories','note','treadmillSteps','avgHR','durationMin','distanceKm','specialCondition','ptSession','exercises','updatedAt','place']},
   // [2026-09-25 추가] creatine(g) 컬럼 — 크레아틴 복용 모니터링. getOrCreateSheet_가 기존 Meals 시트 헤더 끝에 자동 보강.
   // [2026-10-16 추가] estimated(TRUE=추정치 포함)·errorPct(추정 오차 ±%) — 식단 메모의 '추정' 단어에 의존하던 표시를 구조화. 기존 시트는 헤더 끝에 자동 보강.
   // [2026-10-18 추가] items(JSON): 식단 구성 항목 [{name,kcal,protein,carbs,src,errorPct}] — 합계 정정용 내역. 합계 열이 점수의 원본이다. 기존 시트는 헤더 끝에 자동 보강.
@@ -1669,7 +1683,7 @@ function saveDailyScore_(ss, r, status){
 //  유산소일: part가 정확히 '유산소' AND (30분 이상 OR 3km 이상)(심박은 참고만). 칼로리 밴드 1,900~2,200(2026-11-07b). 칼로리 평균은 오늘(진행 중)을 제외한다(그 주 다른 날이 없으면 오늘 포함).
 //  공식 사본: 채팅 점검 때 같은 값으로 재현 가능(2026-11-07 시트 기준 6주 백테스트 일치).
 // =====================================================================================
-const WEEKLY_SCORE_VERSION_ = '2026-11-09b';
+const WEEKLY_SCORE_VERSION_ = '2026-11-22c'; // 홈트 유효 세트 단계안(6세트·2일=0.5회, 12세트=1회) 반영 — 과거 주는 세트별 RIR 기록이 없어 숫자는 그대로, gymDays/homeDays 등 새 열만 채워짐
 const WEEKLY_SCORE_START_ = '2026-09-28';                      // 이 주(월요일)부터 계산
 const WEEKLY_SCORE_SKIP_ = {'2026-10-12': '장염 회복주 — 점수 산출 안 함(참고값만)'}; // 정희님이 확정한 질병·회복주
 const WS_KCAL_LOW_ = 1900, WS_KCAL_HIGH_ = 2200, WS_KCAL_ZERO_GAP_ = 300, WS_PROTEIN_MIN_ = 120;
@@ -1691,8 +1705,12 @@ function wsWeekStart_(date){
   d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
   return d.toISOString().slice(0, 10);
 }
+// [2026-11-22 수정] 홈트(맨몸·밴드·턱걸이 등)는 wsIsHomeTierEntry_가 true인 기록이라 이 함수의 "근력일"(기존 규칙,
+// 하루 통째로 1회)에서 제외한다 — 대신 computeWeeklyScore_의 홈트 유효 세트 규칙으로 따로 집계한다.
+// PT·헬스장(세트별 RIR을 기록하지 않는 기록)은 전혀 영향 없이 그대로 이 규칙을 쓴다.
 function wsIsStrength_(w){
   if(dsIsAux_(w)) return false;
+  if(wsIsHomeTierEntry_(w)) return false;
   const part = String(w.part || '').trim();
   if(part === '' || part === '유산소' || part === '회복') return false;
   const vol = dsNum_(w.volume), dur = dsNum_(w.durationMin);
@@ -1700,32 +1718,61 @@ function wsIsStrength_(w){
   if(Array.isArray(w.exercises) && w.exercises.length > 0) return true;
   return dur !== null && dur >= 30;
 }
-// [2026-11-09b] 턱걸이 유효 세트 규칙: 보조운동 기록의 풀업·친업·턱걸이 종목 세트 중 정상 반복(reps) 5회 이상 + rir 0~4 입력(시도 tried가 있으면 reps 이상)인 세트만 유효.
-// 5회·RIR 0~4는 앱 운영용 실용 기준(공식 가이드라인 값 아님). 매달리기(초)는 제외. RIR이 없는 옛 기록·문구만 있는 기록은 유효 세트로 세지 않는다.
-const WS_PULL_SET_MIN_REPS_ = 5, WS_PULL_RIR_MAX_ = 4, WS_PULL_WEEK_MIN_SETS_ = 6, WS_PULL_WEEK_MIN_DAYS_ = 2;
-function wsPullValidSet_(st){
+// [2026-11-22 수정] 턱걸이 전용 "유효 세트 → 근력 +1(최대 1)" 규칙(2026-11-09b)을 홈트(맨몸·밴드·턱걸이 등) 전체로
+// 일반화하고, 단계안(정희님 확정 2026-11-22)으로 바꿨다: 6세트·2일 이상=0.5회, 12세트·2일 이상=1회(그 외 0회),
+// 홈트 주간 인정 상한 1회(전체 근력 상한 2회는 기존과 동일). 단계 값은 아래 상수에 모아 월 점검에서 바꾸기 쉽게 했다.
+// 5회·RIR 0~4 유효 세트 기준 자체는 2026-11-09b 턱걸이 규칙과 동일(과학 공식 아님, 앱 운영용).
+//
+// 홈트/헬스장·PT 구분(필드가 없던 기존 기록 호환): place(home/gym/pt)를 명시했으면 그 값을 따르고,
+// 안 적었으면(기존 기록 전부) "그 기록에 세트별 RIR이 실제로 기록돼 있는가"로 판단한다. 2026-11-09 이전
+// 기록(PT·헬스장 전부 포함)은 세트별 RIR을 쓴 적이 없어 전부 false로 남아 과거 점수가 그대로 보존된다.
+const WS_HOME_SET_MIN_REPS_ = 5, WS_HOME_RIR_MAX_ = 4;
+const WS_HOME_WEEK_MIN_DAYS_ = 2, WS_HOME_WEEK_SETS_TIER1_ = 6, WS_HOME_WEEK_SETS_TIER2_ = 12;
+const WS_HOME_WEEK_TIER1_VALUE_ = 0.5, WS_HOME_WEEK_TIER2_VALUE_ = 1;
+/** 이 기록을 홈트 규칙으로 볼지: place가 있으면 그 값을 그대로 따르고(gym·pt는 항상 기존 규칙), 없으면
+ * 세트별 RIR이 하나라도 실제 기록돼 있는 경우만 홈트로 본다(기존 PT·헬스장 기록엔 RIR이 없어 영향 없음). */
+function wsIsHomeTierEntry_(w){
+  if(!w) return false;
+  const place = String(w.place || '').trim();
+  if(place === 'gym' || place === 'pt') return false;
+  if(String(w.ptSession || '').toUpperCase() === 'TRUE') return false;
+  if(place === 'home') return true;
+  if(String(w.part || '').trim() === '유산소') return false;
+  return wsEntryHasAnyRir_(w);
+}
+function wsEntryHasAnyRir_(w){
+  if(!Array.isArray(w.exercises)) return false;
+  return w.exercises.some(ex => Array.isArray(ex && ex.sets) && ex.sets.some(st => st && st.rir !== null && st.rir !== undefined && st.rir !== ''));
+}
+/** 유효 세트 1개: 정상 반복(reps) 5회 이상 AND RIR 0~4 입력(시도 tried가 있으면 reps 이상). RIR 미기록·ROM 미충족
+ * (reps 미기록)·RIR 5 이상·5회 미만은 모두 제외(미확인 포함) — 임의로 채우거나 추측하지 않는다. */
+function wsHomeValidSet_(st){
   if(!st) return false;
-  const r = Number(st.reps); if(!(r >= WS_PULL_SET_MIN_REPS_)) return false;
+  const r = Number(st.reps); if(!(r >= WS_HOME_SET_MIN_REPS_)) return false;
   if(st.rir === null || st.rir === undefined || st.rir === '') return false;
-  const rir = Number(st.rir); if(isNaN(rir) || rir < 0 || rir > WS_PULL_RIR_MAX_) return false;
+  const rir = Number(st.rir); if(isNaN(rir) || rir < 0 || rir > WS_HOME_RIR_MAX_) return false;
   if(st.tried !== null && st.tried !== undefined && st.tried !== '' && Number(st.tried) < r) return false;
   return true;
 }
-/** 한 운동 기록의 유효 턱걸이 세트 수(보조운동 기록만) */
-function wsPullValidSets_(w){
-  if(!dsIsAux_(w) || !Array.isArray(w.exercises)) return 0;
+/** 한 운동 기록의 홈트 유효 세트 수(wsIsHomeTierEntry_가 아니면 0). 종목명 제한 없이 기록된 모든 세트를
+ * 본다 — 매달리기(sec만 기록, reps 없음)는 reps 조건에서 자동으로 빠진다. */
+function wsHomeValidSetsForEntry_(w){
+  if(!wsIsHomeTierEntry_(w) || !Array.isArray(w.exercises)) return 0;
   let n = 0;
-  w.exercises.forEach(ex => {
-    if(!/턱걸이|친업|풀업|pull|chin/i.test(String((ex && ex.name) || ''))) return;
-    n += (Array.isArray(ex.sets) ? ex.sets : []).filter(wsPullValidSet_).length;
-  });
+  w.exercises.forEach(ex => { n += (Array.isArray(ex && ex.sets) ? ex.sets : []).filter(wsHomeValidSet_).length; });
   return n;
 }
-/** 주간 판정: byDate = {날짜: 유효 세트 수} → 수행일·유효 세트 합계·인정 여부 */
-function wsPullWeek_(byDate){
-  const dates = Object.keys(byDate).filter(d => byDate[d] > 0);
+/** 주간 판정: byDate = {날짜: 유효 세트 수}, excludeDates = 이미 PT·헬스장으로 근력 1회를 받은 날짜 집합
+ * (같은 날 PT와 홈트가 함께 있으면 그 날은 PT만 인정 — 홈트 운동일 집계에서 제외). */
+function wsHomeWeek_(byDate, excludeDates){
+  const dates = Object.keys(byDate).filter(d => byDate[d] > 0 && !excludeDates[d]);
   const sets = dates.reduce((s, d) => s + byDate[d], 0);
-  return {days: dates.length, sets: sets, bonus: (dates.length >= WS_PULL_WEEK_MIN_DAYS_ && sets >= WS_PULL_WEEK_MIN_SETS_) ? 1 : 0};
+  let tier = 0;
+  if(dates.length >= WS_HOME_WEEK_MIN_DAYS_){
+    if(sets >= WS_HOME_WEEK_SETS_TIER2_) tier = WS_HOME_WEEK_TIER2_VALUE_;
+    else if(sets >= WS_HOME_WEEK_SETS_TIER1_) tier = WS_HOME_WEEK_TIER1_VALUE_;
+  }
+  return {days: dates.length, sets: sets, tier: tier};
 }
 function wsIsCardio_(w){
   return dsIsQualifyingCardio_(w); // 30분 이상 또는 3km 이상
@@ -1734,10 +1781,10 @@ function computeWeeklyScore_(weekStart, allWorkouts, allMeals, today){
   const weekEnd = dsDateMinus_(weekStart, -6);
   const inWeek = d => d >= weekStart && d <= weekEnd;
   const sDays = {}, cDays = {};
-  const pullByDate = {};
+  const homeByDate = {};
   allWorkouts.forEach(w => {
     const d = wsDate_(w.date); if(!inWeek(d)) return;
-    const pv = wsPullValidSets_(w); if(pv) pullByDate[d] = (pullByDate[d] || 0) + pv;
+    const hv = wsHomeValidSetsForEntry_(w); if(hv) homeByDate[d] = (homeByDate[d] || 0) + hv;
     if(wsIsStrength_(w)) sDays[d] = 1;
     if(wsIsCardio_(w)) cDays[d] = 1;
   });
@@ -1753,9 +1800,11 @@ function computeWeeklyScore_(weekStart, allWorkouts, allMeals, today){
   const calDays = days.filter(d => d < today);
   const useDays = calDays.length ? calDays : days;
   const avgKcal = Math.round(useDays.reduce((s, d) => s + byDay[d].cal, 0) / useDays.length);
-  const pw = wsPullWeek_(pullByDate);                                // 2026-11-09b: 유효 세트 6세트·2일 이상 → 근력 +1(최대 1)
   const gymN = Object.keys(sDays).length;
-  const sN = gymN >= 2 ? gymN : gymN + pw.bonus, cN = Object.keys(cDays).length;
+  const home = wsHomeWeek_(homeByDate, sDays);                     // 2026-11-22: 단계안(6세트·2일=0.5회, 12세트=1회), 홈트 상한 1회
+  const gymCapped = Math.min(gymN, 2);
+  const sN = gymCapped + (gymCapped < 2 ? Math.min(home.tier, 2 - gymCapped) : 0);
+  const cN = Object.keys(cDays).length;
   const pN = days.filter(d => byDay[d].prot >= WS_PROTEIN_MIN_).length, rN = days.length;
   const kt = kcalWeekTargetFrom_(allWorkouts, weekStart);
   const gap = avgKcal < kt.low ? kt.low - avgKcal : (avgKcal > kt.high ? avgKcal - kt.high : 0);
@@ -1770,7 +1819,7 @@ function computeWeeklyScore_(weekStart, allWorkouts, allMeals, today){
   const total = skip ? null : wsR1_(parts.strength + parts.cardio + parts.protein + parts.record + parts.calories);
   return {
     weekStart: weekStart, weekEnd: weekEnd, score: total, parts: parts,
-    counts: {strengthDays: sN, pullDays: pw.days, pullSets: pw.sets, pullBonus: pw.bonus, cardioDays: cN, proteinDays: pN, recordDays: rN, avgKcal: avgKcal, exerciseKcal: kt.eat, kcalTarget: kt.mid, kcalLow: kt.low, kcalHigh: kt.high},
+    counts: {strengthDays: sN, gymDays: gymN, homeDays: home.days, homeSets: home.sets, homeTier: home.tier, cardioDays: cN, proteinDays: pN, recordDays: rN, avgKcal: avgKcal, exerciseKcal: kt.eat, kcalTarget: kt.mid, kcalLow: kt.low, kcalHigh: kt.high},
     status: skip || (weekEnd < today ? '확정' : '잠정'),
   };
 }
@@ -1780,6 +1829,7 @@ function weeklyScoreRecord_(r){
     date: r.weekStart, weekEnd: r.weekEnd, score: r.score,
     strength30: r.parts.strength, cardio20: r.parts.cardio, protein20: r.parts.protein, record10: r.parts.record, calories20: r.parts.calories,
     strengthDays: r.counts.strengthDays, cardioDays: r.counts.cardioDays, protein120Days: r.counts.proteinDays, recordDays: r.counts.recordDays, avgKcal: r.counts.avgKcal,
+    gymDays: r.counts.gymDays, homeDays: r.counts.homeDays, homeSets: r.counts.homeSets, homeTier: r.counts.homeTier,
     status: r.status, updatedAt: new Date().toISOString(), version: WEEKLY_SCORE_VERSION_,
     exerciseKcal: r.counts.exerciseKcal, kcalTarget: r.counts.kcalTarget,
   };
@@ -1824,12 +1874,13 @@ function formatWeeklyScoreBlock_(r, label){
   if(!r) return '🎯 주간 점수: 이번 주 식단 기록이 아직 없어요.';
   if(r.score === null || r.score === undefined) return '🎯 주간 점수: 산출 안 함 (' + r.status + ')';
   const p = r.parts, c = r.counts;
-  const pullLine = c.pullBonus
-    ? `\n 턱걸이 ${c.pullSets}세트·${c.pullDays}일 (근력 +1 포함)`
-    : (c.pullSets ? `\n 턱걸이 ${c.pullSets}/${WS_PULL_WEEK_MIN_SETS_}세트 · ${c.pullDays}/${WS_PULL_WEEK_MIN_DAYS_}일` : '');
+  // [2026-11-22 수정] 턱걸이 전용 문구 → 홈트(맨몸·밴드·턱걸이) 유효 세트 단계안 문구로 교체(근력 +1 고정 문구는 0.5/1회로 세분화)
+  const homeLine = c.homeTier
+    ? `\n 홈트 유효 세트 ${c.homeSets}세트·${c.homeDays}일 (근력 +${c.homeTier}회 포함)`
+    : (c.homeSets ? `\n 홈트 유효 세트 ${c.homeSets}/${WS_HOME_WEEK_SETS_TIER1_}세트 · ${c.homeDays}/${WS_HOME_WEEK_MIN_DAYS_}일` : '');
   const kcalAdd_ = c.kcalTarget - KCAL_TARGET_MID_;
   return '🎯 <b>주간 점수 ' + dsFmt_(r.score) + '/100</b>' + (label ? '\n' + label : '') + '\n' +
-    '근력 ' + dsFmt_(p.strength) + '/30 · ' + c.strengthDays + '/2회' + pullLine + '\n' +
+    '근력 ' + dsFmt_(p.strength) + '/30 · ' + c.strengthDays + '/2회' + homeLine + '\n' +
     '유산소 ' + dsFmt_(p.cardio) + '/20 · ' + c.cardioDays + '/3회\n' +
     '단백질 ' + dsFmt_(p.protein) + '/20 · ' + c.proteinDays + '/5일\n' +
     '기록 ' + dsFmt_(p.record) + '/10 · ' + c.recordDays + '/6일\n' +
