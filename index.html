@@ -645,7 +645,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-22-c (홈트 근력 판정 새 기준: 유효 세트+단계 인정, PT·헬스장은 기존 그대로. Code.gs 2026-11-22c와 짝. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
+const APP_BUILD_VERSION = '2026-11-22-d (Work Out 탭이 보조운동 뺀 목록으로 홈트 집계해 근력이 실제보다 낮게 보이던 버그 수정 + 주간 실적/요일 칸/인사이트/턱걸이 카드 문구를 홈트 전체 합산 기준으로 정리. Code.gs 2026-11-22e와 짝. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -750,6 +750,16 @@ function homeWeekInfo_(workouts, dates, excludeDates){
     else if(sets >= HOME_WEEK_SETS_TIER1_) tier = HOME_WEEK_TIER1_VALUE_;
   }
   return {days: ds.length, sets: sets, tier: tier};
+}
+/** 스마트 인사이트·턱걸이 카드용 홈트 진행 문구(2026-11-22-d). flexWeekStats_가 돌려주는 모양
+ * ({homeSets, homeDays, homeTier, ...})을 그대로 받는다 — 점수 계산에는 쓰지 않는 표시 전용 함수.
+ * 아직 0.5회 단계 전이면 6세트 기준으로, 이미 0.5회를 받았고 1회(12세트)를 더 노려볼 수 있으면 그 기준으로 안내한다. */
+function homeProgressText_(home){
+  if(!home) return '';
+  const sets = home.homeSets, days = home.homeDays, tier = home.homeTier;
+  if(tier >= HOME_WEEK_TIER2_VALUE_) return `홈트 유효 세트 ${sets}세트 · 운동일 ${days}일 → 근력 +${tier}회(홈트 상한)`;
+  if(tier > 0) return `홈트 유효 세트 ${sets}/${HOME_WEEK_SETS_TIER2_}세트 · 운동일 ${days}일 → 지금 +${tier}회, ${HOME_WEEK_SETS_TIER2_}세트면 +${HOME_WEEK_TIER2_VALUE_}회`;
+  return `홈트 유효 세트 ${sets}/${HOME_WEEK_SETS_TIER1_}세트 · 운동일 ${days}/${HOME_WEEK_MIN_DAYS_}일 → +${HOME_WEEK_TIER1_VALUE_}회`;
 }
 const BODY_PART_COLOR = {'하체':'#7C5CFC','등':'#17D9B4','가슴':'#FF6B7A','어깨':'#FFB648','이두':'#4C8DFF','삼두':'#2F6E51'};
 const BODY_PART_ICON = {'하체':'🦵','등':'🔥','가슴':'🔥','어깨':'💪','이두':'💪','삼두':'💪'};
@@ -1934,6 +1944,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-22-d','Work Out 탭 근력/홈트 불일치 수정 — 보조운동(턱걸이) 뺀 목록으로 홈트를 집계해 서버보다 낮게 보이던 버그(예: 근력 1→1.5회). 주간 실적 줄·요일 칸("홈트" 표시)·스마트 인사이트·턱걸이 카드 문구를 홈트 전체 합산 기준으로 정리, 대시보드 주간 점수 카드 날짜가 하루 당겨 보이던 것도 수정'],
   ['2026-11-22-c','주간 근력 점수: 홈트(맨몸·밴드·턱걸이 등)만 유효 세트(정상 반복 5회↑·RIR 0~4)+운동일 기준 단계 인정(6세트·2일=0.5회, 12세트=1회)으로 바꿈. PT·헬스장은 기존 규칙 그대로(과거 점수 안 바뀜)'],
   ['2026-11-22-b','"월 점검 · 계획선 대비" 섹션을 항상 접힌 상태로 시작(눌러서 펼침). 계산·내용은 그대로'],
   ['2026-11-22-a','크레아틴 카드 개편 — "충분복용 0건/미복용" 대신 거의 안 먹음·일부 복용·많이 복용·목표선(21일) 4구간으로 전부 표시, "앞으로 며칠" 정확 계산, 크레아틴 기인 골격근 증가량은 항상 산출 불가로 고정, 여행 직후(9/21 이후) 참고줄 추가'],
@@ -2971,7 +2982,7 @@ function pullHangBarsSvg_(hd){
   });
   return o + '</svg>';
 }
-function pullCoachHtml_(ses, days, thisWk){
+function pullCoachHtml_(ses, days, thisWk, homeWk){
   const ev = pullEvalGet_();
   const stIdx = Math.min(Math.max(Number(ev.stage)||0,0), PULL_STAGES_.length-1), st = PULL_STAGES_[stIdx];
   const ck = (ok, t, sub) => `<div style="display:flex; gap:8px; font-size:12px; line-height:1.55; margin-top:4px;"><span style="color:${ok===true?'var(--c-good)':ok===false?'var(--c-warn)':'var(--text-faint)'}; font-weight:700;">${ok===true?'✓':ok===false?'✗':'○'}</span><span>${t}${sub?` <span class="dim" style="font-size:10.5px;">${sub}</span>`:''}</span></div>`;
@@ -3006,7 +3017,7 @@ function pullCoachHtml_(ses, days, thisWk){
     <div style="margin-top:8px;">
       <div style="font-size:12.5px; font-weight:600;">현재 단계 <span class="dim" style="font-weight:500; font-size:11px;">(직접 선택 · 녹색 밴드 · RIR 2~3 · 휴식 3분)</span></div>
       <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">${stBtns}</div>
-      ${bar('이번 주 인정 진행(유효 세트)', Math.min(thisWk.sets, PULL_WEEK_MIN_SETS_), PULL_WEEK_MIN_SETS_, `수행 ${thisWk.days}/${PULL_WEEK_MIN_DAYS_}일 → ${thisWk.bonus?'근력 +1 인정 중':'아직 조건 미달'}`)}
+      ${bar('이번 주 인정 진행(턱걸이 유효 세트)', Math.min(thisWk.sets, PULL_WEEK_MIN_SETS_), PULL_WEEK_MIN_SETS_, `수행 ${thisWk.days}/${PULL_WEEK_MIN_DAYS_}일 → ${homeWk && homeWk.homeTier ? `홈트 전체 기준 근력 +${homeWk.homeTier}회 인정 중` : '홈트 전체(맨몸·밴드 등 포함) 기준 아직 조건 미달'}`)}
       ${sub(nextSt ? `다음 단계(3×${nextSt.lo}~${nextSt.hi}회) 승급 조건` : '승급 조건 — 마지막 단계예요')}
       ${nextSt ? `<div class="dim" style="font-size:10.5px;">3세트 모두 ${st.hi}회 + RIR 2 이상, 2회 연속</div>
       ${rec3.length ? rec3.map(s => ck(okUp(s), `${s.date.slice(5)} 세션`, okUp(s)?'조건 충족':'미충족')).join('') : ck(null,'기록 없음','')}
@@ -3041,7 +3052,11 @@ function renderPullupCard_(){
   let bestM = null, anyMax = 0;
   hangDays.forEach(d => d.hangs.forEach((v,i) => { anyMax = Math.max(anyMax, v); if((d.hangFlags||[])[i] && (!bestM || v>bestM.v || (v===bestM.v && d.date>bestM.date))) bestM = {v, date:d.date}; }));
   const wkDates = getWeekDates(isoWeekKey(todayISO()));
-  const thisWk_ = pullWeekInfo_(wkDates);
+  const thisWk_ = pullWeekInfo_(wkDates); // 턱걸이만 본 참고용 숫자(세트·일) — 근력 +N 판정 자체는 아래 homeThisWk_(홈트 전체 합산) 기준
+  // 2026-11-22-d: "유효 세트 n/6 → 근력 +1"은 2026-11-22c부터 턱걸이 혼자가 아니라 맨몸·밴드 등 홈트 전체를
+  // 합산한 기준(홈트 전체 상한 1회, 6세트=0.5회·12세트=1회)으로 바뀌었다 — 이 카드·인사이트의 판정 문구도 맞춘다.
+  const homeWk_ = dates => flexWeekStats_(statWorkouts_(), dates);
+  const homeThisWk_ = homeWk_(wkDates);
   const wkHang = hangDays.filter(d => wkDates.includes(d.date)).reduce((s,d) => s + d.hangs.reduce((a,b)=>a+b,0), 0);
   const box = 'border:1px solid var(--border); border-radius:10px; padding:10px 12px;';
   const mini = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
@@ -3073,12 +3088,18 @@ function renderPullupCard_(){
   days.forEach(d => { const k = auxWeekKey_(d.date); const w = weeks[k] || (weeks[k] = {k, total:0, hang:0}); if(d.pull) w.total += d.pull.sets.reduce((a,b)=>a+b,0); w.hang += d.hangs.reduce((a,b)=>a+b,0); });
   const wk = Object.values(weeks).sort((a,b) => b.k.localeCompare(a.k)).slice(0,4);
   const chip = (t, ok) => `<span style="display:inline-block; font-size:10.5px; font-weight:700; padding:1px 7px; border-radius:9px; background:${ok?'var(--c-good-soft)':'var(--c-neutral-soft)'}; color:${ok?'var(--c-good)':'var(--c-neutral)'};">${t}</span>`;
-  const weekRows = wk.map(w => { const info = pullWeekInfo_(Array.from({length:7}, (_,i) => pullAddDays_(w.k, i))); return `<tr><td style="text-align:left; white-space:nowrap;">${w.k.slice(5)}~</td><td class="mono" style="white-space:nowrap;">${info.days}일·${info.sets}/${PULL_WEEK_MIN_SETS_}</td><td>${chip(info.bonus?'충족':'미충족', info.bonus)}</td><td class="mono">${w.total||'—'}${w.total?'회':''}</td><td class="mono">${w.hang?w.hang+'초':'—'}</td></tr>`; }).join('');
+  // 2026-11-22-d: "근력 +1" 칼럼은 턱걸이만으로 판정하던 옛 규칙(pullWeekInfo_.bonus) — 홈트 전체 합산
+  // 기준(homeWk_)으로 바꾼다. 턱걸이만 본 세트·일수는 그 앞 칼럼에 참고용으로 남긴다.
+  const weekRows = wk.map(w => {
+    const weekDates = Array.from({length:7}, (_,i) => pullAddDays_(w.k, i));
+    const pullInfo = pullWeekInfo_(weekDates), homeInfo = homeWk_(weekDates);
+    return `<tr><td style="text-align:left; white-space:nowrap;">${w.k.slice(5)}~</td><td class="mono" style="white-space:nowrap;">${pullInfo.days}일·${pullInfo.sets}/${PULL_WEEK_MIN_SETS_}</td><td>${chip(homeInfo.homeTier?`+${homeInfo.homeTier}회`:'0회', !!homeInfo.homeTier)}</td><td class="mono">${w.total||'—'}${w.total?'회':''}</td><td class="mono">${w.hang?w.hang+'초':'—'}</td></tr>`;
+  }).join('');
   const dLeft = pullEvalDLeft_();
   const banner = (!ev.ack && dLeft<=3) ? `<div class="no-print" style="border:1px solid var(--c-accent); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:12.5px; line-height:1.55;"><b style="color:var(--c-accent);">${dLeft>0?`2주 평가 D-${dLeft}`:dLeft===0?'오늘이 2주 평가일이에요':'2주 평가 시점이 지났어요'}</b> (${pullEvalDate_().slice(5)}) — 주 3회 전환·승급 여부를 확인해 보세요. <button type="button" onclick="pullCoachOpen()" style="margin-left:6px; padding:4px 10px; border-radius:8px; border:none; background:var(--c-accent); color:#fff; font-size:12px; cursor:pointer;">평가 열기</button></div>` : '';
   return `<section class="card">
     <div class="section-label good">${secNum('W4e')}턱걸이 · 매달리기 <span class="dim" style="font-weight:500; text-transform:none; letter-spacing:0;">· 보조운동 · 주간 실적 카드에 함께 표시</span></div>
-    <div class="dim" style="font-size:11.5px; margin:-2px 0 10px;">주간 점수 반영(월~일): 이번 주 유효 세트 <b>${thisWk_.sets}/${PULL_WEEK_MIN_SETS_}세트</b> · 수행 <b>${thisWk_.days}/${PULL_WEEK_MIN_DAYS_}일</b> → ${thisWk_.bonus ? '<b style="color:var(--c-good)">근력 +1 인정 중</b>' : '아직 조건 미달'} (정상 가동범위 5회 이상 + RIR 0~4 입력한 세트만 유효, 매달리기 제외, 주 최대 +1·근력 합계 상한 2회, 앱 내부 점수일 뿐 전신 근력운동 1회와 같다는 뜻은 아니에요)</div>
+    <div class="dim" style="font-size:11.5px; margin:-2px 0 10px;">주간 점수 반영(월~일): 홈트(맨몸·밴드·턱걸이 등 합산) ${homeProgressText_(homeThisWk_)}${homeThisWk_.homeTier ? ' <b style="color:var(--c-good)">인정 중</b>' : ''} <span class="dim">(턱걸이만 보면 유효 세트 ${thisWk_.sets}세트 · 수행 ${thisWk_.days}일)</span> (정상 가동범위 5회 이상 + RIR 0~4 입력한 세트만 유효, 매달리기 제외, 홈트 주 최대 +1·근력 합계 상한 2회, 앱 내부 점수일 뿐 전신 근력운동 1회와 같다는 뜻은 아니에요)</div>
     ${banner}
     ${auxFormHtml_(days)}
     ${auxHangFormHtml_()}
@@ -3088,11 +3109,11 @@ function renderPullupCard_(){
     <div style="overflow-x:auto;${days.length ? '' : ' display:none;'}"><table class="data-table pull-tbl">
       <thead><tr><th style="text-align:left">날짜</th><th style="text-align:left">세트 (정상 반복/RIR)</th><th>유효</th><th>매달리기</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>
-    <div class="dim" style="font-size:11.5px; margin:14px 0 4px;${days.length ? '' : ' display:none;'}">주간 (월~일 · 인정 조건: 유효 세트 ${PULL_WEEK_MIN_SETS_} · 수행 ${PULL_WEEK_MIN_DAYS_}일 · 이번 주는 진행 중)</div>
+    <div class="dim" style="font-size:11.5px; margin:14px 0 4px;${days.length ? '' : ' display:none;'}">주간 (월~일 · 턱걸이 유효 세트·일수는 참고용, "홈트 가산"은 맨몸·밴드 등 포함 전체 합산 기준 · 이번 주는 진행 중)</div>
     <div style="overflow-x:auto;${days.length ? '' : ' display:none;'}"><table class="data-table pull-tbl">
-      <thead><tr><th style="text-align:left">주</th><th>유효일·세트</th><th>근력 +1</th><th>반복 합계</th><th>매달리기</th></tr></thead>
+      <thead><tr><th style="text-align:left">주</th><th>턱걸이 유효일·세트</th><th>홈트 가산</th><th>반복 합계</th><th>매달리기</th></tr></thead>
       <tbody>${weekRows}</tbody></table></div>
-    ${pullCoachHtml_(ses, days, thisWk_)}
+    ${pullCoachHtml_(ses, days, thisWk_, homeThisWk_)}
   </section>`;
 }
 
@@ -3937,6 +3958,13 @@ function computeWorkoutInsightsV2_(workouts){
     const slackS = remain - (2*needS - 1); // 근력은 같은 부위 48시간 간격 → n회에 최소 2n-1일
     const riskS = needS>0 && slackS <= 1, riskC = needC>0 && remain <= needC;
     const allDone = needS===0 && needC===0;
+    // 2026-11-22-d: 오늘 이미 근력(헬스·PT·홈트 전부 포함)을 했으면 "N회 남음"이라고 말해도 당장은
+    // 48시간 쉬어야 해서 혼란스러웠다 — 오늘 이미 했거나 남은 날로 더 못 채우면 "여기까지"로 안내한다.
+    const didStrengthToday_ = (() => {
+      const a = classifyDayType(workouts, today);
+      return !!(a && (a.type==='근력'||a.type==='둘다')) || (state.workouts||[]).some(w => w.date===today && isHomeTierEntry_(w));
+    })();
+    const strengthCapped_ = needS>0 && (riskS || didStrengthToday_);
     const tone = allDone ? 'good' : (riskS || riskC) ? 'warn' : 'neutral';
     const fresh = dow===0 && sCnt===0 && cCnt===0;
     const title = fresh ? `이번 주 시작 — 근력 0/${goalS} · 유산소 0/${goalC}` : `이번 주 근력 ${sCnt}/${goalS} · 유산소 ${cCnt}/${goalC}`;
@@ -3944,34 +3972,37 @@ function computeWorkoutInsightsV2_(workouts){
     if(allDone) bits.push('이번 주 근력·유산소 목표를 채웠어요. 이 흐름을 유지하세요.');
     else {
       const need = [];
-      if(needS>0) need.push(`근력 ${needS}회 남음${riskS ? `(남은 ${remain}일, 같은 부위는 48시간 간격이라 빠듯해요)` : ''}`);
+      if(needS>0) need.push(strengthCapped_ ? '이번 주 근력은 여기까지예요(같은 부위는 48시간 뒤부터)' : `근력 ${needS}회 남음`);
       if(needC>0) need.push(`유산소 ${needC}회 남음(30분 이상 또는 3km 이상만 인정${remain<needC ? ' — 남은 일수가 모자라 3회는 어려워요' : remain===needC ? ' — 남은 날을 매일 해야 채워요' : ''})`);
       bits.push(need.join(' · ') + '.');
-      if(riskS) bits.push('근력은 1회당 주간 점수 약 15점이에요.');
-      else if(riskC) bits.push('유산소는 1회당 약 7점이에요.');
+      if(needS>0) bits.push('근력 1회=약 15점, 홈트 0.5회=약 7.5점이에요.');
+      if(riskC) bits.push('유산소는 1회당 약 7점이에요.');
     }
-    if(S.homeTier && realS < goalS) bits.push(`홈트 +${S.homeTier}회가 근력에 포함돼 있어요.`);
+    if(needS>0) bits.push(homeProgressText_(S));
+    else if(S.homeTier && realS < goalS) bits.push(`홈트 +${S.homeTier}회가 근력에 포함돼 있어요.`);
     add(allDone ? 50 : (tone==='warn' ? 100 : 90), tone, 'target', title, bits.join(' ') + lastWkLine, '이번 주');
   }
 
   // 2) 턱걸이·매달리기 — 유효 세트 진행, RIR 미입력 경고, 2주 평가
   const pullEverDays = aux.filter(d => d.pull);
   if(pullEverDays.length){
-    const pw = pullWeekInfo_(wk), lw = pullWeekInfo_(lastWk);
+    const pw = pullWeekInfo_(wk), lw = pullWeekInfo_(lastWk); // 턱걸이만 본 참고용 숫자(세트·일)
     const wkPull = pullEverDays.filter(d => wk.includes(d.date));
     let miss = 0, bad = 0;
     wkPull.forEach(d => pullDet_(d).forEach(s => { if(isValidPullSet_(s)) return; if(pullRirNum_(s)===null) miss++; else bad++; }));
     const bits = [];
-    if(pw.bonus) bits.push(`근력 +1 인정 조건을 채웠어요${realS>=goalS ? '(실제 근력이 이미 2회라 점수 가산은 상한)' : ''}.`);
-    else bits.push(`유효 세트 ${Math.max(0,PULL_WEEK_MIN_SETS_-pw.sets)}개·수행 ${Math.max(0,PULL_WEEK_MIN_DAYS_-pw.days)}일이 더 필요해요.`);
+    // 2026-11-22-d: "근력 +1 인정 조건을 채웠어요"는 턱걸이 혼자만 보던 옛 판정(pw.bonus) — 2026-11-22c부터
+    // 근력 가산은 맨몸·밴드 등 홈트 전체 합산(S.homeTier, 6세트=+0.5회·12세트=+1회)으로 바뀌어 이 문구도 맞춘다.
+    if(S.homeTier) bits.push(`홈트 전체 합산 근력 +${S.homeTier}회 인정 조건을 채웠어요${realS>=goalS ? '(실제 근력이 이미 2회라 점수 가산은 상한)' : ''}.`);
+    else bits.push(homeProgressText_(S) + '.');
     if(miss) bits.push(`RIR을 안 적은 세트가 ${miss}개 있어요 — RIR 0~4를 입력해야 유효 세트로 세요.`);
     if(bad) bits.push(`정상 반복 5회 미만 또는 RIR 5+인 세트 ${bad}개는 유효 세트가 아니에요.`);
     if(!miss && !bad && pw.sets<PULL_WEEK_MIN_SETS_) bits.push('세트가 끝나면 RIR(남은 여유 횟수)을 같이 기록하세요.');
-    if(dow<=1 && (lw.sets || lw.days)) bits.push(`지난주 유효 ${lw.sets}세트(${lw.days}일) ${lw.bonus ? '달성' : '미달'}.`);
+    if(dow<=1 && (lw.sets || lw.days)) bits.push(`지난주 턱걸이만 유효 ${lw.sets}세트(${lw.days}일), 홈트 전체 ${L.homeTier ? '+'+L.homeTier+'회 인정' : '미달'}.`);
     const dL = pullEvalDLeft_(), ev = pullEvalGet_();
     let evNote = '';
     if(!ev.ack && dL<=3) evNote = dL>0 ? ` 2주 평가 D-${dL}.` : ' 2주 평가 시점이에요 — 턱걸이 카드 "진행 코치"를 확인하세요.';
-    add(miss ? 95 : (evNote ? 85 : (pw.bonus ? 40 : 78)), miss ? 'warn' : (pw.bonus ? 'good' : 'neutral'), 'target',
+    add(miss ? 95 : (evNote ? 85 : (S.homeTier ? 40 : 78)), miss ? 'warn' : (S.homeTier ? 'good' : 'neutral'), 'target',
       `턱걸이 이번 주 유효 세트 ${pw.sets}/${PULL_WEEK_MIN_SETS_} · 수행 ${pw.days}/${PULL_WEEK_MIN_DAYS_}일`, bits.join(' ') + evNote, '턱걸이');
   }
 
@@ -4842,7 +4873,11 @@ function flexWeekStats_(workouts, dates){
     if(a.type==='유산소' || a.type==='둘다'){ if(qualifiedCardioOnDate_(workouts, d)) cardioQ++; else cardioU++; }
   });
   const gymN = gymDates.size;
-  const home = homeWeekInfo_(workouts, dates, gymDates); // 같은 날 PT·헬스장이 있으면 그 날은 홈트 운동일에서 제외
+  // 2026-11-22-d: 호출부(renderWorkoutTab 등)가 statWorkouts_()로 보조운동(턱걸이 등 part='보조운동')을
+  // 뺀 workouts를 넘기면 홈트 유효 세트 집계에서 그 기록이 통째로 빠지는 버그가 있었다(서버
+  // computeWeeklyScore_·wsHomeWeek_는 항상 전체 Workouts에서 홈트 세트를 센다). 홈트 집계만은
+  // workouts 인자와 무관하게 항상 state.workouts(원본 전체)를 써서 앱·서버 결과를 맞춘다.
+  const home = homeWeekInfo_(state.workouts||[], dates, gymDates); // 같은 날 PT·헬스장이 있으면 그 날은 홈트 운동일에서 제외
   const gymCapped = Math.min(gymN, 2);
   const strength = gymCapped + (gymCapped < 2 ? Math.min(home.tier, 2 - gymCapped) : 0);
   return {strength, cardioQ, cardioU, gymDays: gymN, homeDays: home.days, homeSets: home.sets, homeTier: home.tier};
@@ -4862,11 +4897,6 @@ function nextFlexSession_(workouts){
 }
 // 2026-11-09: "이번 주는 요일 자유예요"·A/B 차례 문구 삭제 — 주별로 근력 횟수(한 부위)·인정 유산소·보조(턱걸이·매달리기)만 한 줄씩 보여준다.
 // 보조(턱걸이·매달리기)는 같은 카드에서 함께 보되 점수·근력 횟수에는 넣지 않는다(근력일 집계 규칙은 그대로: 보조운동 자체는 근력일 아님).
-function flexWeekPartsDone_(workouts, dates){
-  const set = new Set();
-  workouts.filter(w => dates.includes(w.date)).forEach(w => inferPartsForEntry(w).forEach(p => { if(BODY_PARTS.includes(p)) set.add(p); }));
-  return BODY_PARTS.filter(p => set.has(p));
-}
 function auxWeekSummaryText_(dates){
   const days = auxDaily_().filter(d => dates.includes(d.date));
   if(!days.length) return '';
@@ -4883,9 +4913,10 @@ function flexStripHtml_(workouts){
   const line = (label, monday) => {
     const dates = getWeekDates(monday);
     const st = flexWeekStats_(workouts, dates);
-    const parts = flexWeekPartsDone_(workouts, dates);
     const aux = auxWeekSummaryText_(dates);
-    return `<div class="plan-advisory-item"><b>${label}</b> · 근력 ${st.strength}/${FLEX_STRENGTH_TARGET_}회${parts.length ? ` (${parts.join('·')})` : ''} · 인정 유산소 ${st.cardioQ}/${FLEX_CARDIO_TARGET_}회${st.cardioU>0?` · 미인정 ${st.cardioU}회`:''}${aux ? ` · 보조 ${aux}` : ''}</div>`;
+    // 2026-11-22-d: 부위 나열("하체·등") 대신 근력 횟수의 구성(헬스·PT 몇 회 + 홈트 몇 회)을 보여준다 —
+    // 부위는 아래 "부위별 회복 상태" 섹션에서 이미 보여주고 있어 여기선 중복이자 혼란(둘 다 15점 동일 취급으로 보임)이었다.
+    return `<div class="plan-advisory-item"><b>${label}</b> · 근력 ${st.strength}/${FLEX_STRENGTH_TARGET_}회 (헬스·PT ${st.gymDays} + 홈트 ${st.homeTier}) · 인정 유산소 ${st.cardioQ}/${FLEX_CARDIO_TARGET_}회${st.cardioU>0?` · 미인정 ${st.cardioU}회`:''}${aux ? ` · 보조 ${aux}` : ''}</div>`;
   };
   return `<div class="plan-advisory">${line('이번주', thisMonday)}${line('지난주', lastMonday)}</div>`;
 }
@@ -4970,12 +5001,15 @@ function renderWeeklyPlanSection(workouts){
   const dow = ['월','화','수','목','금','토','일'];
   const typeClass = t => t==='근력'?'plan-strength':t==='유산소'?'plan-cardio':t==='둘다'?'plan-both':t==='휴식'?'plan-rest':'plan-none';
 
-  const subtypeCellHTML = (subType, plan, showPlan, unq) => {
+  // labelOverride(2026-11-22-d): 색·칸 종류(typeClass)는 subType(근력/유산소) 그대로 쓰고 글자만 바꾼다
+  // — 홈트로 판정된 날을 "근력"과 똑같이 보이게 하면 PT·헬스장과 구분이 안 돼 11/19 맨몸 스쿼트 같은
+  // 날이 73분 PT와 같은 비중으로 보이는 오해를 준다(실제로는 근력 0.5~1회만 인정).
+  const subtypeCellHTML = (subType, plan, showPlan, unq, labelOverride) => {
     const isPlanned = !!(plan && plan.type === subType);
     const flex_ = FLEX_WEEK_V2_ && !showPlan; // 요일 계획이 없는 자유 주간: ✓/🔥 없이 실적만 보여준다
     const cls = flex_ ? typeClass(subType) : (isPlanned ? typeClass(subType) : 'plan-bonus');
     const mark = flex_ ? (unq ? ' (미인정)' : '') : (isPlanned ? ' ✓' : ' 🔥');
-    return `<div class="plan-cell ${cls} ${showPlan?'':'solo'}"${unq?' style="opacity:.6;"':''}>${subType}${mark}</div>`;
+    return `<div class="plan-cell ${cls} ${showPlan?'':'solo'}"${unq?' style="opacity:.6;"':''}>${labelOverride || subType}${mark}</div>`;
   };
 
   const weekBlock = (mondayDate, weekLabel, showPlan) => {
@@ -5017,24 +5051,27 @@ function renderWeeklyPlanSection(workouts){
             const actual = classifyDayType(workouts, d);
             const isToday = d===todayISO();
             const cardioUnq_ = FLEX_WEEK_V2_ && actual && (actual.type==='유산소'||actual.type==='둘다') ? !qualifiedCardioOnDate_(workouts, d) : false; // 2026-10-22: 인정 기준 미달 유산소 표시
+            // 2026-11-22-d: 홈트(맨몸·밴드·턱걸이 등)로 판정된 날은 "근력" 대신 "홈트"로 표시 — classifyDayType은
+            // 보조운동(턱걸이 등)을 제외하므로, 턱걸이만 있는 날(actual 없음)도 state.workouts 전체로 따로 확인한다.
+            const isHomeDay_ = FLEX_WEEK_V2_ && (state.workouts||[]).some(w => w.date===d && isHomeTierEntry_(w));
             // 2026-07-16 추가: 계획일(근력/유산소)이 실제로 이행되지 않았으면 계획 타입 + ❌ 를 경고색(plan-missed)으로 별도 표시
             const isFreeSlot = !!(plan && plan.label && plan.label.includes('자율'));
             const isPastDate = d < todayISO(); // 오늘·미래 날짜는 아직 결과가 안 나온 것이므로 미이행으로 판정하지 않음
             const missedCellHTML = (planType) => `<div class="plan-cell plan-missed ${showPlan?'':'solo'}">${planType} ❌</div>`;
             const planNotFulfilled = (fulfilledTypes) => isPastDate && plan && plan.type!=='휴식' && !isFreeSlot && !fulfilledTypes.includes(plan.type);
             const actualCell = !actual
-              ? (planNotFulfilled([]) ? missedCellHTML(plan.type) : `<div class="plan-cell plan-none ${showPlan?'':'solo'}">—</div>`)
+              ? (isHomeDay_ ? subtypeCellHTML('근력', plan, showPlan, false, '홈트') : (planNotFulfilled([]) ? missedCellHTML(plan.type) : `<div class="plan-cell plan-none ${showPlan?'':'solo'}">—</div>`))
               : actual.type==='둘다'
-                ? subtypeCellHTML('근력', plan, showPlan) + subtypeCellHTML('유산소', plan, showPlan, cardioUnq_)
+                ? subtypeCellHTML('근력', plan, showPlan, false, isHomeDay_?'홈트':undefined) + subtypeCellHTML('유산소', plan, showPlan, cardioUnq_)
                 : actual.type==='휴식'
                   ? `<div class="plan-cell plan-rest ${showPlan?'':'solo'}">휴식${plan && plan.type==='휴식' ? ' ✓' : ''}</div>` + (planNotFulfilled(['휴식']) ? missedCellHTML(plan.type) : '')
-                  : subtypeCellHTML(actual.type, plan, showPlan, actual.type==='유산소' && cardioUnq_) + (planNotFulfilled([actual.type]) ? missedCellHTML(plan.type) : '');
+                  : subtypeCellHTML(actual.type, plan, showPlan, actual.type==='유산소' && cardioUnq_, (actual.type==='근력' && isHomeDay_)?'홈트':undefined) + (planNotFulfilled([actual.type]) ? missedCellHTML(plan.type) : '');
             const pullReps_ = FLEX_WEEK_V2_ ? pullRepsOnDate_(d) : 0; // 2026-11-09-h: 턱걸이 정상 반복 합계 칩(표시용)
             const pullChip_ = pullReps_ > 0 ? `<div class="plan-cell solo" style="background:var(--c-bonus-soft,var(--panel-alt)); color:var(--c-bonus,var(--text-dim)); border:1px solid var(--c-bonus,var(--border)); word-break:keep-all; line-height:1.25;">턱걸이<br>${pullReps_}회</div>` : '';
             return `<div class="plan-col ${isToday?'is-today':''} ${planDetailDate===d?'is-selected':''}" onclick="selectPlanDay('${d}')">
               <div class="plan-dow">${dow[i]}${isToday?' ·오늘':''}</div>
               ${showPlan ? `<div class="plan-cell plan-row ${plan?typeClass(plan.type):'plan-none'}">${plan?plan.type:'—'}</div>` : ''}
-              ${pullChip_ && !actual ? pullChip_ : actualCell + pullChip_}
+              ${pullChip_ && !actual && !isHomeDay_ ? pullChip_ : actualCell + pullChip_}
               <div class="plan-label">${actual ? (actual.label.length>10?actual.label.slice(0,10)+'…':actual.label) : (plan?plan.label:'')}</div>
             </div>`;
           }).join('')}

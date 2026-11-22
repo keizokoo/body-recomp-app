@@ -1,6 +1,12 @@
 /**
  * 바디 리컴포지션 앱 - 클라우드 동기화 백엔드
  *
+ * [2026-11-22e 수정] WeeklyScore 시트의 weekEnd가 대시보드에 하루 전(예: 11/22주인데 "~11/21")으로
+ *    보이던 원인 확인·수정(점수 계산·시트 구조 변경 없음). weekEnd는 서버에서 항상 "yyyy-MM-dd" 문자열로
+ *    만들지만, 시트에 쓰면 날짜 칼럼으로 자동 인식돼 Date로 저장되고, 다음에 읽을 때 그 Date를 그대로
+ *    JSON으로 보내면 UTC로 변환되며 전날 15:00(한국 시간 자정의 UTC 환산)이 돼 앱이 날짜 앞 10글자만
+ *    자르면 하루 전으로 보였다. rowsToObjects_가 "date" 칼럼만 Date→문자열로 되돌리던 것을 "weekEnd"도
+ *    같이 되돌리게 일반화(DATE_ONLY_COLS_). 앱 index.html 2026-11-22-d와 짝.
  * [2026-11-22c 수정] 주간 근력 점수: 홈트(맨몸·밴드·턱걸이 등)만 새 기준(유효 세트 + 운동일 + 단계 인정)으로
  *    판정, PT·헬스장은 기존 규칙 그대로(과거 점수 안 바뀜 — 세트별 RIR을 쓴 적이 없어서). 바뀐 곳:
  *    SHEETS.workouts.cols에 place(home/gym/pt, 선택값) 추가 · wsIsHomeTierEntry_·wsEntryHasAnyRir_ 신설(홈트
@@ -136,7 +142,7 @@
 // getOrCreateSheet_가 헤더 끝에 자동으로 컬럼을 보강해주므로 별도 마이그레이션 작업 불필요.
 // 기존 행은 이 값이 빈 문자열(=null)이라, 클라이언트 병합 로직은 양쪽 다 값이 있을 때만
 // 타임스탬프를 비교하고 없으면 기존처럼 "서버 값 신뢰"로 안전하게 폴백한다.
-const CODE_VERSION_ = '2026-11-22d'; // [2026-11-22d] 홈트(맨몸·밴드·턱걸이) 근력 판정 새 기준(유효 세트+단계, PT·헬스장 기존 규칙 유지) + 텔레그램 인바디 메시지 "📊분석요약" 개편 — 두 PR이 합쳐짐
+const CODE_VERSION_ = '2026-11-22e'; // [2026-11-22e] WeeklyScore weekEnd가 Date로 저장돼 하루 전으로 보이던 직렬화 버그 수정(rowsToObjects_ DATE_ONLY_COLS_). 이전: 홈트 근력 판정 새 기준 + 텔레그램 인바디 메시지 "📊분석요약" 개편
 // [2026-11-22b] 텔레그램 인바디 메시지 "📊분석요약" 개편(결론/근거1/근거2/안전지표/오늘), 점수 공식·칼로리 밴드·MA7 산식·시트 구조 변경 없음
 // [2026-11-22] 채팅 분석용 ?brief=1&date=·?reports=1 읽기 전용 조회 추가, 점수 공식·시트 구조 변경 없음
 // [2026-11-21 버전] 텔레그램 일일요약·인바디분석 메시지 개선 2차(표시 구조·문구만 변경, 점수 공식·칼로리 밴드·MA7 산식·시트 구조 변경 없음)
@@ -267,6 +273,14 @@ function readSheet_(ss, def){
   return rows.slice();
 }
 /** 헤더 + 데이터 행 → 객체 배열(readSheet_와 같은 규칙: 첫 칸이 비면 건너뜀, JSON 문자열 복원, Date는 yyyy-MM-dd) */
+// [2026-11-22-d 수정] "date" 칼럼만 Date→문자열 정규화를 하고 있었는데, WeeklyScore의 "weekEnd"도 같은 증상이 있었다.
+// weekEnd는 서버에서 항상 문자열("yyyy-MM-dd")로 만들어 쓰지만(dsDateMinus_), 그 문자열을 셀에 쓰면 시트가
+// 날짜 형식 칼럼으로 자동 인식해 Date로 저장하고, 다음에 읽을 때는 스크립트 타임존(Asia/Seoul, UTC+9) 기준
+// 자정의 Date 객체로 돌아온다 — 이 Date를 그대로 JSON으로 보내면 JS가 UTC로 직렬화하면서 전날 15:00으로
+// 바뀌어, 앱이 날짜 앞 10글자만 잘라 쓰면 하루 전으로 보인다(대시보드 주간 점수 카드가 "~11/21"로 보이던
+// 원인). "date"뿐 아니라 날짜만 의미 있는 칼럼은 전부 같은 문제를 겪을 수 있어 DATE_ONLY_COLS_에
+// 모아 두고 공통 처리한다(updatedAt처럼 시각까지 의미 있는 ISO 문자열 칼럼은 건드리지 않음).
+const DATE_ONLY_COLS_ = ['date', 'weekEnd'];
 function rowsToObjects_(header, dataRows){
   return dataRows
     .filter(row => row[0] !== '' && row[0] !== null)
@@ -281,10 +295,12 @@ function rowsToObjects_(header, dataRows){
         }
         obj[h] = v;
       });
-      // 날짜 컬럼이 Date 객체로 들어온 경우 YYYY-MM-DD 문자열로 정규화
-      if(obj.date instanceof Date){
-        obj.date = Utilities.formatDate(obj.date, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-      }
+      // 날짜만 의미 있는 칼럼이 Date 객체로 들어온 경우 YYYY-MM-DD 문자열로 정규화
+      DATE_ONLY_COLS_.forEach(col => {
+        if(obj[col] instanceof Date){
+          obj[col] = Utilities.formatDate(obj[col], Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        }
+      });
       return obj;
     });
 }
