@@ -645,7 +645,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-22-a (크레아틴 카드 개편 — 구간 4단계로 전부 보여줌, 산출불가 고정. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
+const APP_BUILD_VERSION = '2026-11-22-b ("월 점검 · 계획선 대비" 기본 접힘으로 변경. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1876,6 +1876,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-22-b','"월 점검 · 계획선 대비" 섹션을 항상 접힌 상태로 시작(눌러서 펼침). 계산·내용은 그대로'],
   ['2026-11-22-a','크레아틴 카드 개편 — "충분복용 0건/미복용" 대신 거의 안 먹음·일부 복용·많이 복용·목표선(21일) 4구간으로 전부 표시, "앞으로 며칠" 정확 계산, 크레아틴 기인 골격근 증가량은 항상 산출 불가로 고정, 여행 직후(9/21 이후) 참고줄 추가'],
   ['2026-11-15-b','설정 탭에 "내 앱 허브" 링크 추가(hub.html) — 5개 앱 바로가기, 바디 요약은 주소를 넣으면 오늘 숫자까지 표시(선택)'],
   ['2026-11-15-a','운동 탭: 미인정 유산소 사유 표시 · 인정 유산소 합계(분) · 대시보드 점수와 차이 안내 · 걷기 속도 조건(11/16부터, 인클라인 제외) · 근력 칩을 점수 기준(턱걸이 +1 포함)으로'],
@@ -3367,7 +3368,7 @@ function goalTrackerHtml_(compact){
       <div class="hg-bar"><div class="hg-fill" style="width:${fmt(fatFill,1)}%"></div></div>
       <div class="hg-foot"><span>최근 7번 평균 ${fmt(m.fatPct,2)}%</span><span>${fmt(START_FAT_PCT)}% → ${NEW_GOAL.fatPctHi}%</span></div>
     </div>
-    <details class="sl-more"${showSig ? ' open' : ''}>
+    <details class="sl-more">
       <summary><span>월 점검 · 계획선 대비</span><span class="hg-status">${nc ? '다음 '+nc.date.slice(5).replace('-','/')+' (D-'+nc.days+')' : '점검 일정 종료'}</span></summary>
       <div class="dim" style="font-size:11px; margin:6px 0 2px;">최근 7번 평균(${m.from.slice(5)}~${m.to.slice(5)})</div>
       ${rowsHtml_}${goalForecastHtml_()}
