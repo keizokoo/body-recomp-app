@@ -645,7 +645,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-15-b (설정 탭에 "내 앱 허브" 링크 추가 — 5개 앱 바로가기를 한 화면에서. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
+const APP_BUILD_VERSION = '2026-11-22-a (크레아틴 카드 개편 — 구간 4단계로 전부 보여줌, 산출불가 고정. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -1876,6 +1876,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-22-a','크레아틴 카드 개편 — "충분복용 0건/미복용" 대신 거의 안 먹음·일부 복용·많이 복용·목표선(21일) 4구간으로 전부 표시, "앞으로 며칠" 정확 계산, 크레아틴 기인 골격근 증가량은 항상 산출 불가로 고정, 여행 직후(9/21 이후) 참고줄 추가'],
   ['2026-11-15-b','설정 탭에 "내 앱 허브" 링크 추가(hub.html) — 5개 앱 바로가기, 바디 요약은 주소를 넣으면 오늘 숫자까지 표시(선택)'],
   ['2026-11-15-a','운동 탭: 미인정 유산소 사유 표시 · 인정 유산소 합계(분) · 대시보드 점수와 차이 안내 · 걷기 속도 조건(11/16부터, 인클라인 제외) · 근력 칩을 점수 기준(턱걸이 +1 포함)으로'],
   ['2026-11-14-a','동기화 기록 · 오류 기록 · 저장공간 표시 · 글자 크기 · 홈 화면 바로가기(식단·운동·인바디 입력)'],
@@ -5702,11 +5703,12 @@ function mealCreatineG_(m){
   return g > 0 ? g : 0;
 }
 const CREATINE_SATURATION_DAYS = 28;   // 3g/일 기준 포화까지 약 28일
-const CREATINE_FULL_THRESHOLD = 21;    // 최근 28일 중 21일(75%) 이상 복용 → "충분 복용" 구간
-const CREATINE_MIN_GROUP_N = 5;        // C안 비교 시 그룹별 최소 인바디 건수(미만이면 판단보류)
+const CREATINE_FULL_THRESHOLD = 21;    // 목표선(최근 28일 중 21일=75%) — 비교 구간이 아니라 진행 표시용(2026-11-22: "충분복용" 이름은 과장이라 안 씀)
+const CREATINE_MIN_GROUP_N = 5;        // 구간 비교 시 그룹별 최소 인바디 건수(미만이면 "기록 부족")
 // 2026-09-25 정희님 확인: 8/26 이전에는 크레아틴 복용한 적 없음 → 프로그램 시작일(6/5)부터를 "복용 여부 확인된 기간"으로 사용.
-// 이 날짜 이전은 여전히 C안 비교에서 제외(확인되지 않은 기간을 미복용으로 단정하지 않기 위함).
 const CREATINE_TRACKING_START = '2026-06-05';
+// 2026-11-22 추가(크레아틴 비교기준 개선 2단계, 정희님 컨펌): 해외여행(9/6~9/21) 복귀 후부터 — 6~8월 감량기와 안 섞인 "시기 영향 참고줄" 비교 시작일.
+const CREATINE_POST_TRIP_START = '2026-09-21';
 // 2026-09-25 권장량 검토 결과(ISSN 2017 입장문: 유지 3~5g/일, 또는 로딩 없이 3g/일×28일로 포화): 매일 3g(1스쿱),
 // 로딩(20g/일) 안 함 — 로딩은 0.5~1.0L 수분 저류로 인바디 추세를 흔들기 때문. 핵심은 '양'보다 '매일 빠짐없이'.
 const CREATINE_TARGET_NOTE = '권장: 매일 3g(1스쿱), 로딩 없이 — 양보다 매일 빠짐없이가 핵심';
@@ -5725,10 +5727,16 @@ function creatineMap_(){
   });
   return map;
 }
-// endIso 포함 최근 days일 중 복용일수
+// endIso 포함 최근 days일 중 복용일수(오늘 진행 표시용)
 function creatineCountInWindow_(map, endIso, days){
   let c = 0;
   for(let i=0;i<days;i++){ if(map[isoAddDays_(endIso,-i)]) c++; }
+  return c;
+}
+// 2026-11-22 추가(A안): 인바디 측정일 과거 분류용 — 측정 당일은 안 세고 그 전날부터 days일(정희님 컨펌).
+function creatineCountInWindowExclToday_(map, endIso, days){
+  let c = 0;
+  for(let i=1;i<=days;i++){ if(map[isoAddDays_(endIso,-i)]) c++; }
   return c;
 }
 function creatineStage_(map, todayIso){
@@ -5738,23 +5746,40 @@ function creatineStage_(map, todayIso){
   const daysSinceLast = Math.round((new Date(todayIso+'T00:00:00') - new Date(lastDate+'T00:00:00'))/86400000);
   const count28 = creatineCountInWindow_(map, todayIso, CREATINE_SATURATION_DAYS);
   let label, tone;
-  if(count28 >= CREATINE_FULL_THRESHOLD){ label='충분 복용 중(근육 포화 추정)'; tone='good'; }
-  else if(daysSinceLast > 7){ label='중단 상태(근육 저장량 감소 중 추정)'; tone='warn'; }
-  else { label='복용 중 · 아직 포화 전'; tone='neutral'; }
+  if(count28 >= CREATINE_FULL_THRESHOLD){ label='21일 기준 도달(최근 28일 중 대부분 복용)'; tone='good'; }
+  else if(daysSinceLast > 7){ label='중단 상태(최근 일주일 넘게 기록 없음)'; tone='warn'; }
+  else { label='복용 중'; tone='neutral'; }
   return {label, tone, count28, lastDate, daysSinceLast};
 }
-// C안: 인바디(체성분 실측) 날짜별로 "그날까지 최근 28일 복용일수"를 구해 두 그룹으로 나눠 평균 비교
-function computeCreatinePeriodCompare_(ib, map){
+// 2026-11-22 추가: "21일까지 앞으로 며칠" — 내일부터 매일 먹는다고 가정하고 28일 창에서 오래된 날이 빠지는 것까지 반영한 정확 계산
+// (단순히 21-현재로 빼면 실제보다 짧게 나옴 — 크레아틴 비교기준 개선 1단계 진단에서 확인, 정희님 컨펌으로 이 방식 채택).
+function creatineDaysToGoal_(map, todayIso){
+  const cur = creatineCountInWindow_(map, todayIso, CREATINE_SATURATION_DAYS);
+  if(cur >= CREATINE_FULL_THRESHOLD) return 0;
+  const sim = Object.assign({}, map);
+  for(let step=1; step<=60; step++){
+    const nd = isoAddDays_(todayIso, step);
+    if(!sim[nd]) sim[nd] = CREATINE_DEFAULT_G;
+    let n = 0;
+    for(let i=0;i<CREATINE_SATURATION_DAYS;i++){ if(sim[isoAddDays_(nd,-i)]) n++; }
+    if(n >= CREATINE_FULL_THRESHOLD) return step;
+  }
+  return null;
+}
+const CREATINE_BUCKET_LABEL_ = {low:'거의 안 먹음', mid:'일부 복용', high:'많이 복용(절반 이상)', goal:'목표선(21일 이상)'};
+const CREATINE_BUCKET_RANGE_ = {low:'0~3일', mid:'4~13일', high:'14~20일', goal:'21일 이상'};
+// A안(2026-11-22 정희님 컨펌): 인바디 측정일마다 "직전 28일(측정일 제외) 복용일수"로 4구간 중 하나에 전부 분류 — 빠지는 건 없음.
+function computeCreatineBucketCompare_(ib, map){
   const rows = ib.filter(r => r.muscle!=null && r.weight!=null && r.fatPct!=null && r.date>=CREATINE_TRACKING_START);
-  const full = [], none = [];
+  const buckets = {low:[], mid:[], high:[], goal:[]};
   rows.forEach(r => {
-    const c = creatineCountInWindow_(map, r.date, CREATINE_SATURATION_DAYS);
-    if(c >= CREATINE_FULL_THRESHOLD) full.push(r);
-    else if(c === 0 && isoAddDays_(r.date, -(CREATINE_SATURATION_DAYS-1)) >= CREATINE_TRACKING_START) none.push(r);
+    const n = creatineCountInWindowExclToday_(map, r.date, CREATINE_SATURATION_DAYS);
+    const key = n>=CREATINE_FULL_THRESHOLD ? 'goal' : n>=14 ? 'high' : n>=4 ? 'mid' : 'low';
+    buckets[key].push(r);
   });
   const avg = (arr,k) => arr.length ? arr.reduce((s,r)=>s+Number(r[k]),0)/arr.length : null;
   const pack = arr => ({n:arr.length, weight:avg(arr,'weight'), muscle:avg(arr,'muscle'), fatPct:avg(arr,'fatPct')});
-  return {full: pack(full), none: pack(none)};
+  return {low:pack(buckets.low), mid:pack(buckets.mid), high:pack(buckets.high), goal:pack(buckets.goal)};
 }
 function creatineStripSVG_(map, todayIso){
   // 2026-10-30-e: 최근 60일 복용 띠 한 줄(글자 없음 — 날짜는 HTML 캡션)
@@ -5765,42 +5790,63 @@ function creatineStripSVG_(map, todayIso){
   return {svg:`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%; height:${H}px; display:block;" role="img" aria-label="최근 60일 크레아틴 복용 띠">${bars}</svg>`, startIso};
 }
 function renderCreatineSection(ib){
-  // 2026-10-30-e: 크레아틴 별도 차트 카드 → 이동평균 추세 그리드 안의 작은 요약 카드(복용 띠 + 복용/미복용 비교). 체중·골격근 차트에는 복용일 음영이 깔림
+  // 2026-11-22 개편(크레아틴 비교기준 개선 3단계, 정희님 컨펌): A안 4구간(거의 안 먹음/일부 복용/많이 복용/목표선)으로
+  // 인바디 전부를 분류 — 기존(충분복용 21일+ vs 미복용 0일)은 실제 복용 패턴보다 기준이 높아 131건 중 85건이 화면에 안 보였음(1단계 진단).
   const map = creatineMap_();
   const today = todayISO();
   const st = creatineStage_(map, today);
-  const cmp = computeCreatinePeriodCompare_(ib, map);
-  const ready = cmp.full.n >= CREATINE_MIN_GROUP_N && cmp.none.n >= CREATINE_MIN_GROUP_N;
+  const cmp = computeCreatineBucketCompare_(ib, map);
+  const cmpPost = computeCreatineBucketCompare_(ib.filter(r => r.date >= CREATINE_POST_TRIP_START), map);
   const toneColor = st.tone==='good' ? 'var(--c-good)' : st.tone==='warn' ? 'var(--c-warn)' : 'var(--text-dim)';
   const cell = (v,u,d) => v==null ? '—' : `${fmt(v,d)}${u}`;
-  const diff = (a,b,u,d) => (a==null||b==null) ? '—' : `${a-b>=0?'+':''}${fmt(a-b,d)}${u}`;
   const strip = creatineStripSVG_(map, today);
+  const mainKeys = ['low','mid','high'];
+  const readyCount = mainKeys.filter(k => cmp[k].n >= CREATINE_MIN_GROUP_N).length;
+  const readyLine = readyCount===mainKeys.length
+    ? `비교 구간 ${readyCount}/${mainKeys.length} 모두 5건 이상`
+    : `비교 구간 ${readyCount}/${mainKeys.length} 건수 충분(나머지는 기록 부족)`;
+  const daysToGoal = creatineDaysToGoal_(map, today);
+  const progressLine = st.count28 >= CREATINE_FULL_THRESHOLD
+    ? `최근 ${CREATINE_SATURATION_DAYS}일 중 ${st.count28}일 드셨어요 — 매일 드시는 수준(${CREATINE_FULL_THRESHOLD}일)에 도달했어요.`
+    : `최근 ${CREATINE_SATURATION_DAYS}일 중 ${st.count28}일 드셨어요. 매일 드시면 ${CREATINE_FULL_THRESHOLD}일까지 앞으로 약 ${daysToGoal}일 더 걸려요.`;
+  const bucketRow = (key) => {
+    const b = cmp[key];
+    if(b.n === 0) return '';
+    const stateText = b.n < CREATINE_MIN_GROUP_N
+      ? `<span class="badge ex-badge">기록 부족</span> 이 구간은 아직 기록이 ${b.n}건이라 비교를 보여드리기 어려워요. ${CREATINE_MIN_GROUP_N-b.n}건 더 모이면 비교가 시작돼요.`
+      : `<span class="badge ex-badge">관측됨</span> ${cell(b.muscle,'kg',2)}`;
+    return `<tr><td>${CREATINE_BUCKET_LABEL_[key]}<div style="font-size:10px;color:var(--text-faint)">${CREATINE_BUCKET_RANGE_[key]} · ${b.n}건</div></td><td style="text-align:right">${stateText}</td></tr>`;
+  };
+  const diffNote = (() => {
+    const avail = mainKeys.filter(k => cmp[k].n>=CREATINE_MIN_GROUP_N && cmp[k].muscle!=null);
+    let minDiff = Infinity;
+    for(let i=0;i<avail.length-1;i++){ minDiff = Math.min(minDiff, Math.abs(cmp[avail[i]].muscle - cmp[avail[i+1]].muscle)); }
+    return avail.length>=2 && minDiff<=0.1 ? '<div class="dim" style="font-size:10.5px;margin-top:4px;">이웃한 구간끼리 골격근 평균이 거의 같아요(차이 거의 없음).</div>' : '';
+  })();
+  const postReady = cmpPost.mid.n>=CREATINE_MIN_GROUP_N && cmpPost.high.n>=CREATINE_MIN_GROUP_N;
+  const postLine = postReady
+    ? `<div class="dim" style="font-size:10.5px;margin-top:6px;"><span class="badge ex-badge">참고만</span> 여행 직후(9/21 이후) 기록만 보면 — 일부 복용 ${cmpPost.mid.n}건(${cell(cmpPost.mid.muscle,'kg',2)}) vs 많이 복용 ${cmpPost.high.n}건(${cell(cmpPost.high.muscle,'kg',2)}). 많이 복용한 기록이 모두 최근이라, 시간이 지나 오른 것과 구분되지 않아요.</div>`
+    : '';
   return `<div class="card chart-card">
     <div class="ch-head"><span class="ch-title">크레아틴 복용</span><span class="ch-now mono" style="color:var(--c-waist)">${st.count28}/${CREATINE_SATURATION_DAYS}일</span></div>
-    <div class="dim" style="font-size:11px; margin-bottom:8px;"><b style="color:${toneColor}">${st.label}</b> · 마지막 <b class="mono">${st.lastDate ? `${dLabel(st.lastDate)}(${st.daysSinceLast===0?'오늘':st.daysSinceLast+'일 전'})` : '—'}</b></div>
+    <div class="dim" style="font-size:11px; margin-bottom:4px;"><b style="color:${toneColor}">${st.label}</b> · 마지막 <b class="mono">${st.lastDate ? `${dLabel(st.lastDate)}(${st.daysSinceLast===0?'오늘':st.daysSinceLast+'일 전'})` : '—'}</b></div>
+    <div class="dim" style="font-size:11px; margin-bottom:8px;">${progressLine}</div>
     ${strip.svg}
     <div style="font-size:10px; color:var(--text-faint); margin-top:4px;">${dLabel(strip.startIso)} ~ ${dLabel(today)} · 주황 = 복용일</div>
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px;">
-      <div class="sl-tile"><span>복용 구간 골격근</span><b>${cell(cmp.full.muscle,'kg',1)}</b></div>
-      <div class="sl-tile"><span>미복용 구간</span><b>${cell(cmp.none.muscle,'kg',1)}</b></div>
-      <div class="sl-tile"><span>표본(건)</span><b>${cmp.full.n} / ${cmp.none.n}</b></div>
-    </div>
-    <div style="font-size:10.5px; color:var(--text-faint); margin-top:6px;">${ready ? '관찰 비교예요(효과 단정 금지)' : '판단보류 — 표본이 더 필요해요'}</div>
-    <details style="margin-top:6px;"><summary style="cursor:pointer; font-size:11.5px; color:var(--text-dim); font-weight:600;">복용 구간 vs 미복용 구간 상세 ${ready ? '' : '(판단보류)'}</summary>
-    <div class="dim" style="font-size:11px; margin:6px 0;">${CREATINE_TARGET_NOTE} · 최근 ${CREATINE_SATURATION_DAYS}일 중 ${CREATINE_FULL_THRESHOLD}일 이상 복용 vs 0일 비교(부분 복용·${CREATINE_TRACKING_START} 이전 제외)</div>
+    <div style="font-size:10.5px; color:var(--text-faint); margin-top:8px;">${readyLine}</div>
+    <details open style="margin-top:6px;"><summary style="cursor:pointer; font-size:11.5px; color:var(--text-dim); font-weight:600;">복용 구간별 비교</summary>
+    <div class="dim" style="font-size:11px; margin:6px 0;">${CREATINE_TARGET_NOTE} · 인바디 측정일마다 직전 ${CREATINE_SATURATION_DAYS}일(측정일 제외) 복용일수로 구간을 나눠요.</div>
     <div style="overflow-x:auto;">
       <table class="data-table">
-        <thead><tr><th style="text-align:left">구간</th><th>인바디 건수</th><th>체중 평균</th><th>골격근 평균</th><th>체지방률 평균</th></tr></thead>
-        <tbody>
-          <tr><td>충분 복용</td><td class="mono">${cmp.full.n}건</td><td class="mono">${cell(cmp.full.weight,'kg',2)}</td><td class="mono">${cell(cmp.full.muscle,'kg',2)}</td><td class="mono">${cell(cmp.full.fatPct,'%',2)}</td></tr>
-          <tr><td>미복용</td><td class="mono">${cmp.none.n}건</td><td class="mono">${cell(cmp.none.weight,'kg',2)}</td><td class="mono">${cell(cmp.none.muscle,'kg',2)}</td><td class="mono">${cell(cmp.none.fatPct,'%',2)}</td></tr>
-          ${ready ? `<tr><td>차이(복용−미복용)</td><td class="mono">—</td><td class="mono">${diff(cmp.full.weight,cmp.none.weight,'kg',2)}</td><td class="mono">${diff(cmp.full.muscle,cmp.none.muscle,'kg',2)}</td><td class="mono">${diff(cmp.full.fatPct,cmp.none.fatPct,'%p',2)}</td></tr>` : ''}
-        </tbody>
+        <tbody>${['low','mid','high','goal'].map(bucketRow).join('')}</tbody>
       </table>
     </div>
-    <div class="note-box" style="margin-top:8px; font-size:11.5px;">${ready
-      ? '관찰 비교라 마운자로 용량·식단·운동 변화가 함께 섞여 있어요 — 차이를 크레아틴 효과로 단정하지 마세요. 크레아틴은 근육 속 수분을 늘려 인바디 골격근이 실제보다 높게 잡힐 수 있어요.'
-      : `판단보류 — 두 구간 모두 인바디 ${CREATINE_MIN_GROUP_N}건 이상 필요해요(현재 충분 복용 ${cmp.full.n}건 / 미복용 ${cmp.none.n}건). 3g을 매일 ${CREATINE_FULL_THRESHOLD}일 이상 기록하면 자동으로 비교가 시작돼요.`}</div>
+    ${diffNote}
+    <div class="note-box" style="margin-top:8px; font-size:11.5px;">
+      <div><span class="badge ex-badge">판단 불가</span> <b>크레아틴 때문에 늘어난 골격근량: 산출 불가</b> — 지금 갖고 있는 기록만으론 크레아틴 효과만 따로 뗄 수 없어요.</div>
+      <div style="margin-top:4px;">💧 크레아틴은 몸속 수분을 늘려서 인바디 골격근 수치가 실제 근육보다 조금 높게 나올 수 있어요.</div>
+      ${postLine}
+    </div>
     </details>
   </div>`;
 }
