@@ -30,6 +30,9 @@
   --c-neutral:#2E6FE0; --c-neutral-soft:rgba(76,141,255,0.14);
   --c-accent:#7C5CFC; --c-accent-strong:#F04D5E;
   --c-bonus:#F5A623; --c-bonus-soft:rgba(245,166,35,0.16);
+  /* 2026-11-23: 주간 홈트 표시(코랄, 정희님 확정 시안) + 걸음수 이상치 배지 색 */
+  --c-coral:#D85A30; --c-coral-soft:#FAECE7; --c-coral-line:#F0997B; --c-coral-ink:#712B13;
+  --c-outlier:#8A6DFF; --c-outlier-soft:rgba(138,109,255,0.14);
 
   --gauge-value-color:#7C5CFC;
   --eyebrow-bg:linear-gradient(120deg, rgba(124,92,252,0.12), rgba(23,217,180,0.12)); --eyebrow-text:#5B3DF0;
@@ -52,6 +55,8 @@ html[data-theme="dark"]{
   --c-good:#2FE0BC; --c-good-soft:rgba(47,224,188,0.16);
   --c-warn:#FF7A87; --c-warn-soft:rgba(255,122,135,0.16);
   --c-neutral:#6E9CFF; --c-neutral-soft:rgba(110,156,255,0.16);
+  --c-coral:#E8785A; --c-coral-soft:#3A2420; --c-coral-line:#C96A4A; --c-coral-ink:#F5C3AE;
+  --c-outlier:#A694FF; --c-outlier-soft:rgba(166,148,255,0.18);
   --eyebrow-bg:linear-gradient(120deg, rgba(124,92,252,0.22), rgba(23,217,180,0.18)); --eyebrow-text:#B7A6FF;
   --accent-strong-text:#B7A6FF; --sec-num-color:#5A5C78;
   --backdrop:rgba(0,0,0,0.6);
@@ -278,6 +283,10 @@ input.inline-edit-input{width:64px; background:var(--panel); border:1.5px solid 
 .chip{font-size:11px; font-weight:600; padding:5px 11px; border-radius:var(--radius-pill); background:var(--panel-alt); color:var(--text-dim); border:1px solid var(--border-soft);}
 .chip.good{background:var(--c-good-soft); color:var(--c-good); border-color:transparent;}
 .chip.warn{background:var(--c-warn-soft); color:var(--c-warn); border-color:transparent;}
+.chip.chip-coral{background:var(--c-coral-soft); color:var(--c-coral-ink); border-color:transparent; font-weight:700;}
+.home-prog-label{display:flex; justify-content:space-between; font-size:11px; color:var(--text-dim); max-width:280px; margin-top:8px;}
+.home-prog{height:7px; border-radius:4px; background:var(--panel-alt); overflow:hidden; margin:3px 0 2px; max-width:280px;}
+.home-prog i{display:block; height:100%; background:var(--c-coral);}
 
 .day-row{display:grid; grid-template-columns:56px 1fr; gap:14px; padding:14px 4px; border-bottom:1px solid var(--border-soft);}
 .day-row:last-child{border-bottom:none;}
@@ -412,7 +421,7 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .plan-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
 .plan-col{text-align:center; border-radius:8px; padding:6px 3px; background:var(--panel-alt); cursor:pointer;}
 .plan-col:active{opacity:0.7;}
-.plan-col.is-today{outline:1.5px solid var(--c-gauge-from); outline-offset:-1.5px;}
+.plan-col.is-today{outline:1.5px solid var(--c-coral); outline-offset:-1.5px;}
 .plan-col.is-selected{background:var(--eyebrow-bg);}
 .plan-detail{margin-top:14px; padding:14px; border-radius:var(--radius-sm); background:var(--panel-alt); border:1px solid var(--border);}
 .plan-detail-head{display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:700; color:var(--text); margin-bottom:10px;}
@@ -431,6 +440,9 @@ textarea.ai-textarea:focus{outline:none; border-color:var(--c-gauge-from);}
 .plan-cell.plan-both{background:var(--c-accent);}
 .plan-cell.plan-rest{background:var(--text-faint);}
 .plan-cell.plan-bonus{background:var(--c-bonus);}
+/* 2026-11-23: 주간 홈트 표시 — 헬스·PT 근력은 진한 코랄, 홈트(맨몸·밴드 등)는 연한 코랄+점선 테두리로 구분(정희님 확정 시안) */
+.plan-cell.plan-strength-gym{background:var(--c-coral);}
+.plan-cell.plan-home{background:var(--c-coral-soft); color:var(--c-coral-ink); border:1.5px dashed var(--c-coral-line); line-height:1.25;}
 .plan-cell.plan-none{background:transparent; color:var(--text-faint); border:1px dashed var(--border);}
 .plan-cell.plan-missed{background:#2A1620; color:#FF5C72; border:1px solid #FF5C72;}
 .plan-cell.plan-row.plan-strength{background:var(--c-good-soft); color:var(--c-good);}
@@ -645,7 +657,7 @@ const START_FAT_PCT = 26.4;
 const MUSCLE_BASELINE = 33.2;
 // 2026-07-25 추가: GitHub 업로드가 실제로 반영됐는지 코드 검색 없이 설정탭에서 바로 확인하기 위한
 // 빌드 버전 표시. 코드를 수정할 때마다 이 값을 갱신할 것(날짜-순번 형식 권장, 예: 2026-07-25-b).
-const APP_BUILD_VERSION = '2026-11-22-d (Work Out 탭이 보조운동 뺀 목록으로 홈트 집계해 근력이 실제보다 낮게 보이던 버그 수정 + 주간 실적/요일 칸/인사이트/턱걸이 카드 문구를 홈트 전체 합산 기준으로 정리. Code.gs 2026-11-22e와 짝. 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
+const APP_BUILD_VERSION = '2026-11-23-a (걸음수 카드: 오늘(집계 중) 값을 평균·그래프 현재값에서 분리, 이상치 배지(직전14일 중앙값의 50%↓), 차트 y축 0 밑 음수 방지, 정수 표시. 주간 근력: 헬스·PT는 진한 코랄, 홈트는 연한 코랄+점선+세트 수로 색 구분, 헤더에 근력/목표 코랄 칩·홈트 진행바 추가, 턱걸이 칩 삭제(상세는 요일 칸 클릭). 이전 빌드 내용은 설정 탭 "전체 변경 이력" 참고)';
 
 const MOUNJARO_DOSES = [
   {cycle:1, date:'2026-06-04', dose:'2.5mg'},
@@ -724,6 +736,11 @@ function homeValidSetsForEntry_(w){
   if(!isHomeTierEntry_(w) || !Array.isArray(w.exercises)) return 0;
   let n = 0; w.exercises.forEach(ex => { n += (Array.isArray(ex && ex.sets) ? ex.sets : []).filter(homeValidSet_).length; });
   return n;
+}
+// 2026-11-23: 요일 칸에 "n세트" 표시용(점수 계산에는 homeWeekInfo_를 그대로 쓰고, 이 함수는 화면 표시 전용).
+// homeWeekInfo_와 같이 항상 state.workouts(원본 전체)에서 집계한다.
+function homeSetsOnDate_(date){
+  return (state.workouts||[]).filter(w => w.date===date).reduce((s,w) => s + homeValidSetsForEntry_(w), 0);
 }
 /** 서버 wsIsStrength_와 같은 규칙(홈트로 판정된 기록은 제외해 기존 "근력일" 하루 1회 규칙과 이중집계되지 않게 한다) */
 function isGymDay_(w){
@@ -991,6 +1008,29 @@ function computeStepBreakdown(stepRec, workouts){
   });
   const neat = Math.max(0, stepRec.steps - treadmillSteps);
   return {total: stepRec.steps, treadmillSteps, neat};
+}
+// 2026-11-23: 걸음수 "이상치" 배지 기준(표시만, 평균·점수 계산에는 안 씀) — 정희님 확정: 직전 14일 중앙값의 50% 이하.
+// 상수로 분리해 나중에 쉽게 조정할 수 있게 함. 오늘(todayISO())은 아직 집계 중인 값이라 이상치 판정 대상에서 뺀다("집계 중"으로 별도 표시).
+const STEP_OUTLIER_WINDOW_DAYS_ = 14, STEP_OUTLIER_RATIO_ = 0.5, STEP_OUTLIER_MIN_SAMPLES_ = 3;
+function stepsMedian_(arr){
+  if(!arr.length) return null;
+  const s = [...arr].sort((a,b)=>a-b);
+  const m = Math.floor(s.length/2);
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2;
+}
+/** ascSteps: 날짜 오름차순 [{date,steps}]. 반환: 이상치로 판정된 날짜의 Set */
+function computeStepOutliers_(ascSteps){
+  const today = todayISO();
+  const out = new Set();
+  ascSteps.forEach(s => {
+    if(s.date === today || s.steps==null) return;
+    const windowStart = (() => { const d=new Date(s.date+'T00:00:00'); d.setDate(d.getDate()-STEP_OUTLIER_WINDOW_DAYS_); return toLocalISO(d); })();
+    const prev = ascSteps.filter(x => x.date >= windowStart && x.date < s.date && x.steps!=null).map(x=>x.steps);
+    if(prev.length < STEP_OUTLIER_MIN_SAMPLES_) return; // 비교할 데이터가 너무 적으면 판정 보류
+    const med = stepsMedian_(prev);
+    if(med>0 && s.steps <= med*STEP_OUTLIER_RATIO_) out.add(s.date);
+  });
+  return out;
 }
 
 function parseHR(text){
@@ -1944,6 +1984,7 @@ function paletteGridHtml_(){
 }
 /* 2026-10-30-f 맨 아래 버전 정보 — 새 빌드마다 APP_CHANGELOG 맨 앞에 한 줄 추가(최근 3건만 표시) */
 const APP_CHANGELOG = [
+  ['2026-11-23-a','걸음수 카드: 오늘(집계 중) 값을 "최근 7일 평균"·차트 "현재값"에서 빼고 별도로 표시(식단 탭과 같은 방식), 걸음수를 소수점 없이 1,000단위로 표시, 직전 14일 중앙값의 50% 이하인 날은 이상치(◇)로 표시만(평균·점수는 그대로 포함). 모든 차트의 y축이 0 밑 음수로 그려지던 공통 버그 수정. 주간 근력/유산소 실적: 헬스·PT 근력은 진한 코랄, 홈트(맨몸·밴드 등)는 연한 코랄+점선 테두리+그날 유효 세트 수로 색부터 구분, 헤더에 "근력 N/목표2"(코랄 칩)·"헬스·PT x+홈트 y"(회색 칩)·홈트 유효 세트 진행바 추가, 요일 칸의 턱걸이 개별 칩·합계 칩은 삭제(세트·RIR 상세는 요일 칸 클릭으로 계속 조회)'],
   ['2026-11-22-d','Work Out 탭 근력/홈트 불일치 수정 — 보조운동(턱걸이) 뺀 목록으로 홈트를 집계해 서버보다 낮게 보이던 버그(예: 근력 1→1.5회). 주간 실적 줄·요일 칸("홈트" 표시)·스마트 인사이트·턱걸이 카드 문구를 홈트 전체 합산 기준으로 정리, 대시보드 주간 점수 카드 날짜가 하루 당겨 보이던 것도 수정'],
   ['2026-11-22-c','주간 근력 점수: 홈트(맨몸·밴드·턱걸이 등)만 유효 세트(정상 반복 5회↑·RIR 0~4)+운동일 기준 단계 인정(6세트·2일=0.5회, 12세트=1회)으로 바꿈. PT·헬스장은 기존 규칙 그대로(과거 점수 안 바뀜)'],
   ['2026-11-22-b','"월 점검 · 계획선 대비" 섹션을 항상 접힌 상태로 시작(눌러서 펼침). 계산·내용은 그대로'],
@@ -2676,12 +2717,6 @@ function auxDaily_(){
   });
   return Object.values(days).filter(d => d.pull || d.hangs.length).sort((a,b) => a.date.localeCompare(b.date));
 }
-// 2026-11-09-h: 주간 실적 일별 표에 턱걸이 정상 반복 합계를 보여주기 위한 표시용 집계(점수 계산과 무관).
-function pullRepsOnDate_(date){
-  const d = auxDaily_().find(x => x.date === date);
-  return d && d.pull ? d.pull.sets.reduce((a,b)=>a+b,0) : 0;
-}
-function pullRepsInDates_(dates){ return dates.reduce((s,d) => s + pullRepsOnDate_(d), 0); }
 // 요일 칸을 눌렀을 때 상세 패널에 보여줄 그날의 턱걸이·매달리기 기록(세트별 정상 반복·시도·RIR·유효 여부, 매달리기 초)
 function pullDetailHtml_(date){
   const day = auxDaily_().find(x => x.date === date);
@@ -3135,12 +3170,14 @@ function lineChartSVG(data, key, colorVar, opts={}){
   const vals = data.map(d=>d[key]).filter(v=>v!==null&&v!==undefined);
   if(vals.length===0) return `<svg class="chart" viewBox="0 0 ${w} ${h}"></svg>`;
   let min = Math.min(...vals), max = Math.max(...vals);
+  const rawMin = min; // 2026-11-23: 축 하한이 0 밑으로 내려가지 않게 막는 기준(원래 값이 전부 0 이상인 경우만)
   const pad = opts.pad ?? ((max-min)*0.15 || 1);
   min -= pad; max += pad;
+  if(rawMin >= 0 && min < 0) min = 0; // 걸음수 등 0 아래로 내려갈 수 없는 값의 차트가 극단적 저값 때문에 음수 축으로 그려지던 문제 수정(체중 등 기존 차트는 원래 0 근처로 안 가서 화면이 그대로임)
   const x = i => padL + (i/(data.length-1||1)) * (w-padL-padR);
   const y = v => padT + (1-(v-min)/(max-min||1)) * (h-padT-padB);
 
-  const pts = data.map((d,i) => d[key]!=null ? [x(i), y(d[key]), !!d._ex, !!d._alc] : null); // 2026-10-13: [2]=제외점 여부
+  const pts = data.map((d,i) => d[key]!=null ? [x(i), y(d[key]), !!d._ex, !!d._alc, !!d._outlier] : null); // 2026-10-13: [2]=제외점 여부, 2026-11-23: [4]=이상치(표시만)
   let pathD = '', areaD = '';
   let started = false;
   pts.forEach((p) => {
@@ -3204,6 +3241,7 @@ function lineChartSVG(data, key, colorVar, opts={}){
     ${maPath_ ? `<path d="${maPath_}" fill="none" style="stroke:var(${colorVar})" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>` : ''}
     ${pts.filter(p=>p && p[2]).map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="none" stroke="#9aa0a6" stroke-width="1.6"/>`).join('')}
     ${pts.filter(p=>p && !p[2] && p[3]).map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.6" fill="none" style="stroke:var(--c-warn)" stroke-width="1.5"/>`).join('')}
+    ${pts.filter(p=>p && !p[2] && p[4]).map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4.2" fill="none" style="stroke:var(--c-outlier)" stroke-width="1.5" stroke-dasharray="1.5 1.5"/>`).join('')}
     ${xTicks}
   </svg>`;
 }
@@ -5001,15 +5039,18 @@ function renderWeeklyPlanSection(workouts){
   const dow = ['월','화','수','목','금','토','일'];
   const typeClass = t => t==='근력'?'plan-strength':t==='유산소'?'plan-cardio':t==='둘다'?'plan-both':t==='휴식'?'plan-rest':'plan-none';
 
-  // labelOverride(2026-11-22-d): 색·칸 종류(typeClass)는 subType(근력/유산소) 그대로 쓰고 글자만 바꾼다
-  // — 홈트로 판정된 날을 "근력"과 똑같이 보이게 하면 PT·헬스장과 구분이 안 돼 11/19 맨몸 스쿼트 같은
-  // 날이 73분 PT와 같은 비중으로 보이는 오해를 준다(실제로는 근력 0.5~1회만 인정).
-  const subtypeCellHTML = (subType, plan, showPlan, unq, labelOverride) => {
+  // homeSets(2026-11-23 코랄 통합안): 홈트로 판정된 날은 색부터 다르게(연한 코랄+점선) 보여주고
+  // 그날 유효 세트 수를 칸에 바로 적는다 — 헬스·PT 근력(진한 코랄)과 한눈에 구분되게 하기 위함.
+  // (이전 2026-11-22-d엔 둘 다 같은 초록 칸에 글자만 "홈트"로 바꿔서, 11/19 맨몸 스쿼트 같은 날이
+  // 73분 PT와 같은 색·비중으로 보이는 오해가 있었다.)
+  const subtypeCellHTML = (subType, plan, showPlan, unq, homeSets) => {
     const isPlanned = !!(plan && plan.type === subType);
     const flex_ = FLEX_WEEK_V2_ && !showPlan; // 요일 계획이 없는 자유 주간: ✓/🔥 없이 실적만 보여준다
-    const cls = flex_ ? typeClass(subType) : (isPlanned ? typeClass(subType) : 'plan-bonus');
+    const isHomeCell = flex_ && subType==='근력' && homeSets!=null;
+    const cls = isHomeCell ? 'plan-home' : (flex_ ? (subType==='근력' ? 'plan-strength-gym' : typeClass(subType)) : (isPlanned ? typeClass(subType) : 'plan-bonus'));
     const mark = flex_ ? (unq ? ' (미인정)' : '') : (isPlanned ? ' ✓' : ' 🔥');
-    return `<div class="plan-cell ${cls} ${showPlan?'':'solo'}"${unq?' style="opacity:.6;"':''}>${labelOverride || subType}${mark}</div>`;
+    const label = isHomeCell ? `홈트<br>${homeSets}세트` : subType;
+    return `<div class="plan-cell ${cls} ${showPlan?'':'solo'}"${unq?' style="opacity:.6;"':''}>${label}${mark}</div>`;
   };
 
   const weekBlock = (mondayDate, weekLabel, showPlan) => {
@@ -5029,13 +5070,16 @@ function renderWeeklyPlanSection(workouts){
       return d.length ? `<div>대시보드 주간 점수는 서버 계산 기준 ${d.join(' · ')}이에요. 기록을 고친 직후면 다음 동기화 때 맞춰져요. 계속 다르면 아래 미인정 사유를 확인해 주세요.</div>` : '';
     })();
     const unqHtml_ = cwd_.unq.length ? `<div style="margin:6px 0; padding:6px 10px; border:1px solid var(--border); border-radius:10px; font-size:12px; line-height:1.5;" class="dim">${cwd_.unq.map(u => `<div>미인정 · ${esc(u.date.slice(5).replace('-','/'))} ${esc(u.name.length>16?u.name.slice(0,16)+'…':u.name)} — ${esc(u.reason)}</div>`).join('')}</div>` : '';
+    // 2026-11-23: "근력 N/목표2"는 코랄 칩으로, "헬스·PT x + 홈트 y" 구성은 별도 회색 칩으로 분리(정희님 확정 시안)
     const chipsHtml_ = FLEX_WEEK_V2_
-      ? `<span class="chip ${fx_.strength>=sT_?'good':''}">근력 ${fx_.strength}회 / 목표 ${sT_}회${fx_.homeTier ? ` (홈트 +${fx_.homeTier}회 포함)` : ''}${fx_.strength>sT_?` 🔥 초과달성 (${Math.round(fx_.strength/sT_*100)}%)`:fx_.strength===sT_?' ✓ 달성 (100%)':''}</span>
+      ? `<span class="chip chip-coral">근력 ${fx_.strength} / 목표 ${sT_}${fx_.strength>sT_?` 🔥 초과달성 (${Math.round(fx_.strength/sT_*100)}%)`:fx_.strength===sT_?' ✓ 달성 (100%)':''}</span>
+            <span class="chip">헬스·PT ${fx_.gymDays} + 홈트 ${fx_.homeTier}</span>
             <span class="chip ${fx_.cardioQ>=FLEX_CARDIO_TARGET_?'good':''}">인정 유산소 ${fx_.cardioQ}회 / 목표 ${FLEX_CARDIO_TARGET_}회(최소 ${FLEX_CARDIO_MIN_}회)${fx_.cardioQ>FLEX_CARDIO_TARGET_?` 🔥 초과달성 (${Math.round(fx_.cardioQ/FLEX_CARDIO_TARGET_*100)}%)`:fx_.cardioQ===FLEX_CARDIO_TARGET_?' ✓ 달성 (100%)':''}${fx_.cardioU>0?` · 미인정 ${fx_.cardioU}회`:''}</span>
-            <span class="chip" title="참고 숫자(WHO·한국인 신체활동 지침 주 150분). 점수에는 쓰지 않아요.">인정 유산소 합계 ${cwd_.minutes}분 <span class="dim">(참고 150분)</span></span>
-            <span class="chip">턱걸이 합계 ${pullRepsInDates_(dates)}회</span>`
+            <span class="chip" title="참고 숫자(WHO·한국인 신체활동 지침 주 150분). 점수에는 쓰지 않아요.">인정 유산소 합계 ${cwd_.minutes}분 <span class="dim">(참고 150분)</span></span>`
       : `<span class="chip ${strengthCount>=3?'good':''}">근력 ${strengthCount}회 / 목표 3회${strengthCount>3?` 🔥 초과달성 (${Math.round(strengthCount/3*100)}%)`:strengthCount===3?' ✓ 달성 (100%)':''}</span>
             <span class="chip ${cardioCount>=3?'good':''}">유산소 ${cardioCount}회 / 목표 3회${cardioCount>3?` 🔥 초과달성 (${Math.round(cardioCount/3*100)}%)`:cardioCount===3?' ✓ 달성 (100%)':''}</span>`;
+    // 2026-11-23: 홈트 유효 세트 진행바(n/12, 코랄 채움) — 요일 칸별 "n세트" 합과 항상 같은 fx_.homeSets를 그대로 씀
+    const homeProgHtml_ = FLEX_WEEK_V2_ ? `<div class="home-prog-label"><span>홈트 유효 세트 진행</span><span class="mono">${fx_.homeSets}/${HOME_WEEK_SETS_TIER2_}</span></div><div class="home-prog"><i style="width:${Math.min(100, Math.round(fx_.homeSets/HOME_WEEK_SETS_TIER2_*100))}%"></i></div>` : '';
     return `
       <div style="margin-bottom:18px;">
         <div class="week-head">
@@ -5044,6 +5088,7 @@ function renderWeeklyPlanSection(workouts){
             ${chipsHtml_}
           </div>
         </div>
+        ${homeProgHtml_}
         ${srvDiff_ ? `<div style="margin:6px 0; padding:6px 10px; border:1px solid var(--border); border-radius:10px; font-size:12px; line-height:1.5;" class="dim">${srvDiff_}</div>` : ''}${unqHtml_}
         <div class="plan-grid">
           ${dates.map((d,i) => {
@@ -5051,27 +5096,29 @@ function renderWeeklyPlanSection(workouts){
             const actual = classifyDayType(workouts, d);
             const isToday = d===todayISO();
             const cardioUnq_ = FLEX_WEEK_V2_ && actual && (actual.type==='유산소'||actual.type==='둘다') ? !qualifiedCardioOnDate_(workouts, d) : false; // 2026-10-22: 인정 기준 미달 유산소 표시
-            // 2026-11-22-d: 홈트(맨몸·밴드·턱걸이 등)로 판정된 날은 "근력" 대신 "홈트"로 표시 — classifyDayType은
+            // 2026-11-23: 홈트(맨몸·밴드·턱걸이 등)로 판정된 날은 "근력" 대신 연한 코랄 "홈트 n세트"로 표시 — classifyDayType은
             // 보조운동(턱걸이 등)을 제외하므로, 턱걸이만 있는 날(actual 없음)도 state.workouts 전체로 따로 확인한다.
-            const isHomeDay_ = FLEX_WEEK_V2_ && (state.workouts||[]).some(w => w.date===d && isHomeTierEntry_(w));
+            // 그날 이미 헬스·PT 근력(isGymDay_)이 있으면 홈트로 중복 표시하지 않는다 — 주간 집계(homeWeekInfo_)가 그런 날을
+            // excludeDates로 빼고 세기 때문에, 요일 칸의 "n세트" 합이 진행바 fx_.homeSets와 항상 같으려면 화면도 같은 규칙을 써야 한다.
+            const dayIsGym_ = workouts.some(w => w.date===d && isGymDay_(w));
+            const isHomeDay_ = FLEX_WEEK_V2_ && !dayIsGym_ && (state.workouts||[]).some(w => w.date===d && isHomeTierEntry_(w));
+            const homeSetsToday_ = isHomeDay_ ? homeSetsOnDate_(d) : null;
             // 2026-07-16 추가: 계획일(근력/유산소)이 실제로 이행되지 않았으면 계획 타입 + ❌ 를 경고색(plan-missed)으로 별도 표시
             const isFreeSlot = !!(plan && plan.label && plan.label.includes('자율'));
             const isPastDate = d < todayISO(); // 오늘·미래 날짜는 아직 결과가 안 나온 것이므로 미이행으로 판정하지 않음
             const missedCellHTML = (planType) => `<div class="plan-cell plan-missed ${showPlan?'':'solo'}">${planType} ❌</div>`;
             const planNotFulfilled = (fulfilledTypes) => isPastDate && plan && plan.type!=='휴식' && !isFreeSlot && !fulfilledTypes.includes(plan.type);
             const actualCell = !actual
-              ? (isHomeDay_ ? subtypeCellHTML('근력', plan, showPlan, false, '홈트') : (planNotFulfilled([]) ? missedCellHTML(plan.type) : `<div class="plan-cell plan-none ${showPlan?'':'solo'}">—</div>`))
+              ? (isHomeDay_ ? subtypeCellHTML('근력', plan, showPlan, false, homeSetsToday_) : (planNotFulfilled([]) ? missedCellHTML(plan.type) : `<div class="plan-cell plan-none ${showPlan?'':'solo'}">—</div>`))
               : actual.type==='둘다'
-                ? subtypeCellHTML('근력', plan, showPlan, false, isHomeDay_?'홈트':undefined) + subtypeCellHTML('유산소', plan, showPlan, cardioUnq_)
+                ? subtypeCellHTML('근력', plan, showPlan, false, isHomeDay_?homeSetsToday_:null) + subtypeCellHTML('유산소', plan, showPlan, cardioUnq_)
                 : actual.type==='휴식'
                   ? `<div class="plan-cell plan-rest ${showPlan?'':'solo'}">휴식${plan && plan.type==='휴식' ? ' ✓' : ''}</div>` + (planNotFulfilled(['휴식']) ? missedCellHTML(plan.type) : '')
-                  : subtypeCellHTML(actual.type, plan, showPlan, actual.type==='유산소' && cardioUnq_, (actual.type==='근력' && isHomeDay_)?'홈트':undefined) + (planNotFulfilled([actual.type]) ? missedCellHTML(plan.type) : '');
-            const pullReps_ = FLEX_WEEK_V2_ ? pullRepsOnDate_(d) : 0; // 2026-11-09-h: 턱걸이 정상 반복 합계 칩(표시용)
-            const pullChip_ = pullReps_ > 0 ? `<div class="plan-cell solo" style="background:var(--c-bonus-soft,var(--panel-alt)); color:var(--c-bonus,var(--text-dim)); border:1px solid var(--c-bonus,var(--border)); word-break:keep-all; line-height:1.25;">턱걸이<br>${pullReps_}회</div>` : '';
+                  : subtypeCellHTML(actual.type, plan, showPlan, actual.type==='유산소' && cardioUnq_, (actual.type==='근력' && isHomeDay_)?homeSetsToday_:null) + (planNotFulfilled([actual.type]) ? missedCellHTML(plan.type) : '');
             return `<div class="plan-col ${isToday?'is-today':''} ${planDetailDate===d?'is-selected':''}" onclick="selectPlanDay('${d}')">
               <div class="plan-dow">${dow[i]}${isToday?' ·오늘':''}</div>
               ${showPlan ? `<div class="plan-cell plan-row ${plan?typeClass(plan.type):'plan-none'}">${plan?plan.type:'—'}</div>` : ''}
-              ${pullChip_ && !actual && !isHomeDay_ ? pullChip_ : actualCell + pullChip_}
+              ${actualCell}
               <div class="plan-label">${actual ? (actual.label.length>10?actual.label.slice(0,10)+'…':actual.label) : (plan?plan.label:'')}</div>
             </div>`;
           }).join('')}
@@ -5093,7 +5140,8 @@ function renderWeeklyPlanSection(workouts){
         </div>`;
       })()}
       ${FLEX_WEEK_V2_ ? `<div class="plan-legend">
-        <span><span class="legend-dot" style="background:var(--c-good)"></span>근력</span>
+        <span><span class="legend-dot" style="background:var(--c-coral)"></span>헬스·PT 근력</span>
+        <span><span class="legend-dot" style="background:var(--c-coral-soft); border:1.5px dashed var(--c-coral-line);"></span>홈트(맨몸·밴드 등)</span>
         <span><span class="legend-dot" style="background:var(--c-neutral)"></span>인정 유산소(30분↑ 또는 3km↑)</span>
         <span><span class="legend-dot" style="background:var(--c-accent)"></span>둘다</span>
         <span><span class="legend-dot" style="background:var(--text-faint)"></span>휴식</span>
@@ -5108,7 +5156,7 @@ function renderWeeklyPlanSection(workouts){
       </div>`}
       ${weekBlock(lastMonday, '지난주', !FLEX_WEEK_V2_)}
       ${weekBlock(thisMonday, '이번주', !FLEX_WEEK_V2_)}
-      ${FLEX_WEEK_V2_ ? `<div class="note-box">유산소는 <b>30분 이상 또는 3km 이상</b>인 기록만 세고(11/16부터 걷기·산책·평지 러닝머신은 <b>평균 4.0km/h 이상 또는 분당 100보 이상</b>도 필요, 인클라인·골프는 제외), 기준에 못 미친 유산소는 <b>(미인정)</b>과 사유를 따로 표시해요. 인정 유산소 합계(분)는 참고 숫자이고 점수에는 쓰지 않아요. 턱걸이 칩은 그날 <b>정상 반복 합계</b>예요(근력 +1 인정은 유효 세트 기준 — 턱걸이 카드 참고). 요일 칸을 누르면 그날 상세 내역이 펼쳐집니다.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
+      ${FLEX_WEEK_V2_ ? `<div class="note-box">유산소는 <b>30분 이상 또는 3km 이상</b>인 기록만 세고(11/16부터 걷기·산책·평지 러닝머신은 <b>평균 4.0km/h 이상 또는 분당 100보 이상</b>도 필요, 인클라인·골프는 제외), 기준에 못 미친 유산소는 <b>(미인정)</b>과 사유를 따로 표시해요. 인정 유산소 합계(분)는 참고 숫자이고 점수에는 쓰지 않아요. 홈트 칸의 "n세트"는 그날 유효 세트 합(6세트=근력 +0.5회, 12세트=+1회, 턱걸이 포함)이고, 턱걸이·매달리기 세트별 정상 반복·RIR은 요일 칸을 눌렀을 때 상세에서 볼 수 있어요.</div>` : `<div class="note-box">지난주·이번주 모두 <b>실제 회복 데이터를 기준으로 매번 다시 계산되는 적응형 계획</b>과 실적을 함께 보여드려요 — 고정 로테이션이 아니라, 각 근력일 시점까지 가장 오래 방치된 부위 그룹을 그때그때 배정합니다. 계획과 다르게 운동했거나 건너뛰면 이후 계획이 자동으로 재조정돼요. 부위 배정은 운동 데이터, 위 참고사항은 체성분·식단 데이터 기준이에요. <b>각 요일 칸의 위쪽 연한색은 계획, 아래쪽 진한색은 실제 실적</b>이며, 계획에 없던 근력/유산소를 추가로 하신 날은 <b style="color:var(--c-bonus)">주황색 🔥</b>로 표시돼요. 요일 칸을 누르면 배정 근거와 상세 내역이 펼쳐집니다.</div>`}
     </section>
   `;
 }
@@ -5272,20 +5320,28 @@ function renderWorkoutTab(){
         </div>`;
         if(steps.length===0) return stepsInputRow + `<div class="empty-state" style="padding:30px 10px;">걸음수 기록이 없습니다. 위에서 날짜와 걸음 수를 입력해 추가해보세요.</div>`;
         const breakdowns = steps.map(s => ({...s, ...computeStepBreakdown(s, workouts)}));
-        const last7 = daysAgoList(7), last14 = daysAgoList(14);
+        const today = todayISO();
+        const stepsFmt_ = v => v==null ? '—' : Math.round(v).toLocaleString('ko-KR'); // 2026-11-23: 걸음수는 소수점 없이 1,000단위 구분으로 표시(기존 fmt()는 소수 1자리 기본값이라 "3200.0보"처럼 보였음)
+        // 2026-11-23: 오늘은 아직 집계 중인 값이라 평균·차트 "현재값"에서 빼고 별도 줄로 보여준다(식단 탭 7일 평균 등과 같은 방식)
+        const last7 = daysAgoList(8).filter(d => d !== today);
+        const last14 = daysAgoList(15).filter(d => d !== today);
         const recent7 = breakdowns.filter(b=>last7.includes(b.date));
         const prior7 = breakdowns.filter(b=>last14.includes(b.date) && !last7.includes(b.date));
+        const todayRec = breakdowns.find(b=>b.date===today);
         const avgTotal = recent7.length ? recent7.reduce((s,b)=>s+b.total,0)/recent7.length : null;
         const avgNeat = recent7.length ? recent7.reduce((s,b)=>s+b.neat,0)/recent7.length : null;
         const avgNeatPrior = prior7.length ? prior7.reduce((s,b)=>s+b.neat,0)/prior7.length : null;
-        const chartData = [...steps].sort((a,b)=>a.date.localeCompare(b.date)).map(s=>({date:s.date, steps:s.steps}));
+        const treadSum7_ = recent7.reduce((s,b)=>s+b.treadmillSteps,0); // 2026-11-23: 최근 7일에 트레드밀 기록이 없으면 총 걸음=NEAT가 정상임을 안내
+        const ascSteps_ = [...steps].sort((a,b)=>a.date.localeCompare(b.date));
+        const outlierDates_ = computeStepOutliers_(ascSteps_); // 2026-11-23: 직전 14일 중앙값의 50% 이하(표시만, 평균·점수 계산에는 그대로 포함)
+        const chartData = ascSteps_.map(s=>({date:s.date, steps:s.steps, _today: s.date===today, _outlier: s.date!==today && outlierDates_.has(s.date)}));
 
         let neatInsight = null;
         if(avgNeat!==null && avgNeatPrior!==null){
           const diffPct = ((avgNeat-avgNeatPrior)/avgNeatPrior)*100;
-          if(diffPct >= 15) neatInsight = {tone:'good', text:`최근 7일 평균 NEAT ${fmt(avgNeat,0)}보로, 이전 7일(${fmt(avgNeatPrior,0)}보) 대비 ${fmt(diffPct,0)}% 늘었어요. 일상활동량이 증가 추세예요.`};
-          else if(diffPct <= -15) neatInsight = {tone:'warn', text:`최근 7일 평균 NEAT ${fmt(avgNeat,0)}보로, 이전 7일(${fmt(avgNeatPrior,0)}보) 대비 ${fmt(Math.abs(diffPct),0)}% 줄었어요. 일상활동량 감소가 체지방 정체에 영향을 줬을 수 있어요.`};
-          else neatInsight = {tone:'neutral', text:`최근 7일 평균 NEAT ${fmt(avgNeat,0)}보로 이전 7일(${fmt(avgNeatPrior,0)}보)과 큰 변동 없이 유지되고 있어요.`};
+          if(diffPct >= 15) neatInsight = {tone:'good', text:`최근 7일 평균 NEAT ${stepsFmt_(avgNeat)}보로, 이전 7일(${stepsFmt_(avgNeatPrior)}보) 대비 ${fmt(diffPct,0)}% 늘었어요. 일상활동량이 증가 추세예요.`};
+          else if(diffPct <= -15) neatInsight = {tone:'warn', text:`최근 7일 평균 NEAT ${stepsFmt_(avgNeat)}보로, 이전 7일(${stepsFmt_(avgNeatPrior)}보) 대비 ${fmt(Math.abs(diffPct),0)}% 줄었어요. 일상활동량 감소가 체지방 정체에 영향을 줬을 수 있어요.`};
+          else neatInsight = {tone:'neutral', text:`최근 7일 평균 NEAT ${stepsFmt_(avgNeat)}보로 이전 7일(${stepsFmt_(avgNeatPrior)}보)과 큰 변동 없이 유지되고 있어요.`};
         }
 
         return `
@@ -5293,20 +5349,26 @@ function renderWorkoutTab(){
           <div class="insight-grid" style="margin-bottom:16px;">
             <div class="card insight tone-neutral">
               <div class="ic-label"><span class="ic-icon">${ICONS.award}</span>최근 7일 평균 총 걸음</div>
-              <div class="ic-value">${avgTotal?fmt(avgTotal,0):'—'}</div>
-              <div class="ic-sub">인클라인 트레드밀 포함</div>
+              <div class="ic-value">${stepsFmt_(avgTotal)}</div>
+              <div class="ic-sub">인클라인 트레드밀 포함 · 오늘 제외</div>
             </div>
             <div class="card insight tone-neutral">
               <div class="ic-label"><span class="ic-icon">${ICONS.target}</span>최근 7일 평균 NEAT</div>
-              <div class="ic-value">${avgNeat?fmt(avgNeat,0):'—'}</div>
-              <div class="ic-sub">트레드밀 걸음 제외한 순수 일상활동</div>
+              <div class="ic-value">${stepsFmt_(avgNeat)}</div>
+              <div class="ic-sub">트레드밀 걸음 제외한 순수 일상활동 · 오늘 제외</div>
+            </div>
+            <div class="card insight tone-neutral">
+              <div class="ic-label"><span class="ic-icon">${ICONS.target}</span>오늘(집계 중)</div>
+              <div class="ic-value">${todayRec ? stepsFmt_(todayRec.total) : '—'}</div>
+              <div class="ic-sub">${todayRec ? '하루가 끝나기 전 값이라 평균엔 안 넣어요' : '아직 오늘 동기화된 기록이 없어요'}</div>
             </div>
           </div>
+          ${(avgTotal!=null && treadSum7_===0) ? `<div class="note-box" style="margin-bottom:16px;">최근 7일에는 트레드밀(러닝머신) 걸음 기록이 없어서 "총 걸음"과 "NEAT"가 같게 나와요 — 차감이 안 된 게 아니라 뺄 트레드밀 걸음이 없는 정상 상태예요. 인클라인·평지 트레드밀 세션이 생기면 그만큼 자동으로 빠져요.</div>` : ''}
           ${(neatInsight && !INSIGHT_ENGINE_V2) ? `<div class="alert-item ${neatInsight.tone==='warn'?'tone-warn-item':neatInsight.tone==='good'?'tone-good-item':''}" style="margin-bottom:16px;">
             <div class="alert-icon tone-${neatInsight.tone}">${neatInsight.tone==='warn'?ICONS.up:neatInsight.tone==='good'?ICONS.down:ICONS.target}</div>
             <div class="alert-body"><div class="alert-title tone-${neatInsight.tone}">NEAT 추세</div><div class="alert-detail">${neatInsight.text}</div></div>
           </div>` : ''}
-          ${chartCard('일별 총 걸음수', chartData, 'steps', '보', '--c-neutral')}
+          ${chartCard('일별 총 걸음수', chartData, 'steps', '보', '--c-neutral', null, null, {intFmt:true})}
           ${expandToggleRow('stepsTable', breakdowns.length, '일별 상세 기록 보기')}
           ${state.expandedTables['stepsTable'] ? `
           <div style="overflow-x:auto; margin-top:10px;">
@@ -5314,7 +5376,7 @@ function renderWorkoutTab(){
               <thead><tr><th style="text-align:left">날짜</th><th>총 걸음</th><th>트레드밀</th><th>NEAT</th><th>거리</th><th>칼로리</th><th></th></tr></thead>
               <tbody>
                 ${breakdowns.map(b => `<tr>
-                  <td style="text-align:left">${b.date}</td>
+                  <td style="text-align:left">${b.date}${b.date===today?' <span class="badge" style="font-size:9.5px;">집계 중</span>':''}${outlierDates_.has(b.date)?' <span class="badge" style="font-size:9.5px; background:var(--c-outlier-soft); color:var(--c-outlier);">이상치</span>':''}</td>
                   <td>${b.total.toLocaleString()}</td>
                   <td class="${b.treadmillSteps>0?'warn-text':''}">${b.treadmillSteps>0?'-'+b.treadmillSteps.toLocaleString():'—'}</td>
                   <td class="good-text">${b.neat.toLocaleString()}</td>
@@ -5325,7 +5387,7 @@ function renderWorkoutTab(){
               </tbody>
             </table>
           </div>` : ''}
-          <div class="note-box" style="margin-top:12px;">그날 인클라인 트레드밀 운동을 하셨으면, 그 세션의 걸음수를 총 걸음수에서 빼서 "NEAT"(순수 일상활동)로 따로 계산해요 — 총 걸음수엔 이미 트레드밀 걸음이 포함돼 있어서 중복 집계를 막기 위함이에요.</div>
+          <div class="note-box" style="margin-top:12px;">그날 인클라인 트레드밀 운동을 하셨으면, 그 세션의 걸음수를 총 걸음수에서 빼서 "NEAT"(순수 일상활동)로 따로 계산해요 — 총 걸음수엔 이미 트레드밀 걸음이 포함돼 있어서 중복 집계를 막기 위함이에요. 오늘(집계 중) 값은 평균·그래프 현재값에는 넣지 않고, 이상치(◇) 표시는 직전 ${STEP_OUTLIER_WINDOW_DAYS_}일 중앙값의 ${Math.round(STEP_OUTLIER_RATIO_*100)}% 이하로 낮은 날을 보여주는 용도일 뿐 평균·점수 계산에는 그대로 포함돼요.</div>
         `;
       })()}
     </section>
@@ -5953,13 +6015,17 @@ function renderCreatineSection(ib){
     </details>
   </div>`;
 }
-function chartCard(title, data, key, unit, colorVar, goal, vlines){
-  const vals = data.filter(d=>!d._ex).map(d=>d[key]).filter(v=>v!=null); // 2026-10-13: 현재값은 제외점 말고 유효 측정 기준
+function chartCard(title, data, key, unit, colorVar, goal, vlines, dispOpts){
+  dispOpts = dispOpts || {};
+  // 2026-11-23: "현재값"은 제외점(_ex)뿐 아니라 오늘(_today, 집계 중인 값)도 빼고 계산한다 — 오늘 값은 아래 별도 줄로 보여준다.
+  const vals = data.filter(d=>!d._ex && !d._today).map(d=>d[key]).filter(v=>v!=null);
   const nowVal = vals[vals.length-1];
+  const nowTxt = nowVal==null ? '—' : (dispOpts.intFmt ? Math.round(nowVal).toLocaleString('ko-KR') : fmt(nowVal));
   return `<div class="card chart-card">
-    <div class="ch-head"><span class="ch-title">${title}</span><span class="ch-now mono" style="color:var(${colorVar})">${fmt(nowVal)}${unit}</span></div>
+    <div class="ch-head"><span class="ch-title">${title}</span><span class="ch-now mono" style="color:var(${colorVar})">${nowTxt}${unit}</span></div>
     ${lineChartSVG(data, key, colorVar, {goal, vlines})}
     ${data.some(d=>d._alc && !d._ex && d[key]!=null) ? `<div style="font-size:10px; color:var(--text-faint); margin-top:4px;"><span style="color:var(--c-warn)">◯</span> 음주 다음날 — 수분·나트륨 영향으로 높게 나올 수 있어요</div>` : ''}
+    ${data.some(d=>d._outlier && !d._ex && d[key]!=null) ? `<div style="font-size:10px; color:var(--text-faint); margin-top:4px;"><span style="color:var(--c-outlier)">◇</span> 이상치 — 직전 ${STEP_OUTLIER_WINDOW_DAYS_}일 중앙값의 ${Math.round(STEP_OUTLIER_RATIO_*100)}% 이하로 낮은 날(표시만, 평균·점수 계산에는 그대로 포함)</div>` : ''}
   </div>`;
 }
 // 2026-10-30-d: 이동평균 추세 + 체성분 변화 통합 카드 — 매일 값(연한 선)과 7일 평균(진한 선)을 한 차트에 겹쳐 그린다
